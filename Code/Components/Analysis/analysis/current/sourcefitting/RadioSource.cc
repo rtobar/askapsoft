@@ -1325,6 +1325,49 @@ namespace askap {
 
             //**************************************************************//
 
+	  duchamp::Catalogues::CatalogueSpecification CASDACatalogue(duchamp::Catalogues::CatalogueSpecification inputSpec, duchamp::FitsHeader &header)
+          {
+              // Returns a catalogue spec consistent with CASDA specs
+              const int prFlux=duchamp::Catalogues::prFLUX;
+              const int prPos=duchamp::Catalogues::prPOS;
+              const int prWpos=duchamp::Catalogues::prWPOS;
+              duchamp::Catalogues::CatalogueSpecification newSpec;
+              newSpec.addColumn("ISLAND","island_id", "--", 6, 0,"meta.id.parent","char","col_island_id","");
+              newSpec.addColumn("NUM","component_id", "--", 6, 0,"meta.id;meta.main","char","col_component_id","");
+              newSpec.addColumn("RA","ra_hms_cont","",11,0,"pos.eq.ra","char","col_ra","J2000");
+              newSpec.addColumn("DEC", "dec_hms_cont","",11,0,"pos.eq.dec","char","col_dec","J2000");
+              newSpec.addColumn("RAJD","ra_deg_cont","[deg]",11,prPos,"pos.eq.ra;meta.main","float","col_rajd","J2000");
+              newSpec.addColumn("DECJD","dec_deg_cont","[deg]",11,prPos,"pos.eq.dec;meta.main","float","col_decjd","J2000");
+              newSpec.addColumn("RAERR","ra_err","[deg]",11,prPos,"stat.error;pos.eq.ra","float","col_raerr","J2000");
+              newSpec.addColumn("DECERR","dec_err","[deg]",11,prPos,"stat.error;pos.eq.dec","float","col_decerr","J2000");
+              newSpec.addColumn("FPEAKFIT","flux_peak","["+header.getFluxUnits()+"]",9,prFlux,"phot.flux.density;stat.max;em.radio;stat.fit","float","col_fpeak","");
+              newSpec.addColumn("FPEAKFITERR","flux_peak_err","["+header.getFluxUnits()+"]",9,prFlux,"stat.error;phot.flux.density;stat.max;em.radio;stat.fit","float","col_fpeak_err","");
+              newSpec.addColumn("FINTFIT","flux_int","["+header.getIntFluxUnits()+"]",9,prFlux,"phot.flux.density;em.radio;stat.fit","float","col_fint","");
+              newSpec.addColumn("FINTFITERR","flux_int_err","["+header.getIntFluxUnits()+"]",9,prFlux,"stat.error;phot.flux.density;em.radio;stat.fit","float","col_fint_err","");
+              newSpec.addColumn("MAJFIT","maj_axis","[arcsec]",6,prWpos,"phys.angSize.smajAxis;em.radio;stat.fit","float","col_maj","");
+              newSpec.addColumn("MINFIT","min_axis","[arcsec]",6,prWpos,"phys.angSize.sminAxis;em.radio;stat.fit","float","col_min","");
+              newSpec.addColumn("PAFIT","pos_ang","[deg]",7,prWpos,"phys.angSize;pos.posAng;em.radio;stat.fit","float","col_pa","");
+              newSpec.addColumn("MAJERR","maj_axis_err","[arcsec]",6,prWpos,"stat.error;phys.angSize.smajAxis;em.radio","float","col_maj_err","");
+              newSpec.addColumn("MINERR","min_axis_err","[arcsec]",6,prWpos,"stat.error;phys.angSize.sminAxis;em.radio","float","col_min_err","");
+              newSpec.addColumn("PAERR","pos_ang_err","[deg]",7,prWpos,"stat.error;phys.angSize;pos.posAng;em.radio","float","col_pa_err","");
+              newSpec.addColumn("MAJDECONV","maj_axis_deconv","[arcsec]",6,prWpos,"phys.angSize.smajAxis;em.radio;askap:meta.deconvolved","float","col_maj_deconv","");
+              newSpec.addColumn("MINDECONV","min_axis_deconv","[arcsec]",6,prWpos,"phys.angSize.sminAxis;em.radio;askap:meta.deconvolved","float","col_min_deconv","");
+              newSpec.addColumn("PADECONV","pos_ang_deconv","[deg]",7,prWpos,"phys.angSize;pos.posAng;em.radio;askap:meta.deconvolved","float","col_pa_deconv","");
+              newSpec.addColumn("CHISQFIT","chi_squared_fit", "--", 10,3,"stat.fit.chi2","float","col_chisqfit","");
+              newSpec.addColumn("RMSFIT","rms_fit_gauss", "["+header.getFluxUnits()+"]", 10, 3,"stat.stdev;stat.fit","float","col_rmsfit","");
+              newSpec.addColumn("ALPHA","spectral_index", "--", 8, 3,"spect.index;em.radio","float","col_alpha","");
+              newSpec.addColumn("BETA","spectral_curvature", "--", 8, 3,"askap:spect.curvature;em.radio","float","col_beta","");
+              newSpec.addColumn("RMSIMAGE","rms_image", "["+header.getFluxUnits()+"]", 10,3,"stat.stdev;phot.flux.density","float","col_rmsimage","");
+              newSpec.addColumn("FLAG1","flag_c1","",5,0,"meta.code","char","col_flag1","");
+              newSpec.addColumn("FLAG2","flag_c2","",5,0,"meta.code","char","col_flag2","");
+              newSpec.addColumn("FLAG3","flag_c3","",5,0,"meta.code","char","col_flag3","");
+              newSpec.addColumn("FLAG4","flag_c4","",5,0,"meta.code","char","col_flag4","");
+
+              return newSpec;
+
+          }
+            
+
 	  duchamp::Catalogues::CatalogueSpecification fullCatalogue(duchamp::Catalogues::CatalogueSpecification inputSpec, duchamp::FitsHeader &header)
 	  {
 
@@ -1400,21 +1443,36 @@ namespace askap {
 			std::vector<Double> deconvShape;
 			double ra,dec,intFluxFit;
 			getResultsParams(gauss,src->header(), src->getZcentre(), deconvShape, ra, dec, intFluxFit);
-			std::stringstream id;
-			id << src->getID() << char('a'+n);
-			spec.column("NUM").check(id.str());
+                        int precision = -int(log10(fabs(src->header()->WCS().cdelt[src->header()->WCS().lng]*3600./10.)));
+                        std::string raS  = decToDMS(ra, src->header()->lngtype(),precision);
+                        std::string decS = decToDMS(dec,src->header()->lattype(),precision);
+                        std::string name = src->header()->getIAUName(ra, dec);
+                        spec.column("ISLAND").check(src->getID());
+			std::stringstream compid;
+			compid << src->getID() << getSuffix(n);
+			spec.column("NUM").check(compid.str());
 			spec.column("NAME").check(src->getName());
+			spec.column("RA").check(raS);
+			spec.column("DEC").check(decS);
 			spec.column("RAJD").check(ra);
 			spec.column("DECJD").check(dec);
+			spec.column("RAERR").check(0.);
+			spec.column("DECERR").check(0.);
 			spec.column("X").check(gauss.xCenter());
 			spec.column("Y").check(gauss.yCenter());
 			spec.column("FINT").check(src->getIntegFlux());
 			spec.column("FPEAK").check(src->getPeakFlux());
 			spec.column("FINTFIT").check(intFluxFit);
+			spec.column("FINTFITERR").check(0.);
 			spec.column("FPEAKFIT").check(gauss.height());
+			spec.column("FPEAKFITERR").check(0.);
 			spec.column("MAJFIT").check(gauss.majorAxis()*src->header()->getAvPixScale()*3600.); // convert from pixels to arcsec
 			spec.column("MINFIT").check(gauss.minorAxis()*src->header()->getAvPixScale()*3600.);
 			spec.column("PAFIT").check(gauss.PA()*180. / M_PI,false);
+			
+			spec.column("MAJERR").check(0.);
+			spec.column("MINERR").check(0.);
+			spec.column("PAERR").check(0.);
 			spec.column("MAJDECONV").check(deconvShape[0]*src->header()->getAvPixScale()*3600.); // convert from pixels to arcsec
 			spec.column("MINDECONV").check(deconvShape[1]*src->header()->getAvPixScale()*3600.);
 			spec.column("PADECONV").check(deconvShape[2]*180. / M_PI,false);
@@ -1427,6 +1485,12 @@ namespace askap {
 			spec.column("NDOFFIT").check(results.ndof());
 			spec.column("NPIXFIT").check(results.numPix());
 			spec.column("NPIXOBJ").check(src->getSize());
+                        std::string blankFlag="--";
+                        std::string estimateFlag="fitIsEstimate";               
+			spec.column("FLAG1").check(results.fitIsGuess() ? estimateFlag : blankFlag);
+			spec.column("FLAG2").check("");
+			spec.column("FLAG3").check("");
+			spec.column("FLAG4").check("");
 		    }
 		}
 	    }
@@ -1492,24 +1556,40 @@ namespace askap {
 	    std::vector<Double> deconv = deconvolveGaussian(gauss,this->itsHeader->getBeam());
 	    double thisRA,thisDec,zworld;
 	    this->itsHeader->pixToWCS(gauss.xCenter(),gauss.yCenter(),this->getZcentre(),thisRA,thisDec,zworld);
+            int precision = -int(log10(fabs(this->itsHeader->WCS().cdelt[this->itsHeader->WCS().lng]*3600./10.)));
+            std::string raS  = decToDMS(thisRA, this->itsHeader->lngtype(),precision);
+            std::string decS = decToDMS(thisDec,this->itsHeader->lattype(),precision);
+            std::string name = this->itsHeader->getIAUName(thisRA, thisDec);
 	    float intfluxfit = gauss.flux();
 	    if (this->itsHeader->needBeamSize())
 	      intfluxfit /= this->itsHeader->beam().area(); // Convert from Jy/beam to Jy
+            std::string blankFlag="--";
+            std::string estimateFlag="fitIsEstimate";               
 
-	    std::string type=column.type();	    
-	    if(type=="NUM")  column.printEntry(stream, id.str());
-	    else if(type=="NAME")  column.printEntry(stream, this->getName());
+	    std::string type=column.type();
+            if(type=="ISLAND") column.printEntry(stream, this->getID());
+	    else if(type=="NUM")  column.printEntry(stream, id.str());
+	    else if(type=="NAME")  column.printEntry(stream, name);
+	    else if(type=="RA")  column.printEntry(stream, raS);
+	    else if(type=="DEC")  column.printEntry(stream, decS);
 	    else if(type=="RAJD")  column.printEntry(stream, thisRA);
 	    else if(type=="DECJD")  column.printEntry(stream, thisDec);
+	    else if(type=="RAERR")  column.printEntry(stream, 0.);
+	    else if(type=="DECERR")  column.printEntry(stream, 0.);
 	    else if(type=="X") column.printEntry(stream,gauss.xCenter());
 	    else if(type=="Y") column.printEntry(stream,gauss.yCenter());
 	    else if(type=="FINT")  column.printEntry(stream, this->getIntegFlux());
 	    else if(type=="FPEAK")  column.printEntry(stream, this->getPeakFlux());
 	    else if(type=="FINTFIT")  column.printEntry(stream, intfluxfit);
+	    else if(type=="FINTFITERR")  column.printEntry(stream, 0.);
 	    else if(type=="FPEAKFIT")  column.printEntry(stream, gauss.height());
+	    else if(type=="FPEAKFITERR")  column.printEntry(stream, 0.);
 	    else if(type=="MAJFIT")  column.printEntry(stream, gauss.majorAxis()*this->itsHeader->getAvPixScale()*3600.); // convert from pixels to arcsec
 	    else if(type=="MINFIT")  column.printEntry(stream, gauss.minorAxis()*this->itsHeader->getAvPixScale()*3600.);
 	    else if(type=="PAFIT")  column.printEntry(stream, gauss.PA()*180. / M_PI);
+	    else if(type=="MAJERR")  column.printEntry(stream, 0.);
+	    else if(type=="MINERR")  column.printEntry(stream, 0.);
+	    else if(type=="PAERR")  column.printEntry(stream, 0.);
 	    else if(type=="MAJDECONV")  column.printEntry(stream, deconv[0]*this->itsHeader->getAvPixScale()*3600.); // convert from pixels to arcsec
 	    else if(type=="MINDECONV")  column.printEntry(stream, deconv[1]*this->itsHeader->getAvPixScale()*3600.);
 	    else if(type=="PADECONV")  column.printEntry(stream, deconv[2]*180. / M_PI);
@@ -1523,6 +1603,10 @@ namespace askap {
 	    else if(type=="NPIXFIT")  column.printEntry(stream, results.numPix());
 	    else if(type=="NPIXOBJ")  column.printEntry(stream, this->getSize());
 	    else if(type=="GUESS")  column.printEntry(stream, results.fitIsGuess() ? 1 : 0);
+	    else if(type=="FLAG1")  column.printEntry(stream, results.fitIsGuess() ? estimateFlag : blankFlag);
+	    else if(type=="FLAG2")  column.printEntry(stream, blankFlag);
+	    else if(type=="FLAG3")  column.printEntry(stream, blankFlag);
+	    else if(type=="FLAG4")  column.printEntry(stream, blankFlag);
 	    else this->duchamp::Detection::printTableEntry(stream,column); // handles anything covered by duchamp code. If different column, use the following.
 	  }
 

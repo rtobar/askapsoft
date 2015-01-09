@@ -94,7 +94,9 @@ namespace askap {
 	
 	std::map<std::string,std::string> posUCDmap;
 	posUCDmap.insert(std::pair<std::string,std::string>("ra","pos.eq.ra"));
+	posUCDmap.insert(std::pair<std::string,std::string>("ra_deg_cont","pos.eq.ra"));
 	posUCDmap.insert(std::pair<std::string,std::string>("dec","pos.eq.dec"));
+	posUCDmap.insert(std::pair<std::string,std::string>("dec_deg_cont","pos.eq.dec"));
 	posUCDmap.insert(std::pair<std::string,std::string>("glon","pos.galactic.lng"));
 	posUCDmap.insert(std::pair<std::string,std::string>("glat","pos.galactic.lat"));
 	duchamp::Catalogues::Column &raCol=this->itsColumnSpecification->column("RAJD");

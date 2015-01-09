@@ -1192,16 +1192,43 @@ namespace askap {
 		    vowriter.writeParameters();
 		    if(this->is2D()){
 			double ra,dec,freq;
-			this->itsCube.header().pixToWCS(this->itsCube.getDimX()/2.,this->itsCube.getDimY()/2.,0.,ra,dec,freq);
-			std::string frequnits(this->itsCube.header().WCS().cunit[this->itsCube.header().WCS().spec]);
-			vowriter.writeParameter(duchamp::VOParam("Reference frequency","em.freq;meta.main","float",freq,0,frequnits));
-		    }
+                        if(this->itsCube.header().WCS().spec>=0){
+                            this->itsCube.header().pixToWCS(this->itsCube.getDimX()/2.,this->itsCube.getDimY()/2.,0.,ra,dec,freq);
+                            std::string frequnits(this->itsCube.header().WCS().cunit[this->itsCube.header().WCS().spec]);
+                            vowriter.writeParameter(duchamp::VOParam("Reference frequency","em.freq;meta.main","float",freq,0,frequnits));
+                        }
+                    }
 		    vowriter.writeStats();
 		    vowriter.writeTableHeader();
 		    vowriter.writeEntries();
 		    vowriter.writeFooter();
 		    vowriter.closeCatalogue();
 		  
+                    duchamp::Catalogues::CatalogueSpecification casdaColumns = sourcefitting::CASDACatalogue(this->itsCube.getFullCols(), this->itsCube.header());
+                    setupCols(casdaColumns,this->itsSourceList,outtypes[t]);
+		    filename = filename.replace(filename.rfind(".xml"), std::string::npos, ".casda.xml");
+		    vowriter=AskapVOTableCatalogueWriter(filename);
+		    ASKAPLOG_DEBUG_STR(logger, "Writing CASDA-style Fit results to the VOTable " << filename);
+		    vowriter.setup(this);
+		    vowriter.setFitType(outtypes[t]);
+		    vowriter.setColumnSpec(&casdaColumns);
+		    vowriter.setSourceList(&this->itsSourceList);
+		    vowriter.openCatalogue();
+		    vowriter.writeHeader();
+		    vowriter.writeParameters();
+		    if(this->is2D()){
+			double ra,dec,freq;
+                        if(this->itsCube.header().WCS().spec>=0){
+                            this->itsCube.header().pixToWCS(this->itsCube.getDimX()/2.,this->itsCube.getDimY()/2.,0.,ra,dec,freq);
+                            std::string frequnits(this->itsCube.header().WCS().cunit[this->itsCube.header().WCS().spec]);
+                            vowriter.writeParameter(duchamp::VOParam("Reference frequency","em.freq;meta.main","float",freq,0,frequnits));
+                        }
+                    }
+		    vowriter.writeStats();
+		    vowriter.writeTableHeader();
+		    vowriter.writeEntries();
+		    vowriter.writeFooter();
+		    vowriter.closeCatalogue();
 		    
 		    filename = this->itsParset.getString("outputComponentParset","");
 		    if(filename!=""){
