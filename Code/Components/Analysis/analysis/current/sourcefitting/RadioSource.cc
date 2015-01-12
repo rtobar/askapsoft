@@ -1371,8 +1371,7 @@ namespace askap {
 	    float intfluxfit = gauss.flux();
 	    if (this->itsHeader->needBeamSize())
 	      intfluxfit /= this->itsHeader->beam().area(); // Convert from Jy/beam to Jy
-            std::string blankFlag="--";
-            std::string estimateFlag="fitIsEstimate";               
+            std::string blankComment="--";
 
 	    std::string type=column.type();
             if(type=="ISLAND") column.printEntry(stream, this->getID());
@@ -1411,11 +1410,11 @@ namespace askap {
 	    else if(type=="NPIXFIT")  column.printEntry(stream, results.numPix());
 	    else if(type=="NPIXOBJ")  column.printEntry(stream, this->getSize());
 	    else if(type=="GUESS")  column.printEntry(stream, results.fitIsGuess() ? 1 : 0);
-	    else if(type=="FLAG1")  column.printEntry(stream, results.fitIsGuess() ? estimateFlag : blankFlag);
-	    else if(type=="FLAG2")  column.printEntry(stream, blankFlag);
-	    else if(type=="FLAG3")  column.printEntry(stream, blankFlag);
-	    else if(type=="FLAG4")  column.printEntry(stream, blankFlag);
-            else if(type=="COMMENT") column.printEntry(stream, blankFlag);
+	    else if(type=="FLAG1")  column.printEntry(stream, this->itsBestFitMap[fitType].numFits()>1 ? 1 : 0);
+	    else if(type=="FLAG2")  column.printEntry(stream, results.fitIsGuess() ? 1 : 0);
+	    else if(type=="FLAG3")  column.printEntry(stream, 0);
+	    else if(type=="FLAG4")  column.printEntry(stream, 0);
+            else if(type=="COMMENT") column.printEntry(stream, blankComment);
 	    else this->duchamp::Detection::printTableEntry(stream,column); // handles anything covered by duchamp code. If different column, use the following.
 	  }
 

@@ -154,10 +154,10 @@ namespace analysis {
         newSpec.addColumn("ALPHA","spectral_index", "--", 8, 3,"spect.index;em.radio","float","col_alpha","");
         newSpec.addColumn("BETA","spectral_curvature", "--", 8, 3,"askap:spect.curvature;em.radio","float","col_beta","");
         newSpec.addColumn("RMSIMAGE","rms_image", "["+header.getFluxUnits()+"]", 10,3,"stat.stdev;phot.flux.density","float","col_rmsimage","");
-        newSpec.addColumn("FLAG1","flag_c1","",5,0,"meta.code","char","col_flag1","");
-        newSpec.addColumn("FLAG2","flag_c2","",5,0,"meta.code","char","col_flag2","");
-        newSpec.addColumn("FLAG3","flag_c3","",5,0,"meta.code","char","col_flag3","");
-        newSpec.addColumn("FLAG4","flag_c4","",5,0,"meta.code","char","col_flag4","");
+        newSpec.addColumn("FLAG1","flag_c1","",5,0,"meta.code","int","col_flag1","");
+        newSpec.addColumn("FLAG2","flag_c2","",5,0,"meta.code","int","col_flag2","");
+        newSpec.addColumn("FLAG3","flag_c3","",5,0,"meta.code","int","col_flag3","");
+        newSpec.addColumn("FLAG4","flag_c4","",5,0,"meta.code","int","col_flag4","");
         newSpec.addColumn("COMMENT","comment","",100,0,"meta.note","char","col_comment","");
 
         return newSpec;
@@ -271,12 +271,10 @@ namespace analysis {
                 spec.column("NDOFFIT").check(results.ndof());
                 spec.column("NPIXFIT").check(results.numPix());
                 spec.column("NPIXOBJ").check(src->getSize());
-                std::string blankFlag="--";
-                std::string estimateFlag="fitIsEstimate";               
-                spec.column("FLAG1").check(results.fitIsGuess() ? estimateFlag : blankFlag);
-                spec.column("FLAG2").check("");
-                spec.column("FLAG3").check("");
-                spec.column("FLAG4").check("");
+                spec.column("FLAG1").check(1);
+                spec.column("FLAG2").check(1);
+                spec.column("FLAG3").check(1);
+                spec.column("FLAG4").check(1);
                 spec.column("COMMENT").check("");
             }
         }

@@ -51,6 +51,7 @@ namespace askap {
     {
       this->itsSourceList = 0;
       this->itsFitType = "best";
+      this->itsEntryType = COMPONENT;
     }
 
     AskapVOTableCatalogueWriter::AskapVOTableCatalogueWriter(const AskapVOTableCatalogueWriter& other)
@@ -64,6 +65,7 @@ namespace askap {
       ((VOTableCatalogueWriter &) *this) = other;
       this->itsSourceList = other.itsSourceList;
       this->itsFitType = other.itsFitType;
+      this->itsEntryType = other.itsEntryType;
       return *this;
     }
 
