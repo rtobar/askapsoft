@@ -41,15 +41,14 @@ namespace askap {
     AskapVOTableCatalogueWriter::AskapVOTableCatalogueWriter():
       duchamp::VOTableCatalogueWriter()
     {
-      this->itsFlagWriteFits = true;
       this->itsSourceList = 0;
       this->itsFitType = "best";
+      this->itsEntryType = COMPONENT;
     }
 
     AskapVOTableCatalogueWriter::AskapVOTableCatalogueWriter(std::string name):
       duchamp::VOTableCatalogueWriter(name)
     {
-      this->itsFlagWriteFits = true;
       this->itsSourceList = 0;
       this->itsFitType = "best";
     }
@@ -63,7 +62,6 @@ namespace askap {
     {
       if(this==&other) return *this;
       ((VOTableCatalogueWriter &) *this) = other;
-      this->itsFlagWriteFits = other.itsFlagWriteFits;
       this->itsSourceList = other.itsSourceList;
       this->itsFitType = other.itsFitType;
       return *this;
@@ -77,15 +75,11 @@ namespace askap {
     
     void AskapVOTableCatalogueWriter::writeEntries()
     {
-      if(this->itsFlagWriteFits){
 	if(this->itsOpenFlag){
-	  for(std::vector<sourcefitting::RadioSource>::iterator src=this->itsSourceList->begin(); 
-	      src<this->itsSourceList->end(); src++)
-	    this->writeEntry(&*src);
-	}
-      }
-      else this->CatalogueWriter::writeEntries();
-      
+            for(std::vector<sourcefitting::RadioSource>::iterator src=this->itsSourceList->begin(); 
+                src<this->itsSourceList->end(); src++)
+                this->writeEntry(&*src);
+        }      
     }    
 
     void AskapVOTableCatalogueWriter::writeTableHeader()
@@ -105,30 +99,33 @@ namespace askap {
 	std::string latUCDbase = posUCDmap[makelower(decCol.getName())];
 	
 	std::map<std::string,std::string> specUCDmap;
-	specUCDmap.insert(std::pair<std::string,std::string>("VELO","phys.veloc;spect.dopplerVeloc"));
-	specUCDmap.insert(std::pair<std::string,std::string>("VOPT","phys.veloc;spect.dopplerVeloc.opt"));
-	specUCDmap.insert(std::pair<std::string,std::string>("VRAD","phys.veloc;spect.dopplerVeloc.rad"));
-	specUCDmap.insert(std::pair<std::string,std::string>("FREQ","em.freq"));
-	specUCDmap.insert(std::pair<std::string,std::string>("ENER","em.energy"));
-	specUCDmap.insert(std::pair<std::string,std::string>("WAVN","em.wavenumber"));
-	specUCDmap.insert(std::pair<std::string,std::string>("WAVE","em.wl"));
-	specUCDmap.insert(std::pair<std::string,std::string>("AWAV","em.wl"));
-	specUCDmap.insert(std::pair<std::string,std::string>("ZOPT","src.redshift"));
-	specUCDmap.insert(std::pair<std::string,std::string>("BETA","src.redshift; spect.dopplerVeloc"));
-	std::string specUCDbase = specUCDmap[this->itsColumnSpecification->column("VEL").getName()];
+	specUCDmap.insert(std::pair<std::string,std::string>("velo","phys.veloc;spect.dopplerVeloc"));
+	specUCDmap.insert(std::pair<std::string,std::string>("vopt","phys.veloc;spect.dopplerVeloc.opt"));
+	specUCDmap.insert(std::pair<std::string,std::string>("vrad","phys.veloc;spect.dopplerVeloc.rad"));
+	specUCDmap.insert(std::pair<std::string,std::string>("freq","em.freq"));
+	specUCDmap.insert(std::pair<std::string,std::string>("ener","em.energy"));
+	specUCDmap.insert(std::pair<std::string,std::string>("wavn","em.wavenumber"));
+	specUCDmap.insert(std::pair<std::string,std::string>("wave","em.wl"));
+	specUCDmap.insert(std::pair<std::string,std::string>("awav","em.wl"));
+	specUCDmap.insert(std::pair<std::string,std::string>("zopt","src.redshift"));
+	specUCDmap.insert(std::pair<std::string,std::string>("beta","src.redshift; spect.dopplerVeloc"));
+	std::string specUCDbase = specUCDmap[makelower(this->itsColumnSpecification->column("VEL").getName())];
 	
 	for(size_t i=0;i<this->itsColumnSpecification->size();i++){
 	  
 	  duchamp::Catalogues::Column *col = this->itsColumnSpecification->pCol(i);
-	  duchamp::VOField field(*col); 
+          std::string type=col->type();
+          col->setType("IGNORETHIS"); // A hack as the VOField currently tries to change a few column names & we don't want it to.
+	  duchamp::VOField field(*col);
+          col->setType(type);
 	  if(col->type()=="RAJD")  field.setUCD(lngUCDbase+";meta.main");
-	  if(col->type()=="WRA")   field.setUCD("phys.angSize;"+lngUCDbase);
+	  // if(col->type()=="WRA")   field.setUCD("phys.angSize;"+lngUCDbase);
 	  if(col->type()=="DECJD") field.setUCD(latUCDbase+";meta.main");
-	  if(col->type()=="WDEC")  field.setUCD("phys.angSize;"+latUCDbase);	
-	  if(col->type()=="VEL")   field.setUCD(specUCDbase+";meta.main");
-	  if(col->type()=="W20")   field.setUCD("spect.line.width;"+specUCDbase);
-	  if(col->type()=="W50")   field.setUCD("spect.line.width;"+specUCDbase);
-	  if(col->type()=="WVEL")  field.setUCD("spect.line.width;"+specUCDbase);
+	  // if(col->type()=="WDEC")  field.setUCD("phys.angSize;"+latUCDbase);	
+	  // if(col->type()=="VEL")   field.setUCD(specUCDbase+";meta.main");
+	  // if(col->type()=="W20")   field.setUCD("spect.line.width;"+specUCDbase);
+	  // if(col->type()=="W50")   field.setUCD("spect.line.width;"+specUCDbase);
+	  // if(col->type()=="WVEL")  field.setUCD("spect.line.width;"+specUCDbase);
 	  this->itsFileStream << "      ";
 	  field.printField(this->itsFileStream);
 	
@@ -145,21 +142,46 @@ namespace askap {
     {
       if(this->itsOpenFlag){
 	this->itsFileStream.setf(std::ios::fixed);  
-	
-	for(size_t f=0;f<source->numFits(this->itsFitType);f++){
-	  this->itsFileStream<<"        <TR>\n";
-	  this->itsFileStream<<"          ";
-	  for(size_t i=0;i<this->itsColumnSpecification->size();i++){
-	    this->itsFileStream<<"<TD>";
-	    source->printTableEntry(this->itsFileStream, this->itsColumnSpecification->column(i),f,this->itsFitType);
-	    this->itsFileStream<<"</TD>";
-	  }
-	  this->itsFileStream<<"\n";
-	  this->itsFileStream<<"        </TR>\n";
-	}
+
+        if(this->itsEntryType == COMPONENT){
+            
+            // write out an entry for all fits 
+            for(size_t f=0;f<source->numFits(this->itsFitType);f++){
+                this->itsFileStream<<"        <TR>\n";
+                this->itsFileStream<<"          ";
+                for(size_t i=0;i<this->itsColumnSpecification->size();i++){
+                   duchamp::Catalogues::Column col=this->itsColumnSpecification->column(i);
+                   this->itsFileStream<<"<TD>";
+                   source->printTableEntry(this->itsFileStream, col,
+                                              f,this->itsFitType);
+                   this->itsFileStream<<"</TD>";
+                }
+                this->itsFileStream<<"\n";
+                this->itsFileStream<<"        </TR>\n";
+            }
+            
+        } else {
+
+             this->itsFileStream<<"        <TR>\n";
+              this->itsFileStream<<"          ";
+              for(size_t i=0;i<this->itsColumnSpecification->size();i++){
+                  duchamp::Catalogues::Column col=this->itsColumnSpecification->column(i);
+                  this->itsFileStream<<"<TD>";
+                  if(col.type()=="NCOMP")
+                      col.printEntry(this->itsFileStream,
+                                     source->numFits(this->itsFitType));
+                  else
+                      source->printTableEntry(this->itsFileStream,col);
+                  this->itsFileStream<<"</TD>";
+              }
+              this->itsFileStream<<"\n";
+              this->itsFileStream<<"        </TR>\n";
+
+
+        }
       }
     }
-
+      
   }
   
 }

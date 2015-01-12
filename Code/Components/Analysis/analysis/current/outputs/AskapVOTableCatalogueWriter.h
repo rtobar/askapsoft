@@ -31,7 +31,9 @@
 
 namespace askap {
 
-  namespace analysis { 
+  namespace analysis {
+
+      enum ENTRYTYPE { ISLAND, COMPONENT};
 
     class AskapVOTableCatalogueWriter : public duchamp::VOTableCatalogueWriter
     {
@@ -42,23 +44,24 @@ namespace askap {
       AskapVOTableCatalogueWriter& operator= (const AskapVOTableCatalogueWriter& other);
       virtual ~AskapVOTableCatalogueWriter(){};
 
-      bool writeFits(){return itsFlagWriteFits;};
-      void setFlagWriteFits(bool b){itsFlagWriteFits = b;};
-      std::vector<sourcefitting::RadioSource> *sourcelist(){return itsSourceList;};
-      void setSourceList(std::vector<sourcefitting::RadioSource> *srclist){itsSourceList = srclist;};
+      std::vector<sourcefitting::RadioSource> *srclist(){return itsSourceList;};
+      void setSourceList(std::vector<sourcefitting::RadioSource> *cmplist){itsSourceList = cmplist;};
       std::string fitType(){return itsFitType;};
       void setFitType(std::string s){itsFitType = s;};
+      ENTRYTYPE entryType(){return itsEntryType;};
+      void setEntryType(ENTRYTYPE type){itsEntryType = type;};
 
       void setup(DuchampParallel *finder);
       void writeTableHeader();
       void writeEntries();
       using duchamp::VOTableCatalogueWriter::writeEntry;
-      void writeEntry(sourcefitting::RadioSource *source);
+      void writeEntry(sourcefitting::RadioSource *component);
       
     protected:
-      bool itsFlagWriteFits; ///< Do we write the information on the fits to each source?
       std::vector<sourcefitting::RadioSource> *itsSourceList;
       std::string itsFitType; ///< Which fit type to write out.
+      ENTRYTYPE itsEntryType;
+      
     };
 
   }

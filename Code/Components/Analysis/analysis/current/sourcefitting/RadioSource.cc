@@ -39,6 +39,7 @@
 #include <analysisutilities/AnalysisUtilities.h>
 #include <analysisparallel/SubimageDef.h>
 #include <casainterface/CasaInterface.h>
+#include <outputs/CataloguePreparation.h>
 
 #include <duchamp/fitsHeader.hh>
 #include <duchamp/PixelMap/Voxel.hh>
@@ -1325,179 +1326,6 @@ namespace askap {
 
             //**************************************************************//
 
-	  duchamp::Catalogues::CatalogueSpecification CASDACatalogue(duchamp::Catalogues::CatalogueSpecification inputSpec, duchamp::FitsHeader &header)
-          {
-              // Returns a catalogue spec consistent with CASDA specs
-              const int prFlux=duchamp::Catalogues::prFLUX;
-              const int prPos=duchamp::Catalogues::prPOS;
-              const int prWpos=duchamp::Catalogues::prWPOS;
-              duchamp::Catalogues::CatalogueSpecification newSpec;
-              newSpec.addColumn("ISLAND","island_id", "--", 6, 0,"meta.id.parent","char","col_island_id","");
-              newSpec.addColumn("NUM","component_id", "--", 6, 0,"meta.id;meta.main","char","col_component_id","");
-              newSpec.addColumn("RA","ra_hms_cont","",11,0,"pos.eq.ra","char","col_ra","J2000");
-              newSpec.addColumn("DEC", "dec_hms_cont","",11,0,"pos.eq.dec","char","col_dec","J2000");
-              newSpec.addColumn("RAJD","ra_deg_cont","[deg]",11,prPos,"pos.eq.ra;meta.main","float","col_rajd","J2000");
-              newSpec.addColumn("DECJD","dec_deg_cont","[deg]",11,prPos,"pos.eq.dec;meta.main","float","col_decjd","J2000");
-              newSpec.addColumn("RAERR","ra_err","[deg]",11,prPos,"stat.error;pos.eq.ra","float","col_raerr","J2000");
-              newSpec.addColumn("DECERR","dec_err","[deg]",11,prPos,"stat.error;pos.eq.dec","float","col_decerr","J2000");
-              newSpec.addColumn("FPEAKFIT","flux_peak","["+header.getFluxUnits()+"]",9,prFlux,"phot.flux.density;stat.max;em.radio;stat.fit","float","col_fpeak","");
-              newSpec.addColumn("FPEAKFITERR","flux_peak_err","["+header.getFluxUnits()+"]",9,prFlux,"stat.error;phot.flux.density;stat.max;em.radio;stat.fit","float","col_fpeak_err","");
-              newSpec.addColumn("FINTFIT","flux_int","["+header.getIntFluxUnits()+"]",9,prFlux,"phot.flux.density;em.radio;stat.fit","float","col_fint","");
-              newSpec.addColumn("FINTFITERR","flux_int_err","["+header.getIntFluxUnits()+"]",9,prFlux,"stat.error;phot.flux.density;em.radio;stat.fit","float","col_fint_err","");
-              newSpec.addColumn("MAJFIT","maj_axis","[arcsec]",6,prWpos,"phys.angSize.smajAxis;em.radio;stat.fit","float","col_maj","");
-              newSpec.addColumn("MINFIT","min_axis","[arcsec]",6,prWpos,"phys.angSize.sminAxis;em.radio;stat.fit","float","col_min","");
-              newSpec.addColumn("PAFIT","pos_ang","[deg]",7,prWpos,"phys.angSize;pos.posAng;em.radio;stat.fit","float","col_pa","");
-              newSpec.addColumn("MAJERR","maj_axis_err","[arcsec]",6,prWpos,"stat.error;phys.angSize.smajAxis;em.radio","float","col_maj_err","");
-              newSpec.addColumn("MINERR","min_axis_err","[arcsec]",6,prWpos,"stat.error;phys.angSize.sminAxis;em.radio","float","col_min_err","");
-              newSpec.addColumn("PAERR","pos_ang_err","[deg]",7,prWpos,"stat.error;phys.angSize;pos.posAng;em.radio","float","col_pa_err","");
-              newSpec.addColumn("MAJDECONV","maj_axis_deconv","[arcsec]",6,prWpos,"phys.angSize.smajAxis;em.radio;askap:meta.deconvolved","float","col_maj_deconv","");
-              newSpec.addColumn("MINDECONV","min_axis_deconv","[arcsec]",6,prWpos,"phys.angSize.sminAxis;em.radio;askap:meta.deconvolved","float","col_min_deconv","");
-              newSpec.addColumn("PADECONV","pos_ang_deconv","[deg]",7,prWpos,"phys.angSize;pos.posAng;em.radio;askap:meta.deconvolved","float","col_pa_deconv","");
-              newSpec.addColumn("CHISQFIT","chi_squared_fit", "--", 10,3,"stat.fit.chi2","float","col_chisqfit","");
-              newSpec.addColumn("RMSFIT","rms_fit_gauss", "["+header.getFluxUnits()+"]", 10, 3,"stat.stdev;stat.fit","float","col_rmsfit","");
-              newSpec.addColumn("ALPHA","spectral_index", "--", 8, 3,"spect.index;em.radio","float","col_alpha","");
-              newSpec.addColumn("BETA","spectral_curvature", "--", 8, 3,"askap:spect.curvature;em.radio","float","col_beta","");
-              newSpec.addColumn("RMSIMAGE","rms_image", "["+header.getFluxUnits()+"]", 10,3,"stat.stdev;phot.flux.density","float","col_rmsimage","");
-              newSpec.addColumn("FLAG1","flag_c1","",5,0,"meta.code","char","col_flag1","");
-              newSpec.addColumn("FLAG2","flag_c2","",5,0,"meta.code","char","col_flag2","");
-              newSpec.addColumn("FLAG3","flag_c3","",5,0,"meta.code","char","col_flag3","");
-              newSpec.addColumn("FLAG4","flag_c4","",5,0,"meta.code","char","col_flag4","");
-
-              return newSpec;
-
-          }
-            
-
-	  duchamp::Catalogues::CatalogueSpecification fullCatalogue(duchamp::Catalogues::CatalogueSpecification inputSpec, duchamp::FitsHeader &header)
-	  {
-
-	    // /// @todo Make this a more obvious parameter to change
-	    // const int fluxPrec = 8;
-	    // const int fluxWidth = fluxPrec + 12;
-
-	    duchamp::Catalogues::CatalogueSpecification newSpec;
-	    newSpec.addColumn(inputSpec.column("NUM"));
-	    newSpec.column("NUM").setName("ID");
-	    newSpec.column("NUM").setUnits("--");
-	    newSpec.column("NUM").setDatatype("char");
-	    newSpec.addColumn(inputSpec.column("NAME"));
-	    newSpec.column("NAME").setUnits("--");
-	    newSpec.addColumn(inputSpec.column("RAJD"));
-	    newSpec.addColumn(inputSpec.column("DECJD"));
-	    // newSpec.addColumn(inputSpec.column("VEL"));
-	    newSpec.addColumn(inputSpec.column("X"));
-	    newSpec.column("X").setUnits("[pix]");
-	    newSpec.addColumn(inputSpec.column("Y"));
-	    newSpec.column("Y").setUnits("[pix]");
-	    // newSpec.addColumn(inputSpec.column("Z"));
-	    newSpec.addColumn(inputSpec.column("FINT"));
-	    newSpec.addColumn(inputSpec.column("FPEAK"));
- 
-	    newSpec.column("FINT").setUCD("phot.flux.density.integrated");
-	    // newSpec.column("FINT").changePrec(fluxPrec);
-	    newSpec.column("FPEAK").setUCD("phot.flux.density.peak");
-	    // newSpec.column("FPEAK").changePrec(fluxPrec);
-	    // new columns
-	    newSpec.addColumn( duchamp::Catalogues::Column("FINTFIT","F_int(fit)", "["+header.getIntFluxUnits()+"]",10,3,"phot.flux.density.integrated;stat.fit","float","col_fint_fit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("FPEAKFIT","F_pk(fit)", "["+header.getFluxUnits()+"]", 10, 3,"phot.flux.density.peak;stat.fit","float","col_fpeak_fit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("MAJFIT","Maj(fit)", "[arcsec]", 10, 3,"phys.angSize.smajAxis","float","col_maj_fit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("MINFIT","Min(fit)", "[arcsec]", 10, 3,"phys.angSize.sminAxis","float","col_min_fit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("PAFIT","P.A.(fit)", "[deg]", 10, 2,"phys.angSize;pos.posAng","float","col_pa_fit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("MAJDECONV","Maj(fit_deconv.)", "[arcsec]", 17, 3,"phys.angSize.smajAxis;meta.deconvolved","float","col_maj_deconv","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("MINDECONV","Min(fit_deconv.)", "[arcsec]", 17, 3,"phys.angSize.sminAxis;meta.deconvolved","float","col_min_deconv","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("PADECONV","P.A.(fit_deconv.)", "[deg]", 18, 2,"phys.angSize;pos.posAng;meta.deconvolved","float","col_pa_deconv","") ); 
-	    newSpec.addColumn( duchamp::Catalogues::Column("ALPHA","Alpha", "--", 8, 3,"spect.index","float","col_alpha","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("BETA","Beta", "--", 8, 3,"spect.curvature","float","col_beta","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("CHISQFIT","Chisq(fit)", "--", 10,3,"stat.fit.chi2","float","col_chisqfit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("RMSIMAGE","RMS(image)", "["+header.getFluxUnits()+"]", 10,3,"stat.stdev;phot.flux.density","float","col_rmsimage","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("RMSFIT","RMS(fit)", "["+header.getFluxUnits()+"]", 10, 3,"stat.stdev;stat.fit","float","col_rmsfit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("NFREEFIT","Nfree(fit)", "--", 11, 0,"meta.number;stat.fit.param;stat.fit","int","col_nfreefit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("NDOFFIT","NDoF(fit)", "--", 10, 0,"stat.fit.dof","int","col_ndoffit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("NPIXFIT","NPix(fit)", "--", 10, 0,"meta.number;instr.pixel","int","col_npixfit","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("NPIXOBJ","NPix(obj)", "--", 10, 0,"meta.number;instr.pixel;stat.fit","int","col_npixobj","") );
-	    newSpec.addColumn( duchamp::Catalogues::Column("GUESS","Guess?","--",7,0,"meta.flag","int","col_guess","") );
-    
-	    return newSpec;
-	  }
-
-	    void getResultsParams(casa::Gaussian2D<Double> &gauss, duchamp::FitsHeader *head, double zval, std::vector<Double> &deconvShape, double &ra, double &dec, double &intFluxFit)
-	    {
-		deconvShape = deconvolveGaussian(gauss,head->getBeam());
-		double zworld;
-		if(head->pixToWCS(gauss.xCenter(),gauss.yCenter(),zval,ra,dec,zworld)!=0)
-		    ASKAPLOG_ERROR_STR(logger, "Error with pixToWCS conversion");
-		intFluxFit = gauss.flux();
-		if (head->needBeamSize())
-		    intFluxFit /= head->beam().area(); // Convert from Jy/beam to Jy
-	    }
-
-
-	    void setupCols(duchamp::Catalogues::CatalogueSpecification &spec, std::vector<sourcefitting::RadioSource> &srclist, std::string fitType)
-	    {
-
-		std::vector<sourcefitting::RadioSource>::iterator src;
-		for(src=srclist.begin();src!=srclist.end();src++){
-		    FitResults results=src->fitResults(fitType);
-		    for(unsigned int n=0;n<results.numFits();n++){
-			casa::Gaussian2D<Double> gauss=results.gaussian(n);
-			std::vector<Double> deconvShape;
-			double ra,dec,intFluxFit;
-			getResultsParams(gauss,src->header(), src->getZcentre(), deconvShape, ra, dec, intFluxFit);
-                        int precision = -int(log10(fabs(src->header()->WCS().cdelt[src->header()->WCS().lng]*3600./10.)));
-                        std::string raS  = decToDMS(ra, src->header()->lngtype(),precision);
-                        std::string decS = decToDMS(dec,src->header()->lattype(),precision);
-                        std::string name = src->header()->getIAUName(ra, dec);
-                        spec.column("ISLAND").check(src->getID());
-			std::stringstream compid;
-			compid << src->getID() << getSuffix(n);
-			spec.column("NUM").check(compid.str());
-			spec.column("NAME").check(src->getName());
-			spec.column("RA").check(raS);
-			spec.column("DEC").check(decS);
-			spec.column("RAJD").check(ra);
-			spec.column("DECJD").check(dec);
-			spec.column("RAERR").check(0.);
-			spec.column("DECERR").check(0.);
-			spec.column("X").check(gauss.xCenter());
-			spec.column("Y").check(gauss.yCenter());
-			spec.column("FINT").check(src->getIntegFlux());
-			spec.column("FPEAK").check(src->getPeakFlux());
-			spec.column("FINTFIT").check(intFluxFit);
-			spec.column("FINTFITERR").check(0.);
-			spec.column("FPEAKFIT").check(gauss.height());
-			spec.column("FPEAKFITERR").check(0.);
-			spec.column("MAJFIT").check(gauss.majorAxis()*src->header()->getAvPixScale()*3600.); // convert from pixels to arcsec
-			spec.column("MINFIT").check(gauss.minorAxis()*src->header()->getAvPixScale()*3600.);
-			spec.column("PAFIT").check(gauss.PA()*180. / M_PI,false);
-			
-			spec.column("MAJERR").check(0.);
-			spec.column("MINERR").check(0.);
-			spec.column("PAERR").check(0.);
-			spec.column("MAJDECONV").check(deconvShape[0]*src->header()->getAvPixScale()*3600.); // convert from pixels to arcsec
-			spec.column("MINDECONV").check(deconvShape[1]*src->header()->getAvPixScale()*3600.);
-			spec.column("PADECONV").check(deconvShape[2]*180. / M_PI,false);
-			spec.column("ALPHA").check(src->alphaValues(fitType)[n]);
-			spec.column("BETA").check(src->betaValues(fitType)[n]);
-			spec.column("CHISQFIT").check(results.chisq());
-			spec.column("RMSIMAGE").check(src->noiseLevel());
-			spec.column("RMSFIT").check(results.RMS());
-			spec.column("NFREEFIT").check(results.numFreeParam());
-			spec.column("NDOFFIT").check(results.ndof());
-			spec.column("NPIXFIT").check(results.numPix());
-			spec.column("NPIXOBJ").check(src->getSize());
-                        std::string blankFlag="--";
-                        std::string estimateFlag="fitIsEstimate";               
-			spec.column("FLAG1").check(results.fitIsGuess() ? estimateFlag : blankFlag);
-			spec.column("FLAG2").check("");
-			spec.column("FLAG3").check("");
-			spec.column("FLAG4").check("");
-		    }
-		}
-	    }
-
-
-            //**************************************************************//
-
 	  void RadioSource::printTableRow(std::ostream &stream, duchamp::Catalogues::CatalogueSpecification columns, size_t fitNum, std::string fitType)
 	  {
 	    /// @details
@@ -1516,27 +1344,7 @@ namespace askap {
 	    
 	  }
 
-	    std::string getSuffix(unsigned int num)
-	    {
-		/// @details Returns a string to uniquely identify a
-		/// fit that is part of an island. The first 26
-		/// numbers (zero-based), get a single letter
-		/// a-z. After that, it becomes
-		/// aa,ab,ac,...az,ba,bb,bc,...bz,ca,... If there are
-		/// more than 702 (=26^2+26), we move to three
-		/// characters: zy,zz,aaa,aab,aac,... And so on.
-
-		char initialLetter='a';
-		std::stringstream id;
-		for(unsigned int c=0,count=0,factor=1; count <= num; factor*=26,c++,count+=factor){
-		    int n = ((num-count)/factor)%26;
-		    id << char(initialLetter+n);
-		}
-		std::string suff=id.str();
-		std::reverse(suff.begin(),suff.end());
-		    
-		return suff;
-	    }
+            //**************************************************************//
 
 	  void RadioSource::printTableEntry(std::ostream &stream, duchamp::Catalogues::Column column, size_t fitNum, std::string fitType)
 	  {
@@ -1607,6 +1415,7 @@ namespace askap {
 	    else if(type=="FLAG2")  column.printEntry(stream, blankFlag);
 	    else if(type=="FLAG3")  column.printEntry(stream, blankFlag);
 	    else if(type=="FLAG4")  column.printEntry(stream, blankFlag);
+            else if(type=="COMMENT") column.printEntry(stream, blankFlag);
 	    else this->duchamp::Detection::printTableEntry(stream,column); // handles anything covered by duchamp code. If different column, use the following.
 	  }
 
