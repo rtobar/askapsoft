@@ -1224,11 +1224,13 @@ namespace askap {
 
                     std::string vofilenames[2];
                     vofilenames[0]=filename.replace(filename.rfind(".txt"), 4, ".xml");
-                    vofilenames[1]=filename.replace(filename.rfind(".xml"), std::string::npos, ".casda.xml");
+                    filename = this->itsCube.pars().getOutFile();
+                    vofilenames[1]=filename.replace(filename.rfind(".txt"), std::string::npos, ".components.xml");
                     duchamp::Catalogues::CatalogueSpecification casdaColumns = CASDACatalogue(this->itsCube.header());
                     setupCols(casdaColumns,this->itsSourceList,outtypes[t]);
-                    
-                    for(int i=0;i<2;i++){
+
+                    int loopMax = (outtypes[t]=="best") ? 2 : 1; // only do second (CASDA) one for "best" results
+                    for(int i=0;i<loopMax;i++){
                         vowriter=AskapVOTableCatalogueWriter(vofilenames[i]);
                         vowriter.setup(this);
                         vowriter.setFitType(outtypes[t]);
