@@ -103,6 +103,7 @@ using namespace LOFAR::TYPES;
 #include <duchamp/Cubes/cubes.hh>
 #include <duchamp/Utils/Statistics.hh>
 #include <duchamp/Utils/utils.hh>
+#include <duchamp/Utils/VOParam.hh>
 #include <duchamp/Detection/detection.hh>
 // #include <duchamp/Detection/columns.hh>
 #include <duchamp/Outputs/columns.hh>
@@ -1166,6 +1167,10 @@ namespace askap {
                         vowriter.setSourceList(&this->itsSourceList);
                         vowriter.openCatalogue();
                         vowriter.writeHeader();
+                        duchamp::VOParam version("table_version","meta.version","char",
+                                                 std::string("casda.continuum_island_description_v0.5"),
+                                                 39,"");
+                        vowriter.writeParameter(version);
                         vowriter.writeParameters();
                         // if(this->is2D()){
                         //     double ra,dec,freq;
@@ -1237,6 +1242,12 @@ namespace askap {
                         vowriter.setSourceList(&this->itsSourceList);
                         vowriter.openCatalogue();
                         vowriter.writeHeader();
+                        if(i==1){
+                            duchamp::VOParam version("table_version","meta.version","char",
+                                                     std::string("casda.continuum_component_description_v1.5"),
+                                                     42,"");
+                            vowriter.writeParameter(version);
+                        }
                         vowriter.writeParameters();
                         if(this->is2D()){
                             double ra,dec,freq;
