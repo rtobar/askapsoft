@@ -155,7 +155,7 @@ namespace askap {
                    duchamp::Catalogues::Column col=this->itsColumnSpecification->column(i);
                    this->itsFileStream<<"<TD>";
                    source->printTableEntry(this->itsFileStream, col,
-                                              f,this->itsFitType);
+                                           f,this->itsFitType);
                    this->itsFileStream<<"</TD>";
                 }
                 this->itsFileStream<<"\n";
@@ -169,11 +169,17 @@ namespace askap {
               for(size_t i=0;i<this->itsColumnSpecification->size();i++){
                   duchamp::Catalogues::Column col=this->itsColumnSpecification->column(i);
                   this->itsFileStream<<"<TD>";
-                  if(col.type()=="NCOMP")
+                  if(col.type()=="NCOMP"){
+                      // n_components printing not defined elsewhere
                       col.printEntry(this->itsFileStream,
                                      source->numFits(this->itsFitType));
-                  else
+                  } else if (col.type()=="NUM"){
+                      // ensure we print the island ID, not the 1st component ID
+                      col.printEntry(this->itsFileStream,source->getID());
+                  } else {
+                      // use Duchamp library to print all other columns
                       source->printTableEntry(this->itsFileStream,col);
+                  }
                   this->itsFileStream<<"</TD>";
               }
               this->itsFileStream<<"\n";
