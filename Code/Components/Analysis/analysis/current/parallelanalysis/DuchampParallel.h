@@ -197,9 +197,6 @@ namespace askap {
 		std::vector<sourcefitting::RadioSource> *pEdgeList(){return &itsEdgeSourceList;};
 		std::vector<sourcefitting::RadioSource> edgeList(){return itsEdgeSourceList;};
 
-		std::string getSubimageAnnotationFile()      {return itsSubimageAnnotationFile;};
-		void        setSubimageAnnotationFile(std::string s){itsSubimageAnnotationFile=s;};
-
             protected:
 
 		/// @brief Check for the existence of deprecated parameters in the parset.
@@ -254,9 +251,6 @@ namespace askap {
 		std::vector<bool> itsFlagFindSpectralTerms;
                 /// Where shall we find spectral index/curvature information?
 		std::vector<string> itsSpectralTermImages;
-
-                /// Name of the Karma annotation file showing the subimages used when in parallel
-                std::string itsSubimageAnnotationFile;
 
                 /// The list of fits to the detected sources.
                 std::vector<sourcefitting::RadioSource> itsSourceList;

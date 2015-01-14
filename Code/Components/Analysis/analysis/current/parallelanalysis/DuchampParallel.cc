@@ -250,8 +250,6 @@ namespace askap {
 		else ASKAPLOG_INFO_STR(logger, "Extracting noise spectra for detected sources from " << this->itsParset.getString("extractNoiseSpectra.spectralCube",""));
 	    }
 
-	    this->itsSubimageAnnotationFile = this->itsParset.getString("subimageAnnotationFile", "selavy-SubimageLocations.ann");
-
             if (itsComms.isParallel()) {
 		this->itsSubimageDef = SubimageDef(this->itsParset);
 		int ovx=this->itsSubimageDef.overlapx();
@@ -483,13 +481,8 @@ namespace askap {
 
 		int result=this->getMetadata();
 
-                ASKAPLOG_INFO_STR(logger, "Annotation file for subimages is \"" << this->itsSubimageAnnotationFile << "\".");
-
-                if (this->itsSubimageAnnotationFile != "") {
-                    ASKAPLOG_INFO_STR(logger, "Writing annotation file showing subimages to " << this->itsSubimageAnnotationFile);
-                    this->itsSubimageDef.writeAnnotationFile(this->itsSubimageAnnotationFile, this->itsCube.header(), this->itsCube.pars().getImageFile(), itsComms);
-                }
-
+                this->itsSubimageDef.writeAnnotationFile(this->itsCube.header(), itsComms);
+                
                 if (result == duchamp::FAILURE) {
                     ASKAPLOG_ERROR_STR(logger, this->workerPrefix() << "Could not read in metadata from image " << this->itsCube.pars().getImageFile() << ".");
                     ASKAPTHROW(AskapError, this->workerPrefix() << "Unable to read image " << this->itsCube.pars().getImageFile())

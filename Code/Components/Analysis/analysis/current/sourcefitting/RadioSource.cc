@@ -319,8 +319,8 @@ namespace askap {
                     ymaxEdge = cube.getDimY() - 1;
                     zmaxEdge = cube.getDimZ() - 1;
                 } else {
-                    int *nsub = subimage.nsub();
-                    int *overlap = subimage.overlap();
+                    std::vector<int> nsub = subimage.nsub();
+                    std::vector<int> overlap = subimage.overlap();
                     int colnum = workerNum % nsub[0];
                     int rownum = workerNum / nsub[0];
                     int znum = workerNum / (nsub[0] * nsub[1]);
