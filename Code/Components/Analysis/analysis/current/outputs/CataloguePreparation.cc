@@ -156,9 +156,10 @@ CatalogueSpecification IslandCatalogue(duchamp::FitsHeader &header)
 CatalogueSpecification ComponentCatalogue(duchamp::FitsHeader &header)
 {
     // Returns a component catalogue spec consistent with CASDA specs
-    const int prFlux = prFLUX;
-    const int prPos = prPOS;
-    const int prWpos = prWPOS;
+    const int prFlux = duchamp::Catalogues::prFLUX;
+    const int prPos = duchamp::Catalogues::prPOS;
+    const int prWpos = duchamp::Catalogues::prWPOS;
+    const int prVel = duchamp::Catalogues::prVEL;
     CatalogueSpecification newSpec;
     newSpec.addColumn("ISLAND", "island_id", "--", 6, 0,
                       "meta.id.parent", "char", "col_island_id", "");
@@ -178,6 +179,8 @@ CatalogueSpecification ComponentCatalogue(duchamp::FitsHeader &header)
                       "stat.error;pos.eq.ra", "float", "col_raerr", "J2000");
     newSpec.addColumn("DECERR", "dec_err", "[deg]", 11, prPos,
                       "stat.error;pos.eq.dec", "float", "col_decerr", "J2000");
+    newSpec.addColumn("VEL", "freq", "[" + header.getSpectralUnits() + "]", 11, prVel,
+                      "em.freq", "float", "col_freq", "");
     newSpec.addColumn("FPEAKFIT", "flux_peak", "[" + header.getFluxUnits() + "]",
                       9, prFlux,
                       "phot.flux.density;stat.max;em.radio;stat.fit",

@@ -163,6 +163,20 @@ void ResultsWriter::writeIslandCatalogue()
 
 }
 
+void ResultsWriter::writeFrequencyParam(AskapVOTableCatalogueWriter &vowriter)
+{
+    double ra, dec, freq;
+    int spec = itsCube.header().WCS().spec;
+    if (spec >= 0) { // if there is a spectral axis, write the frequency of the image
+        itsCube.header().pixToWCS(itsCube.getDimX() / 2., itsCube.getDimY() / 2., 0.,
+                                  ra, dec, freq);
+        std::string frequnits(itsCube.header().WCS().cunit[spec]);
+        duchamp::VOParam freqParam("Reference frequency", "em.freq;meta.main", "float",
+                                   freq, 0, frequnits);
+        vowriter.writeParameter(freqParam);
+    }
+}
+
 void ResultsWriter::writeComponentCatalogue()
 {
     if (itsFlag2D) {
@@ -184,20 +198,11 @@ void ResultsWriter::writeComponentCatalogue()
         vowriter.setSourceList(&itsSourceList);
         vowriter.openCatalogue();
         vowriter.writeHeader();
-        std::string tableVersion = "casda.continuum_component_description_v1.5";
+        std::string tableVersion = "casda.continuum_component_description_v1.6";
         duchamp::VOParam version("table_version", "meta.version", "char", tableVersion, 42, "");
         vowriter.writeParameter(version);
         vowriter.writeParameters();
-        double ra, dec, freq;
-        int spec = itsCube.header().WCS().spec;
-        if (spec >= 0) { // if there is a spectral axis, write the frequency of the image
-            itsCube.header().pixToWCS(itsCube.getDimX() / 2., itsCube.getDimY() / 2., 0.,
-                                      ra, dec, freq);
-            std::string frequnits(itsCube.header().WCS().cunit[spec]);
-            duchamp::VOParam freqParam("Reference frequency", "em.freq;meta.main", "float",
-                                       freq, 0, frequnits);
-            vowriter.writeParameter(freqParam);
-        }
+        writeFrequencyParam(vowriter);
         vowriter.writeStats();
         vowriter.writeTableHeader();
         vowriter.writeEntries();
@@ -248,16 +253,7 @@ void ResultsWriter::writeFitResults()
             vowriter.writeHeader();
             vowriter.writeParameters();
             if (itsFlag2D) {
-                double ra, dec, freq;
-                int spec = itsCube.header().WCS().spec;
-                if (spec >= 0) {
-                    itsCube.header().pixToWCS(itsCube.getDimX() / 2., itsCube.getDimY() / 2., 0.,
-                                              ra, dec, freq);
-                    std::string frequnits(itsCube.header().WCS().cunit[spec]);
-                    duchamp::VOParam freqParam("Reference frequency", "em.freq;meta.main", "float",
-                                               freq, 0, frequnits);
-                    vowriter.writeParameter(freqParam);
-                }
+                writeFrequencyParam(vowriter);
             }
             vowriter.writeStats();
             vowriter.writeTableHeader();

@@ -34,6 +34,7 @@
 #include <Common/ParameterSet.h>
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FittingParameters.h>
+#include <outputs/AskapVOTableCatalogueWriter.h>
 
 namespace askap {
 
@@ -75,6 +76,10 @@ class ResultsWriter {
         /// standard Duchamp functionality. This will also include the
         /// writing of the binary catalogue and the text-based spectra.
         void duchampOutput();
+
+        /// Writes a single PARAM to the header of the given VOTable that
+        /// records the frequency at which the image was taken.
+        void writeFrequencyParam(AskapVOTableCatalogueWriter &vowriter);
 
         void writeIslandCatalogue();
 
