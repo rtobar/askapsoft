@@ -37,15 +37,16 @@ if [ $PROCESS_HAS_RUN == false ]; then
 
     ####################
     # Define the full path of output directory
-    OUTPUT="${CWD}/${OUTPUT}"
+    OUTPUT="${BASEDIR}/${OUTPUT}"
     mkdir -p $OUTPUT
     . ${PIPELINEDIR}/utils.sh
-    cd $OUTPUT
+    BASEDIR=${BASEDIR}
+cd $OUTPUT
     echo $NOW >> PROCESSED_ON
     if [ ! -e ${stats} ]; then
-        ln -s ${CWD}/${stats} .
+        ln -s ${BASEDIR}/${stats} .
     fi
-    cd $CWD
+    cd $BASEDIR
     
     ####################
     # Slurm file headers
@@ -178,6 +179,19 @@ if [ $PROCESS_HAS_RUN == false ]; then
         CHAN_RANGE_SL_SCIENCE="1-$NUM_CHAN_SCIENCE"
     fi
 
+    # Method used for continuum subtraction
+    if [ ${CONTSUB_METHOD} != "Cmodel" ] &&
+           [ ${CONTSUB_METHOD} != "Components" ] &&
+           [ ${CONTSUB_METHOD} != "CleanModel" ]; then
+        CONTSUB_METHOD="Cmodel"
+    fi
+    # Old way of choosing above
+    if [ "${BUILD_MODEL_FOR_CONTSUB}" != "" ] &&
+           [ "${BUILD_MODEL_FOR_CONTSUB}" != "true" ]; then
+        echo "WARN - the parameter BUILD_MODEL_FOR_CONTSUB is deprecated - please use CONTSUB_METHOD instead"
+        CONTSUB_METHOD="CleanModel"
+    fi
+    
 
     ####################
     # Define the beam arrangements for linmos

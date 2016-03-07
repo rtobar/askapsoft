@@ -17,7 +17,12 @@ tool *footprint.py*), you will need to load the ACES module (to get
 the correct python packages) and have an up-to-date version of the
 ACES subversion repository. If you have not loaded the ACES module, it
 is likely the *footprint.py* task will fail, and mosaicking will be
-disabled. 
+disabled.
+
+Once loaded, the module will set an environment variable
+**PIPELINEDIR**, pointing to the directory containing the scripts. It
+also defines **PIPELINE_VERSION** to be the version number of the
+currently-used module.
 
 Configuration file
 ------------------
@@ -58,6 +63,10 @@ This file should define enough environment variables for the scripts
 to run successfully. Mandatory ones, if you are starting from scratch,
 are the locations of either the SBs for the observations or the
 specific MSs.
+
+When run, this file will be archived in the *slurmOutputs* directory
+(see below), marked with an appropriate timestamp so that you'll be
+able to keep a record of exactly what you have run.
 
 **Important Note: The input file is a bash script, so formatting
 matters. Most importantly in this case, you can not have spaces either

@@ -37,7 +37,7 @@
 
 ##############################
 
-if [ $SUBMIT_JOBS == true ]; then
+if [ $SUBMIT_JOBS == true ] && [ "${ALL_JOB_IDS}" != "" ]; then
 
     # Gather stats on all running jobs
 
@@ -55,6 +55,7 @@ ${EMAIL_REQUEST}
 #SBATCH --export=ASKAP_ROOT,AIPSPATH
 #SBATCH --output=$slurmOut/slurm-gatherAll-%j.out
 
+BASEDIR=${BASEDIR}
 cd $OUTPUT
 . ${PIPELINEDIR}/utils.sh	
 
@@ -177,7 +178,8 @@ EOF
     # make links to the current job list, both at the top level *and*
     # in the output directory
     makeLink $JOBLIST
-    cd $OUTPUT
+    BASEDIR=${BASEDIR}
+cd $OUTPUT
     makeLink $JOBLIST
     cd ..
 
