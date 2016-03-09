@@ -39,12 +39,12 @@
 
 // ASKAPsoft includes
 #include "askap/AskapError.h"
-#include "casa/aips.h"
-#include "casa/Quanta.h"
-#include "casa/Quanta/MVDirection.h"
-#include "measures/Measures/MDirection.h"
-#include "measures/Measures/MPosition.h"
-#include "measures/Measures/MEpoch.h"
+#include "casacore/casa/aips.h"
+#include "casacore/casa/Quanta.h"
+#include "casacore/casa/Quanta/MVDirection.h"
+#include "casacore/measures/Measures/MDirection.h"
+#include "casacore/measures/Measures/MPosition.h"
+#include "casacore/measures/Measures/MEpoch.h"
 
 namespace askap {
 
