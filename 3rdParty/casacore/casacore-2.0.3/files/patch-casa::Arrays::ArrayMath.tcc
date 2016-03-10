@@ -4,7 +4,7 @@
    MaskedArray<T> arr (array);
    Array<T> result (resShape);
    DebugAssert (result.contiguousStorage(), AipsError);
-+  Array<Bool> resultMask(reshape);
++  Array<Bool> resultMask(resShape);
    T* res = result.data();
 +  Bool* resMask = resultMask.data();
    // Loop through all data and assemble as needed.

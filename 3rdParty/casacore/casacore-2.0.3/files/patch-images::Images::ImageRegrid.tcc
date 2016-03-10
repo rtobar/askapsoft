@@ -1,6 +1,21 @@
---- ./images/Images/ImageRegrid.tcc.orig	2016-03-10 18:03:06.000000000 +1100
-+++ ./images/Images/ImageRegrid.tcc	2016-03-10 18:24:13.000000000 +1100
-@@ -1265,60 +1265,122 @@
+--- ./images/Images/ImageRegrid.tcc.orig	2016-03-11 10:46:44.000000000 +1100
++++ ./images/Images/ImageRegrid.tcc	2016-03-11 10:48:04.000000000 +1100
+@@ -1262,63 +1262,137 @@
+ // to be masked as the coarse grid is unlikely to finish exactly
+ // on the lattice edge
+ 
++  uInt i, k;
++  Int where;
++  Bool ok = True;
++
++  const uInt nPixelAxes = 2;
++  uInt nConversions;
++  if ( decimate > 1 ) {
++    nConversions = nOutI*nOutJ;
++  } else {
++    nConversions = ni*nj;
++  }
++
    Timer t0;
    uInt ii = 0;
    uInt jj = 0;
