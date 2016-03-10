@@ -40,7 +40,7 @@
 #include <boost/shared_ptr.hpp>
 
 // casa includes
-#include <tables/Tables/ExprNode.h>
+#include <casacore/tables/Tables/ExprNode.h>
 
 // own includes
 #include <dataaccess/IDataConverterImpl.h>

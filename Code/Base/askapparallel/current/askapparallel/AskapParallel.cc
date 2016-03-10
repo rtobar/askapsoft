@@ -46,8 +46,8 @@
 // ASKAPsoft includes
 #include "askap/AskapLogging.h"
 #include "askap/AskapError.h"
-#include "casa/Utilities/Regex.h"
-#include "casa/BasicSL/String.h"
+#include "casacore/casa/Utilities/Regex.h"
+#include "casacore/casa/BasicSL/String.h"
 
 // Local package includes
 #include "askapparallel/MPIComms.h"
