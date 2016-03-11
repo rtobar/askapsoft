@@ -25,17 +25,17 @@
 #define ASKAP_SYNTHESIS_IMAGE2DCONVOLVER_H
 
 // ASKAPsoft includes
-#include <casa/aips.h>
-#include <casa/Arrays/Array.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Arrays/Matrix.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/Unit.h>
-#include <casa/Arrays/IPosition.h>
-#include <images/Images/ImageInfo.h>
-#include <images/Images/ImageInterface.h>
-#include <scimath/Mathematics/VectorKernel.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/Unit.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/images/Images/ImageInfo.h>
+#include <casacore/images/Images/ImageInterface.h>
+#include <casacore/scimath/Mathematics/VectorKernel.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
 
 namespace askap {
 namespace synthesis {

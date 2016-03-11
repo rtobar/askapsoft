@@ -42,11 +42,11 @@
 #include <imageaccess/BeamLogger.h>
 #include <boost/scoped_ptr.hpp>
 #include <Common/ParameterSet.h>
-#include <casa/Arrays/IPosition.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
-#include <coordinates/Coordinates/SpectralCoordinate.h>
-#include <images/Images/PagedImage.h>
-#include <casa/Quanta/Unit.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/images/Images/PagedImage.h>
+#include <casacore/casa/Quanta/Unit.h>
 
 // Local package includes
 #include <makecube/CubeMakerHelperFunctions.h>

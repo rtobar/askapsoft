@@ -28,12 +28,12 @@
 
 //# Includes
 #include <string>
-#include <casa/aips.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <ms/MeasurementSets/MeasurementSet.h>
-#include <ms/MeasurementSets/MSSummary.h>
-#include <ms/MeasurementSets/MSLister.h>
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/ms/MeasurementSets/MeasurementSet.h>
+#include <casacore/ms/MeasurementSets/MSSummary.h>
+#include <casacore/ms/MeasurementSets/MSLister.h>
 #include <askap/AskapError.h>
 
 //DAM testing stderr output
