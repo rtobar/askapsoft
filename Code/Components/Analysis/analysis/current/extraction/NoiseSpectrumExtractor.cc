@@ -111,7 +111,7 @@ void NoiseSpectrumExtractor::setBoxWidth()
 
     if (this->openInput()) {
         Vector<Quantum<Double> >
-        inputBeam = itsInputCubePtr->imageInfo().restoringBeam();
+        inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
         ASKAPLOG_DEBUG_STR(logger, "Beam for input cube = " << inputBeam);
         if (inputBeam.size() == 0) {
             ASKAPLOG_WARN_STR(logger, "Input image \"" << itsInputCube <<

@@ -274,7 +274,7 @@ void SourceDataExtractor::verifyInputs()
 void SourceDataExtractor::writeBeam(std::string &filename)
 {
     casa::Vector<Quantum<Double> >
-    inputBeam = itsInputCubePtr->imageInfo().restoringBeam();
+    inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
 
     if (inputBeam.size() > 0) {
         accessors::CasaImageAccess ia;

@@ -114,7 +114,7 @@ void SourceSpectrumExtractor::setBeamScale()
             std::vector< casa::Vector<Quantum<Double> > > beamvec;
 
             casa::Vector<Quantum<Double> >
-            inputBeam = itsInputCubePtr->imageInfo().restoringBeam();
+            inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
 
             ASKAPLOG_DEBUG_STR(logger, "Setting beam scaling factor. BeamLog=" <<
                                itsBeamLog << ", image beam = " << inputBeam);
