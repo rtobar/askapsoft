@@ -38,7 +38,7 @@
 #include "boost/shared_ptr.hpp"
 #include "casacore/ms/MeasurementSets/MeasurementSet.h"
 #include "casacore/ms/MeasurementSets/MSColumns.h"
-#include "casacore/ms/MeasurementSets/MSSelection.h"
+#include "casacore/ms/MSSel/MSSelection.h"
 
 // Local package includes
 #include "cflag/IFlagger.h"

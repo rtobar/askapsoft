@@ -40,8 +40,8 @@ ASKAP_LOGGER(logger, ".measurementequation.wienerpreconditioner");
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/lattices/Lattices/SubLattice.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
-#include <casacore/lattices/Lattices/LatticeFFT.h>
-#include <casacore/lattices/Lattices/LatticeExpr.h>
+#include <casacore/lattices/LatticeMath/LatticeFFT.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
 using namespace casa;
 
 #include <iostream>

@@ -44,7 +44,7 @@ ASKAP_LOGGER(logger, ".measurementequation.imagemultiscalesolver");
 #include <casacore/casa/Arrays/MatrixMath.h>
 #include <casacore/casa/Arrays/Vector.h>
 
-#include <casacore/lattices/Lattices/LatticeCleaner.h>
+#include <casacore/lattices/LatticeMath/LatticeCleaner.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
 
 using namespace casa;

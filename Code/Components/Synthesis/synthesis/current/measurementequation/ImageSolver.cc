@@ -38,7 +38,7 @@ ASKAP_LOGGER(logger, ".measurementequation.imagesolver");
 #include <casacore/casa/Arrays/Vector.h>
 
 #include <casacore/lattices/Lattices/ArrayLattice.h>
-#include <casacore/lattices/Lattices/LatticeFFT.h>
+#include <casacore/lattices/LatticeMath/LatticeFFT.h>
 #include <utils/MultiDimArrayPlaneIter.h>
 
 using namespace askap;

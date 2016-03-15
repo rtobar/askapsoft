@@ -43,7 +43,7 @@
 #include "casacore/measures/Measures/MDirection.h"
 #include "casacore/ms/MeasurementSets/MeasurementSet.h"
 #include "casacore/ms/MeasurementSets/MSColumns.h"
-#include "casacore/ms/MeasurementSets/MSDerivedValues.h"
+#include "casacore/ms/MSOper/MSDerivedValues.h"
 #include "casacore/casa/Arrays/ArrayMath.h" // for near()
 
 // Local package includes

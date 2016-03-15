@@ -38,7 +38,7 @@
 /// own include
 #include <dataaccess/TableScalarFieldSelector.h>
 #include <dataaccess/DataAccessError.h>
-#include <casacore/tables/Tables/ExprNodeSet.h>
+#include <casacore/tables/TaQL/ExprNodeSet.h>
 
 
 using namespace askap;

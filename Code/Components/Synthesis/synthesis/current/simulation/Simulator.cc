@@ -39,7 +39,7 @@ ASKAP_LOGGER(logger, ".parallel");
 #include <askap/AskapError.h>
 #include <askap/AskapUtil.h>
 
-#include <casacore/ms/MeasurementSets/MSDerivedValues.h>
+#include <casacore/ms/MSOper/MSDerivedValues.h>
 #include <casacore/ms/MeasurementSets/MeasurementSet.h>
 #include <casacore/ms/MeasurementSets/MSColumns.h>
 #include <casacore/casa/Logging/LogIO.h>

@@ -45,7 +45,7 @@
 #include "casacore/casa/aipstype.h"
 #include "casacore/ms/MeasurementSets/MeasurementSet.h"
 #include "casacore/ms/MeasurementSets/MSColumns.h"
-#include "casacore/ms/MeasurementSets/MSSelection.h"
+#include "casacore/ms/MSSel/MSSelection.h"
 #include "casacore/casa/Arrays/Vector.h"
 #include "casacore/casa/Arrays/Matrix.h"
 

@@ -148,16 +148,16 @@ bool AskapParallel::isWorker() const
 }
 
 /// Rank
-int AskapParallel::rank() const
-{
-    return itsRank;
-}
+//int AskapParallel::rank() const
+//{
+//    return itsRank;
+//}
 
 /// Number of nodes
-int AskapParallel::nProcs() const
-{
-    return itsNProcs;
-}
+//int AskapParallel::nProcs() const
+//{
+//    return itsNProcs;
+//}
 
 /// @brief configure to communicate with all workers
 /// @details This method selects the default communicator allowing

@@ -40,8 +40,8 @@ ASKAP_LOGGER(logger, ".measurementequation.imageamsmfsolver");
 
 #include <deconvolution/DeconvolverMultiTermBasisFunction.h>
 
-#include <casacore/lattices/Lattices/LatticeCleaner.h>
-#include <casacore/lattices/Lattices/MultiTermLatticeCleaner.h>
+#include <casacore/lattices/LatticeMath/LatticeCleaner.h>
+#include <casacore/lattices/LatticeMath/MultiTermLatticeCleaner.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
 
 #include <measurementequation/ImageAMSMFSolver.h>

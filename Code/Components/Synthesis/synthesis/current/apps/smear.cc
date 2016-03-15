@@ -29,8 +29,8 @@
 #include <casacore/casa/Arrays/Array.h>
 #include <utils/PaddingUtils.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
-#include <casacore/lattices/Lattices/LatticeFFT.h>
-#include <casacore/lattices/Lattices/LatticeExpr.h>
+#include <casacore/lattices/LatticeMath/LatticeFFT.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
 #include <askap/AskapError.h>
 
 using namespace casa;

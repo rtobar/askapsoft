@@ -38,10 +38,10 @@
 #include <casacore/images/Regions/ImageRegion.h>
 #include <casacore/images/Images/ImageUtilities.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
-#include <casacore/lattices/Lattices/LatticeConvolver.h>
+#include <casacore/lattices/LatticeMath/LatticeConvolver.h>
 #include <casacore/lattices/Lattices/LatticeUtilities.h>
-#include <casacore/lattices/Lattices/LatticeExpr.h>
-#include <casacore/lattices/Lattices/LatticeExprNode.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
+#include <casacore/lattices/LEL/LatticeExprNode.h>
 #include <casacore/coordinates/Coordinates/CoordinateUtil.h>
 #include <casacore/casa/iostream.h>
 
@@ -60,6 +60,8 @@ ImageConvolver<T>::~ImageConvolver()
 {
 }
 
+using namespace casa;
+
 template <typename T>
 void ImageConvolver<T>::convolve(casa::ImageInterface<T>& imageOut,
                                  casa::ImageInterface<T>& imageIn,
@@ -77,11 +79,11 @@ void ImageConvolver<T>::convolve(casa::ImageInterface<T>& imageOut,
 template <typename T>
 void ImageConvolver<T>::convolve(casa::ImageInterface<T>& imageOut,
                                  casa::ImageInterface<T>& imageIn,
-                                 const Array<T>& kernel,
+                                 const casa::Array<T>& kernel,
                                  ScaleTypes scaleType, casa::Double scale,
                                  casa::Bool copyMiscellaneous)
 {
-    ArrayLattice<T> kernelLattice(kernel);
+    casa::ArrayLattice<T> kernelLattice(kernel);
     convolve(imageOut, imageIn, kernelLattice, scaleType, scale, copyMiscellaneous);
 }
 

@@ -51,7 +51,6 @@
 #include "casacore/tables/Tables/Table.h"
 #include "casacore/tables/Tables/TableRecord.h"
 
-
 namespace askap {
 
 std::string printDirection(const casa::MVDirection &dir)

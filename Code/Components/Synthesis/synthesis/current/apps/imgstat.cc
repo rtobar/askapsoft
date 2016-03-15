@@ -47,7 +47,7 @@
 
 using namespace askap;
 
-void printDirection(ostream &os,const casa::MDirection &dir)  {
+void printDirection(std::ostream &os,const casa::MDirection &dir)  {
     double lngbuf=dir.getValue().getLong("deg").getValue();
     if (lngbuf<0) lngbuf+=360.;
     os<<(dir.getRefString()!="GALACTIC"?casa::MVAngle::Format(casa::MVAngle::TIME):
@@ -87,7 +87,7 @@ int main(int argc, const char** argv) {
      
      // print peak in the image and position of the peak 
      std::cout<<tmax<<" ";
-     printDirection(cout,res);
+     printDirection(std::cout,res);
      std::cout<<" # Max RA Dec (Epoch)"<<std::endl;
      
      std::cout<<std::setprecision(15)<<res.getValue().getLong("deg").getValue()<<" "<<

@@ -55,7 +55,7 @@
 #include "casacore/tables/Tables/StandardStMan.h"
 #include "casacore/tables/Tables/TiledShapeStMan.h"
 
-#include "casacore/ms/MeasurementSets/MSConcat.h"
+#include "casacore/ms/MSOper/MSConcat.h"
 #include "casacore/ms/MeasurementSets/MeasurementSet.h"
 #include "casacore/ms/MeasurementSets/MSColumns.h"
 

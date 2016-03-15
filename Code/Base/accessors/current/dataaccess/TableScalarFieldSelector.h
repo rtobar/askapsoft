@@ -38,7 +38,7 @@
 #define ASKAP_ACCESSORS_TABLE_SCALAR_FIELD_SELECTOR_H
 
 // casa includes
-#include <casacore/tables/Tables/ExprNode.h>
+#include <casacore/tables/TaQL/ExprNode.h>
 #include <casacore/tables/Tables/Table.h>
 
 // own includes

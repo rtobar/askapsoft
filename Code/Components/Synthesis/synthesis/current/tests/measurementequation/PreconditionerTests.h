@@ -38,8 +38,8 @@
 #include <askap/AskapError.h>
 #include <casacore/lattices/LatticeMath/Fit2D.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
-#include <casacore/lattices/Lattices/LatticeFFT.h>
-#include <casacore/lattices/Lattices/LatticeExpr.h>
+#include <casacore/lattices/LatticeMath/LatticeFFT.h>
+#include <casacore/lattices/LEL/LatticeExpr.h>
 
 
 #include <cppunit/extensions/HelperMacros.h>

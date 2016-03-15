@@ -257,7 +257,7 @@ void CubeMaker::recordBeams()
 {
     if (itsBeamLog != "") {
 	const casa::PagedImage<float> firstimg(itsInputNames[0]);
-	const casa::Vector<Quantum<Double> > firstbeam = firstimg.imageInfo().restoringBeam();
+	const casa::Vector<casa::Quantum<casa::Double> > firstbeam = firstimg.imageInfo().restoringBeam().toVector();
 
         if (firstbeam.size() == 0) {
             ASKAPLOG_WARN_STR(logger, "The first input image " << itsInputNames[0]

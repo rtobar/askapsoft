@@ -119,7 +119,7 @@ class Model2TTApp : public askap::Application {
                                    " and the spectral axis is #" << specAxis);
 
                 Unit bunit = img.units();
-                casa::Vector<casa::Quantum<Double> > beam = img.imageInfo().restoringBeam();
+                casa::Vector<casa::Quantum<Double> > beam = img.imageInfo().restoringBeam().toVector();
                 casa::ImageInfo ii = img.imageInfo();
                 ii.setRestoringBeam(beam);
 

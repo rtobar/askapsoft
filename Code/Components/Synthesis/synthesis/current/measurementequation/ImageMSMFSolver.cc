@@ -40,8 +40,8 @@ ASKAP_LOGGER(logger, ".measurementequation.imagemsmfsolver");
 #include <measurementequation/ImageParamsHelper.h>
 #include <utils/MultiDimArrayPlaneIter.h>
 
-#include <casacore/lattices/Lattices/LatticeCleaner.h>
-#include <casacore/lattices/Lattices/MultiTermLatticeCleaner.h>
+#include <casacore/lattices/LatticeMath/LatticeCleaner.h>
+#include <casacore/lattices/LatticeMath/MultiTermLatticeCleaner.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
 
 using namespace casa;
