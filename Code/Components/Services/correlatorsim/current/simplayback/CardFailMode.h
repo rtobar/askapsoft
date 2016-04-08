@@ -1,8 +1,6 @@
-/// @file
+/// @file CardFailMode.h
 ///
-/// Implementation of base class CatalogueEntry
-///
-/// @copyright (c) 2014 CSIRO
+/// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -24,42 +22,53 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Matthew Whiting <Matthew.Whiting@csiro.au>
-///
-#include <catalogues/CatalogueEntry.h>
-#include <askap_analysis.h>
+/// @author Paulus Lahur <paulus.lahur@csiro.au>
 
-#include <askap/AskapLogging.h>
-#include <askap/AskapError.h>
+#ifndef ASKAP_CP_SIMPLAYBACK_CARDFAILMODE_H
+#define ASKAP_CP_SIMPLAYBACK_CARDFAILMODE_H
 
-#include <Common/ParameterSet.h>
+// System includes
+#include <stdint.h>
 
-ASKAP_LOGGER(logger, ".catalogueentry");
 
 namespace askap {
+namespace cp {
 
-namespace analysis {
+/// @brief Failure modes for a card in Correlator Simulator.
+class CardFailMode {
 
-CatalogueEntry::CatalogueEntry(const LOFAR::ParameterSet &parset):
-    itsSBid(parset.getString("sbid", "null"))
-{
-    std::string imageName = parset.getString("image");
-    if (imageName.find(".fits") != std::string::npos) {
-        if (imageName.substr(imageName.rfind("."), std::string::npos) == ".fits") {
-            imageName.erase(imageName.rfind("."), std::string::npos);
-        }
-    }
-    imageName.erase(0, imageName.rfind("/") + 1);
-    std::stringstream id;
-    if (itsSBid != "null") {
-        id << "SB" << itsSBid << "_";
-    }
-    id << imageName << "_";
-    itsIDbase = id.str();
+    public:
 
-}
+		/// Constructor
+		CardFailMode();
+
+        /// Destructor
+        //virtual ~CardFailMode();
+
+		/// Print all mode status
+		void print();
 
 
-}
+		/// True if the card fails in any way (default: false)
+		bool fail;
 
-}
+		/// The card misses transmission at a given cycle
+		/// 0 (default): no missing transmission
+		uint32_t miss;
+
+		// TODO
+		// The card has mismatch in its BAT
+		// The amount of mismatch is given below (early is positive)
+		// 0 (default): no mismatch
+		// int32_t batMismatch;
+		//
+		// Add more failure modes here
+		//
+
+    //private:
+
+};
+
+};
+};
+#endif

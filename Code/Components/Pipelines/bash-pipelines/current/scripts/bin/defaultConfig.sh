@@ -155,12 +155,20 @@ NCYCLES_BANDPASS_CAL=25
 # Number of CPUs used for the cbpcalibrator job
 NUM_CPUS_CBPCAL=400
 
+# Whether to do dynamic flagging
+FLAG_DO_DYNAMIC_AMPLITUDE_1934=true
 # Dynamic threshold applied to amplitudes [sigma]
 FLAG_THRESHOLD_DYNAMIC_1934=4.0
-# Second amplitude threshold applied [hardware units - before calibration]
+# Whether to apply a flat amplitude cut
+FLAG_DO_FLAT_AMPLITUDE_1934=true
+# Flat amplitude threshold applied [hardware units - before calibration]
 FLAG_THRESHOLD_AMPLITUDE_1934=0.2
+# Minimum amplitude threshold applied [hardware units - before calibration]
+FLAG_THRESHOLD_AMPLITUDE_1934_LOW=0.0
 # Baselines or antennas to flag in the 1934 case
 ANTENNA_FLAG_1934=""
+# Whether to flag autocorrelations for the 1934 data
+FLAG_AUTOCORRELATION_1934=false
 
 ####################
 ## Science observation
@@ -184,12 +192,20 @@ CHAN_RANGE_SCIENCE="1-16416"
 # Number of channels to be averaged to create continuum measurement set
 NUM_CHAN_TO_AVERAGE=54
 
+# Whether to do dynamic flagging
+FLAG_DO_DYNAMIC_AMPLITUDE_SCIENCE=true
 # Dynamic threshold applied to amplitudes [sigma]
 FLAG_THRESHOLD_DYNAMIC_SCIENCE=4.0
-# Second amplitude threshold applied [hardware units - before calibration]
+# Whether to apply a flat amplitude cut
+FLAG_DO_FLAT_AMPLITUDE_SCIENCE=true
+# Flat amplitude threshold applied [hardware units - before calibration]
 FLAG_THRESHOLD_AMPLITUDE_SCIENCE=0.2
+# Minimum amplitude threshold applied [hardware units - before calibration]
+FLAG_THRESHOLD_AMPLITUDE_SCIENCE_LOW=0.0
 # Baselines or antennas to flag in the science data
 ANTENNA_FLAG_SCIENCE=""
+# Whether to flag autocorrelations for the science data
+FLAG_AUTOCORRELATION_SCIENCE=false
 
 # Data column in MS to use in cimager
 DATACOLUMN=DATA
@@ -253,6 +269,9 @@ SELFCAL_SELAVY_THRESHOLD=15
 # Division of image for source-finding in selfcal
 SELFCAL_SELAVY_NSUBX=6
 SELFCAL_SELAVY_NSUBY=3
+# Option to pass to the "Ccalibrator.normalisegains" parameter,
+# indicating we want to approximate phase-only self-cal
+SELFCAL_NORMALISE_GAINS=true
 
 # name of the final gains calibration table
 GAINS_CAL_TABLE=cont_gains_cal_beam%b.tab

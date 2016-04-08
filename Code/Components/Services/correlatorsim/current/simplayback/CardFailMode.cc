@@ -1,8 +1,6 @@
-/// @file
+/// @file CardFailMode.cc
 ///
-/// Implementation of base class CatalogueEntry
-///
-/// @copyright (c) 2014 CSIRO
+/// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -24,42 +22,34 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Matthew Whiting <Matthew.Whiting@csiro.au>
-///
-#include <catalogues/CatalogueEntry.h>
-#include <askap_analysis.h>
+/// @author Paulus Lahur <paulus.lahur@csiro.au>
 
-#include <askap/AskapLogging.h>
-#include <askap/AskapError.h>
+#include "CardFailMode.h"
 
-#include <Common/ParameterSet.h>
+// System includes
+#include <iostream>
+#include <stdint.h>
 
-ASKAP_LOGGER(logger, ".catalogueentry");
+using namespace std;
+using namespace askap;
+using namespace askap::cp;
 
-namespace askap {
 
-namespace analysis {
 
-CatalogueEntry::CatalogueEntry(const LOFAR::ParameterSet &parset):
-    itsSBid(parset.getString("sbid", "null"))
+CardFailMode::CardFailMode() 
 {
-    std::string imageName = parset.getString("image");
-    if (imageName.find(".fits") != std::string::npos) {
-        if (imageName.substr(imageName.rfind("."), std::string::npos) == ".fits") {
-            imageName.erase(imageName.rfind("."), std::string::npos);
-        }
-    }
-    imageName.erase(0, imageName.rfind("/") + 1);
-    std::stringstream id;
-    if (itsSBid != "null") {
-        id << "SB" << itsSBid << "_";
-    }
-    id << imageName << "_";
-    itsIDbase = id.str();
-
+	fail = false;
+	miss = 0;
 }
 
 
+void CardFailMode::print() 
+{
+	if (fail) {
+		cout << "Failure: " << ", miss at: " << miss << endl;
+	}
+	else {
+		cout << "No failure" << endl;
+	}
 }
 
-}
