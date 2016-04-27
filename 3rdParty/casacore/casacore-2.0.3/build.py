@@ -7,24 +7,18 @@ import askapdev.rbuild.utils as utils
 # explicitly name them.  Want to use the dynamic libraries in order 
 # to avoid link problems with missing FORTRAN symbols.
 platform =  utils.get_platform()
-libblas = "libblas.so"
-liblapack = "liblapack.so"
-if platform['system'] == 'Darwin':
-    libblas = libblas.replace(".so", ".dylib")
-    liblapack = liblapack.replace(".so", ".dylib")
-
 builder = Builder()
 builder.remote_archive = "casacore-2.0.3.tar.gz"
 
 cfitsio = builder.dep.get_install_path("cfitsio")
 wcslib  = builder.dep.get_install_path("wcslib")
-blas    = builder.dep.get_install_path("blas")
-lapack  = builder.dep.get_install_path("lapack")
+#blas    = builder.dep.get_install_path("blas")
+#lapack  = builder.dep.get_install_path("lapack")
 fftw3   = builder.dep.get_install_path("fftw3")
 
 # CMake doesn't know about ROOT_DIR for these packages, so be explicit
-builder.add_option("-DBLAS_LIBRARIES=%s" % os.path.join(blas, 'lib', libblas))
-builder.add_option("-DLAPACK_LIBRARIES=%s" % os.path.join(lapack, 'lib', liblapack))
+#builder.add_option("-DBLAS_LIBRARIES=%s" % os.path.join(blas, 'lib', libblas))
+#builder.add_option("-DLAPACK_LIBRARIES=%s" % os.path.join(lapack, 'lib', liblapack))
 # these work
 builder.add_option("-DCFITSIO_ROOT_DIR=%s" % cfitsio)
 builder.add_option("-DWCSLIB_ROOT_DIR=%s" % wcslib)

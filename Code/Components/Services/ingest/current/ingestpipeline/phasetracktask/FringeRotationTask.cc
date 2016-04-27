@@ -50,7 +50,7 @@
 #include <casacore/measures/Measures/MeasConvert.h>
 #include <casacore/casa/Arrays/Matrix.h>
 #include <casacore/casa/Arrays/MatrixMath.h>
-#include "measures/Measures/UVWMachine.h"
+#include <casacore/measures/Measures/UVWMachine.h>
 
 ASKAP_LOGGER(logger, ".FringeRotationTask");
 

@@ -163,19 +163,21 @@ void FrtHWAde::process(const askap::cp::common::VisChunk::ShPtr& chunk,
 
        /*
        // experiments with rates
-       if (ant == 3) {
+       //if (ant != 0) {
+       if (ant == 5) {
            const double interval = itsTm[ant]>0 ? (chunk->time().getTime("s").getValue() - itsTm[ant]) : 0;
            //diffRate = (int(interval/240) % 2 == 0 ? +1. : -1) * static_cast<casa::Int>(casa::C::pi / 100. / phaseRateUnit);
            const casa::Int rates[11] = {-10, -8, -6, -4, -2, 0, 2, 4, 6, 8,10}; 
            const double addRate = rates[int(interval/120) % 11]*100.;
-           //diffRate = addRate;
-           diffRate += addRate;
+           //diffRate = 120+addRate; // adding rough rate at the time of the experiment, although it is not quite required
+           diffRate = addRate;
+           //diffRate += addRate;
            if (int((interval - 5.)/120) % 11 != int(interval/120) % 11) {
                ASKAPLOG_DEBUG_STR(logger,"Invalidating ant="<<ant);
                itsFrtComm.invalidate(ant);
            }
            
-           ASKAPLOG_DEBUG_STR(logger, "Interval = "<<interval<<" seconds, rate = "<<diffRate<<" for ant = "<<ant<<" addRate="<<addRate);
+           ASKAPLOG_DEBUG_STR(logger, "Interval = "<<interval<<" seconds, rate = "<<diffRate<<" for ant = "<<ant<<" addRate="<<addRate<<" rate in deg/s = "<<diffRate*phaseRateUnit/casa::C::pi*180.);
        }  else { diffRate = 0.;}
        */
        /*

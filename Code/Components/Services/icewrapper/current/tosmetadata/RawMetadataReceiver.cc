@@ -69,7 +69,7 @@ RawMetadataReceiver::RawMetadataReceiver(const std::string& locatorHost,
     Ice::ObjectPrx obj = comm->stringToProxy(topicManager);
     IceStorm::TopicManagerPrx topicManagerPrx = IceStorm::TopicManagerPrx::checkedCast(obj);
     Ice::ObjectAdapterPtr adapter = comm->createObjectAdapter(adapterName);
-    itsProxy = adapter->addWithUUID(this)->ice_twoway();
+    itsProxy = adapter->addWithUUID(this)->ice_oneway();
 
     ASKAPLOG_DEBUG_STR(logger, "Subscribing to topic: " << topic);
 
@@ -86,7 +86,7 @@ RawMetadataReceiver::RawMetadataReceiver(const std::string& locatorHost,
     }
 
     IceStorm::QoS qos;
-    qos["reliability"] = "ordered";
+    //qos["reliability"] = "ordered";
     itsTopicPrx->subscribeAndGetPublisher(qos, itsProxy);
 
     adapter->activate();

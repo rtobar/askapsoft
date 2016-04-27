@@ -61,14 +61,15 @@ cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
 parset=${parsets}/ccalapply_bp_\${SLURM_JOB_ID}.in
 cat > \$parset << EOFINNER
-Ccalapply.dataset                             = ${msSci}
+Ccalapply.dataset                         = ${msSci}
 #
 # Allow flagging of vis if inversion of Mueller matrix fails
-Ccalapply.calibrate.allowflag                 = true
+Ccalapply.calibrate.allowflag             = true
+Ccalapply.calibrate.scalenoise            = ${BANDPASS_SCALENOISE}
 #
 Ccalapply.calibaccess                     = table
 Ccalapply.calibaccess.table.maxant        = ${NUM_ANT}
-Ccalapply.calibaccess.table.maxbeam       = ${nbeam}
+Ccalapply.calibaccess.table.maxbeam       = ${maxbeam}
 Ccalapply.calibaccess.table.maxchan       = ${NUM_CHAN_SCIENCE}
 Ccalapply.calibaccess.table               = ${TABLE_BANDPASS}
 

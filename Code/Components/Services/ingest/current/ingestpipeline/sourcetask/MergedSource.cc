@@ -53,7 +53,7 @@
 #include "casacore/measures/Measures/MCEpoch.h"
 #include "casacore/measures/Measures/MCDirection.h"
 #include "casacore/measures/Measures/Stokes.h"
-#include "casa/OS/Timer.h"
+#include "casacore/casa/OS/Timer.h"
 
 // Local package includes
 #include "ingestpipeline/sourcetask/IVisSource.h"
