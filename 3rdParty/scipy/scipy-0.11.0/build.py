@@ -7,7 +7,7 @@ builder = Builder()
 builder.remote_archive = "scipy-0.11.0.tar.gz"
 
 platform = utils.get_platform()
-if platform['system'] != 'Darwin'
+if platform['system'] != 'Darwin':
 
     blas      = builder.dep.get_install_path("blas")
     lapack    = builder.dep.get_install_path("lapack")

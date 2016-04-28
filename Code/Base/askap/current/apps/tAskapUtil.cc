@@ -36,6 +36,7 @@
 
 using namespace askap;
 using namespace std;
+using namespace casacore;
 
 void testCase()
 {
