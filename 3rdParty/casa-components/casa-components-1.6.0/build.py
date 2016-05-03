@@ -26,8 +26,8 @@ casacore = builder.dep.get_install_path("casacore")
 #builder.add_option("-DBLAS_LIBRARIES=%s" % os.path.join(blas, 'lib', libblas))
 #builder.add_option("-DLAPACK_LIBRARIES=%s" % os.path.join(lapack, 'lib', liblapack))
 # these work
-#builder.add_option("-DCFITSIO_ROOT_DIR=%s" % cfitsio)
-#builder.add_option("-DWCSLIB_ROOT_DIR=%s" % wcslib)
+builder.add_option("-DCFITSIO_ROOT_DIR=%s" % cfitsio)
+builder.add_option("-DWCSLIB_ROOT_DIR=%s" % wcslib)
 # but FFTW3_ROOT_DIR don't for the include part
 builder.add_option("-DFFTW3_DISABLE_THREADS=ON")
 builder.add_option("-DFFTW3_ROOT_DIR=%s" % fftw3)

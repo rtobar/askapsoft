@@ -4,4 +4,4 @@ casacore=3rdParty/casacore/casacore-2.0.3;casa_ms casa_images casa_mirlib casa_c
 cpcommon=Code/Components/Services/common/current
 ice=3rdParty/Ice/Ice-3.5.0;IceStorm Ice IceUtil
 cppiceinterfaces=Code/Interfaces/cpp/current
-casa_components=Code/Base/casa-components/current
+casa_components=3rdParty/casa-components/casa-components-1.6.0

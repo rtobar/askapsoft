@@ -7,5 +7,5 @@ logfilters=Code/Base/logfilters/current
 accessors=Code/Base/accessors/current
 cpdataservices-client=Code/Components/Services/cpdataservices/client-cpp/current
 components=Code/Base/components/current
-casa_components=Code/Base/casa-components/current
+casa_components=3rdParty/casa-components/casa-components-1.6.0
 

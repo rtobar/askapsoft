@@ -8,4 +8,4 @@ casacore=3rdParty/casacore/casacore-2.0.3;casa_ms casa_images casa_mirlib casa_c
 accessors=Code/Base/accessors/current
 synthesis=Code/Components/Synthesis/synthesis/current
 mpe2=3rdParty/mpe2/mpe2-mpich2-1.5
-casa_components=Code/Base/casa-components/current
+casa_components=3rdParty/casa-components/casa-components-1.6.0
