@@ -14,6 +14,7 @@ if platform['system'] == 'Darwin':
     liblapack = liblapack.replace(".so", ".dylib")
 
 builder = Builder(".")
+builder.remote_archive = "casa-components-1.6.0.tar.gz"
 
 cfitsio = builder.dep.get_install_path("cfitsio")
 wcslib  = builder.dep.get_install_path("wcslib")
