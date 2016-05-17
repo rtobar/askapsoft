@@ -44,6 +44,7 @@ namespace askap {
         {
             public:
                 enum PayloadType {
+                    NA,
                     WORK,
                     DONE
                 };

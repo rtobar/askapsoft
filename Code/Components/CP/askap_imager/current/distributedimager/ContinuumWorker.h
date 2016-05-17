@@ -42,12 +42,15 @@
 // Local includes
 #include "distributedimager/IBasicComms.h"
 #include "distributedimager/MSSplitter.h"
+#include "distributedimager/CalcCore.h"
 #include "messages/ContinuumWorkUnit.h"
 
 namespace askap {
 namespace cp {
 
-class ContinuumWorker {
+class ContinuumWorker
+    
+    {
     public:
         ContinuumWorker(LOFAR::ParameterSet& parset,
                            askap::askapparallel::AskapParallel& comms);
@@ -61,17 +64,22 @@ class ContinuumWorker {
 
     
         // Process a workunit
-        askap::scimath::Params::ShPtr processWorkUnit(const ContinuumWorkUnit& wu);
+        void processWorkUnit(const ContinuumWorkUnit& wu);
 
-    
-        // StoreMs - it needs its own copy of the parset to build
-        // a specific measurement set.
-        void storeMs(LOFAR::ParameterSet& parset);
+        // Vector of the stored parsets
+        vector<LOFAR::ParameterSet> itsParsets;
+        // Vector of the imagers
+        
+        vector<CalcCore *> itsImagers;
     
         // For a given workunit, just process a single channel - the channel is specified
         // in the parset ... 
         askap::scimath::Params::ShPtr processChannel(LOFAR::ParameterSet& parset);
     
+        //For all workunits .... process
+        
+        void processChannels();
+        
         // For a given workunit, just process a single snapshot - the channel is specified
         // in the parset ...
         askap::scimath::Params::ShPtr processSnapshot(LOFAR::ParameterSet& parset);

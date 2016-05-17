@@ -63,6 +63,7 @@
 // Local includes
 #include "distributedimager/IBasicComms.h"
 #include "distributedimager/SolverCore.h"
+#include "distributedimager/CalcCore.h"
 #include "distributedimager/Tracing.h"
 #include "distributedimager/MSSplitter.h"
 #include "messages/ContinuumWorkUnit.h"
@@ -98,47 +99,61 @@ void ContinuumWorker::run(void)
     // Send the initial request for work
     ContinuumWorkRequest wrequest;
     ASKAPLOG_INFO_STR(logger,"Worker is sending request for work");
-    wrequest.sendRequest(itsMaster,itsComms);
+   
+    
 
+    vector<ContinuumWorkUnit> wus;
+    ContinuumWorkUnit wu;
+    wrequest.sendRequest(itsMaster,itsComms);
     while (1) {
 
-        // Get a workunit
-        ASKAPLOG_INFO_STR(logger,"Worker is waiting for a work unit");
-        ContinuumWorkUnit wu;
+        
+        
         wu.receiveUnitFrom(itsMaster,itsComms);
-
         if (wu.get_payloadType() == ContinuumWorkUnit::DONE) {
-            // Indicates all workunits have been assigned already
-            ASKAPLOG_INFO_STR(logger, "Received DONE signal");
             break;
         }
-
-        const string ms = wu.get_dataset();
-        ASKAPLOG_INFO_STR(logger, "Received Work Unit for dataset " << ms
-                           << ", local channel " << wu.get_localChannel()
-                           << ", global channel " << wu.get_globalChannel()
-                           << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
-        askap::scimath::Params::ShPtr params;
-        try {
-            params = processWorkUnit(wu);
-        } catch (AskapError& e) {
-            ASKAPLOG_WARN_STR(logger, "Failure processing channel " << wu.get_globalChannel());
-            ASKAPLOG_WARN_STR(logger, "Exception detail: " << e.what());
+        else if (wu.get_payloadType() == ContinuumWorkUnit::NA) {
+            sleep(1);
+            wrequest.sendRequest(itsMaster,itsComms);
+            continue;
         }
-
-        // Send the params to the master, which also implicitly requests
-        // more work
-        ASKAPLOG_INFO_STR(logger, "Sending params back to master for local channel " << wu.get_localChannel()
-                           << ", global channel " << wu.get_globalChannel()
-                           << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
-        wrequest.set_globalChannel(wu.get_globalChannel());
-        wrequest.set_params(params);
-        wrequest.sendRequest(itsMaster,itsComms);
-        wrequest.set_params(askap::scimath::Params::ShPtr()); // Free memory
+        else {
+            
+            
+            const string ms = wu.get_dataset();
+            ASKAPLOG_INFO_STR(logger, "Received Work Unit for dataset " << ms
+                              << ", local channel " << wu.get_localChannel()
+                              << ", global channel " << wu.get_globalChannel()
+                              << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
+            
+            
+            //storeMs(wu,itsParset); // proxy for storing the dataset somehow
+            wus.push_back(wu); // this isn't needed anymore... i think
+            
+            processWorkUnit(wu);
+            
+            askap::scimath::Params::ShPtr params; // also a proxy for information - dont need this anymore
+            
+            // Send the params to the master, which also implicitly requests
+            // more work
+            ASKAPLOG_INFO_STR(logger, "Sending params back to master for local channel " << wu.get_localChannel()
+                              << ", global channel " << wu.get_globalChannel()
+                              << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
+            wrequest.set_globalChannel(wu.get_globalChannel());
+            wrequest.set_params(params);
+            wrequest.sendRequest(itsMaster,itsComms);
+            wrequest.set_params(askap::scimath::Params::ShPtr()); // Free memory
+        }
+        
     }
+
+    if (wus.size()>=1)
+        processChannels();
+
 }
 
-askap::scimath::Params::ShPtr ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
+void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
 {
     
     // place measurement set and parset into /dev/shm for use later
@@ -152,22 +167,93 @@ askap::scimath::Params::ShPtr ContinuumWorker::processWorkUnit(const ContinuumWo
     LOFAR::ParameterSet unitParset = itsParset;
     unitParset.replace("Imager.Channels",ChannelPar);
     
-    // Now we want to create the measurement set and store it
-    // the location will default to /dev/shm/...
-    // this will permit subsequent operations
-    // We are going to have to use a lot of the measurement set classes.
-    // most of this is already in the app mssplit - but I cannot find a
-    // clean way to do that.
+    
+    // store the datatable accessor - this is not storing the data
+    // i am still working on that
+    // Now trying to store the parset. the ds. and an imager.
   
-    return askap::scimath::Params::ShPtr() ;
+    
+    //
+    const int uvwMachineCacheSize = unitParset.getInt32("nUVWMachines", 1);
+    ASKAPCHECK(uvwMachineCacheSize > 0 ,
+               "Cache size is supposed to be a positive number, you have "
+               << uvwMachineCacheSize);
+    
+    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(
+                                                                                   unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
+    
+    ASKAPLOG_INFO_STR(logger,
+                      "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
+    ASKAPLOG_INFO_STR(logger, "Tolerance on the directions is "
+                      << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
+    
+    TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+    
+    ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
+    
+    
+    CalcCore *imager = new CalcCore(unitParset,itsComms,ds,wu.get_localChannel());
+  
+    itsImagers.push_back(imager);
+    itsParsets.push_back(unitParset);
+
 }
 
-void ContinuumWorker::storeMs(LOFAR::ParameterSet& unitParset)
-{
-}
+
 askap::scimath::Params::ShPtr
 ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 {
+}
+
+void ContinuumWorker::processChannels()
+{
+   
+    askap::scimath::INormalEquations::ShPtr ne;
+    
+    ne = ImagingNormalEquations::ShPtr(new ImagingNormalEquations());
+    
+    LOFAR::ParameterSet& unitParset = itsParsets[0];
+    
+    std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
+    const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
+    const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
+    const int nCycles = unitParset.getInt32("ncycles", 0);
+       
+    for (size_t n = 0; n <= nCycles; n++) {
+        
+        itsImagers[0]->receiveModel();
+        
+        for (size_t i = 0; i < itsImagers.size(); ++i) {
+            
+        
+            itsImagers[i]->replaceModel(itsImagers[0]->params());
+            itsImagers[i]->calcNE();
+            ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
+            ne->merge(*(itsImagers[i]->getNE()));
+            if (i>0) {
+                itsImagers[i]->getNE()->reset();
+            }
+            ASKAPLOG_INFO_STR(logger,"Merged");
+            
+        }
+        
+        itsImagers[0]->setNE(ne);
+        ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
+        itsImagers[0]->sendNE();
+        ASKAPLOG_INFO_STR(logger,"Sent");
+    }
+    
+    
+    for (size_t i = 0; i < itsImagers.size(); ++i) {
+        
+        
+        delete itsImagers[i];
+      
+        
+    }
+
+   
+    
 }
 askap::scimath::Params::ShPtr
 ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
@@ -178,30 +264,28 @@ ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
     const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
     const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
     const int nCycles = unitParset.getInt32("ncycles", 0);
-   
     
-    ImagerParallel imager(itsComms, unitParset);
-   
+    
     
     if (nCycles == 0) {
    
    
         
-        imager.receiveModel();
+        itsImagers[0]->receiveModel();
 
-        imager.calcNE();
+        itsImagers[0]->calcNE();
 
 
         
     } else {
        
-        imager.receiveModel();
+        itsImagers[0]->receiveModel();
         
         for (int cycle = 0; cycle < nCycles; ++cycle) {
         
             
-            if (imager.params()->has("peak_residual")) {
-                const double peak_residual = imager.params()->scalarValue("peak_residual");
+            if (itsImagers[0]->params()->has("peak_residual")) {
+                const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
                 ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
                 if (peak_residual < targetPeakResidual) {
                     ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
@@ -218,8 +302,10 @@ ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
             }
             
             ASKAPLOG_INFO_STR(logger, "*** Starting major cycle " << cycle << " ***");
+            
+            // lets calcNE() without recourse to the manager function in imager parallel
         
-            imager.calcNE();
+            itsImagers[0]->calcNE();
           
             
             if (cycle + 1 >= nCycles) {
@@ -229,19 +315,19 @@ ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
             
             if (writeAtMajorCycle) {
                
-                imager.writeModel(std::string(".majorcycle.") + utility::toString(cycle + 1));
+                itsImagers[0]->writeModel(std::string(".majorcycle.") + utility::toString(cycle + 1));
             }
             
-            imager.receiveModel();
+            itsImagers[0]->receiveModel();
         }
         ASKAPLOG_INFO_STR(logger, "*** Finished major cycles ***");
         ASKAPLOG_INFO_STR(logger, "Will <NOT> CalcNE");
-        imager.calcNE();
+        itsImagers[0]->calcNE();
         
         
     } // end cycling block
 
-    return imager.params();
+    return itsImagers[0]->params();
     
 }
 

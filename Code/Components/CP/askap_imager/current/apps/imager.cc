@@ -58,20 +58,44 @@ class ImagerApp : public askap::Application
     public:
         virtual int run(int argc, char* argv[])
         {
+            // Instantiate the comms class
+
             askap::askapparallel::AskapParallel comms_p(argc, const_cast<const char **>(argv));
             StatReporter stats;
 
             try {
+                
+                
                 // Create a subset
 
                 LOFAR::ParameterSet subset(config().makeSubset("Imager."));
-
-                // Instantiate the comms class
-
-                ASKAPCHECK(comms_p.isParallel(), "This imager can only be run as a parallel MPI job");
                 
+                // Perform %w substitutions for all keys.
+                // NOTE: This MUST happen after AskapParallel::defineGroups() is called
+                
+                for (LOFAR::ParameterSet::iterator it = subset.begin(); it != subset.end(); ++it) {
+                    it->second = LOFAR::ParameterValue(comms_p.substitute(it->second));
+                }
+
+                
+                LOFAR::ParameterSet fullset(synthesis::ImagerParallel::autoSetParameters(comms_p, subset));
+                ASKAPLOG_INFO_STR(logger, "Parset parameters:\n" << fullset);
+                
+                ASKAPCHECK(comms_p.isParallel(), "This imager can only be run as a parallel MPI job");
+                // imager-specific configuration of the master/worker to allow groups of workers
+                const int nWorkerGroups = subset.getInt32("nworkergroups", 1);
+                ASKAPCHECK(nWorkerGroups > 0, "nworkergroups is supposed to be greater than 0");
+                if (nWorkerGroups > 1) {
+                    ASKAPLOG_INFO_STR(logger, "Model parameters will be distributed between "<<nWorkerGroups<<
+                                      " groups of workers");
+                    ASKAPCHECK(comms_p.isParallel(), "This option is only allowed in the parallel mode");
+                    comms_p.defineGroups(nWorkerGroups);
+                } else {
+                    ASKAPLOG_INFO_STR(logger, "All workers are treated as identical");
+                }
+
                 // Instantiate the Distributed Imager
-                ContinuumImager imager(subset, comms_p);
+                ContinuumImager imager(fullset, comms_p);
                 
                 // runit
                 imager.run();
@@ -98,4 +122,5 @@ int main(int argc, char *argv[])
 {
     ImagerApp app;
     return app.main(argc, argv);
+    MPI_Barrier(MPI_COMM_WORLD);
 }

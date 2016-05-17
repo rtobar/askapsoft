@@ -50,9 +50,12 @@
 #include <dataaccess/SharedIter.h>
 #include <casacore/casa/Quanta.h>
 #include <imageaccess/BeamLogger.h>
+#include <parallel/ImagerParallel.h>
+#include <measurementequation/SynthesisParamsHelper.h>
 
 // Local includes
 #include "distributedimager/IBasicComms.h"
+#include "distributedimager/CalcCore.h"
 #include "messages/ContinuumWorkUnit.h"
 #include "messages/ContinuumWorkRequest.h"
 #include "Tracing.h"
@@ -80,9 +83,21 @@ void ContinuumMaster::run(void)
     if (ms.size() == 0) {
         ASKAPTHROW(std::runtime_error, "No datasets specified in the parameter set file");
     }
+  
+   
+  
+    
+    const double targetPeakResidual = synthesis::SynthesisParamsHelper::convertQuantity(
+                itsParset.getString("threshold.majorcycle", "-1Jy"), "Jy");
+    const bool writeAtMajorCycle = itsParset.getBool("writeAtMajorCycle", false);
+    const int nCycles = itsParset.getInt32("ncycles", 0);
+    const int nChanperCore = itsParset.getInt32("nchanpercore", 0);
    
     // Send work orders to the worker processes, handling out
     // more work to the workers as needed.
+    
+  
+   
 
     // Global channel is the channel offset across all measurement sets
     // For example, the first MS has 16 channels, then the global channel
@@ -106,72 +121,99 @@ void ContinuumMaster::run(void)
 
         const unsigned int msChannels = it->nChannel();
         ASKAPLOG_INFO_STR(logger, "Creating work orders for measurement set "
-                           << ms[n] << " with " << msChannels << " channels");
+                           << ms[n] << " with " << msChannels << " channels and " << nChanperCore
+                           << " channels per core");
 
-        // Iterate over all channels in the measurement set
-        for (unsigned int localChan = 0; localChan < msChannels; ++localChan) {
-
-            casa::Quantity freq;
-            
-            freq = casa::Quantity(it->frequency()[localChan],"Hz");
-            
-            int id; // Id of the process the WorkRequest message is received from
-
-            // Wait for a worker to request some work
-            ASKAPLOG_INFO_STR(logger, "Master is waiting for a worker to request some work");
-            
+        int nWorkers = itsComms.nProcs() - 1;
+        int nWorkersPerGroup = nWorkers/itsComms.nGroups();
+        ASKAPLOG_INFO_STR(logger, "There are  "
+                          << itsComms.nGroups() << " groups of " << nWorkers
+                          << " with " << nWorkersPerGroup);
+        
+        for (size_t group = 0; group<itsComms.nGroups(); ++group) {
+      
+            // Iterate over all channels in the measurement set
+            for (unsigned int localChan = 0; localChan < msChannels; localChan=localChan+nChanperCore) {
+                
+                casa::Quantity freq;
+                
+                freq = casa::Quantity(it->frequency()[localChan],"Hz");
+                
+                int id; // Id of the process the WorkRequest message is received from
+                
+                // Wait for a worker to request some work
+                ASKAPLOG_INFO_STR(logger, "Master is waiting for a worker to request some work for channel " << localChan <<  " frequency " << freq);
+                
+                // wait for valid work request
+                ContinuumWorkRequest wrequest;
+                int inGroup = 0;
+                while (inGroup == 0)
+                {
+                    wrequest.receiveRequest(id, itsComms);
+                    if (id > group*nWorkersPerGroup && id <= (group+1)*nWorkersPerGroup) {
+                        inGroup = 1;
+                        ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
+                                          << group);
+                    }
+                    if (!inGroup) {
+                        ASKAPLOG_INFO_STR(logger, "Master received request from " << id
+                                          << " Worker NOT in group " << group);
+                        ContinuumWorkUnit wu;
+                        wu.set_payloadType(ContinuumWorkUnit::NA);
+                        wu.sendUnit(id,itsComms);
+                    }
+                }
+                // If the worker is not in this group send NA (not applicable) and it will drop it
+                // If the channel number is CHANNEL_UNINITIALISED then this indicates
+                // there is no image associated with this message. If the channel
+                // number is initialised yet the params pointer is null this indicates
+                // that an an attempt was made to process this channel but an exception
+                // was thrown.
+                if (wrequest.get_globalChannel() != ContinuumWorkRequest::CHANNEL_UNINITIALISED) {
+                    ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has previously received channel" << wrequest.get_globalChannel());
+                    --outstanding;
+                }
+                else {
+                    ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has had no previous channel allocation");
+                }
+                
+                // Send the workunit to the worker
+                ASKAPLOG_INFO_STR(logger, "Master is allocating workunit " << ms[n]
+                                  << ", local channel " <<  localChan << ", global channel "
+                                  << globalChannel << " to worker " << id);
+                ContinuumWorkUnit wu;
+                wu.set_payloadType(ContinuumWorkUnit::WORK);
+                wu.set_dataset(ms[n]);
+                wu.set_globalChannel(globalChannel);
+                wu.set_localChannel(localChan);
+                wu.set_channelFrequency(freq.getValue("Hz"));
+                wu.sendUnit(id,itsComms);
+                ++outstanding;
+                
+                ++globalChannel;
+            }
+     
+        }
+    }
+    
+    while (outstanding > 0) {
+        for (size_t group = 0; group<itsComms.nGroups(); ++group) {
+            itsComms.useGroupOfWorkers(group);
+            int id;
             ContinuumWorkRequest wrequest;
             wrequest.receiveRequest(id, itsComms);
-            // If the channel number is CHANNEL_UNINITIALISED then this indicates
-            // there is no image associated with this message. If the channel
-            // number is initialised yet the params pointer is null this indicates
-            // that an an attempt was made to process this channel but an exception
-            // was thrown.
             if (wrequest.get_globalChannel() != ContinuumWorkRequest::CHANNEL_UNINITIALISED) {
-                if (wrequest.get_params().get() != 0) {
-                    handleImageParams(wrequest.get_params(), wrequest.get_globalChannel());
-                } else {
-                    ASKAPLOG_WARN_STR(logger, "Global channel " << wrequest.get_globalChannel()
-                                      << " has failed - will be set to zero in the cube.");
-                    recordBeamFailure(wrequest.get_globalChannel());
-                }
+                
                 --outstanding;
+                ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has previously received channel" << wrequest.get_globalChannel() << " there are " << outstanding
+                                  << " outstanding");
             }
-
-            // Send the workunit to the worker
-            ASKAPLOG_INFO_STR(logger, "Master is allocating workunit " << ms[n]
-                              << ", local channel " <<  localChan << ", global channel "
-                              << globalChannel << " to worker " << id);
-            ContinuumWorkUnit wu;
-            wu.set_payloadType(ContinuumWorkUnit::WORK);
-            wu.set_dataset(ms[n]);
-            wu.set_globalChannel(globalChannel);
-            wu.set_localChannel(localChan);
-            wu.set_channelFrequency(freq.getValue("Hz"));
-            wu.sendUnit(id,itsComms);
-            ++outstanding;
-
-            ++globalChannel;
+            itsComms.useAllWorkers();
         }
     }
-    ASKAPLOG_INFO_STR(logger, "Master is waiting for outstanding workunits to complete");
-    // Wait for all outstanding workunits to complete
-    while (outstanding > 0) {
-        int id;
-        ContinuumWorkRequest wrequest;
-        wrequest.receiveRequest(id, itsComms);
-        if (wrequest.get_globalChannel() != ContinuumWorkRequest::CHANNEL_UNINITIALISED) {
-            if (wrequest.get_params().get() != 0) {
-                handleImageParams(wrequest.get_params(), wrequest.get_globalChannel());
-            } else {
-                ASKAPLOG_WARN_STR(logger, "Global channel " << wrequest.get_globalChannel()
-                                  << " has failed - will be set to zero in the cube.");
-                recordBeamFailure(wrequest.get_globalChannel());
-            }
-            --outstanding;
-        }
-    }
-
+    
+    ASKAPLOG_INFO_STR(logger, "Master all outstanding work-units are acknowledged");
+    
     // Send each worker a response to indicate there are
     // no more work units. This is done separate to the above loop
     // since we need to make sure even workers that never received
@@ -182,6 +224,49 @@ void ContinuumMaster::run(void)
         wu.sendUnit(id,itsComms);
     }
 
+    
+    ASKAPLOG_INFO_STR(logger, "Master is about to broadcast first <empty> model");
+    
+    synthesis::ImagerParallel imager(itsComms, itsParset);
+   
+  
+    for (int cycle = 0; cycle <= nCycles; ++cycle) {
+        ASKAPLOG_INFO_STR(logger, "Master beginning major cycle");
+
+        imager.broadcastModel(); // initially empty model
+        
+        /// Minor Cycle
+        /// Implicit receive in here
+        imager.solveNE();
+
+       
+        if (imager.params()->has("peak_residual")) {
+            const double peak_residual = imager.params()->scalarValue("peak_residual");
+            ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+            if (peak_residual < targetPeakResidual) {
+                ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
+                                  << targetPeakResidual << " Jy. Stopping.");
+                break;
+            } else {
+                if (targetPeakResidual < 0) {
+                    ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+                } else {
+                    ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
+                                      << targetPeakResidual << " Jy. Continuing.");
+                }
+            }
+        }
+
+    }
+      
+    /// We would broadcast back here for more major cycles
+    
+    
+    
+    
+    /// Write out the images
+    imager.writeModel();
+    
     logBeamInfo();
 
 }

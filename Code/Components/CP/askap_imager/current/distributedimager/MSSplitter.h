@@ -53,8 +53,14 @@ class MSSplitter {
     public:
         /// Constructor
         MSSplitter(LOFAR::ParameterSet& parset);
-        /// Builder
-     
+        /// Entry point method
+        int split(const std::string& invis, const std::string& outvis,
+              const uint32_t startChan,
+              const uint32_t endChan,
+              const uint32_t width,
+              const LOFAR::ParameterSet& parset);
+
+    
 
     private:
 
@@ -109,12 +115,7 @@ class MSSplitter {
                             const uint32_t endChan,
                             const uint32_t width);
 
-        int split(const std::string& invis, const std::string& outvis,
-                  const uint32_t startChan,
-                  const uint32_t endChan,
-                  const uint32_t width,
-                  const LOFAR::ParameterSet& parset);
-
+    
         // Returns true if row filtering is enabled, otherwise false.
         bool rowFiltersExist() const;
 

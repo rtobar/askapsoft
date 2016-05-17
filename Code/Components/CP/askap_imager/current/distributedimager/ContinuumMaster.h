@@ -41,6 +41,7 @@
 
 // Local includes
 #include "distributedimager/IBasicComms.h"
+#include "distributedimager/CalcCore.h"
 #include "distributedimager/CubeBuilder.h"
 #include "distributedimager/MSGroupInfo.h"
 
