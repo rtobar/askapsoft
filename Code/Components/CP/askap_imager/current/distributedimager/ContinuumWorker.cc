@@ -208,10 +208,6 @@ ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 void ContinuumWorker::processChannels()
 {
    
-    askap::scimath::INormalEquations::ShPtr ne;
-    
-    ne = ImagingNormalEquations::ShPtr(new ImagingNormalEquations());
-    
     LOFAR::ParameterSet& unitParset = itsParsets[0];
     
     std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
@@ -223,23 +219,51 @@ void ContinuumWorker::processChannels()
         
         itsImagers[0]->receiveModel();
         
+        if (itsImagers[0]->params()->has("peak_residual")) {
+            const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
+            ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+            if (peak_residual < targetPeakResidual) {
+                ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
+                                  << targetPeakResidual << " Jy. Stopping.");
+                break;
+            } else {
+                if (targetPeakResidual < 0) {
+                    ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+                } else {
+                    ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
+                                      << targetPeakResidual << " Jy. Continuing.");
+                }
+            }
+        }
+
+        
         for (size_t i = 0; i < itsImagers.size(); ++i) {
             
-        
+           
             itsImagers[i]->replaceModel(itsImagers[0]->params());
-            itsImagers[i]->calcNE();
-            ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
-            ne->merge(*(itsImagers[i]->getNE()));
-            if (i>0) {
-                itsImagers[i]->getNE()->reset();
+            
+            const vector<string> completions(itsImagers[i]->params()->completions("image"));
+            
+            for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
+            {
+                const string imageName("image"+(*it));
+                ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
             }
-            ASKAPLOG_INFO_STR(logger,"Merged");
+            
+            itsImagers[i]->calcNE();
+            
+            if (i>0) {
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
+                itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                itsImagers[i]->getNE()->reset();
+                ASKAPLOG_INFO_STR(logger,"Merged");
+            }
+            
             
         }
-        
-        itsImagers[0]->setNE(ne);
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
         itsImagers[0]->sendNE();
+        itsImagers[0]->getNE()->reset();
         ASKAPLOG_INFO_STR(logger,"Sent");
     }
     

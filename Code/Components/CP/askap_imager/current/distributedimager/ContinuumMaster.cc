@@ -234,7 +234,7 @@ void ContinuumMaster::run(void)
         ASKAPLOG_INFO_STR(logger, "Master beginning major cycle");
 
         imager.broadcastModel(); // initially empty model
-        
+        imager.getNE()->reset();
         /// Minor Cycle
         /// Implicit receive in here
         imager.solveNE();

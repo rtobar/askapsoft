@@ -82,9 +82,7 @@ void CalcCore::doCalc()
    
     casa::Timer timer;
     timer.mark();
-    ASKAPLOG_INFO_STR(logger, "Calculating normal equations ");
-    // First time around we need to generate the equation
-  
+     
     
     ASKAPLOG_INFO_STR(logger, "Creating measurement equation" );
     
@@ -111,7 +109,7 @@ void CalcCore::doCalc()
     ASKAPCHECK(gridder(), "Gridder not defined");
     // calibration can go below if required
     if (!itsEquation) {
-   
+    
             ASKAPLOG_INFO_STR(logger, "No calibration is applied" );
             boost::shared_ptr<ImageFFTEquation> fftEquation(new ImageFFTEquation (*itsModel, it, gridder()));
             ASKAPDEBUGASSERT(fftEquation);
@@ -136,7 +134,8 @@ void CalcCore::calcNE()
    
     ASKAPLOG_INFO_STR(logger, "Creating Normal Equations");
     /// Now we need to recreate the normal equations
-    itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
+    if (!itsNe)
+        itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
     ASKAPLOG_INFO_STR(logger, "Created Normal Equations");
     
     if (itsComms.isWorker())
@@ -147,8 +146,7 @@ void CalcCore::calcNE()
         
       
         doCalc();
-            // instead sending we need to accumulate and then send ....
-        mergeNE();
+       
         
     }
     
