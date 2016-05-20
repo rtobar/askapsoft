@@ -54,6 +54,7 @@
 #include <measurementequation/SynthesisParamsHelper.h>
 
 // Local includes
+#include "distributedimager/AdviseDI.h"
 #include "distributedimager/IBasicComms.h"
 #include "distributedimager/CalcCore.h"
 #include "messages/ContinuumWorkUnit.h"
@@ -169,13 +170,7 @@ void ContinuumMaster::run(void)
                 // number is initialised yet the params pointer is null this indicates
                 // that an an attempt was made to process this channel but an exception
                 // was thrown.
-                if (wrequest.get_globalChannel() != ContinuumWorkRequest::CHANNEL_UNINITIALISED) {
-                    ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has previously received channel" << wrequest.get_globalChannel());
-                    --outstanding;
-                }
-                else {
-                    ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has had no previous channel allocation");
-                }
+            
                 
                 // Send the workunit to the worker
                 ASKAPLOG_INFO_STR(logger, "Master is allocating workunit " << ms[n]
@@ -196,23 +191,8 @@ void ContinuumMaster::run(void)
         }
     }
     
-    while (outstanding > 0) {
-        for (size_t group = 0; group<itsComms.nGroups(); ++group) {
-            itsComms.useGroupOfWorkers(group);
-            int id;
-            ContinuumWorkRequest wrequest;
-            wrequest.receiveRequest(id, itsComms);
-            if (wrequest.get_globalChannel() != ContinuumWorkRequest::CHANNEL_UNINITIALISED) {
-                
-                --outstanding;
-                ASKAPLOG_INFO_STR(logger, "Master has received a work request from " << id << " this worker has previously received channel" << wrequest.get_globalChannel() << " there are " << outstanding
-                                  << " outstanding");
-            }
-            itsComms.useAllWorkers();
-        }
-    }
     
-    ASKAPLOG_INFO_STR(logger, "Master all outstanding work-units are acknowledged");
+    ASKAPLOG_INFO_STR(logger, "Master all outstanding work-units are allocated");
     
     // Send each worker a response to indicate there are
     // no more work units. This is done separate to the above loop
@@ -227,6 +207,11 @@ void ContinuumMaster::run(void)
     
     ASKAPLOG_INFO_STR(logger, "Master is about to broadcast first <empty> model");
     
+    // this parset need to know direction and frequency for the final maps/models
+    // But I dont want to run Cadvise as it is too specific to the old imaging requirements
+   
+    synthesis::AdviseDI diadvise(itsComms,itsParset);
+    diadvise.addMissingParameters();
     synthesis::ImagerParallel imager(itsComms, itsParset);
    
   

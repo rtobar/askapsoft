@@ -72,6 +72,7 @@ CalcCore::CalcCore(LOFAR::ParameterSet& parset,
                        accessors::TableDataSource ds, int localChannel)
     : ImagerParallel(comms,parset), itsParset(parset), itsComms(comms),itsData(ds),itsChannel(localChannel)
 {
+    
 }
 
 CalcCore::~CalcCore()

@@ -69,17 +69,7 @@ class ImagerApp : public askap::Application
                 // Create a subset
 
                 LOFAR::ParameterSet subset(config().makeSubset("Imager."));
-                
-                // Perform %w substitutions for all keys.
-                // NOTE: This MUST happen after AskapParallel::defineGroups() is called
-                
-                for (LOFAR::ParameterSet::iterator it = subset.begin(); it != subset.end(); ++it) {
-                    it->second = LOFAR::ParameterValue(comms_p.substitute(it->second));
-                }
 
-                
-                LOFAR::ParameterSet fullset(synthesis::ImagerParallel::autoSetParameters(comms_p, subset));
-                ASKAPLOG_INFO_STR(logger, "Parset parameters:\n" << fullset);
                 
                 ASKAPCHECK(comms_p.isParallel(), "This imager can only be run as a parallel MPI job");
                 // imager-specific configuration of the master/worker to allow groups of workers
@@ -93,9 +83,8 @@ class ImagerApp : public askap::Application
                 } else {
                     ASKAPLOG_INFO_STR(logger, "All workers are treated as identical");
                 }
-
                 // Instantiate the Distributed Imager
-                ContinuumImager imager(fullset, comms_p);
+                ContinuumImager imager(subset, comms_p);
                 
                 // runit
                 imager.run();

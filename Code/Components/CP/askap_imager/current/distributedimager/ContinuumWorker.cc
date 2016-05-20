@@ -61,6 +61,7 @@
 // CASA Includes
 
 // Local includes
+#include "distributedimager/AdviseDI.h"
 #include "distributedimager/IBasicComms.h"
 #include "distributedimager/SolverCore.h"
 #include "distributedimager/CalcCore.h"
@@ -137,7 +138,8 @@ void ContinuumWorker::run(void)
             
             // Send the params to the master, which also implicitly requests
             // more work
-            ASKAPLOG_INFO_STR(logger, "Sending params back to master for local channel " << wu.get_localChannel()
+            ASKAPLOG_INFO_STR(logger, "Sending params back to master for local channel "
+                              << wu.get_localChannel()
                               << ", global channel " << wu.get_globalChannel()
                               << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
             wrequest.set_globalChannel(wu.get_globalChannel());
@@ -160,14 +162,23 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
     
     const string colName = itsParset.getString("datacolumn", "DATA");
     const string ms = wu.get_dataset();
+  
+    
+    
+    
+    // This also needs to set the frequencies and directions for all the images
+    
     char ChannelPar[64];
     
     sprintf(ChannelPar,"[1,%d]",wu.get_localChannel());
     
     LOFAR::ParameterSet unitParset = itsParset;
     unitParset.replace("Imager.Channels",ChannelPar);
-    
-    
+   
+    synthesis::AdviseDI diadvise(itsComms,itsParset);
+    diadvise.addMissingParameters();
+   
+   
     // store the datatable accessor - this is not storing the data
     // i am still working on that
     // Now trying to store the parset. the ds. and an imager.
@@ -179,8 +190,7 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
                "Cache size is supposed to be a positive number, you have "
                << uvwMachineCacheSize);
     
-    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(
-                                                                                   unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
+    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
     
     ASKAPLOG_INFO_STR(logger,
                       "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
@@ -191,6 +201,7 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
     
     ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
     
+    ASKAPLOG_INFO_STR(logger, "Parset before imager: " << unitParset);
     
     CalcCore *imager = new CalcCore(unitParset,itsComms,ds,wu.get_localChannel());
   
