@@ -48,8 +48,9 @@ if [ $DO_IT == true ]; then
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
+${ACCOUNT_REQUEST}
 ${RESERVATION_REQUEST}
-#SBATCH --time=12:00:00
+#SBATCH --time=${JOB_TIME_FIND_BANDPASS}
 #SBATCH --ntasks=${NUM_CPUS_CBPCAL}
 #SBATCH --ntasks-per-node=20
 #SBATCH --job-name=cbpcal

@@ -68,13 +68,22 @@ public:
    
    void addMissingParameters();
    
-protected:
+   LOFAR::ParameterSet& getParset() { return itsParset; };
    
+protected:
+   std::vector<std::string> getDatasets();
   
         
 private:
    
+   LOFAR::ParameterSet itsParset;
   
+   /// The parameters we need to set.
+   
+   int channel;
+   
+   double Frequency;
+   
 };
 
 } // namespace synthesis

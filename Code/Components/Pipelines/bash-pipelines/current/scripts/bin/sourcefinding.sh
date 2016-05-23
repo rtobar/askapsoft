@@ -49,8 +49,9 @@ Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
+${ACCOUNT_REQUEST}
 ${RESERVATION_REQUEST}
-#SBATCH --time=12:00:00
+#SBATCH --time=${JOB_TIME_SOURCEFINDING}
 #SBATCH --ntasks=${NUM_CPUS_SELAVY}
 #SBATCH --ntasks-per-node=${CPUS_PER_CORE_SELAVY}
 #SBATCH --job-name=selavyB${BEAM}

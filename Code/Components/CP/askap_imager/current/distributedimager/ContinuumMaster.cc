@@ -210,9 +210,19 @@ void ContinuumMaster::run(void)
     // this parset need to know direction and frequency for the final maps/models
     // But I dont want to run Cadvise as it is too specific to the old imaging requirements
    
-    synthesis::AdviseDI diadvise(itsComms,itsParset);
+    char ChannelPar[64];
+   
+    sprintf(ChannelPar,"[1,0]"); // we are the master
+   
+    LOFAR::ParameterSet unitParset = itsParset;
+   
+    unitParset.replace("Channels",ChannelPar);
+   
+    synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
-    synthesis::ImagerParallel imager(itsComms, itsParset);
+   
+  
+    synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
    
   
     for (int cycle = 0; cycle <= nCycles; ++cycle) {

@@ -41,6 +41,9 @@ CLUSTER=galaxy
 QUEUE=workq
 # Reservation to use. If no reservation available, leave as blank
 RESERVATION=""
+# Account to use for the jobs. If left blank, the user's default
+# account is used
+ACCOUNT=""
 # Email address to send notifications to. No notifications sent if
 # blank
 EMAIL=""
@@ -48,6 +51,24 @@ EMAIL=""
 # sbatch's requirements:
 # BEGIN, END, FAIL, REQUEUE, ALL, TIME_LIMIT, TIME_LIMIT_90, TIME_LIMIT_80, and TIME_LIMIT_50
 EMAIL_TYPE="ALL"
+
+####################
+# Times for individual slurm jobs
+JOB_TIME_DEFAULT="12:00:00"
+JOB_TIME_SPLIT_1934=""
+JOB_TIME_SPLIT_SCIENCE=""
+JOB_TIME_FLAG_1934=""
+JOB_TIME_FLAG_SCIENCE=""
+JOB_TIME_FIND_BANDPASS=""
+JOB_TIME_APPLY_BANDPASS=""
+JOB_TIME_AVERAGE_MS=""
+JOB_TIME_CONT_IMAGE=""
+JOB_TIME_SPECTRAL_SPLIT=""
+JOB_TIME_SPECTRAL_APPLYCAL=""
+JOB_TIME_SPECTRAL_CONTSUB=""
+JOB_TIME_SPECTRAL_IMAGE=""
+JOB_TIME_LINMOS=""
+JOB_TIME_SOURCEFINDING=""
 
 ####################
 # Output directory for images, catalogues, tables, etc

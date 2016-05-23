@@ -173,11 +173,12 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
     sprintf(ChannelPar,"[1,%d]",wu.get_localChannel());
     
     LOFAR::ParameterSet unitParset = itsParset;
-    unitParset.replace("Imager.Channels",ChannelPar);
+    unitParset.replace("Channels",ChannelPar);
    
-    synthesis::AdviseDI diadvise(itsComms,itsParset);
+    synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
    
+ 
    
     // store the datatable accessor - this is not storing the data
     // i am still working on that
@@ -185,12 +186,12 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
   
     
     //
-    const int uvwMachineCacheSize = unitParset.getInt32("nUVWMachines", 1);
+    const int uvwMachineCacheSize = diadvise.getParset().getInt32("nUVWMachines", 1);
     ASKAPCHECK(uvwMachineCacheSize > 0 ,
                "Cache size is supposed to be a positive number, you have "
                << uvwMachineCacheSize);
     
-    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
+    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(diadvise.getParset().getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
     
     ASKAPLOG_INFO_STR(logger,
                       "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
@@ -200,13 +201,12 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
     TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
     
     ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
+   
     
-    ASKAPLOG_INFO_STR(logger, "Parset before imager: " << unitParset);
-    
-    CalcCore *imager = new CalcCore(unitParset,itsComms,ds,wu.get_localChannel());
+    CalcCore *imager = new CalcCore(diadvise.getParset(),itsComms,ds,wu.get_localChannel());
   
     itsImagers.push_back(imager);
-    itsParsets.push_back(unitParset);
+    itsParsets.push_back(diadvise.getParset());
 
 }
 

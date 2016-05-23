@@ -49,6 +49,8 @@ ASKAP_LOGGER(logger, "");
 #include <Common/ParameterSet.h>
 
 #include <iomanip>
+#include <vector>
+#include <string>
 
 using namespace askap;
 using namespace askap::accessors;
@@ -65,7 +67,91 @@ public:
    /// @param[in] argv parameter vector
    /// @return exit code
    virtual int run(int argc, char *argv[]);
+protected:
+   /// @brief helper method to fill antenna names
+   /// @details This method extracts antenna names from the supplied parset of ingest pipeline
+   /// (obtained via the SB number) and populates itsAntennaNames in the order of ingest indices.
+   /// @param[in] parset parset used with ingest pipeline
+   void fillAntennaNames(const LOFAR::ParameterSet &parset);
+
+   /// @brief helper method to extract current delays from the ingest's parset
+   /// @details
+   /// @param[in] parset parset used with ingest pipeline
+   /// @return vector with delays in ns
+   std::vector<double> getCurrentDelays(const LOFAR::ParameterSet &parset);
+
+private:
+   /// @brief vector with antenna names
+   /// @details Note, indices correspond to that internally used by ingest. If empty, the output
+   /// parset (in the fcm format) will be in the form of ingest-specific vector (used in some test
+   /// applications, although to be deprecated for normal operations). 
+   /// @note If not empty, the size of the vector should match that of the delay vector
+   std::vector<std::string> itsAntennaNames;
 };
+
+/// @brief helper method to fill antenna names
+/// @details This method extracts antenna names from the supplied parset of ingest pipeline
+/// (obtained via the SB number) and populates itsAntennaNames in the order of ingest indices.
+void DelaySolverApp::fillAntennaNames(const LOFAR::ParameterSet &parset)
+{
+   if (!parset.isDefined("baselinemap.antennaidx") || !parset.isDefined("antennas")) {
+       itsAntennaNames.resize(0);
+       return;
+   }
+
+   // this is the name of antennas as specified in antenna.antXX.name keyword, we have to find
+   // the name how it is called in the parset/fcm. In the ingest parset there is no cp.ingest prefix
+   const std::vector<std::string> antennas = parset.getStringVector("baselinemap.antennaidx");
+
+   // this is the list of all "parset/fcm" names of antennas, including those which may be unused at the moment
+   // in the ingest parset there is no "common" prefix
+   const std::vector<std::string> parsetNames = parset.getStringVector("antennas");
+
+   std::map<std::string, std::string> ingestName2ParsetNameMap;
+   for (size_t ant=0; ant<parsetNames.size(); ++ant) {
+        const std::string curName = parset.getString("antenna." + parsetNames[ant] + ".name");
+        ASKAPCHECK(ingestName2ParsetNameMap.find(curName) == ingestName2ParsetNameMap.end(), "Detected duplicated antenna name: "<<curName);
+        ingestName2ParsetNameMap[curName] = parsetNames[ant];
+   }
+
+   
+   itsAntennaNames.resize(antennas.size());
+   for (size_t ant = 0; ant < itsAntennaNames.size(); ++ant) {
+        const std::map<std::string, std::string>::const_iterator ci = ingestName2ParsetNameMap.find(antennas[ant]);
+        ASKAPCHECK(ci != ingestName2ParsetNameMap.end(), "Antenna "<<antennas[ant]<<" is not defined, there is no antenna.XX.name keyword equal to "<<antennas[ant]);
+        itsAntennaNames[ant] = ci->second;
+   }
+}
+
+/// @brief helper method to extract current delays from the ingest's parset
+/// @details
+/// @param[in] parset parset used with ingest pipeline
+/// @return vector with delays in ns
+std::vector<double> DelaySolverApp::getCurrentDelays(const LOFAR::ParameterSet &parset)
+{
+   const std::string ingestSpecificFixedDelayKey = "tasks.FringeRotationTask.params.fixeddelays";
+   if (parset.isDefined(ingestSpecificFixedDelayKey)) {
+       ASKAPLOG_WARN_STR(logger, "Old-style fixed delay key ("<<ingestSpecificFixedDelayKey<<") is present in the ingest parset - ignoring");
+       // uncomment the following line to use old-style fixed delay key instead of the new way to specify fixed delays
+       // (may be handy for some commissioning experiments)
+       //return parset.getDoubleVector("tasks.FringeRotationTask.params.fixeddelays");                                
+   } 
+   ASKAPCHECK(itsAntennaNames.size() > 0, "No antennas seem to be defined in the ingest parset, unable to load initial delays");
+   // default delay - we use this value if antenna-specific keyword is not defined
+   const std::string defaultDelay = parset.getString("antenna.ant.delay", "0s");
+  
+   std::vector<double> delays(itsAntennaNames.size(),0.);
+   for (size_t ant=0; ant < delays.size(); ++ant) {
+        const std::string delayKey = "antenna." + itsAntennaNames[ant] + ".delay";
+        if (!parset.isDefined(delayKey)) {
+            ASKAPLOG_WARN_STR(logger, "Antenna specific delay key ("<<delayKey<<") is not found in the ingest's parset, using the default: "<<defaultDelay);
+        }
+        const double delay = asQuantity(parset.getString(delayKey, defaultDelay)).getValue("ns");
+        ASKAPLOG_INFO_STR(logger, "Initial delay for "<<itsAntennaNames[ant]<<" is "<<std::setprecision(9)<<delay<<" ns");
+        delays[ant] = delay;
+   }
+   return delays;
+}
 
 void DelaySolverApp::process(const IConstDataSource &ds, const std::vector<double>& currentDelays) {
   IDataSelectorPtr sel=ds.createSelector();
@@ -126,7 +212,7 @@ void DelaySolverApp::process(const IConstDataSource &ds, const std::vector<doubl
   ASKAPLOG_INFO_STR(logger, "Corrections (ns): "<<std::setprecision(9)<<delays);
   if (currentDelays.size() > 0) {
       ASKAPLOG_INFO_STR(logger, "Old delays (ns): "<< std::setprecision(9) << currentDelays);
-      ASKAPCHECK(currentDelays.size() == delays.nelements(), "Number of antennas differ in fixeddelays parameter and in the dataset");
+      ASKAPCHECK(currentDelays.size() == delays.nelements(), "Number of antennas differ in fixeddelays (or antXX.delay) parameters and in the dataset");
       for (casa::uInt ant = 0; ant < delays.nelements(); ++ant) {
            delays[ant] += currentDelays[ant];
       }
@@ -135,7 +221,17 @@ void DelaySolverApp::process(const IConstDataSource &ds, const std::vector<doubl
       {
           std::ofstream os(outParset.c_str());
           // write the file in the format directly understood by fcm put to simplify operations
-          os << "cp.ingest.tasks.FringeRotationTask.params.fixeddelays = " << std::setprecision(9)<<delays << std::endl;
+          if ((itsAntennaNames.size() == 0) || config().getBool("oldfcmformat",false)) {
+              ASKAPLOG_WARN_STR(logger, "Exporting delays in the old FCM format - use at your own risk");
+              os << "cp.ingest.tasks.FringeRotationTask.params.fixeddelays = " << std::setprecision(9)<<delays << std::endl;
+          } else {
+              ASKAPCHECK(itsAntennaNames.size() == delays.size(), 
+                    "Number of antennas defined in the ingest parset is different from the number of antennas delays are solved for");
+              for (casa::uInt ant = 0; ant < delays.nelements(); ++ant) {
+                   os << "common.antenna."<<itsAntennaNames[ant]<<".delay = " << std::setprecision(9)<<delays[ant] << "ns"<<std::endl;
+                   ASKAPLOG_INFO_STR(logger, "      "<<std::setw(5)<<itsAntennaNames[ant]<< " (index "<<ant<<") ->  "<<std::setprecision(9)<<delays[ant]<<" ns");
+              }
+          }
       }
       ASKAPLOG_INFO_STR(logger, "The new delays are now stored in "<<outParset);       
   } else {
@@ -180,8 +276,9 @@ int DelaySolverApp::run(int, char **) {
          ASKAPCHECK(currentDelays.size() == 0, "When the scheduling block ID is specified, the current fixed delays are taken "
                     "from the ingest pipeline parset stored with that SB. Remove it from the application's parset to continue.");
          
+         fillAntennaNames(ingestParset);
          // here we look at the actual ingest pipeline parset not the fcm, so there is no cp.ingest prefix
-         currentDelays = ingestParset.getDoubleVector("tasks.FringeRotationTask.params.fixeddelays");                                
+         currentDelays = getCurrentDelays(ingestParset);
      }
      timer.mark();
      ASKAPCHECK(msName != "", "Measurement set should be specified explicitly or the scheduling block should be given");
