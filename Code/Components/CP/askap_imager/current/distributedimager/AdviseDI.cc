@@ -180,7 +180,7 @@ void AdviseDI::addMissingParameters()
    // these parameters can be set globally or individually
    bool cellsizeNeeded = false;
    bool shapeNeeded = false;
-   string param
+   string param;
    
 
    const vector<string> imageNames = itsParset.getStringVector("Images.Names", false);
@@ -210,7 +210,7 @@ void AdviseDI::addMissingParameters()
          // Only J2000 is implemented at the moment.
          pstr<<"["<<printLon(itsTangent)<<", "<<printLat(itsTangent)<<", J2000]";
          ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
-         parset.add(param, pstr.str().c_str());
+         itsParset.add(param, pstr.str().c_str());
       }
       if ( !itsParset.isDefined("Images."+imageNames[img]+".nchan") ) {
        
