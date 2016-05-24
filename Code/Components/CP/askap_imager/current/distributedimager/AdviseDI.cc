@@ -180,18 +180,21 @@ void AdviseDI::addMissingParameters()
    // these parameters can be set globally or individually
    bool cellsizeNeeded = false;
    bool shapeNeeded = false;
-   
+   string param
    
 
    const vector<string> imageNames = itsParset.getStringVector("Images.Names", false);
    
    for (size_t img = 0; img < imageNames.size(); ++img) {
       
-      if ( !itsParset.isDefined("Images."+imageNames[img]+".cellsize") ) cellsizeNeeded = true;
+      param = "Images."+imageNames[img]+".cellsize";
+      if ( !itsParset.isDefined(param) ) cellsizeNeeded = true;
+     
+      param = "Images."+imageNames[img]+".shape";
+      if ( !itsParset.isDefined(param) ) shapeNeeded = true;
       
-      if ( !itsParset.isDefined("Images."+imageNames[img]+".shape") ) shapeNeeded = true;
-      
-      if ( !itsParset.isDefined("Images."+imageNames[img]+".frequency") ) {
+      param = "Images."+imageNames[img]+".frequency";
+      if ( !itsParset.isDefined(param) ) {
          const string key="Images."+imageNames[img]+".frequency";
          char tmp[64];
          // changing this to match adviseParallel
@@ -201,8 +204,13 @@ void AdviseDI::addMissingParameters()
          itsParset.add(key,val);
          
       }
-      if ( !itsParset.isDefined("Images."+imageNames[img]+".direction") ) {
-         
+      param ="Images."+imageNames[img]+".direction";
+      if ( !itsParset.isDefined(param) ) {
+         std::ostringstream pstr;
+         // Only J2000 is implemented at the moment.
+         pstr<<"["<<printLon(itsTangent)<<", "<<printLat(itsTangent)<<", J2000]";
+         ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
+         parset.add(param, pstr.str().c_str());
       }
       if ( !itsParset.isDefined("Images."+imageNames[img]+".nchan") ) {
        
