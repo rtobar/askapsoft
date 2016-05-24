@@ -97,6 +97,7 @@ void AdviseDI::addMissingParameters()
    vector<double> chanWidth;
    vector<double> effectiveBW;
    vector<double> resolution;
+   vector<double> centre;
    
    // Not really sure what to do for multiple ms or what that means in this
    // context... but i'm doing it any way - probably laying a trap for myself
@@ -111,6 +112,7 @@ void AdviseDI::addMissingParameters()
       const casa::MeasurementSet in(ms[n]);
       const casa::ROMSColumns srcCols(in);
       const casa::ROMSSpWindowColumns& sc = srcCols.spectralWindow();
+      const casa::ROMSFieldColumns& fc = srcCols.field();
       
       const casa::uInt totChanIn = casa::ROScalarColumn<casa::Int>(in.spectralWindow(),"NUM_CHAN")(0);
 
@@ -133,22 +135,17 @@ void AdviseDI::addMissingParameters()
          resolution[i] = sc.resolution()(srow)(casa::IPosition(1, i));
          
       }
-      
-      // test for missing image-specific parameters:
-      const vector<string> imageNames = itsParset.getStringVector("Images.Names", false);
-      for (size_t img = 0; img < imageNames.size(); ++img) {
-         if ( !itsParset.isDefined("Images."+imageNames[img]+".frequency") ) {
-            const string key="Images."+imageNames[img]+".frequency";
-            char tmp[64];
-            sprintf(tmp,"%f",Frequency);
-            string val = string(tmp);
-            itsParset.add(key,val);
-            
-         }
+      if (n == 0) {
+         const casa::Vector<casa::MDirection> dirVec = fc.phaseDirMeasCol()(0);
+         itsTangent = dirVec(0).getValue();
       }
-
+      
+      
+    
+      
    }
    
+   ASKAPLOG_INFO_STR(logger, "Assumed tangent point: "<<printDirection(itsTangent)<<" (J2000)");
    ASKAPCHECK(itsParset.isDefined("Channels"),"Channels keyword not supplied in parset");
    
    std::vector<LOFAR::uint32> chans = itsParset.getUint32Vector("Channels");
@@ -165,18 +162,61 @@ void AdviseDI::addMissingParameters()
    if (channel < 0) {
       // this is a master - give it the average frequency
       if (chanFreq[0] < chanFreq[ChanIn-1]) {
-         Frequency = 0.5*(chanFreq[ChanIn-1]-chanFreq[0]);
+         minFrequency = chanFreq[0] - (chanWidth[0]/2.);
+         maxFrequency = chanFreq[ChanIn-1] + (chanWidth[0]/2.);
       }
       else {
-         Frequency = 0.5*(chanFreq[0]-chanFreq[ChanIn-1]);
+         minFrequency = chanFreq[ChanIn-1];
+         maxFrequency = chanFreq[0];
       }
    }
    else {
-      Frequency = chanFreq[channel];
+      minFrequency = chanFreq[channel] - (chanWidth[channel]/2.);
+      maxFrequency = chanFreq[channel] + (chanWidth[channel]/2.);
    }
    
+   // test for missing image-specific parameters:
+   
+   // these parameters can be set globally or individually
+   bool cellsizeNeeded = false;
+   bool shapeNeeded = false;
    
    
+
+   const vector<string> imageNames = itsParset.getStringVector("Images.Names", false);
+   
+   for (size_t img = 0; img < imageNames.size(); ++img) {
+      
+      if ( !itsParset.isDefined("Images."+imageNames[img]+".cellsize") ) cellsizeNeeded = true;
+      
+      if ( !itsParset.isDefined("Images."+imageNames[img]+".shape") ) shapeNeeded = true;
+      
+      if ( !itsParset.isDefined("Images."+imageNames[img]+".frequency") ) {
+         const string key="Images."+imageNames[img]+".frequency";
+         char tmp[64];
+         // changing this to match adviseParallel
+         const double aveFreq = 0.5*(minFrequency+maxFrequency);
+         sprintf(tmp,"[%f,%f]",aveFreq,aveFreq);
+         string val = string(tmp);
+         itsParset.add(key,val);
+         
+      }
+      if ( !itsParset.isDefined("Images."+imageNames[img]+".direction") ) {
+         
+      }
+      if ( !itsParset.isDefined("Images."+imageNames[img]+".nchan") ) {
+       
+      }
+   }
+   // test for general missing parameters:
+   if ( cellsizeNeeded && !itsParset.isDefined("nUVWMachines") ) {
+      
+   } else if ( cellsizeNeeded && !itsParset.isDefined("Images.cellsize") ) {
+     
+   } else if ( shapeNeeded && !itsParset.isDefined("Images.shape") ) {
+      
+   }
+
 }
    // Utility function to get dataset names from parset.
 std::vector<std::string> AdviseDI::getDatasets()

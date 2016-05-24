@@ -82,7 +82,12 @@ private:
    
    int channel;
    
-   double Frequency;
+   double minFrequency;
+   
+   double maxFrequency;
+   
+   casa::MVDirection itsTangent;
+   
    
 };
 

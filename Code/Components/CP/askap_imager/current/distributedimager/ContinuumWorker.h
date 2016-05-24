@@ -91,9 +91,6 @@ class ContinuumWorker
 
         // Parameter set
         LOFAR::ParameterSet& itsParset;
-    
-        // splitter
-        cp::MSSplitter *itsSplitter;
 
         // Communications class
         askap::askapparallel::AskapParallel& itsComms;

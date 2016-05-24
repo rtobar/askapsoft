@@ -84,14 +84,14 @@ ContinuumWorker::ContinuumWorker(LOFAR::ParameterSet& parset,
     : itsParset(parset), itsComms(comms)
 {
     itsGridder_p = VisGridderFactory::make(itsParset);
-    itsSplitter = new MSSplitter::MSSplitter(itsParset);
+    
     
 }
 
 ContinuumWorker::~ContinuumWorker()
 {
     itsGridder_p.reset();
-    delete itsSplitter;
+   
     
 }
 
