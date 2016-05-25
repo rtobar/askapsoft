@@ -174,12 +174,16 @@ void AdviseDI::addMissingParameters()
       minFrequency = chanFreq[channel] - (chanWidth[channel]/2.);
       maxFrequency = chanFreq[channel] + (chanWidth[channel]/2.);
    }
+   double refFreq = 0.5*(chanFreq[0] + chanFreq[ChanIn-1]);
    
+  
    // test for missing image-specific parameters:
    
    // these parameters can be set globally or individually
    bool cellsizeNeeded = false;
    bool shapeNeeded = false;
+   int nTerms = 1;
+   
    string param;
    
 
@@ -212,10 +216,38 @@ void AdviseDI::addMissingParameters()
          ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
          itsParset.add(param, pstr.str().c_str());
       }
+      param = "Images."+imageNames[img]+".nterms"; // if nterms is set, store it for later
+      if (itsParset.isDefined(param)) {
+         if ((nTerms>1) && (nTerms!=itsParset.getInt(param))) {
+            ASKAPLOG_WARN_STR(logger, "  Imaging with different nterms may not work");
+         }
+         nTerms = itsParset.getInt(param);
+      }
+
       if ( !itsParset.isDefined("Images."+imageNames[img]+".nchan") ) {
        
       }
    }
+   
+   if (nTerms > 1) { // check required MFS parameters
+      param = "visweights"; // set to "MFS" if unset and nTerms > 1
+      if (!itsParset.isDefined(param)) {
+         std::ostringstream pstr;
+         pstr<<"MFS";
+         ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
+         itsParset.add(param, pstr.str().c_str());
+      }
+      
+      param = "visweights.MFS.reffreq"; // set to average frequency if unset and nTerms > 1
+      if ((itsParset.getString("visweights")=="MFS") && !itsParset.isDefined(param)) {
+         std::ostringstream pstr;
+         
+         pstr<<refFreq;
+         ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
+         itsParset.add(param, pstr.str().c_str());
+      }
+   }
+
    // test for general missing parameters:
    if ( cellsizeNeeded && !itsParset.isDefined("nUVWMachines") ) {
       

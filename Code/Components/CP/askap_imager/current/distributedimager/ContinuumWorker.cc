@@ -138,7 +138,7 @@ void ContinuumWorker::run(void)
             
             // Send the params to the master, which also implicitly requests
             // more work
-            ASKAPLOG_INFO_STR(logger, "Sending params back to master for local channel "
+            ASKAPLOG_INFO_STR(logger, "Acknowledge receipt of local channel "
                               << wu.get_localChannel()
                               << ", global channel " << wu.get_globalChannel()
                               << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
@@ -225,32 +225,15 @@ void ContinuumWorker::processChannels()
     const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
     const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
     const int nCycles = unitParset.getInt32("ncycles", 0);
-       
-    for (size_t n = 0; n <= nCycles; n++) {
+   
+    
+    if (nCycles == 0) {
         
         itsImagers[0]->receiveModel();
-        
-        if (itsImagers[0]->params()->has("peak_residual")) {
-            const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
-            ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
-            if (peak_residual < targetPeakResidual) {
-                ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
-                                  << targetPeakResidual << " Jy. Stopping.");
-                break;
-            } else {
-                if (targetPeakResidual < 0) {
-                    ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
-                } else {
-                    ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
-                                      << targetPeakResidual << " Jy. Continuing.");
-                }
-            }
-        }
-
-        
+       
         for (size_t i = 0; i < itsImagers.size(); ++i) {
             
-           
+            
             itsImagers[i]->replaceModel(itsImagers[0]->params());
             
             const vector<string> completions(itsImagers[i]->params()->completions("image"));
@@ -272,12 +255,102 @@ void ContinuumWorker::processChannels()
             
             
         }
-        ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
+        ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
         itsImagers[0]->sendNE();
         itsImagers[0]->getNE()->reset();
         ASKAPLOG_INFO_STR(logger,"Sent");
     }
-    
+    else {
+        itsImagers[0]->receiveModel();
+        
+        for (size_t n = 0; n < nCycles; n++) {
+            
+            
+            
+            if (itsImagers[0]->params()->has("peak_residual")) {
+                const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
+                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+                if (peak_residual < targetPeakResidual) {
+                    ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
+                                      << targetPeakResidual << " Jy. Stopping.");
+                    break;
+                } else {
+                    if (targetPeakResidual < 0) {
+                        ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+                    } else {
+                        ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
+                                          << targetPeakResidual << " Jy. Continuing.");
+                    }
+                }
+            }
+            
+            
+            for (size_t i = 0; i < itsImagers.size(); ++i) {
+                
+                
+                itsImagers[i]->replaceModel(itsImagers[0]->params());
+                
+                const vector<string> completions(itsImagers[i]->params()->completions("image"));
+                
+                for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
+                {
+                    const string imageName("image"+(*it));
+                    ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
+                }
+                
+                itsImagers[i]->calcNE();
+                
+                if (i>0) {
+                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
+                    itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                    itsImagers[i]->getNE()->reset();
+                    ASKAPLOG_INFO_STR(logger,"Merged");
+                }
+                
+                
+            }
+            ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
+            itsImagers[0]->sendNE();
+            itsImagers[0]->getNE()->reset();
+            
+            
+            ASKAPLOG_INFO_STR(logger,"Waiting to receive new model");
+            
+            itsImagers[0]->receiveModel();
+            
+        }
+        // wrap up
+        
+        for (size_t i = 0; i < itsImagers.size(); ++i) {
+            
+            
+            itsImagers[i]->replaceModel(itsImagers[0]->params());
+            
+            const vector<string> completions(itsImagers[i]->params()->completions("image"));
+            
+            for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
+            {
+                const string imageName("image"+(*it));
+                ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
+            }
+            
+            itsImagers[i]->calcNE();
+            
+            if (i>0) {
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
+                itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                itsImagers[i]->getNE()->reset();
+                ASKAPLOG_INFO_STR(logger,"Merged");
+            }
+            
+            
+        }
+        ASKAPLOG_INFO_STR(logger,"Sending NE to master for wrapup ");
+        itsImagers[0]->sendNE();
+        
+        
+        // end wrap up
+    }
     
     for (size_t i = 0; i < itsImagers.size(); ++i) {
         

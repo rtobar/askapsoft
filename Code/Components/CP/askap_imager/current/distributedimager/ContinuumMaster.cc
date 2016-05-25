@@ -109,7 +109,16 @@ void ContinuumMaster::run(void)
     // Tracks all outstanding workunits, that is, those that have not
     // been completed
     unsigned int outstanding = 0;
-
+   
+    unsigned int nWorkers = itsComms.nProcs() - 1;
+    unsigned int nWorkersPerGroup = nWorkers/itsComms.nGroups();
+   
+    vector<unsigned int> allocation;
+    allocation.resize(itsComms.nProcs());
+    for (unsigned int n = 0; n < allocation.size(); ++n) {
+       allocation[n] = 0;
+    }
+   
     // Iterate over all measurement sets
     for (unsigned int n = 0; n < ms.size(); ++n) {
         
@@ -125,8 +134,13 @@ void ContinuumMaster::run(void)
                            << ms[n] << " with " << msChannels << " channels and " << nChanperCore
                            << " channels per core");
 
-        int nWorkers = itsComms.nProcs() - 1;
-        int nWorkersPerGroup = nWorkers/itsComms.nGroups();
+       
+       
+        if (msChannels != nWorkersPerGroup * nChanperCore) {
+           ASKAPLOG_WARN_STR(logger,"Only " << nWorkersPerGroup * nChanperCore << " of " << msChannels << " will be processed");
+           
+           
+        }
         ASKAPLOG_INFO_STR(logger, "There are  "
                           << itsComms.nGroups() << " groups of " << nWorkers
                           << " with " << nWorkersPerGroup);
@@ -155,10 +169,14 @@ void ContinuumMaster::run(void)
                         inGroup = 1;
                         ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
                                           << group);
+                       if (allocation[id] >= nChanperCore) {
+                          ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
+                          inGroup = 0;
+                       }
                     }
                     if (!inGroup) {
                         ASKAPLOG_INFO_STR(logger, "Master received request from " << id
-                                          << " Worker NOT in group " << group);
+                                          << " Worker NOT in group or already has full allocation" << group);
                         ContinuumWorkUnit wu;
                         wu.set_payloadType(ContinuumWorkUnit::NA);
                         wu.sendUnit(id,itsComms);
@@ -184,8 +202,8 @@ void ContinuumMaster::run(void)
                 wu.set_channelFrequency(freq.getValue("Hz"));
                 wu.sendUnit(id,itsComms);
                 ++outstanding;
-                
                 ++globalChannel;
+                ++allocation[id];
             }
      
         }
@@ -217,45 +235,60 @@ void ContinuumMaster::run(void)
     LOFAR::ParameterSet unitParset = itsParset;
    
     unitParset.replace("Channels",ChannelPar);
-   
+    
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
-   
-  
+    
+    
     synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
-   
-  
-    for (int cycle = 0; cycle <= nCycles; ++cycle) {
-        ASKAPLOG_INFO_STR(logger, "Master beginning major cycle");
-
+    if (nCycles == 0) {
+        ASKAPLOG_INFO_STR(logger, "Master beginning single cycle");
         imager.broadcastModel(); // initially empty model
         imager.getNE()->reset();
         /// Minor Cycle
         /// Implicit receive in here
         imager.solveNE();
-
-       
-        if (imager.params()->has("peak_residual")) {
-            const double peak_residual = imager.params()->scalarValue("peak_residual");
-            ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
-            if (peak_residual < targetPeakResidual) {
-                ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
-                                  << targetPeakResidual << " Jy. Stopping.");
-                break;
-            } else {
-                if (targetPeakResidual < 0) {
-                    ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+    }
+    else {
+        imager.broadcastModel(); // initially empty model
+        
+        for (int cycle = 0; cycle < nCycles; ++cycle) {
+            ASKAPLOG_INFO_STR(logger, "Master beginning major cycle");
+            
+            
+            imager.getNE()->reset();
+            /// Minor Cycle
+            /// Implicit receive in here
+            imager.solveNE();
+            
+            
+            if (imager.params()->has("peak_residual")) {
+                const double peak_residual = imager.params()->scalarValue("peak_residual");
+                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+                if (peak_residual < targetPeakResidual) {
+                    ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
+                                      << targetPeakResidual << " Jy. Stopping.");
+                    break;
                 } else {
-                    ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
-                                      << targetPeakResidual << " Jy. Continuing.");
+                    if (targetPeakResidual < 0) {
+                        ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+                    } else {
+                        ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
+                                          << targetPeakResidual << " Jy. Continuing.");
+                    }
                 }
             }
+            
+            imager.broadcastModel(); // initially empty model
+            
         }
-
+        
+        imager.getNE()->reset();
+        /// Minor Cycle
+        /// Implicit receive in here
+        imager.solveNE();
     }
-      
-    /// We would broadcast back here for more major cycles
-    
+        
     
     
     
