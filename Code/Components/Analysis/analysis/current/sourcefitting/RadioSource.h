@@ -303,8 +303,7 @@ class RadioSource : public duchamp::Detection {
 
         /// @brief Set the detection threshold for a particular Cube
         void setDetectionThreshold(duchamp::Cube &cube,
-                                   bool flagMedianSearch,
-                                   std::string snrImage = "");
+                                   bool flagVariableThreshold);
 
         /// @brief Set the detection threshold directly
         void setDetectionThreshold(float threshold) {itsDetectionThreshold = threshold;};
@@ -317,7 +316,7 @@ class RadioSource : public duchamp::Detection {
         float detectionThreshold() {return itsDetectionThreshold;};
 
         /// @brief Return the set of fits
-        FitResults fitResults(std::string type)
+        FitResults &fitResults(std::string type)
         {
             return itsBestFitMap[type];
         };

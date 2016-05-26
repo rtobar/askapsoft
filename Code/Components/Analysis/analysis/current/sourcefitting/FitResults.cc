@@ -88,6 +88,7 @@ void FitResults::saveResults(Fitter &fit)
 
     for (; rfit != fitMap.rend(); rfit++) {
         itsGaussFitSet.push_back(fit.gaussian(rfit->second));
+        itsGaussFitErrorSet.push_back(fit.error(rfit->second));
     }
 }
 //**************************************************************//
@@ -114,6 +115,7 @@ void FitResults::saveGuess(std::vector<SubComponent> cmpntList)
 
     for (; rfit != fitMap.rend(); rfit++) {
         itsGaussFitSet.push_back(cmpntList[rfit->second].asGauss());
+        itsGaussFitErrorSet.push_back(casa::Vector<casa::Double>(6,0.));
     }
 }
 
@@ -142,22 +144,27 @@ std::vector<SubComponent> FitResults::getCmpntList()
 void FitResults::logIt(std::string loc)
 {
     std::vector<casa::Gaussian2D<Double> >::iterator gauss;
+    unsigned int i=0;
     for (gauss = itsGaussFitSet.begin(); gauss < itsGaussFitSet.end(); gauss++) {
         std::stringstream outmsg;
-        outmsg << "Component Flux,X0,Y0,MAJ,MIN,PA = ";
+        outmsg << "Component FluxPeak,X0,Y0,MAJ,MIN,PA = ";
         outmsg.precision(8);
         outmsg.setf(ios::fixed);
-        outmsg << gauss->height() << ", ";
+        outmsg << gauss->height()    << " (" << itsGaussFitErrorSet[i][0] <<"), ";
         outmsg.precision(3);
         outmsg.setf(ios::fixed);
-        outmsg << gauss->xCenter() << ", " << gauss->yCenter() << ", "
-               << gauss->majorAxis() << ", " << gauss->minorAxis() << ", " << gauss->PA();
+        outmsg << gauss->xCenter()   << " (" << itsGaussFitErrorSet[i][1] <<"), "
+               << gauss->yCenter()   << " (" << itsGaussFitErrorSet[i][2] <<"), "
+               << gauss->majorAxis() << " (" << itsGaussFitErrorSet[i][3] <<"), "
+               << gauss->minorAxis() << " (" << itsGaussFitErrorSet[i][4] <<"), "
+               << gauss->PA()        << " (" << itsGaussFitErrorSet[i][5] <<")";
         if (loc == "DEBUG") {
             ASKAPLOG_DEBUG_STR(logger, outmsg.str());
         } else if (loc == "INFO") {
             ASKAPLOG_INFO_STR(logger, outmsg.str());
         }
-
+        
+        i++;
     }
 }
 
@@ -183,6 +190,11 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &blob, FitResults& result)
         blob << fit->majorAxis();
         blob << fit->axialRatio();
         blob << fit->PA();
+    }
+    for (size_t i=0;i<result.itsGaussFitErrorSet.size();i++){
+        for (size_t j=0;j<6;j++){
+            blob << result.itsGaussFitErrorSet[i][j];
+        }
     }
 
     return blob;
@@ -214,6 +226,17 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob, FitResults& result)
         blob >> d6;
         casa::Gaussian2D<Double> fit(d1, d2, d3, d4, d5, d6);
         result.itsGaussFitSet.push_back(fit);
+    }
+
+    result.itsGaussFitErrorSet.clear();
+    for(i=0;i<size;i++){
+        casa::Vector<casa::Double> err(6);
+        for(size_t j=0;j<6;j++){
+            Double val;
+            blob >> val;
+            err[j]=val;
+        }
+        result.itsGaussFitErrorSet.push_back(err);
     }
 
     return blob;
