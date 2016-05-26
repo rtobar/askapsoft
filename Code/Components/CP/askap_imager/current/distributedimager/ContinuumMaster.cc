@@ -267,9 +267,14 @@ void ContinuumMaster::run(void)
         ASKAPLOG_INFO_STR(logger, "Master beginning single cycle");
         imager.broadcastModel(); // initially empty model
         imager.getNE()->reset();
-        /// Minor Cycle
+        imager.receiveNE();
+        
+        /// No Minor Cycle to mimic cimager
+        
+        
         /// Implicit receive in here
-        imager.solveNE();
+        
+        /// imager.solveNE();
     }
     else {
         imager.broadcastModel(); // initially empty model
@@ -279,6 +284,7 @@ void ContinuumMaster::run(void)
             
             
             imager.getNE()->reset();
+            
             /// Minor Cycle
             /// Implicit receive in here
             imager.solveNE();
@@ -306,9 +312,7 @@ void ContinuumMaster::run(void)
         }
         
         imager.getNE()->reset();
-        /// Minor Cycle
-        /// Implicit receive in here
-        imager.solveNE();
+        imager.receiveNE();
     }
         
     

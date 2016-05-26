@@ -251,7 +251,7 @@ void ContinuumWorker::processChannels()
        
         for (size_t i = 0; i < itsImagers.size(); ++i) {
             
-            
+            itsImagers[i]->zeroAllModelImages();
             itsImagers[i]->replaceModel(itsImagers[0]->params());
             
             const vector<string> completions(itsImagers[i]->params()->completions("image"));
@@ -276,6 +276,7 @@ void ContinuumWorker::processChannels()
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
         itsImagers[0]->sendNE();
         itsImagers[0]->getNE()->reset();
+        itsImagers[0]->zeroAllModelImages();
         ASKAPLOG_INFO_STR(logger,"Sent");
     }
     else {
@@ -337,9 +338,9 @@ void ContinuumWorker::processChannels()
             itsImagers[0]->receiveModel();
             
         }
-        // wrap up
         
-        for (size_t i = 0; i < itsImagers.size(); ++i) {
+    
+        for (size_t i = 0; i < itsImagers.size(); ++i) { // wrap up
             
             
             itsImagers[i]->replaceModel(itsImagers[0]->params());
@@ -365,8 +366,8 @@ void ContinuumWorker::processChannels()
         }
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for wrapup ");
         itsImagers[0]->sendNE();
-        
-        
+    
+    
         // end wrap up
     }
     
