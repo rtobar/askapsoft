@@ -109,6 +109,9 @@ class ContinuumWorker
     
         // List of measurement sets to work on
         vector<std::string> datasets;
+        
+        // the basechannel number assigned to this worker
+        unsigned int baseChannel;
 };
 
 };

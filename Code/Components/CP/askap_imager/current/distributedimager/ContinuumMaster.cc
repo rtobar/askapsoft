@@ -148,7 +148,7 @@ void ContinuumMaster::run(void)
         for (size_t group = 0; group<itsComms.nGroups(); ++group) {
       
             // Iterate over all channels in the measurement set
-            for (unsigned int localChan = 0; localChan < msChannels; localChan=localChan+nChanperCore) {
+            for (unsigned int localChan = 0; localChan < msChannels; ++localChan) {
                 
                 casa::Quantity freq;
                 
@@ -162,21 +162,43 @@ void ContinuumMaster::run(void)
                 // wait for valid work request
                 ContinuumWorkRequest wrequest;
                 int inGroup = 0;
-                while (inGroup == 0)
+                int inRange = 0;
+                while (inGroup == 0 || inRange == 0)
                 {
+                
+                    inRange = 0;
                     wrequest.receiveRequest(id, itsComms);
                     if (id > group*nWorkersPerGroup && id <= (group+1)*nWorkersPerGroup) {
                         inGroup = 1;
                         ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
                                           << group);
-                       if (allocation[id] >= nChanperCore) {
-                          ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
-                          inGroup = 0;
-                       }
+                        if (allocation[id] >= nChanperCore) {
+                            ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
+                            inGroup = 0;
+                        }
+                        /// we need the channel to fall into the allocation for this id : the position this id holds in the group
+                        /// multiplied by the number of channels per core
+                        /// what is the position this rank holds in the group
+                                              
+                        
+                        unsigned int posInGroup = (id % nWorkersPerGroup);
+                        if (posInGroup == 0) {
+                            posInGroup = nWorkersPerGroup;
+                        }
+                        posInGroup = posInGroup-1;
+                        
+                        unsigned int baseChannel = posInGroup * nChanperCore;
+                        unsigned int topChannel = baseChannel + nChanperCore - 1;
+                        
+                        if (localChan >= baseChannel && localChan <= topChannel) {
+                            inRange = 1;
+                        }
+                       
+                        
                     }
-                    if (!inGroup) {
+                    if (!inGroup || !inRange) {
                         ASKAPLOG_INFO_STR(logger, "Master received request from " << id
-                                          << " Worker NOT in group or already has full allocation" << group);
+                                          << " Worker NOT in group or already has full allocation or Channel not in allocation");
                         ContinuumWorkUnit wu;
                         wu.set_payloadType(ContinuumWorkUnit::NA);
                         wu.sendUnit(id,itsComms);

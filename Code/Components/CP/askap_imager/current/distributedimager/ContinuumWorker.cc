@@ -84,8 +84,27 @@ ContinuumWorker::ContinuumWorker(LOFAR::ParameterSet& parset,
     : itsParset(parset), itsComms(comms)
 {
     itsGridder_p = VisGridderFactory::make(itsParset);
+    // lets properly size the storage
+    const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
+    itsImagers.resize(nchanpercore);
+    itsParsets.resize(nchanpercore);
     
+    // lets calculate a base
+    unsigned int nWorkers = itsComms.nProcs() - 1;
+    unsigned int nWorkersPerGroup = nWorkers/itsComms.nGroups();
+
+    unsigned int id = itsComms.rank();
+    // e. g. rank 8, 3 per group should be pos. 1 (zero index)
+    unsigned int posInGroup = (id% nWorkersPerGroup);
     
+    if (posInGroup == 0) {
+        posInGroup = nWorkersPerGroup;
+    }
+    posInGroup = posInGroup - 1;
+    this->baseChannel = posInGroup * nchanpercore;
+    ASKAPLOG_INFO_STR(logger,"Distribution: Id " << id << " nWorkers " << nWorkers << " nGroups " << itsComms.nGroups());
+
+    ASKAPLOG_INFO_STR(logger,"Distribution: Base channel " << this->baseChannel << " PosInGrp " << posInGroup);
 }
 
 ContinuumWorker::~ContinuumWorker()
@@ -158,14 +177,9 @@ void ContinuumWorker::run(void)
 void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
 {
     
-    // place measurement set and parset into /dev/shm for use later
-    
     const string colName = itsParset.getString("datacolumn", "DATA");
     const string ms = wu.get_dataset();
   
-    
-    
-    
     // This also needs to set the frequencies and directions for all the images
     
     char ChannelPar[64];
@@ -204,9 +218,11 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
    
     
     CalcCore *imager = new CalcCore(diadvise.getParset(),itsComms,ds,wu.get_localChannel());
-  
-    itsImagers.push_back(imager);
-    itsParsets.push_back(diadvise.getParset());
+    // This needs to be ordered in the same order for each rank
+    unsigned int location = wu.get_localChannel() - this->baseChannel;
+    ASKAPLOG_INFO_STR(logger,"Placing imager for local channel " << wu.get_localChannel() << " in location " << location << " (base channel= " << this->baseChannel << ")");
+    itsImagers[location] = imager;
+    itsParsets[location] = diadvise.getParset();
 
 }
 
@@ -219,6 +235,8 @@ ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 void ContinuumWorker::processChannels()
 {
    
+    
+    
     LOFAR::ParameterSet& unitParset = itsParsets[0];
     
     std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
