@@ -251,7 +251,7 @@ void ContinuumWorker::processChannels()
        
         for (size_t i = 0; i < itsImagers.size(); ++i) {
             
-            itsImagers[i]->zeroAllModelImages();
+           
             itsImagers[i]->replaceModel(itsImagers[0]->params());
             
             const vector<string> completions(itsImagers[i]->params()->completions("image"));
@@ -267,7 +267,7 @@ void ContinuumWorker::processChannels()
             if (i>0) {
                 ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
                 itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
-                itsImagers[i]->getNE()->reset();
+               
                 ASKAPLOG_INFO_STR(logger,"Merged");
             }
             
@@ -275,8 +275,8 @@ void ContinuumWorker::processChannels()
         }
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
         itsImagers[0]->sendNE();
-        itsImagers[0]->getNE()->reset();
-        itsImagers[0]->zeroAllModelImages();
+        
+     
         ASKAPLOG_INFO_STR(logger,"Sent");
     }
     else {
@@ -322,7 +322,7 @@ void ContinuumWorker::processChannels()
                 if (i>0) {
                     ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
                     itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
-                    itsImagers[i]->getNE()->reset();
+                   
                     ASKAPLOG_INFO_STR(logger,"Merged");
                 }
                 
@@ -330,7 +330,7 @@ void ContinuumWorker::processChannels()
             }
             ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
             itsImagers[0]->sendNE();
-            itsImagers[0]->getNE()->reset();
+           
             
             
             ASKAPLOG_INFO_STR(logger,"Waiting to receive new model");
@@ -358,7 +358,7 @@ void ContinuumWorker::processChannels()
             if (i>0) {
                 ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
                 itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
-                itsImagers[i]->getNE()->reset();
+                
                 ASKAPLOG_INFO_STR(logger,"Merged");
             }
             

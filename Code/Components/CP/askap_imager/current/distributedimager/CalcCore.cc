@@ -85,7 +85,7 @@ void CalcCore::doCalc()
     timer.mark();
      
     
-    ASKAPLOG_INFO_STR(logger, "Creating measurement equation" );
+    ASKAPLOG_INFO_STR(logger, "Calculating NE ...." );
     
     
     accessors::TableDataSource ds = itsData;
@@ -111,7 +111,7 @@ void CalcCore::doCalc()
     // calibration can go below if required
     if (!itsEquation) {
     
-            ASKAPLOG_INFO_STR(logger, "No calibration is applied" );
+            ASKAPLOG_INFO_STR(logger, "building FFT/measurement equation" );
             boost::shared_ptr<ImageFFTEquation> fftEquation(new ImageFFTEquation (*itsModel, it, gridder()));
             ASKAPDEBUGASSERT(fftEquation);
             fftEquation->useAlternativePSF(parset());
@@ -133,11 +133,19 @@ void CalcCore::doCalc()
 void CalcCore::calcNE()
 {
    
-    ASKAPLOG_INFO_STR(logger, "Creating Normal Equations");
+   
     /// Now we need to recreate the normal equations
-    if (!itsNe)
+    if (!itsNe) {
+        ASKAPLOG_INFO_STR(logger, "Constructing Normal Equations from model");
+    
         itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
-    ASKAPLOG_INFO_STR(logger, "Created Normal Equations");
+    
+        ASKAPLOG_INFO_STR(logger, "Constructed Normal Equations");
+    }
+    else{
+        
+        ASKAPLOG_INFO_STR(logger, "Imaging Normal Equations already constructed");
+    }
     
     if (itsComms.isWorker())
     {
