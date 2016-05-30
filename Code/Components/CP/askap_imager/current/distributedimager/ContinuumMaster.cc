@@ -296,6 +296,7 @@ void ContinuumMaster::run(void)
                 if (peak_residual < targetPeakResidual) {
                     ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
                                       << targetPeakResidual << " Jy. Stopping.");
+                    imager.broadcastModel();
                     break;
                 } else {
                     if (targetPeakResidual < 0) {

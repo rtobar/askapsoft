@@ -65,15 +65,11 @@ class ContinuumWorker
 
     
         // Process a workunit
-        void processWorkUnit(const ContinuumWorkUnit& wu);
+        void processWorkUnit(ContinuumWorkUnit& wu);
 
         // Vector of the stored parsets
         vector<LOFAR::ParameterSet> itsParsets;
        
-    
-        // For a given workunit, just process a single channel - the channel is specified
-        // in the parset ... 
-        askap::scimath::Params::ShPtr processChannel(LOFAR::ParameterSet& parset);
     
         //For all workunits .... process
         
@@ -81,7 +77,7 @@ class ContinuumWorker
         
         // For a given workunit, just process a single snapshot - the channel is specified
         // in the parset ...
-        askap::scimath::Params::ShPtr processSnapshot(LOFAR::ParameterSet& parset);
+        void processSnapshot(LOFAR::ParameterSet& parset);
 
 
         // Setup the image specified in itsParset and add it to the Params instance.

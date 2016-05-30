@@ -85,7 +85,7 @@ void CalcCore::doCalc()
     timer.mark();
      
     
-    ASKAPLOG_INFO_STR(logger, "Calculating NE ...." );
+    ASKAPLOG_INFO_STR(logger, "Calculating NE .... for channel" << itsChannel);
     
     
     accessors::TableDataSource ds = itsData;

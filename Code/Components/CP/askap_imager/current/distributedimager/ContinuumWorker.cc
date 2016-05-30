@@ -176,22 +176,49 @@ void ContinuumWorker::run(void)
 
 }
 
-void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
+void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 {
     
    
   
     // This also needs to set the frequencies and directions for all the images
-    
+    LOFAR::ParameterSet unitParset = itsParset;
+
     char ChannelPar[64];
     
-    sprintf(ChannelPar,"[1,%d]",wu.get_localChannel());
+    sprintf(ChannelPar,"[1,%d]",wu.get_localChannel()+1);
     
-    LOFAR::ParameterSet unitParset = itsParset;
+    
+    
+    
+    bool usetmpfs = unitParset.getBool("usetmpfs",false);
+    
+    if (usetmpfs)
+    {
+        const string ms = wu.get_dataset();
+    
+    
+        MSSplitter mySplitter(unitParset);
+    
+        const string shm_root = unitParset.getString("tmpfs","/dev/shm");
+        
+        std::ostringstream pstr;
+        
+        pstr << shm_root << "/"<< ms << "_chan_" << wu.get_localChannel()+1;
+       
+        const string outms = pstr.str();
+       
+    
+        mySplitter.split(ms,outms,wu.get_localChannel()+1,wu.get_localChannel()+1,1,itsParset);
+        
+        wu.set_dataset(outms);
+       
+        sprintf(ChannelPar,"[1,1]");
+        unitParset.replace("dataset",outms);
+    }
+    
     unitParset.replace("Channels",ChannelPar);
     
-    
-   
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
    
@@ -215,7 +242,7 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
 }
 
 
-askap::scimath::Params::ShPtr
+void
 ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 {
 }
@@ -226,13 +253,14 @@ void ContinuumWorker::processChannels()
     
     
     LOFAR::ParameterSet& unitParset = itsParsets[0];
+    int localChannel;
     
     const string colName = unitParset.getString("datacolumn", "DATA");
     const string ms = workUnits[0].get_dataset();
     
     std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
     const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
-    const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
+  
     const int nCycles = unitParset.getInt32("ncycles", 0);
    
     const int uvwMachineCacheSize = unitParset.getInt32("nUVWMachines", 1);
@@ -251,7 +279,16 @@ void ContinuumWorker::processChannels()
     
     ds0.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
     
-    CalcCore rootImager(itsParsets[0],itsComms,ds0,workUnits[0].get_localChannel());
+    
+    bool usetmpfs = unitParset.getBool("usetmpfs",false);
+    if (usetmpfs) {
+        localChannel = 0;
+        
+    }
+    else {
+        localChannel = workUnits[0].get_localChannel();
+    }
+    CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
     
     
     if (nCycles == 0) {
@@ -260,11 +297,21 @@ void ContinuumWorker::processChannels()
        
         for (size_t i = 0; i < workUnits.size(); ++i) {
             
-            TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+            const string myMs = workUnits[i].get_dataset();
+            
+            TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
             
             ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
             
-            CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
+            if (usetmpfs) {
+                localChannel = 0;
+            }
+            else {
+                localChannel = workUnits[i].get_localChannel();
+            }
+
+            
+            CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
             
             workingImager.replaceModel(rootImager.params());
             
@@ -313,11 +360,21 @@ void ContinuumWorker::processChannels()
             
             for (size_t i = 0; i < workUnits.size(); ++i) {
                 
-                TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+                const string myMs = workUnits[i].get_dataset();
+                
+                TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
                 
                 ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
                 
-                CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
+                if (usetmpfs) {
+                    localChannel = 0;
+                }
+                else {
+                    localChannel = workUnits[i].get_localChannel();
+                }
+
+                
+                CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
                 
                 workingImager.replaceModel(rootImager.params());
 
@@ -350,11 +407,21 @@ void ContinuumWorker::processChannels()
     
         for (size_t i = 0; i < workUnits.size(); ++i) { // wrap up
             
-            TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+            const string myMs = workUnits[i].get_dataset();
+            
+            TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
             
             ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
             
-            CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
+            if (usetmpfs) {
+                localChannel = 0;
+            }
+            else {
+                localChannel = workUnits[i].get_localChannel();
+            }
+
+            
+            CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
             
             workingImager.replaceModel(rootImager.params());
 
@@ -385,10 +452,7 @@ void ContinuumWorker::processChannels()
    
     
 }
-askap::scimath::Params::ShPtr
-ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
-{
-}
+
 
 void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
                                     double channelFrequency)
