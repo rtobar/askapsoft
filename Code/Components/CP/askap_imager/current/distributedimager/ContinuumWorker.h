@@ -60,7 +60,8 @@ class ContinuumWorker
 
 
     private:
-    
+         // The work units
+        vector<ContinuumWorkUnit> workUnits;
 
     
         // Process a workunit
@@ -68,9 +69,7 @@ class ContinuumWorker
 
         // Vector of the stored parsets
         vector<LOFAR::ParameterSet> itsParsets;
-        // Vector of the imagers
-        
-        vector<CalcCore *> itsImagers;
+       
     
         // For a given workunit, just process a single channel - the channel is specified
         // in the parset ... 

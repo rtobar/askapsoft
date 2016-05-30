@@ -86,7 +86,7 @@ ContinuumWorker::ContinuumWorker(LOFAR::ParameterSet& parset,
     itsGridder_p = VisGridderFactory::make(itsParset);
     // lets properly size the storage
     const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
-    itsImagers.resize(nchanpercore);
+    workUnits.resize(nchanpercore);
     itsParsets.resize(nchanpercore);
     
     // lets calculate a base
@@ -122,7 +122,7 @@ void ContinuumWorker::run(void)
    
     
 
-    vector<ContinuumWorkUnit> wus;
+    
     ContinuumWorkUnit wu;
     wrequest.sendRequest(itsMaster,itsComms);
     while (1) {
@@ -149,9 +149,11 @@ void ContinuumWorker::run(void)
             
             
             //storeMs(wu,itsParset); // proxy for storing the dataset somehow
-            wus.push_back(wu); // this isn't needed anymore... i think
+           
             
             processWorkUnit(wu);
+            
+           
             
             askap::scimath::Params::ShPtr params; // also a proxy for information - dont need this anymore
             
@@ -169,7 +171,7 @@ void ContinuumWorker::run(void)
         
     }
 
-    if (wus.size()>=1)
+    if (workUnits.size()>=1)
         processChannels();
 
 }
@@ -177,8 +179,7 @@ void ContinuumWorker::run(void)
 void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
 {
     
-    const string colName = itsParset.getString("datacolumn", "DATA");
-    const string ms = wu.get_dataset();
+   
   
     // This also needs to set the frequencies and directions for all the images
     
@@ -188,6 +189,8 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
     
     LOFAR::ParameterSet unitParset = itsParset;
     unitParset.replace("Channels",ChannelPar);
+    
+    
    
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
@@ -200,28 +203,13 @@ void ContinuumWorker::processWorkUnit(const ContinuumWorkUnit& wu)
   
     
     //
-    const int uvwMachineCacheSize = diadvise.getParset().getInt32("nUVWMachines", 1);
-    ASKAPCHECK(uvwMachineCacheSize > 0 ,
-               "Cache size is supposed to be a positive number, you have "
-               << uvwMachineCacheSize);
     
-    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(diadvise.getParset().getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
-    
-    ASKAPLOG_INFO_STR(logger,
-                      "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
-    ASKAPLOG_INFO_STR(logger, "Tolerance on the directions is "
-                      << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
-    
-    TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
-    
-    ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
    
     
-    CalcCore *imager = new CalcCore(diadvise.getParset(),itsComms,ds,wu.get_localChannel());
-    // This needs to be ordered in the same order for each rank
+    
     unsigned int location = wu.get_localChannel() - this->baseChannel;
-    ASKAPLOG_INFO_STR(logger,"Placing imager for local channel " << wu.get_localChannel() << " in location " << location << " (base channel= " << this->baseChannel << ")");
-    itsImagers[location] = imager;
+    workUnits[location] = wu; // this isn't needed anymore... i think
+    
     itsParsets[location] = diadvise.getParset();
 
 }
@@ -239,34 +227,53 @@ void ContinuumWorker::processChannels()
     
     LOFAR::ParameterSet& unitParset = itsParsets[0];
     
+    const string colName = unitParset.getString("datacolumn", "DATA");
+    const string ms = workUnits[0].get_dataset();
+    
     std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
     const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
     const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
     const int nCycles = unitParset.getInt32("ncycles", 0);
    
+    const int uvwMachineCacheSize = unitParset.getInt32("nUVWMachines", 1);
+    ASKAPCHECK(uvwMachineCacheSize > 0 ,
+               "Cache size is supposed to be a positive number, you have "
+               << uvwMachineCacheSize);
+    
+    const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
+    
+    ASKAPLOG_INFO_STR(logger,
+                      "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
+    ASKAPLOG_INFO_STR(logger, "Tolerance on the directions is "
+                      << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
+    
+    TableDataSource ds0(ms, TableDataSource::DEFAULT, colName);
+    
+    ds0.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
+    
+    CalcCore rootImager(itsParsets[0],itsComms,ds0,workUnits[0].get_localChannel());
+    
     
     if (nCycles == 0) {
         
-        itsImagers[0]->receiveModel();
+        rootImager.receiveModel();
        
-        for (size_t i = 0; i < itsImagers.size(); ++i) {
+        for (size_t i = 0; i < workUnits.size(); ++i) {
             
-           
-            itsImagers[i]->replaceModel(itsImagers[0]->params());
+            TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
             
-            const vector<string> completions(itsImagers[i]->params()->completions("image"));
+            ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
             
-            for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
-            {
-                const string imageName("image"+(*it));
-                ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
-            }
+            CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
             
-            itsImagers[i]->calcNE();
+            workingImager.replaceModel(rootImager.params());
+            
+            
+            workingImager.calcNE();
             
             if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
-                itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                rootImager.getNE()->merge(*workingImager.getNE());
                
                 ASKAPLOG_INFO_STR(logger,"Merged");
             }
@@ -274,20 +281,20 @@ void ContinuumWorker::processChannels()
             
         }
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
-        itsImagers[0]->sendNE();
+        rootImager.sendNE();
         
      
         ASKAPLOG_INFO_STR(logger,"Sent");
     }
     else {
-        itsImagers[0]->receiveModel();
+        rootImager.receiveModel();
         
         for (size_t n = 0; n < nCycles; n++) {
             
             
             
-            if (itsImagers[0]->params()->has("peak_residual")) {
-                const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
+            if (rootImager.params()->has("peak_residual")) {
+                const double peak_residual = rootImager.params()->scalarValue("peak_residual");
                 ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
                 if (peak_residual < targetPeakResidual) {
                     ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
@@ -304,24 +311,25 @@ void ContinuumWorker::processChannels()
             }
             
             
-            for (size_t i = 0; i < itsImagers.size(); ++i) {
+            for (size_t i = 0; i < workUnits.size(); ++i) {
                 
+                TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
                 
-                itsImagers[i]->replaceModel(itsImagers[0]->params());
+                ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
                 
-                const vector<string> completions(itsImagers[i]->params()->completions("image"));
+                CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
                 
-                for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
-                {
-                    const string imageName("image"+(*it));
-                    ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
-                }
+                workingImager.replaceModel(rootImager.params());
+
                 
-                itsImagers[i]->calcNE();
+               
+            
+                
+                workingImager.calcNE();
                 
                 if (i>0) {
-                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
-                    itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                    rootImager.getNE()->merge(*workingImager.getNE());
                    
                     ASKAPLOG_INFO_STR(logger,"Merged");
                 }
@@ -329,35 +337,36 @@ void ContinuumWorker::processChannels()
                 
             }
             ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
-            itsImagers[0]->sendNE();
+            rootImager.sendNE();
            
             
             
             ASKAPLOG_INFO_STR(logger,"Waiting to receive new model");
             
-            itsImagers[0]->receiveModel();
+            rootImager.receiveModel();
             
         }
         
     
-        for (size_t i = 0; i < itsImagers.size(); ++i) { // wrap up
+        for (size_t i = 0; i < workUnits.size(); ++i) { // wrap up
+            
+            TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+            
+            ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
+            
+            CalcCore workingImager(itsParsets[i],itsComms,ds,workUnits[i].get_localChannel());
+            
+            workingImager.replaceModel(rootImager.params());
+
             
             
-            itsImagers[i]->replaceModel(itsImagers[0]->params());
+          
             
-            const vector<string> completions(itsImagers[i]->params()->completions("image"));
-            
-            for (vector<string>::const_iterator it=completions.begin();it!=completions.end();it++)
-            {
-                const string imageName("image"+(*it));
-                ASKAPLOG_INFO_STR(logger,"Model contains: " << imageName);
-            }
-            
-            itsImagers[i]->calcNE();
+            workingImager.calcNE();
             
             if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << itsImagers.size());
-                itsImagers[0]->getNE()->merge(*(itsImagers[i]->getNE()));
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                rootImager.getNE()->merge(*workingImager.getNE());
                 
                 ASKAPLOG_INFO_STR(logger,"Merged");
             }
@@ -365,19 +374,13 @@ void ContinuumWorker::processChannels()
             
         }
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for wrapup ");
-        itsImagers[0]->sendNE();
+        rootImager.sendNE();
     
     
         // end wrap up
     }
     
-    for (size_t i = 0; i < itsImagers.size(); ++i) {
-        
-        
-        delete itsImagers[i];
-      
-        
-    }
+   
 
    
     
@@ -385,77 +388,6 @@ void ContinuumWorker::processChannels()
 askap::scimath::Params::ShPtr
 ContinuumWorker::processChannel(LOFAR::ParameterSet& unitParset)
 {
-
-    
-    std::string majorcycle = unitParset.getString("threshold.majorcycle", "-1Jy");
-    const double targetPeakResidual = SynthesisParamsHelper::convertQuantity(majorcycle, "Jy");
-    const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
-    const int nCycles = unitParset.getInt32("ncycles", 0);
-    
-    
-    
-    if (nCycles == 0) {
-   
-   
-        
-        itsImagers[0]->receiveModel();
-
-        itsImagers[0]->calcNE();
-
-
-        
-    } else {
-       
-        itsImagers[0]->receiveModel();
-        
-        for (int cycle = 0; cycle < nCycles; ++cycle) {
-        
-            
-            if (itsImagers[0]->params()->has("peak_residual")) {
-                const double peak_residual = itsImagers[0]->params()->scalarValue("peak_residual");
-                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
-                if (peak_residual < targetPeakResidual) {
-                    ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
-                                      << targetPeakResidual << " Jy. Stopping.");
-                    break;
-                } else {
-                    if (targetPeakResidual < 0) {
-                        ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
-                    } else {
-                        ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
-                                          << targetPeakResidual << " Jy. Continuing.");
-                    }
-                }
-            }
-            
-            ASKAPLOG_INFO_STR(logger, "*** Starting major cycle " << cycle << " ***");
-            
-            // lets calcNE() without recourse to the manager function in imager parallel
-        
-            itsImagers[0]->calcNE();
-          
-            
-            if (cycle + 1 >= nCycles) {
-                ASKAPLOG_INFO_STR(logger, "Reached " << nCycles <<
-                                  " cycle(s), the maximum number of major cycles. Stopping.");
-            }
-            
-            if (writeAtMajorCycle) {
-               
-                itsImagers[0]->writeModel(std::string(".majorcycle.") + utility::toString(cycle + 1));
-            }
-            
-            itsImagers[0]->receiveModel();
-        }
-        ASKAPLOG_INFO_STR(logger, "*** Finished major cycles ***");
-        ASKAPLOG_INFO_STR(logger, "Will <NOT> CalcNE");
-        itsImagers[0]->calcNE();
-        
-        
-    } // end cycling block
-
-    return itsImagers[0]->params();
-    
 }
 
 void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
