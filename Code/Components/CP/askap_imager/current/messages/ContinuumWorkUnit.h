@@ -70,6 +70,7 @@ namespace askap {
                 void set_globalChannel(unsigned int chan);
                 void set_localChannel(unsigned int chan);
                 void set_channelFrequency(double freq);
+                void set_beam(unsigned int beam);
             
                 // Getters
                 PayloadType get_payloadType(void) const;
@@ -77,6 +78,7 @@ namespace askap {
                 unsigned int get_globalChannel(void) const;
                 unsigned int get_localChannel(void) const;
                 double get_channelFrequency(void) const;
+                unsigned int get_beam() const;
 
                 // Serializer functions
 
@@ -109,6 +111,7 @@ namespace askap {
                 unsigned int itsGlobalChannel;
                 unsigned int itsLocalChannel;
                 double itsChannelFrequency;
+                unsigned int itsBeam;
         };
 
     };

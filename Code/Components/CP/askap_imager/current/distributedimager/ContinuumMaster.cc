@@ -48,6 +48,7 @@
 #include <dataaccess/IDataSelector.h>
 #include <dataaccess/IDataIterator.h>
 #include <dataaccess/SharedIter.h>
+#include <dataaccess/TableInfoAccessor.h>
 #include <casacore/casa/Quanta.h>
 #include <imageaccess/BeamLogger.h>
 #include <parallel/ImagerParallel.h>
@@ -60,6 +61,10 @@
 #include "messages/ContinuumWorkUnit.h"
 #include "messages/ContinuumWorkRequest.h"
 #include "Tracing.h"
+
+//casacore includes
+#include "casacore/ms/MeasurementSets/MeasurementSet.h"
+#include "casacore/ms/MeasurementSets/MSColumns.h"
 
 using namespace std;
 using namespace askap::cp;
@@ -85,7 +90,7 @@ void ContinuumMaster::run(void)
         ASKAPTHROW(std::runtime_error, "No datasets specified in the parameter set file");
     }
   
-   
+    
   
     
     const double targetPeakResidual = synthesis::SynthesisParamsHelper::convertQuantity(
@@ -118,11 +123,28 @@ void ContinuumMaster::run(void)
     for (unsigned int n = 0; n < allocation.size(); ++n) {
        allocation[n] = 0;
     }
-   
+    // get the number of beams
+    
     // Iterate over all measurement sets
     for (unsigned int n = 0; n < ms.size(); ++n) {
         
         askap::accessors::TableConstDataSource ds(ms[n]);
+        const casa::MeasurementSet in(ms[n]);
+        const casa::ROMSColumns srcCols(in);
+        const casa::ROMSFeedColumns& fc = srcCols.feed();
+        
+        const int fieldEntries = fc.nrow();
+        
+        const casa::uInt firstAnt = casa::ROScalarColumn<casa::Int>(in.feed(),"ANTENNA_ID")(0);
+        unsigned int nBeams = 0;
+        
+        for (int row = 0; row<fieldEntries; ++row) {
+                if (casa::ROScalarColumn<casa::Int>(in.feed(),"ANTENNA_ID")(row) == firstAnt)
+                    ++nBeams;
+                else
+                    break;
+        }
+        
         askap::accessors::IDataSelectorPtr sel = ds.createSelector();
         askap::accessors::IDataConverterPtr conv = ds.createConverter();
         conv->setFrequencyFrame(casa::MFrequency::Ref(casa::MFrequency::TOPO), "Hz");
@@ -134,100 +156,109 @@ void ContinuumMaster::run(void)
                            << ms[n] << " with " << msChannels << " channels and " << nChanperCore
                            << " channels per core");
 
-       
-       
+        
         if (msChannels != nWorkersPerGroup * nChanperCore) {
            ASKAPLOG_WARN_STR(logger,"Only " << nWorkersPerGroup * nChanperCore << " of " << msChannels << " will be processed");
-           
-           
         }
+        
+        ASKAPLOG_INFO_STR(logger,"There are " << nWorkersPerGroup << " workers per group and " << nBeams << " beams to process");
+        int minWorkers = msChannels * itsComms.nGroups() * nBeams/nChanperCore;
+        
+        ASKAPLOG_WARN_STR(logger,"Will currently only process beam 0");
+        
+        
         ASKAPLOG_INFO_STR(logger, "There are  "
                           << itsComms.nGroups() << " groups of " << nWorkers
                           << " with " << nWorkersPerGroup);
         
-        for (size_t group = 0; group<itsComms.nGroups(); ++group) {
-      
-            // Iterate over all channels in the measurement set
-            for (unsigned int localChan = 0; localChan < msChannels; ++localChan) {
+        
+        
+        for (size_t beam = 0; beam < 1; ++beam) {
+            for (size_t group = 0; group<itsComms.nGroups(); ++group) {
                 
-                casa::Quantity freq;
-                
-                freq = casa::Quantity(it->frequency()[localChan],"Hz");
-                
-                int id; // Id of the process the WorkRequest message is received from
-                
-                // Wait for a worker to request some work
-                ASKAPLOG_INFO_STR(logger, "Master is waiting for a worker to request some work for channel " << localChan <<  " frequency " << freq);
-                
-                // wait for valid work request
-                ContinuumWorkRequest wrequest;
-                int inGroup = 0;
-                int inRange = 0;
-                while (inGroup == 0 || inRange == 0)
-                {
-                
-                    inRange = 0;
-                    wrequest.receiveRequest(id, itsComms);
-                    if (id > group*nWorkersPerGroup && id <= (group+1)*nWorkersPerGroup) {
-                        inGroup = 1;
-                        ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
-                                          << group);
-                        if (allocation[id] >= nChanperCore) {
-                            ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
-                            inGroup = 0;
+                // Iterate over all channels in the measurement set
+                for (unsigned int localChan = 0; localChan < msChannels; ++localChan) {
+                    
+                    casa::Quantity freq;
+                    
+                    freq = casa::Quantity(it->frequency()[localChan],"Hz");
+                    
+                    int id; // Id of the process the WorkRequest message is received from
+                    
+                    // Wait for a worker to request some work
+                    ASKAPLOG_INFO_STR(logger, "Master is waiting for a worker to request some work for channel " << localChan <<  " frequency " << freq);
+                    
+                    // wait for valid work request
+                    ContinuumWorkRequest wrequest;
+                    int inGroup = 0;
+                    int inRange = 0;
+                    while (inGroup == 0 || inRange == 0)
+                    {
+                        
+                        inRange = 0;
+                        wrequest.receiveRequest(id, itsComms);
+                        if (id > group*nWorkersPerGroup && id <= (group+1)*nWorkersPerGroup) {
+                            inGroup = 1;
+                            ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
+                                              << group);
+                            if (allocation[id] >= nChanperCore) {
+                                ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
+                                inGroup = 0;
+                            }
+                            /// we need the channel to fall into the allocation for this id : the position this id holds in the group
+                            /// multiplied by the number of channels per core
+                            /// what is the position this rank holds in the group
+                            
+                            
+                            unsigned int posInGroup = (id % nWorkersPerGroup);
+                            if (posInGroup == 0) {
+                                posInGroup = nWorkersPerGroup;
+                            }
+                            posInGroup = posInGroup-1;
+                            
+                            unsigned int baseChannel = posInGroup * nChanperCore;
+                            unsigned int topChannel = baseChannel + nChanperCore - 1;
+                            
+                            if (localChan >= baseChannel && localChan <= topChannel) {
+                                inRange = 1;
+                            }
+                            
+                            
                         }
-                        /// we need the channel to fall into the allocation for this id : the position this id holds in the group
-                        /// multiplied by the number of channels per core
-                        /// what is the position this rank holds in the group
-                                              
-                        
-                        unsigned int posInGroup = (id % nWorkersPerGroup);
-                        if (posInGroup == 0) {
-                            posInGroup = nWorkersPerGroup;
+                        if (!inGroup || !inRange) {
+                            ASKAPLOG_INFO_STR(logger, "Master received request from " << id
+                                              << " Worker NOT in group or already has full allocation or Channel not in allocation");
+                            ContinuumWorkUnit wu;
+                            wu.set_payloadType(ContinuumWorkUnit::NA);
+                            wu.sendUnit(id,itsComms);
                         }
-                        posInGroup = posInGroup-1;
-                        
-                        unsigned int baseChannel = posInGroup * nChanperCore;
-                        unsigned int topChannel = baseChannel + nChanperCore - 1;
-                        
-                        if (localChan >= baseChannel && localChan <= topChannel) {
-                            inRange = 1;
-                        }
-                       
-                        
                     }
-                    if (!inGroup || !inRange) {
-                        ASKAPLOG_INFO_STR(logger, "Master received request from " << id
-                                          << " Worker NOT in group or already has full allocation or Channel not in allocation");
-                        ContinuumWorkUnit wu;
-                        wu.set_payloadType(ContinuumWorkUnit::NA);
-                        wu.sendUnit(id,itsComms);
-                    }
+                    // If the worker is not in this group send NA (not applicable) and it will drop it
+                    // If the channel number is CHANNEL_UNINITIALISED then this indicates
+                    // there is no image associated with this message. If the channel
+                    // number is initialised yet the params pointer is null this indicates
+                    // that an an attempt was made to process this channel but an exception
+                    // was thrown.
+                    
+                    
+                    // Send the workunit to the worker
+                    ASKAPLOG_INFO_STR(logger, "Master is allocating workunit " << ms[n]
+                                      << ", local channel " <<  localChan << ", global channel "
+                                      << globalChannel << " to worker " << id);
+                    ContinuumWorkUnit wu;
+                    wu.set_payloadType(ContinuumWorkUnit::WORK);
+                    wu.set_dataset(ms[n]);
+                    wu.set_globalChannel(globalChannel);
+                    wu.set_localChannel(localChan);
+                    wu.set_beam(beam);
+                    wu.set_channelFrequency(freq.getValue("Hz"));
+                    wu.sendUnit(id,itsComms);
+                    ++outstanding;
+                    ++globalChannel;
+                    ++allocation[id];
                 }
-                // If the worker is not in this group send NA (not applicable) and it will drop it
-                // If the channel number is CHANNEL_UNINITIALISED then this indicates
-                // there is no image associated with this message. If the channel
-                // number is initialised yet the params pointer is null this indicates
-                // that an an attempt was made to process this channel but an exception
-                // was thrown.
-            
                 
-                // Send the workunit to the worker
-                ASKAPLOG_INFO_STR(logger, "Master is allocating workunit " << ms[n]
-                                  << ", local channel " <<  localChan << ", global channel "
-                                  << globalChannel << " to worker " << id);
-                ContinuumWorkUnit wu;
-                wu.set_payloadType(ContinuumWorkUnit::WORK);
-                wu.set_dataset(ms[n]);
-                wu.set_globalChannel(globalChannel);
-                wu.set_localChannel(localChan);
-                wu.set_channelFrequency(freq.getValue("Hz"));
-                wu.sendUnit(id,itsComms);
-                ++outstanding;
-                ++globalChannel;
-                ++allocation[id];
             }
-     
         }
     }
     

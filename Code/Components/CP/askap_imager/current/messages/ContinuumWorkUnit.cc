@@ -87,6 +87,10 @@ void ContinuumWorkUnit::set_channelFrequency(double freq)
     itsChannelFrequency = freq;
 }
 
+void ContinuumWorkUnit::set_beam(unsigned int beam)
+{
+    itsBeam = beam;
+}
 /////////////////////////////////////////////////////////////////////
 // Getters
 /////////////////////////////////////////////////////////////////////
@@ -114,7 +118,10 @@ double ContinuumWorkUnit::get_channelFrequency(void) const
 {
     return itsChannelFrequency;
 }
-
+unsigned int ContinuumWorkUnit::get_beam(void) const
+{
+    return itsBeam;
+}
 /////////////////////////////////////////////////////////////////////
 // Serializers
 /////////////////////////////////////////////////////////////////////

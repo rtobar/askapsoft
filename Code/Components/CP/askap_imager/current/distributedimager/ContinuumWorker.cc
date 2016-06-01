@@ -219,6 +219,12 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     
     unitParset.replace("Channels",ChannelPar);
     
+    string param = "beams";
+    std::ostringstream pstr;
+    
+    pstr<<"[" << wu.get_beam() << "]";
+    unitParset.replace(param, pstr.str().c_str());
+    
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
    
@@ -228,14 +234,10 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     // i am still working on that
     // Now trying to store the parset. the ds. and an imager.
   
-    
-    //
-    
-   
-    
-    
+
     unsigned int location = wu.get_localChannel() - this->baseChannel;
     workUnits[location] = wu; // this isn't needed anymore... i think
+   
     
     itsParsets[location] = diadvise.getParset();
 
