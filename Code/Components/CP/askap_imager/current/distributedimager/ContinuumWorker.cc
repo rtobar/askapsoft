@@ -476,8 +476,15 @@ void ContinuumWorker::processChannels()
     }
     
    
-
-   
+    
+    for (size_t i = 0; i < workUnits.size(); ++i) { // wrap up
+        
+        const string myMs = workUnits[i].get_dataset();
+        struct stat buffer;
+        if (stat (myMs.c_str(), &buffer) == 0) {
+            unlink(myMs.c_str());
+        }
+    }
     
 }
 
