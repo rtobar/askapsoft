@@ -32,6 +32,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <sys/stat.h>
+#include <unistd.h>
 
 // ASKAPsoft includes
 #include <askap/AskapLogging.h>
@@ -198,32 +200,56 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
         const string ms = wu.get_dataset();
     
     
-        MSSplitter mySplitter(unitParset);
+       
     
         const string shm_root = unitParset.getString("tmpfs","/dev/shm");
         
         std::ostringstream pstr;
         
-        pstr << shm_root << "/"<< ms << "_chan_" << wu.get_localChannel()+1;
+        pstr << shm_root << "/"<< ms << "_chan_" << wu.get_localChannel()+1 << "_beam_" << wu.get_beam() << ".ms";
        
         const string outms = pstr.str();
-       
-    
-        mySplitter.split(ms,outms,wu.get_localChannel()+1,wu.get_localChannel()+1,1,itsParset);
+        pstr << ".working";
         
+        const string outms_flag = pstr.str();
+        
+        string param = "beams";
+        std::ostringstream bstr;
+        
+        bstr<<"[" << wu.get_beam() << "]";
+        
+        unitParset.replace(param, bstr.str().c_str());
+        
+        struct stat buffer;
+        while (stat (outms_flag.c_str(), &buffer) == 0) {
+            // flag file exists - someone is writing
+         
+            sleep(1);
+        }
+        if (stat (outms.c_str(), &buffer)) {
+            // file cannot be read
+            
+            // drop trigger
+            ofstream trigger;
+            trigger.open(outms_flag.c_str());
+            trigger.close();
+            MSSplitter mySplitter(unitParset);
+            
+            mySplitter.split(ms,outms,wu.get_localChannel()+1,wu.get_localChannel()+1,1,unitParset);
+            unlink(outms_flag.c_str());
+            
+        }
+           
+    
         wu.set_dataset(outms);
-       
-        sprintf(ChannelPar,"[1,1]");
         unitParset.replace("dataset",outms);
+        
+        sprintf(ChannelPar,"[1,1]");
     }
     
     unitParset.replace("Channels",ChannelPar);
     
-    string param = "beams";
-    std::ostringstream pstr;
     
-    pstr<<"[" << wu.get_beam() << "]";
-    unitParset.replace(param, pstr.str().c_str());
     
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
@@ -321,7 +347,7 @@ void ContinuumWorker::processChannels()
             workingImager.calcNE();
             
             if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
                 rootImager.getNE()->merge(*workingImager.getNE());
                
                 ASKAPLOG_INFO_STR(logger,"Merged");
@@ -446,7 +472,7 @@ void ContinuumWorker::processChannels()
         rootImager.sendNE();
     
     
-        // end wrap up
+        // unlink the files ... be a good neighbour
     }
     
    

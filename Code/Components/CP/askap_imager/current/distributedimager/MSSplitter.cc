@@ -74,6 +74,31 @@ MSSplitter::MSSplitter(LOFAR::ParameterSet& Parset)
     itsTimeEnd(std::numeric_limits<double>::max()),
     itsParset(Parset)
 {
+
+    // Read beam selection parameters
+    if (itsParset.isDefined("beams")) {
+        const vector<uint32_t> v = itsParset.getUint32Vector("beams", true);
+        itsBeams.insert(v.begin(), v.end());
+        ASKAPLOG_INFO_STR(logger, "Including ONLY beams: " << v);
+    }
+    
+    // Read scan id selection parameters
+    if (itsParset.isDefined("scans")) {
+        const vector<uint32_t> v = itsParset.getUint32Vector("scans", true);
+        itsScans.insert(v.begin(), v.end());
+        ASKAPLOG_INFO_STR(logger, "Including ONLY scan numbers: " << v);
+    }
+    
+    // Read field name selection parameters
+    //if (itsParset.isDefined("fieldnames")) {
+    //    const vector<string> names = itsParset.getStringVector("fieldnames", true);
+    //    ASKAPLOG_INFO_STR(logger, "Including ONLY fields with names: " << names);
+    //    const vector<uint32_t> v = configureFieldNameFilter(names,invis);
+    //    itsFieldIds.insert(v.begin(), v.end());
+    //    ASKAPLOG_INFO_STR(logger, "  fields: " << v);
+    //}
+
+
 }
 
 boost::shared_ptr<casa::MeasurementSet> MSSplitter::create(
@@ -455,10 +480,16 @@ bool MSSplitter::rowIsFiltered(uint32_t scanid, uint32_t fieldid,
 
     if (!itsFieldIds.empty() && itsFieldIds.find(fieldid) == itsFieldIds.end()) return true;
 
-    if (!itsBeams.empty() &&
-            itsBeams.find(feed1) == itsBeams.end() &&
+    if (!itsBeams.empty()) {
+        if (itsBeams.find(feed1) == itsBeams.end() ||
             itsBeams.find(feed2) == itsBeams.end()) {
-        return true;
+            // beam not found in any element of row
+            return true;
+        }
+    
+        else {
+            return false;
+        }
     }
 
     return false;
