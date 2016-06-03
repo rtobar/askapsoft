@@ -199,9 +199,6 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     {
         const string ms = wu.get_dataset();
     
-    
-       
-    
         const string shm_root = unitParset.getString("tmpfs","/dev/shm");
         
         std::ostringstream pstr;
@@ -413,7 +410,7 @@ void ContinuumWorker::processChannels()
                 workingImager.calcNE();
                 
                 if (i>0) {
-                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
                     rootImager.getNE()->merge(*workingImager.getNE());
                    
                     ASKAPLOG_INFO_STR(logger,"Merged");
@@ -460,7 +457,7 @@ void ContinuumWorker::processChannels()
             workingImager.calcNE();
             
             if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size());
+                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
                 rootImager.getNE()->merge(*workingImager.getNE());
                 
                 ASKAPLOG_INFO_STR(logger,"Merged");
