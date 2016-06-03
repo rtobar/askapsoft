@@ -132,6 +132,7 @@ void ContinuumWorkUnit::writeToBlob(LOFAR::BlobOStream& os) const
     os << itsGlobalChannel;
     os << itsChannelFrequency;
     os << itsLocalChannel;
+    os << itsBeam;
 }
 
 void ContinuumWorkUnit::readFromBlob(LOFAR::BlobIStream& is)
@@ -143,7 +144,8 @@ void ContinuumWorkUnit::readFromBlob(LOFAR::BlobIStream& is)
     is >> itsGlobalChannel;
     is >> itsChannelFrequency;
     is >> itsLocalChannel;
-
+    is >> itsBeam;
+    
     itsPayloadType = static_cast<PayloadType>(payloadType);
 }
 /////////////////////////////////////////////////////////////////////
