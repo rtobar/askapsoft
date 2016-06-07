@@ -121,7 +121,8 @@ void ContinuumWorker::run(void)
     // Send the initial request for work
     ContinuumWorkRequest wrequest;
     ASKAPLOG_INFO_STR(logger,"Worker is sending request for work");
-   
+    const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
+
     
 
     
@@ -152,23 +153,19 @@ void ContinuumWorker::run(void)
             
             //storeMs(wu,itsParset); // proxy for storing the dataset somehow
            
-            
-            processWorkUnit(wu);
-            
-           
-            
-            askap::scimath::Params::ShPtr params; // also a proxy for information - dont need this anymore
-            
-            // Send the params to the master, which also implicitly requests
-            // more work
-            ASKAPLOG_INFO_STR(logger, "Acknowledge receipt of local channel "
-                              << wu.get_localChannel()
-                              << ", global channel " << wu.get_globalChannel()
-                              << ", frequency " << wu.get_channelFrequency()/1.e6 << "MHz");
-            wrequest.set_globalChannel(wu.get_globalChannel());
-            wrequest.set_params(params);
-            wrequest.sendRequest(itsMaster,itsComms);
-            wrequest.set_params(askap::scimath::Params::ShPtr()); // Free memory
+            for (unsigned int eachWu = 0; eachWu < nchanpercore; eachWu++ ) {
+                ContinuumWorkUnit thisWu;
+                thisWu.set_localChannel(wu.get_localChannel()+eachWu);
+                thisWu.set_channelFrequency(wu.get_channelFrequency()); // hope this is not used
+                
+                thisWu.set_payloadType(ContinuumWorkUnit::WORK);
+                thisWu.set_dataset(wu.get_dataset());
+                thisWu.set_globalChannel(wu.get_globalChannel());
+                thisWu.set_beam(wu.get_beam());
+                
+                processWorkUnit(thisWu);
+            }
+    
         }
         
     }

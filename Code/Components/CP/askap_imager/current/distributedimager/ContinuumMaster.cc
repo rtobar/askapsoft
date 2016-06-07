@@ -177,7 +177,8 @@ void ContinuumMaster::run(void)
             for (size_t group = 0; group<itsComms.nGroups(); ++group) {
                 
                 // Iterate over all channels in the measurement set
-                for (unsigned int localChan = 0; localChan < msChannels; ++localChan) {
+                // but each core just needs to ask once before it is allocated all its channels
+                for (unsigned int localChan = 0; localChan < msChannels; localChan = localChan+nChanperCore) {
                     
                     casa::Quantity freq;
                     
@@ -201,10 +202,6 @@ void ContinuumMaster::run(void)
                             inGroup = 1;
                             ASKAPLOG_INFO_STR(logger, "Master received request from " << id << " Worker in group "
                                               << group);
-                            if (allocation[id] >= nChanperCore) {
-                                ASKAPLOG_INFO_STR(logger, "But " << id << " already reached allocation");
-                                inGroup = 0;
-                            }
                             /// we need the channel to fall into the allocation for this id : the position this id holds in the group
                             /// multiplied by the number of channels per core
                             /// what is the position this rank holds in the group
@@ -255,7 +252,7 @@ void ContinuumMaster::run(void)
                     wu.sendUnit(id,itsComms);
                     ++outstanding;
                     ++globalChannel;
-                    ++allocation[id];
+                  
                 }
                 
             }
