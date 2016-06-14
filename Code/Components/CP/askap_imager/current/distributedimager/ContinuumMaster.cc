@@ -95,9 +95,7 @@ void ContinuumMaster::run(void)
     
     const double targetPeakResidual = synthesis::SynthesisParamsHelper::convertQuantity(
                 itsParset.getString("threshold.majorcycle", "-1Jy"), "Jy");
-    const bool writeAtMajorCycle = itsParset.getBool("writeAtMajorCycle", false);
-    const int nCycles = itsParset.getInt32("ncycles", 0);
-    const int nChanperCore = itsParset.getInt32("nchanpercore", 0);
+        const int nChanperCore = itsParset.getInt32("nchanpercore", 0);
    
     // Send work orders to the worker processes, handling out
     // more work to the workers as needed.
@@ -289,12 +287,19 @@ void ContinuumMaster::run(void)
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
     
+    const bool writeAtMajorCycle = unitParset.getBool("Images.writeAtMajorCycle", false);
+    const int nCycles = unitParset.getInt32("ncycles", 0);
     
-    synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
+    ASKAPLOG_INFO_STR(logger,"*****");
+    ASKAPLOG_INFO_STR(logger,"Parset" << diadvise.getParset());
+    ASKAPLOG_INFO_STR(logger,"*****");
+    
+    
     if (nCycles == 0) {
+        synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
         ASKAPLOG_INFO_STR(logger, "Master beginning single cycle");
         imager.broadcastModel(); // initially empty model
-        imager.getNE()->reset();
+     
         imager.receiveNE();
         
         /// No Minor Cycle to mimic cimager
@@ -303,24 +308,28 @@ void ContinuumMaster::run(void)
         /// Implicit receive in here
         
         /// imager.solveNE();
+        /// Write out the images
+        imager.writeModel();
+
     }
     else {
-        imager.broadcastModel(); // initially empty model
         
         for (int cycle = 0; cycle < nCycles; ++cycle) {
-            ASKAPLOG_INFO_STR(logger, "Master beginning major cycle");
-            
-            
-            imager.getNE()->reset();
-            
+            ASKAPLOG_INFO_STR(logger, "Master beginning major cycle ** " << cycle);
+            synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
+            if (cycle==0) {
+                imager.broadcastModel(); // initially empty model
+            }
             /// Minor Cycle
             /// Implicit receive in here
+           
             imager.solveNE();
             
+            imager.broadcastModel();
             
             if (imager.params()->has("peak_residual")) {
                 const double peak_residual = imager.params()->scalarValue("peak_residual");
-                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+                ASKAPLOG_INFO_STR(logger, "Major Cycle " << cycle << " Reached peak residual of " << peak_residual);
                 if (peak_residual < targetPeakResidual) {
                     ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
                                       << targetPeakResidual << " Jy. Stopping.");
@@ -335,20 +344,26 @@ void ContinuumMaster::run(void)
                     }
                 }
             }
-            
-            imager.broadcastModel(); // initially empty model
+            if (writeAtMajorCycle) {
+                ASKAPLOG_INFO_STR(logger, "Writing out model");
+                imager.writeModel(std::string(".majorcycle.") + utility::toString(cycle + 1));
+            }
+            else {
+                ASKAPLOG_INFO_STR(logger, "Not writing out model");
+            }
+            if (cycle == nCycles-1) {
+                imager.receiveNE();
+                imager.writeModel();
+
+            }
             
         }
         
-        imager.getNE()->reset();
-        imager.receiveNE();
     }
         
     
     
     
-    /// Write out the images
-    imager.writeModel();
     
     logBeamInfo();
 

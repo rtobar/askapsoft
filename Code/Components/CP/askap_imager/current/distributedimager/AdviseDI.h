@@ -68,7 +68,7 @@ public:
    
    void addMissingParameters();
    
-   LOFAR::ParameterSet& getParset() { return itsParset; };
+   LOFAR::ParameterSet getParset() { return itsParset; };
    
 protected:
    std::vector<std::string> getDatasets();

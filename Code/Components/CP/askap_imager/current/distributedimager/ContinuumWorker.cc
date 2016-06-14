@@ -215,6 +215,9 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
         unitParset.replace(param, bstr.str().c_str());
         
         struct stat buffer;
+        if (stat (outms_flag.c_str(), &buffer) == 0) {
+            ASKAPLOG_WARN_STR(logger, "Split file already exists");
+        }
         while (stat (outms_flag.c_str(), &buffer) == 0) {
             // flag file exists - someone is writing
          
@@ -310,14 +313,16 @@ void ContinuumWorker::processChannels()
     else {
         localChannel = workUnits[0].get_localChannel();
     }
-    CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
+    
     
     
     if (nCycles == 0) {
         
+        CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
         rootImager.receiveModel();
-       
-        for (size_t i = 0; i < workUnits.size(); ++i) {
+        rootImager.calcNE();
+        
+        for (size_t i = 1; i < workUnits.size(); ++i) {
             
             const string myMs = workUnits[i].get_dataset();
             
@@ -351,16 +356,24 @@ void ContinuumWorker::processChannels()
         }
         ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
         rootImager.sendNE();
-        
+        rootImager.getNE()->reset();
      
         ASKAPLOG_INFO_STR(logger,"Sent");
+        
+        
+        
     }
     else {
-        rootImager.receiveModel();
         
-        for (size_t n = 0; n < nCycles; n++) {
+        
+        for (size_t n = 0; n <= nCycles; n++) {
             
+            CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
+            ASKAPLOG_INFO_STR(logger, "Worker reset NE  ");
             
+            ASKAPLOG_INFO_STR(logger,"Worker waiting to receive new model");
+            rootImager.receiveModel();
+            ASKAPLOG_INFO_STR(logger, "Worker received model for cycle  " << n);
             
             if (rootImager.params()->has("peak_residual")) {
                 const double peak_residual = rootImager.params()->scalarValue("peak_residual");
@@ -379,8 +392,10 @@ void ContinuumWorker::processChannels()
                 }
             }
             
+            ASKAPLOG_INFO_STR(logger, "Worker calculating NE");
+            rootImager.calcNE();
             
-            for (size_t i = 0; i < workUnits.size(); ++i) {
+            for (size_t i = 1; i < workUnits.size(); ++i) {
                 
                 const string myMs = workUnits[i].get_dataset();
                 
@@ -399,11 +414,8 @@ void ContinuumWorker::processChannels()
                 CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
                 
                 workingImager.replaceModel(rootImager.params());
-
-                
-               
-            
-                
+                ASKAPLOG_INFO_STR(logger, "workingImager Model" << workingImager.params());
+                ASKAPLOG_INFO_STR(logger, "rootImager Model" << rootImager.params());
                 workingImager.calcNE();
                 
                 if (i>0) {
@@ -415,64 +427,19 @@ void ContinuumWorker::processChannels()
                 
                 
             }
-            ASKAPLOG_INFO_STR(logger,"Sending NE to master for cycle " << n);
+            ASKAPLOG_INFO_STR(logger,"Worker sending NE to master for cycle " << n);
             rootImager.sendNE();
            
-            
-            
-            ASKAPLOG_INFO_STR(logger,"Waiting to receive new model");
-            
-            rootImager.receiveModel();
+           
             
         }
-        
-    
-        for (size_t i = 0; i < workUnits.size(); ++i) { // wrap up
-            
-            const string myMs = workUnits[i].get_dataset();
-            
-            TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
-            
-            ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
-            
-            if (usetmpfs) {
-                localChannel = 0;
-            }
-            else {
-                localChannel = workUnits[i].get_localChannel();
-            }
-
-            
-            CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
-            
-            workingImager.replaceModel(rootImager.params());
-
-            
-            
-          
-            
-            workingImager.calcNE();
-            
-            if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
-                rootImager.getNE()->merge(*workingImager.getNE());
-                
-                ASKAPLOG_INFO_STR(logger,"Merged");
-            }
-            
-            
-        }
-        ASKAPLOG_INFO_STR(logger,"Sending NE to master for wrapup ");
-        rootImager.sendNE();
-    
-    
-        // unlink the files ... be a good neighbour
+       
     }
     
    
     
     for (size_t i = 0; i < workUnits.size(); ++i) { // wrap up
-        
+        // this needs full path
         const string myMs = workUnits[i].get_dataset();
         struct stat buffer;
         if (stat (myMs.c_str(), &buffer) == 0) {

@@ -252,7 +252,7 @@ SpectralLineWorker::processChannel(askap::accessors::TableDataSource& ds,
             // Solve NE
             solverCore.solveNE(ne_p);
 
-            if (model_p->has("peak_residual")) {
+            if (model_p->has("peak_residual")) { 
                 const double peak_residual = model_p->scalarValue("peak_residual");
                 ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
                 if (peak_residual < targetPeakResidual) {

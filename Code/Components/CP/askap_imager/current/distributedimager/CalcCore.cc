@@ -77,6 +77,7 @@ CalcCore::CalcCore(LOFAR::ParameterSet& parset,
 
 CalcCore::~CalcCore()
 {
+   
 }
 void CalcCore::doCalc()
 {
@@ -85,7 +86,7 @@ void CalcCore::doCalc()
     timer.mark();
      
     
-    ASKAPLOG_INFO_STR(logger, "Calculating NE .... for channel" << itsChannel);
+    ASKAPLOG_INFO_STR(logger, "Calculating NE .... for channel " << itsChannel);
     
     
     accessors::TableDataSource ds = itsData;
@@ -135,29 +136,20 @@ void CalcCore::calcNE()
    
    
     /// Now we need to recreate the normal equations
-    if (!itsNe) {
-        ASKAPLOG_INFO_STR(logger, "Constructing Normal Equations from model");
+   
+    itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
     
-        itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
-    
-        ASKAPLOG_INFO_STR(logger, "Constructed Normal Equations");
-    }
-    else{
-        
-        ASKAPLOG_INFO_STR(logger, "Imaging Normal Equations already constructed");
-    }
-    
-    if (itsComms.isWorker())
-    {
-        ASKAPCHECK(gridder(), "Gridder not defined");
-        ASKAPCHECK(itsModel, "Model not defined");
-        ASKAPCHECK(itsNe, "NormalEquations not defined");
+   
+  
+    ASKAPCHECK(gridder(), "Gridder not defined");
+    ASKAPCHECK(itsModel, "Model not defined");
+    ASKAPCHECK(itsNe, "NormalEquations not defined");
         
       
-        doCalc();
+    doCalc();
        
         
-    }
+
     
 }
 
