@@ -31,8 +31,25 @@
 
 ID_LINMOS_SCI=""
 
-if [ $DO_MOSAIC == true ]; then
+DO_IT=$DO_MOSAIC
 
+BEAM=all
+setImageBaseCont
+mosImage=image.${imageBase}
+if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
+    mosImage="${mosImage}.taylor.0"
+fi
+mosImage="${mosImage}.restored"
+
+if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
+    if [ $DO_IT == true ]; then
+        echo "Image ${mosImage} exists, so not running continuum mosaicking"
+    fi
+    DO_IT=false
+fi
+
+if [ $DO_IT == true ]; then
+    
     sbatchfile=$slurms/science_linmos.sbatch
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
@@ -71,8 +88,7 @@ else
     imageSuffix=restored
 fi
 beamList=""
-BEAMS_TO_USE="${BEAMS_TO_USE}"
-for beam in \${BEAMS_TO_USE}; do
+for((beam=${BEAM_MIN};beam<=${BEAM_MAX};beam++)); do
     if [ -e \${imagePrefix}.beam\${beam}.\${imageSuffix} ]; then
         beamList="\${beamList}beam\${beam} "
     else

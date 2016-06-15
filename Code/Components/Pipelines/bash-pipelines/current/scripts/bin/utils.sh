@@ -49,10 +49,21 @@ function archiveConfig()
     filename=$(basename "$1")
     extension="${filename##*.}"
     filename="${filename%.*}"
-    cp $1 $slurmOut/${filename}__${NOW}.${extension}
+    archivedConfig=$slurmOut/${filename}__${NOW}.${extension}
+    cp $1 $archivedConfig
     
 }
 
+##############################
+# Rejuvenation
+
+# Takes one argument, a file or directory
+function rejuvenate()
+{
+    if [ "$1" != "" ]; then
+        find $1 -exec touch {} \;
+    fi
+}
 
 ##############################
 # JOB ID MANAGEMENT

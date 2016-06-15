@@ -83,6 +83,8 @@ class ContinuumMaster {
         /// @param[in] parset   the parameterset to use as input.
         /// @return a vector containing in each element one dataset.
         std::vector<std::string> getDatasets(const LOFAR::ParameterSet& itsParset);
+    
+        std::vector<int> getBeams(void);
 
         void handleImageParams(askap::scimath::Params::ShPtr params, unsigned int chan);
         void handleRestoredImageParams(askap::scimath::Params::ShPtr params, unsigned int chan);
@@ -93,6 +95,7 @@ class ContinuumMaster {
         /// Communications class
         askapparallel::AskapParallel& itsComms;
 
+        /// The rest of these are for the Spectral line case - which I haven't added yet Ord-6/2016
         MSGroupInfo isMSGroupInfo;
 
         boost::scoped_ptr<CubeBuilder> itsImageCube;
