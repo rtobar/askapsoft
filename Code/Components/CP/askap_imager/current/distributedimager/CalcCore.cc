@@ -52,7 +52,7 @@
 #include <dataaccess/ParsetInterface.h>
 #include <measurementequation/ImageFFTEquation.h>
 #include <parallel/GroupVisAggregator.h>
-
+#include <utils/MultiDimArrayPlaneIter.h>
 
 // Local includes
 #include "distributedimager/IBasicComms.h"
@@ -126,7 +126,8 @@ void CalcCore::doCalc()
     ASKAPCHECK(itsEquation, "Equation not defined");
     ASKAPCHECK(itsNe, "NormalEquations not defined");
     itsEquation->calcEquations(*itsNe);
-    ASKAPLOG_INFO_STR(logger, "Calculated normal equations in "<< timer.real()
+    
+    ASKAPLOG_INFO_STR(logger,"Calculated normal equations in "<< timer.real()
                       << " seconds ");
     
 }
@@ -135,9 +136,10 @@ void CalcCore::calcNE()
 {
    
    
+    reset();
     /// Now we need to recreate the normal equations
-   
-    itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
+    if (!itsNe)
+        itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
     
    
   
@@ -153,8 +155,22 @@ void CalcCore::calcNE()
     
 }
 
-void CalcCore::mergeNE()
+void CalcCore::reset()
 {
-    
+    itsNe->reset();
 }
 
+void CalcCore::check()
+{
+    std::vector<std::string> names = itsNe->unknowns();
+    const ImagingNormalEquations &checkRef =
+    dynamic_cast<const ImagingNormalEquations&>(*itsNe);
+    
+    casa::Vector<double> diag(checkRef.normalMatrixDiagonal(names[0]));
+    casa::Vector<double> dv = checkRef.dataVector(names[0]);
+    casa::Vector<double> slice(checkRef.normalMatrixSlice(names[0]));
+    casa::Vector<double> pcf(checkRef.preconditionerSlice(names[0]));
+    
+    ASKAPLOG_INFO_STR(logger, "Max data: " << max(dv) << " Max PSF: " << max(slice) << " Normalised: " << max(dv)/max(slice));
+  
+}

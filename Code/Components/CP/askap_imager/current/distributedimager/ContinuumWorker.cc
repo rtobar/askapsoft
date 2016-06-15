@@ -364,12 +364,10 @@ void ContinuumWorker::processChannels()
         
     }
     else {
-        
+        CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
         
         for (size_t n = 0; n <= nCycles; n++) {
             
-            CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
-            ASKAPLOG_INFO_STR(logger, "Worker reset NE  ");
             
             ASKAPLOG_INFO_STR(logger,"Worker waiting to receive new model");
             rootImager.receiveModel();
@@ -394,6 +392,12 @@ void ContinuumWorker::processChannels()
             
             ASKAPLOG_INFO_STR(logger, "Worker calculating NE");
             rootImager.calcNE();
+            
+            std::vector<std::string> names = rootImager.getNE()->unknowns();
+            
+            ASKAPLOG_INFO_STR(logger,"Unknowns are " << names);
+            
+            rootImager.check();
             
             for (size_t i = 1; i < workUnits.size(); ++i) {
                 

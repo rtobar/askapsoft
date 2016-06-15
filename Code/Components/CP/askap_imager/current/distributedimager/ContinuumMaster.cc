@@ -313,16 +313,16 @@ void ContinuumMaster::run(void)
 
     }
     else {
-        
+        synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
         for (int cycle = 0; cycle < nCycles; ++cycle) {
             ASKAPLOG_INFO_STR(logger, "Master beginning major cycle ** " << cycle);
-            synthesis::ImagerParallel imager(itsComms, diadvise.getParset());
+            
             if (cycle==0) {
                 imager.broadcastModel(); // initially empty model
             }
             /// Minor Cycle
             /// Implicit receive in here
-           
+            imager.calcNE(); // resets the itsNE
             imager.solveNE();
             
             imager.broadcastModel();
@@ -352,6 +352,7 @@ void ContinuumMaster::run(void)
                 ASKAPLOG_INFO_STR(logger, "Not writing out model");
             }
             if (cycle == nCycles-1) {
+                imager.calcNE(); // resets the itsNE
                 imager.receiveNE();
                 imager.writeModel();
 

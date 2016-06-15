@@ -66,9 +66,9 @@ namespace cp {
 
         void doCalc();
         
-        void mergeNE();
+        void reset();
         
-            
+        void check();
 
     private:
        
