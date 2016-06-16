@@ -92,7 +92,7 @@ void CalcCore::doCalc()
 
     casa::Timer timer;
     timer.mark();
-    
+
     ASKAPLOG_INFO_STR(logger, "Calculating NE .... for channel " << itsChannel);
     if (!itsEquation) {
 

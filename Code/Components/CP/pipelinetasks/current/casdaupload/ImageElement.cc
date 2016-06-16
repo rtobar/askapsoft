@@ -36,6 +36,8 @@
 // ASKAPsoft includes
 #include "casdaupload/ProjectElementBase.h"
 #include "casdaupload/ElementBase.h"
+#include "casdaupload/CasdaFileUtils.h"
+#include "askap/AskapLogging.h"
 #include "askap/AskapError.h"
 #include "xercesc/dom/DOM.hpp" // Includes all DOM
 #include "boost/filesystem.hpp"
@@ -48,6 +50,8 @@ using xercesc::DOMElement;
 using askap::accessors::XercescString;
 using askap::accessors::XercescUtils;
 
+ASKAP_LOGGER(logger, ".ImageElement");
+
 ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
     : TypeElementBase(parset)
 {
@@ -57,6 +61,43 @@ ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
         ASKAPTHROW(AskapError,
                    "Unsupported format image - Expect " << itsFormat << " file extension");
     }
+    itsThumbnailLarge = parset.getString("thumbnail_large", "");
+    itsThumbnailSmall = parset.getString("thumbnail_small", "");
+}
+
+xercesc::DOMElement* ImageElement::toXmlElement(xercesc::DOMDocument& doc) const
+{
+    DOMElement* e = TypeElementBase::toXmlElement(doc);
+
+    if (itsThumbnailLarge != "") {
+        XercescUtils::addTextElement(*e, "thumbnail_large", itsThumbnailLarge.filename().string());
+    }
+    if (itsThumbnailSmall != "") {
+        XercescUtils::addTextElement(*e, "thumbnail_small", itsThumbnailSmall.filename().string());
+    }
+
+    return e;
+}
+
+
+void ImageElement::copyAndChecksum(const boost::filesystem::path& outdir) const
+{
+
+    const boost::filesystem::path in(itsFilepath);
+    const boost::filesystem::path out(outdir / in.filename());
+    ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
+    CasdaFileUtils::copyAndChecksum(in, out);
+
+    const boost::filesystem::path inLarge(itsThumbnailLarge);
+    const boost::filesystem::path outLarge(outdir / inLarge.filename());
+    ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << inLarge);
+    CasdaFileUtils::copyAndChecksum(inLarge, outLarge);
+
+    const boost::filesystem::path inSmall(itsThumbnailSmall);
+    const boost::filesystem::path outSmall(outdir / inSmall.filename());
+    ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << inSmall);
+    CasdaFileUtils::copyAndChecksum(inSmall, outSmall);
+
 }
 
 
