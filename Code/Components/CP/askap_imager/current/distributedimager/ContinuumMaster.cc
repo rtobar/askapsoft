@@ -96,7 +96,7 @@ void ContinuumMaster::run(void)
     
     const double targetPeakResidual = synthesis::SynthesisParamsHelper::convertQuantity(
                 itsParset.getString("threshold.majorcycle", "-1Jy"), "Jy");
-        const int nChanperCore = itsParset.getInt32("nchanpercore", 0);
+    int nChanperCore = itsParset.getInt32("nchanpercore", 0);
    
     // Send work orders to the worker processes, handling out
     // more work to the workers as needed.
@@ -151,16 +151,27 @@ void ContinuumMaster::run(void)
         const askap::accessors::IConstDataSharedIter it = ds.createConstIterator(sel, conv);
 
         const unsigned int msChannels = it->nChannel();
+        unsigned int workChannels = nWorkersPerGroup * nChanperCore;
+        
+        if (msChannels < workChannels) {
+            
+            ASKAPTHROW(std::runtime_error,
+                       "Insufficient work for resources available reduce nchanpercore");
+            
+        }
+        else {
+            ASKAPLOG_WARN_STR(logger, "Too much work for resources avaiable - can deal with this though - will only process " << workChannels << " channels");
+        }
         ASKAPLOG_INFO_STR(logger, "Creating work orders for measurement set "
-                           << ms[n] << " with " << msChannels << " channels and " << nChanperCore
+                           << ms[n] << " processing " << workChannels << " channels and " << nChanperCore
                            << " channels per core");
 
         
-        if (msChannels != nWorkersPerGroup * nChanperCore) {
+        if (msChannels > nWorkersPerGroup * nChanperCore) {
            ASKAPLOG_WARN_STR(logger,"Only " << nWorkersPerGroup * nChanperCore << " of " << msChannels << " will be processed");
         }
         
-        ASKAPLOG_INFO_STR(logger,"There are " << nWorkersPerGroup << " workers per group and " << nBeams << " beams to process");
+        // ASKAPLOG_INFO_STR(logger,"There are " << nWorkersPerGroup << " workers per group and " << nBeams << " beams to process");
         int minWorkers = msChannels * itsComms.nGroups() * nBeams/nChanperCore;
         
         ASKAPLOG_WARN_STR(logger,"Will currently only process beam " << beam);
@@ -178,7 +189,7 @@ void ContinuumMaster::run(void)
             
             // Iterate over all channels in the measurement set
             // but each core just needs to ask once before it is allocated all its channels
-            for (unsigned int localChan = 0; localChan < msChannels; localChan = localChan+nChanperCore) {
+            for (unsigned int localChan = 0; localChan < workChannels; localChan = localChan+nChanperCore) {
                 
                 casa::Quantity freq;
                 

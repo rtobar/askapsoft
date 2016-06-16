@@ -47,6 +47,9 @@
 #include <measurementequation/GaussianTaperPreconditioner.h>
 #include <measurementequation/ImageMultiScaleSolver.h>
 #include <measurementequation/ImageParamsHelper.h>
+#include <measurementequation/CalibrationApplicatorME.h>
+#include <measurementequation/CalibrationIterator.h>
+#include <calibaccess/CalibAccessFactory.h>
 #include <casacore/casa/OS/Timer.h>
 #include <dataaccess/TableDataSource.h>
 #include <dataaccess/ParsetInterface.h>
@@ -72,52 +75,76 @@ CalcCore::CalcCore(LOFAR::ParameterSet& parset,
                        accessors::TableDataSource ds, int localChannel)
     : ImagerParallel(comms,parset), itsParset(parset), itsComms(comms),itsData(ds),itsChannel(localChannel)
 {
-    
+    /// We need to set the calibration info here
+    /// the ImagerParallel constructor will do the work to
+    /// obtain the itsSolutionSource - but that is a provate member of
+    /// the parent class.
+    /// Not sure whether to use it directly or copy it.
+
 }
 
 CalcCore::~CalcCore()
 {
-   
+
 }
 void CalcCore::doCalc()
 {
-   
+
     casa::Timer timer;
     timer.mark();
-     
     
     ASKAPLOG_INFO_STR(logger, "Calculating NE .... for channel " << itsChannel);
-    
-    
-    accessors::TableDataSource ds = itsData;
-   
-    // Setup data iterator
-    
-    IDataSelectorPtr sel = ds.createSelector();
-    
-    sel->chooseCrossCorrelations();
-    sel << parset();
-    sel->chooseChannels(1, itsChannel);
-    
-    IDataConverterPtr conv = ds.createConverter();
-    conv->setFrequencyFrame(casa::MFrequency::Ref(casa::MFrequency::TOPO), "Hz");
-    conv->setDirectionFrame(casa::MDirection::Ref(casa::MDirection::J2000));
-    conv->setEpochFrame();
-    
-    IDataSharedIter it = ds.createIterator(sel, conv);
-
-   
-    ASKAPCHECK(itsModel, "Model not defined");
-    ASKAPCHECK(gridder(), "Gridder not defined");
-    // calibration can go below if required
     if (!itsEquation) {
-    
+
+        accessors::TableDataSource ds = itsData;
+
+        // Setup data iterator
+
+        IDataSelectorPtr sel = ds.createSelector();
+
+        sel->chooseCrossCorrelations();
+        sel << parset();
+        sel->chooseChannels(1, itsChannel);
+
+        IDataConverterPtr conv = ds.createConverter();
+        conv->setFrequencyFrame(casa::MFrequency::Ref(casa::MFrequency::TOPO), "Hz");
+        conv->setDirectionFrame(casa::MDirection::Ref(casa::MDirection::J2000));
+        conv->setEpochFrame();
+
+        IDataSharedIter it = ds.createIterator(sel, conv);
+
+
+        ASKAPCHECK(itsModel, "Model not defined");
+        ASKAPCHECK(gridder(), "Gridder not defined");
+        // calibration can go below if required
+
+        if (!getSolutionSource()) {
+            ASKAPLOG_INFO_STR(logger,"Not applying calibration");
             ASKAPLOG_INFO_STR(logger, "building FFT/measurement equation" );
             boost::shared_ptr<ImageFFTEquation> fftEquation(new ImageFFTEquation (*itsModel, it, gridder()));
             ASKAPDEBUGASSERT(fftEquation);
             fftEquation->useAlternativePSF(parset());
             fftEquation->setVisUpdateObject(GroupVisAggregator::create(itsComms));
             itsEquation = fftEquation;
+        } else {
+            ASKAPLOG_INFO_STR(logger, "Calibration will be performed using solution source");
+            boost::shared_ptr<ICalibrationApplicator> calME(new CalibrationApplicatorME(getSolutionSource()));
+            // fine tune parameters
+            ASKAPDEBUGASSERT(calME);
+            calME->scaleNoise(parset().getBool("calibrate.scalenoise",false));
+            calME->allowFlag(parset().getBool("calibrate.allowflag",false));
+            calME->beamIndependent(parset().getBool("calibrate.ignorebeam", false));
+            //
+            IDataSharedIter calIter(new CalibrationIterator(it,calME));
+            boost::shared_ptr<ImageFFTEquation> fftEquation(
+                                                            new ImageFFTEquation (*itsModel, calIter, gridder()));
+            ASKAPDEBUGASSERT(fftEquation);
+            fftEquation->useAlternativePSF(parset());
+            fftEquation->setVisUpdateObject(GroupVisAggregator::create(itsComms));
+            itsEquation = fftEquation;
+        }
+
+
     }
     else {
         ASKAPLOG_INFO_STR(logger, "Reusing measurement equation and updating with latest model images" );
@@ -126,33 +153,31 @@ void CalcCore::doCalc()
     ASKAPCHECK(itsEquation, "Equation not defined");
     ASKAPCHECK(itsNe, "NormalEquations not defined");
     itsEquation->calcEquations(*itsNe);
-    
+
     ASKAPLOG_INFO_STR(logger,"Calculated normal equations in "<< timer.real()
                       << " seconds ");
-    
+
 }
 
 void CalcCore::calcNE()
 {
-   
-   
+
+
     reset();
     /// Now we need to recreate the normal equations
     if (!itsNe)
         itsNe=ImagingNormalEquations::ShPtr(new ImagingNormalEquations(*itsModel));
-    
-   
-  
+
     ASKAPCHECK(gridder(), "Gridder not defined");
     ASKAPCHECK(itsModel, "Model not defined");
     ASKAPCHECK(itsNe, "NormalEquations not defined");
-        
-      
-    doCalc();
-       
-        
 
-    
+
+    doCalc();
+
+
+
+
 }
 
 void CalcCore::reset()
@@ -165,12 +190,12 @@ void CalcCore::check()
     std::vector<std::string> names = itsNe->unknowns();
     const ImagingNormalEquations &checkRef =
     dynamic_cast<const ImagingNormalEquations&>(*itsNe);
-    
+
     casa::Vector<double> diag(checkRef.normalMatrixDiagonal(names[0]));
     casa::Vector<double> dv = checkRef.dataVector(names[0]);
     casa::Vector<double> slice(checkRef.normalMatrixSlice(names[0]));
     casa::Vector<double> pcf(checkRef.preconditionerSlice(names[0]));
-    
+
     ASKAPLOG_INFO_STR(logger, "Max data: " << max(dv) << " Max PSF: " << max(slice) << " Normalised: " << max(dv)/max(slice));
-  
+
 }
