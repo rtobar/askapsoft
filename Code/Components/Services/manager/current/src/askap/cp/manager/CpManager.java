@@ -191,7 +191,8 @@ public final class CpManager extends ServiceApplication {
 		try {
 			// TODO: get the topic name from parset or FCM. But which one?
 			sbStateChangedTopic = topicManager.retrieve("sbstatechange");
-			java.util.Map qos = null;
+			java.util.Map<String, String> qos = null;
+			//java.util.Map<String, String> qos = new java.util.HashMap<String, String>();
 			sbStateChangedTopic.subscribeAndGetPublisher(qos, sbStateChangedSubscriber);
 		}
 		// TODO: do I want to catch this here, print a message and allow execution to continue? Or should we abort?
