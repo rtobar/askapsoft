@@ -42,6 +42,10 @@ public final class CpManager extends ServiceApplication {
 	 * The IceStorm SBStateChanged topic
 	 */
 	IceStorm.TopicPrx sbStateChangedTopic = null;
+
+	/**
+	 * The IceStorm SBStateChanged subscriber
+	 */
 	Ice.ObjectPrx sbStateChangedSubscriber = null;
 
 	/**
@@ -76,7 +80,6 @@ public final class CpManager extends ServiceApplication {
 			}
 
 			// Initialise the Scheduling block state change subscriber
-			// TODO: this might need to move into ObsService if handling of the notification is dependent on internal ObsService state
 			boolean monitorSbStates = config().getBoolean("sbstatemonitor.enabled", false);
 			if (monitorSbStates) {
 				// TODO: pass in config if required.
