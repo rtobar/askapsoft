@@ -69,6 +69,15 @@ public final class CpManager extends ServiceApplication {
 				}
 			}
 
+			// Initialise the Scheduling block state change subscriber
+			boolean sbchange = config().getBoolean("sbstatemonitor.enabled", false);
+			if (sbchange) {
+				// TODO: pass in config if required.
+				if (!initSBStateMonitor()) {
+					logger.error("Scheduling block state change subscriber failed to initialise");
+				}
+			}
+
 			// Blocks until shutdown
 			ServiceManager.runService(communicator(), svc, serviceName, adapterName);
 			if (monitoring) {
@@ -119,6 +128,19 @@ public final class CpManager extends ServiceApplication {
 
 		MonitoringSingleton.init(communicator(),
 				serviceName, adapterName);
+		return true;
+	}
+
+	/**
+	 * Initialises the Scheduling block state change monitor.
+	 * 
+	 * @return true if the state change monitor was correctly initialised;
+	 * otherwise false.
+	 */
+	private boolean initSBStateMonitor() {
+		logger.debug("initialising SB state change subscriber");
+
+		// TODO: return actual status
 		return true;
 	}
 }
