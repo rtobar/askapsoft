@@ -191,8 +191,7 @@ public final class CpManager extends ServiceApplication {
 			java.util.Map qos = null;
 			sbStateChangedTopic.subscribeAndGetPublisher(qos, sbStateChangedSubscriber);
 		}
-		// todo: do I want to catch this here, print a message and allow execution 
-		// to continue? Or should we abort?
+		// TODO: do I want to catch this here, print a message and allow execution to continue? Or should we abort?
 		catch (IceStorm.NoSuchTopic ex) {
 			logger.error(ex);
 			return false;
