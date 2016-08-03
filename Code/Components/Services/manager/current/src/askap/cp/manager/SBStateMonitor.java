@@ -57,7 +57,7 @@ public class SBStateMonitor extends _ISBStateMonitorDisp {
 
 		if (0 == newState.compareTo(ObsState.PROCESSING)) {
 			logger.debug("Schedblock state changed to PROCESSING. Emitting notification");
-			// TODO: notify
+			// TODO: notify, probably via an injected notification interface
 		}
 	}
 }
