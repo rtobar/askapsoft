@@ -38,7 +38,7 @@ class TestRealIngest(object):
         self.igsession.terminate()
         self.igsession = None
 
-    # @skip('too slow!')
+    @skip('too slow!')
     def test_get_service_version(self):
         #Don't test the full string, as the version changes with SVN revision or tag.
         print "Calling getServiceVersion...",
@@ -46,7 +46,7 @@ class TestRealIngest(object):
         print "DONE"
         assert 'manager' == process_name
 
-    # @skip('too slow!')
+    @skip('too slow!')
     def test_start_abort_wait_observation_sequence(self):
         print "Starting observation...",
         self.service.startObs(0)

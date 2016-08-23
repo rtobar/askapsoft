@@ -38,13 +38,13 @@ class TestMockIngest(object):
         self.igsession.terminate()
         self.igsession = None
 
-    # @skip('too slow!')
+    @skip('too slow!')
     def test_get_service_version(self):
         #Don't test the full string, as the version changes with SVN revision or tag.
         process_name = self.service.getServiceVersion().split(';')[0]
         assert 'manager' == process_name
 
-    # @skip('too slow!')
+    @skip('too slow!')
     def test_start_abort_wait_observation_sequence(self):
         self.service.startObs(0)
         self.service.abortObs()
