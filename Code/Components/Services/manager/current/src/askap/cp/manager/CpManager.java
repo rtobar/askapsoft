@@ -199,8 +199,7 @@ public final class CpManager extends ServiceApplication {
         }
 
 		logger.debug("Getting Ice object adapter: SchedBlockStateMonitorAdapter");
-		Ice.ObjectAdapter adapter = communicator().createObjectAdapter(
-				"SchedBlockStateMonitorAdapter");
+		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("SchedBlockStateMonitorAdapter");
         if (adapter == null) {
             throw new RuntimeException("ICE adapter initialisation failed");
         }
