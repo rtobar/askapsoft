@@ -170,6 +170,15 @@ public final class CpManager extends ServiceApplication {
 	private boolean initSBStateMonitor() {
 		logger.debug("initialising SB state change subscriber");
 
+		// We need to sleep for a little while, so the IceStorm process can 
+		// start up during functional tests.
+		try {
+			Thread.sleep(1000);
+		}
+		catch (InterruptedException ex) {
+			logger.debug("Sleep interrupted");
+		}
+
 		String topicManagerName = config().getString("sbstatemonitor.topicmanager");
 		if (topicManagerName == null) {
 			logger.error("Parameter 'sbstatemonitor.topicmanager' not found");
@@ -181,6 +190,7 @@ public final class CpManager extends ServiceApplication {
 			logger.error("Parameter 'sbstatemonitor.topic' not found");
 			return false;
 		}
+
 		logger.debug("Getting topic manager proxy: " + topicManagerName);
 		Ice.ObjectPrx obj = communicator().stringToProxy(topicManagerName);
 		IceStorm.TopicManagerPrx topicManager = IceStorm.TopicManagerPrxHelper.checkedCast(obj);
@@ -188,9 +198,9 @@ public final class CpManager extends ServiceApplication {
             throw new RuntimeException("Failed to get IceStorm topic manager");
         }
 
-		// TODO: actual adapter name from somewhere. Do I use the same adapter 
-		// name as everything else? Or is there a different one for IceStorm?
-		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("ISBStateMonitorAdapter");
+		logger.debug("Getting Ice object adapter: SchedBlockStateMonitorAdapter");
+		Ice.ObjectAdapter adapter = communicator().createObjectAdapter(
+				"SchedBlockStateMonitorAdapter");
         if (adapter == null) {
             throw new RuntimeException("ICE adapter initialisation failed");
         }
