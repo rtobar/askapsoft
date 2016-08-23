@@ -170,8 +170,19 @@ public final class CpManager extends ServiceApplication {
 	private boolean initSBStateMonitor() {
 		logger.debug("initialising SB state change subscriber");
 
-		// TODO: I need to get the actual topic manager details from the parset or FMC
-		Ice.ObjectPrx obj = communicator().stringToProxy("IceStorm/TopicManager:tcp -p 9999");
+		String topicManagerName = config().getString("sbstatemonitor.topicmanager");
+		if (topicManagerName == null) {
+			logger.error("Parameter 'sbstatemonitor.topicmanager' not found");
+			return false;
+		}
+
+		String topicName = config().getString("sbstatemonitor.topic");
+		if (topicName == null) {
+			logger.error("Parameter 'sbstatemonitor.topic' not found");
+			return false;
+		}
+		logger.debug("Getting topic manager proxy: " + topicManagerName);
+		Ice.ObjectPrx obj = communicator().stringToProxy(topicManagerName);
 		IceStorm.TopicManagerPrx topicManager = IceStorm.TopicManagerPrxHelper.checkedCast(obj);
         if (topicManager == null) {
             throw new RuntimeException("Failed to get IceStorm topic manager");
@@ -189,10 +200,8 @@ public final class CpManager extends ServiceApplication {
 		adapter.activate();
 
 		try {
-			// TODO: get the topic name from parset or FCM. But which one?
-			sbStateChangedTopic = topicManager.retrieve("sbstatechange");
+			sbStateChangedTopic = topicManager.retrieve(topicName);
 			java.util.Map<String, String> qos = null;
-			//java.util.Map<String, String> qos = new java.util.HashMap<String, String>();
 			sbStateChangedTopic.subscribeAndGetPublisher(qos, sbStateChangedSubscriber);
 		}
 		// TODO: do I want to catch this here, print a message and allow execution to continue? Or should we abort?
