@@ -202,7 +202,9 @@ public final class CpManager extends ServiceApplication {
 
 		// Create the object adapter to bind our subscriber servant to the Ice runtime
 		logger.debug("Getting Ice object adapter: SBStateMonitorAdapter");
-		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("SBStateMonitorAdapter");
+		Ice.ObjectAdapter adapter = communicator().createObjectAdapterWithEndpoints(
+				"SBStateMonitorAdapter",
+				"tcp");
         if (adapter == null) {
             throw new RuntimeException("ICE adapter initialisation failed");
         }
