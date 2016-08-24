@@ -179,6 +179,7 @@ public final class CpManager extends ServiceApplication {
 			logger.debug("Sleep interrupted");
 		}
 
+		// Get the names of the topic manager and topic from the parset
 		String topicManagerName = config().getString("sbstatemonitor.topicmanager");
 		if (topicManagerName == null) {
 			logger.error("Parameter 'sbstatemonitor.topicmanager' not found");
@@ -191,6 +192,7 @@ public final class CpManager extends ServiceApplication {
 			return false;
 		}
 
+		// get a proxy to the IceStorm topic manager
 		logger.debug("Getting topic manager proxy: " + topicManagerName);
 		Ice.ObjectPrx obj = communicator().stringToProxy(topicManagerName);
 		IceStorm.TopicManagerPrx topicManager = IceStorm.TopicManagerPrxHelper.checkedCast(obj);
@@ -198,16 +200,19 @@ public final class CpManager extends ServiceApplication {
             throw new RuntimeException("Failed to get IceStorm topic manager");
         }
 
-		logger.debug("Getting Ice object adapter: SchedBlockStateMonitorAdapter");
-		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("SchedBlockStateMonitorAdapter");
+		// Create the object adapter to bind our subscriber servant to the Ice runtime
+		logger.debug("Getting Ice object adapter: SBStateMonitorAdapter");
+		Ice.ObjectAdapter adapter = communicator().createObjectAdapter("SBStateMonitorAdapter");
         if (adapter == null) {
             throw new RuntimeException("ICE adapter initialisation failed");
         }
 
+		// Instantiate our schedblock state monitor servant and register with the adapter
 		SBStateMonitor monitor = new SBStateMonitor();
 		sbStateChangedSubscriber = adapter.addWithUUID(monitor).ice_oneway();
 		adapter.activate();
 
+		// subscribe to the topic
 		try {
 			sbStateChangedTopic = topicManager.retrieve(topicName);
 			java.util.Map<String, String> qos = null;

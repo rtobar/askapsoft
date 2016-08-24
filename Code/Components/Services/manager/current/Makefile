@@ -21,8 +21,7 @@ clean:
 	find . -type f -name '*.log' -exec rm -f {} +
 	find . -type f -name '*.pyc' -exec rm -f {} +
 	find . -type d -name '*.ms' -exec rm -rf {} +
-	rm -rf functests/data/ install/ build/askap/
-	rm -rf dist/
+	rm -rf functests/data/ install/ build/askap/ dist/ test_reports/
 	rm -f ./cpmanager*
 
 .PHONY: install
