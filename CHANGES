@@ -1,3 +1,84 @@
+0.14.0 (11 August 2016)
+-----------------------
+
+A major release, with several new features and improvements for both
+the imaging software and the pipeline scripts.
+
+A new imager in under test in this release, currently just called 
+"imager" and it has the following features:
+
+ * In continuum mode it allows a core to process more than one channel.
+   This has a small cost in memory and a proportional increase in disk
+   access. But allows the continuum imaging to proceed with a much smaller
+   footprint on the cluster. This will allow simultaneous processing of all 
+   beams in a coming release. 
+ * Spectral line cubes can be made from measurement sets that are from different
+   epochs. The epochs are imaged separately but merged into the same image for
+   minor-cycle solving.
+ * The output spectral line cubes can be in the barycentric frame. This is currently
+   just nearest neighbour indexing. But the possibility of interpolation has not been
+   designed out. 
+ * The concept of "multiple writers" has been introduced to improve the disk access 
+   pattern for the spectral line mode.  This breaks up the cube into frequency bands.  
+   These can be recombined post-processing. 
+ * If you really want to increase the performance for many major cycles you can
+   also turn on a shared memory option which stores visibility sets in memory throughout 
+   processing.
+ * The imager takes the same parset as Cimager - but extra key-value pairs are required to implement
+   the features. 
+
+This new imager is still under test and we have not added the hooks into the pipeline yet. 
+
+Other updates to the imaging code include:
+ * Simager is now more robust against completely-flagged
+   channels - such channels will now be set to zero in the output
+   cube, instead of failing the simager job.
+ * The extraction of spectra done by Selavy is now more robust and
+   better able to handle multiple components and distributed
+   processing.
+ * Selavy now accepts a reference direction when providing a
+   components parset - the l & m coordinates are calculated relative
+   to this, rather than the image centre.
+ * The restore solver can now accept its own preconditioner
+   parameters, in addition to the general parameters used by the
+   other solvers. If specified, a second set of restored images
+   will be written with suffix ".alt.restored".
+
+The pipeline scripts have seen the following updates:
+ * There is a new option to have a different image centre for each
+   beam, rather than a common pixel grid for all images. This uses the
+   beam centre location taken from the footprint.py utility (an
+   external task in the ACES subversion area).
+ * The self-calibration can now use cmodel to generate a model image,
+   instead of using a components parset.
+ * There are new tasks to:
+   - Apply the gains calibration to the averaged measurement set
+   - Image the averaged measurement set as "continuum cubes", in
+     multiple polarisations
+   - Apply an image-based continuum-subtraction following the creation
+     of the spectral-line cubes. This makes use of an ACES python
+     script to fit a low-order polynomial to each spectrum in the
+     cube.
+  * The headers of the FITS files created by the pipelines now have a
+    wider range of metadata, including observatory and date-obs
+    keywords, as well as information about the askapsoft & pipeline
+    versions.
+  * The restore preconditioner options mentioned above are available
+    through RESTORE_PRECONDITIONER_ parameters, for the continuum
+    imaging only (it is not implemented for simager).
+  * Several bugs were fixed:
+    - The continuum subtraction was failing when using components if
+      no sources were found - it now skips the continuum subtraction
+      step.
+    - The askapdata module was, in certain situations, not loaded
+      correctly, leading to somewhat cryptic errors in the imaging.
+    - The parsing of mslist to obtain MS metadata would sometimes
+      fail, depending on the content of the MS. It is now much more
+      robust.
+    - The default for TILENCHAN_SL has been increased to 10, to
+      counter issues with mssplit running slow.
+
+
 0.13.2 (19 July 2016)
 ---------------------
 

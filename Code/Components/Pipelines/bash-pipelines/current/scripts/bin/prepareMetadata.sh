@@ -29,6 +29,98 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
+####################
+# Input Measurement Sets
+#  We define these based on the SB number
+
+# 1934-638 calibration
+if [ $DO_1934_CAL == true ]; then
+
+    if [ "$MS_INPUT_1934" == "" ]; then
+        if [ $SB_1934 != "SET_THIS" ]; then
+	    sb1934dir=$DIR_SB/$SB_1934
+	    if [ `\ls $sb1934dir | grep "ms" | wc -l` == 1 ]; then
+	        MS_INPUT_1934=$sb1934dir/`\ls $sb1934dir | grep "ms"`
+	    else
+	        echo "SB directory $SB_1934 has more than one measurement set. Please specify with parameter 'MS_INPUT_1934'."
+	    fi
+        else
+	    echo "You must set either 'SB_1934' (scheduling block number) or 'MS_INPUT_1934' (1934 measurement set)."
+        fi
+    fi
+    if [ "$MS_INPUT_1934" == "" ]; then
+	echo "Parameter 'MS_INPUT_1934' not defined. Turning off 1934-638 processing with DO_1934_CAL=false."
+        DO_1934_CAL=false
+    fi
+
+fi
+
+# science observation - check that MS_INPUT_SCIENCE is OK:
+if [ $DO_SCIENCE_FIELD == true ]; then
+    if [ "$MS_INPUT_SCIENCE" == "" ]; then
+        if [ $SB_SCIENCE != "SET_THIS" ]; then
+	    sbScienceDir=$DIR_SB/$SB_SCIENCE
+	    if [ `\ls $sbScienceDir | grep "ms" | wc -l` == 1 ]; then
+	        MS_INPUT_SCIENCE=$sbScienceDir/`\ls $sbScienceDir | grep "ms"`
+	    else
+	        echo "SB directory $SB_SCIENCE has more than one measurement set. Please specify with parameter 'MS_INPUT_SCIENCE'."
+	    fi
+        else
+	    echo "You must set either 'SB_SCIENCE' (scheduling block number) or 'MS_INPUT_SCIENCE' (Science observation measurement set)."
+        fi
+    fi
+    if [ "$MS_INPUT_SCIENCE" == "" ]; then
+        if [ $DO_SCIENCE_FIELD == true ]; then
+	    echo "Parameter 'MS_INPUT_SCIENCE' not defined. Turning off splitting/flagging with DO_FLAG_SCIENCE=false and pushing on.."
+        fi
+        DO_SCIENCE_FIELD=false
+    fi
+fi
+####################
+# Catching old parameters
+
+if [ "${NUM_CHAN}" != "" ]; then
+    echo "You've entered NUM_CHAN=${NUM_CHAN}. This is no longer used!"
+    echo "  Please use CHAN_RANGE_1934 & CHAN_RANGE_SCIENCE to specify number and range of channels."
+fi
+
+if [ "${NUM_ANT}" != "" ]; then
+    echo "You've entered NUM_ANT=${NUM_ANT}. This is no longer used, as we take this info from the MS."
+fi
+
+####################
+# Once we've defined the bandpass calibrator MS name, extract metadata from it
+if [ $DO_1934_CAL == true ] && [ "${MS_INPUT_1934}" != "" ]; then
+
+    echo "Extracting metadata for calibrator measurement set $MS_INPUT_1934"
+    
+    MS_METADATA=$parsets/mslist-cal-${NOW}.txt
+    mslist --full $MS_INPUT_1934 1>& ${MS_METADATA}
+
+    # Number of antennas used in the calibration observation
+    NUM_ANT_1934=`grep Antennas ${MS_METADATA} | head -1 | awk '{print $6}'`
+    NUM_ANT=$NUM_ANT_1934
+
+    # Number of channels used in the calibration observation
+    NUM_CHAN=`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=nChan`
+
+    # Number of channels for 1934 observation
+    if [ "$CHAN_RANGE_1934" == "" ]; then
+        NUM_CHAN_1934=${NUM_CHAN}
+        CHAN_RANGE_1934="1-${NUM_CHAN}"
+    else
+        NUM_CHAN_1934=`echo $CHAN_RANGE_1934 | awk -F'-' '{print $2-$1+1}'`
+    fi
+
+    if [ ${NUM_CHAN} -lt ${NUM_CHAN_1934} ]; then
+        echo "ERROR! Number of channels requested for the calibration observation (${NUM_CHAN_1934}, from \"${CHAN_RANGE_1934}\") is bigger than the number in the MS (${NUM_CHAN})."
+        exit 1
+    fi
+
+
+fi
+    
+# Once we've defined the science MS name, extract metadata from it
 if [ "${MS_INPUT_SCIENCE}" != "" ]; then
 
     echo "Extracting metadata for science measurement set $MS_INPUT_SCIENCE"
@@ -43,9 +135,40 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     DATE_OBS="${DATE_OBS}T${obstime}"
     
     DURATION=`grep "elapsed time" ${MS_METADATA} | head -1 | awk '{print $11}'`
-    
-    
+
+    NUM_ANT_SCIENCE=`grep Antennas ${MS_METADATA} | head -1 | awk '{print $6}'`
+    NUM_ANT=$NUM_ANT_SCIENCE
+
+    NUM_CHAN=`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=nChan`
+
+    # Get the requested number of channels from the config, and make sure they are the same for 1934
+    # & science observations
+
+    # Number of channels in science observation (used in applying the bandpass solution)
+    if [ "$CHAN_RANGE_SCIENCE" == "" ]; then
+        NUM_CHAN_SCIENCE=${NUM_CHAN}
+        CHAN_RANGE_SCIENCE="1-${NUM_CHAN}"
+    else
+        NUM_CHAN_SCIENCE=`echo $CHAN_RANGE_SCIENCE | awk -F'-' '{print $2-$1+1}'`
+    fi
+
+    if [ ${DO_1934_CAL} == true ] && [ $DO_SCIENCE_FIELD == true ]; then
+        if [ ${NUM_ANT_1934} != ${NUM_ANT_SCIENCE} ]; then
+            echo "ERROR! Number of antennas for 1934-638 observation (${NUM_ANT_1934}) is different to the science observation (${NUM_ANT_SCIENCE})."
+            exit 1
+        fi
+        if [ ${NUM_CHAN_1934} != ${NUM_CHAN_SCIENCE} ]; then
+            echo "ERROR! Number of channels for 1934-638 observation (${NUM_CHAN_1934}) is different to the science observation (${NUM_CHAN_SCIENCE})."
+            exit 1
+        fi
+    fi
+
+    if [ ${NUM_CHAN} -lt ${NUM_CHAN_SCIENCE} ]; then
+        echo "ERROR! Number of channels requested for the science observation (${NUM_CHAN_SCIENCE}, from \"${CHAN_RANGE_SCIENCE}\") is bigger than the number in the MS (${NUM_CHAN})."
+        exit 1
+    fi
+
+    # Find the beam centre locations    
     . ${PIPELINEDIR}/findBeamCentres.sh
 
 fi
-

@@ -168,11 +168,11 @@ else
     log=${logs}/mslist_for_simager_\${SLURM_JOB_ID}.log
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full \${ms} 1>& \${log}
-    ra=\`grep -A1 RA \$log | tail -1 | awk '{print \$7}'\`
-    dec=\`grep -A1 RA \$log | tail -1 | awk '{print \$8}'\`
-    eq=\`grep -A1 RA \$log | tail -1 | awk '{print \$9}'\`
-    directionDefinition="Simager.Images.direction                       = [\${ra}, \${dec}, \${eq}]"
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full \${ms} 2>&1 1> \${log}
+    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
+    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
+    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    directionDefinition="Simager.Images.direction                       = [\${ra}, \${dec}, \${epoch}]"
 fi
 
 parset=${parsets}/science_contcube_imager_beam${BEAM}_${POLN}_\${SLURM_JOB_ID}.in
@@ -231,6 +231,7 @@ EOFOUTER
             DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
             DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
             DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
+            DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
             DEP=`addDep "$DEP" "$ID_CAL_APPLY_CONT_SCI"`
 	    ID_CONTCUBE_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
 	    recordJob ${ID_CONTCUBE_SCI} "Make a continuum cube in pol $POLN for beam $BEAM of the science observation, with flags \"$DEP\""

@@ -70,7 +70,7 @@ namespace askap
   namespace synthesis
   {
     ImageRestoreSolver::ImageRestoreSolver(const RestoringBeamHelper &beamHelper) :
-	    itsBeamHelper(beamHelper), itsEqualiseNoise(false)
+	    itsBeamHelper(beamHelper), itsEqualiseNoise(false), itsModelNeedsConvolving(true)
     {
         setIsRestoreSolver();
     }
@@ -113,24 +113,14 @@ namespace askap
             savePSF(ip);
             psfName = SynthesisParamsHelper::findPSF(ip);
             ASKAPCHECK(psfName != "", "Failed to find a PSF parameter");
-        }
-	if (itsBeamHelper.fitRequired()) {
-            itsBeamHelper.fitBeam(ip);
-        }
+    }
 	
-	casa::Vector<casa::Quantum<double> > restoringBeam = itsBeamHelper.value();
-	
-	ASKAPDEBUGASSERT(restoringBeam.size() == 3);
-    ASKAPLOG_INFO_STR(logger, "Restore solver will convolve with the 2D gaussian: "<<restoringBeam[0].getValue("arcsec")<<
-          " x "<<restoringBeam[1].getValue("arcsec")<<" arcsec at position angle "<<restoringBeam[2].getValue("deg")<<" deg");
-	
-	
-	// determine which images are faceted and setup parameters representing the 
-	// result of a merge.
+	// determine which images are faceted and, if need be, setup parameters
+    // representing the result of a merge.
 	map<string,int> facetmap;
 	SynthesisParamsHelper::listFacets(names, facetmap);
 	for (map<string,int>::const_iterator ci=facetmap.begin();ci!=facetmap.end();++ci) {
-	     if (ci->second != 1) {
+	     if ((ci->second != 1) && !ip.has(ci->first)) {
 	         // this is a multi-facet image, add a fixed parameter representing the whole image
 	         ASKAPLOG_INFO_STR(logger, "Adding a fixed parameter " << ci->first<<
                            " representing faceted image with "<<ci->second<<" facets");                 
@@ -150,18 +140,14 @@ namespace askap
 	      // this is not a faceting case, restore the image in situ and add residuals 
 	      ASKAPLOG_INFO_STR(logger, "Restoring " << *ci );
 
-	      // Create a temporary image
-	      boost::shared_ptr<casa::TempImage<float> > image(SynthesisParamsHelper::tempImage(ip, *ci));	      
-          askap::synthesis::Image2DConvolver<float> convolver;	
-	      const casa::IPosition pixelAxes(2, 0, 1);	
-	      convolver.convolve(*image, *image, casa::VectorKernel::GAUSSIAN,
-			     pixelAxes, restoringBeam, true, 1.0, false);
-          SynthesisParamsHelper::update(ip, *ci, *image);
-	      // for some reason update makes the parameter free as well
-	      ip.fix(*ci);
-	  
-	      addResiduals(*ci,ip.value(*ci).shape(),ip.value(*ci));
-	      SynthesisParamsHelper::setBeam(ip, *ci, restoringBeam);
+          // convolve with restoring beam before adding residuals, but wait until after
+          // preconditioning to calculate restoring beam size.
+          itsModelNeedsConvolving = true;
+
+	      // add residuals
+	      addResiduals(ip, *ci);
+
+	      SynthesisParamsHelper::setBeam(ip, *ci, itsBeamHelper.value());
       } else {
           // this is a single facet of a larger image, just fill in the bigger image with the model
           ASKAPLOG_INFO_STR(logger, "Inserting facet " << iph.paramName()<<" into merged image "<<name);
@@ -171,21 +157,17 @@ namespace askap
           patch = model;
       }
 	}
-	
+
 	// restore faceted images
     for (map<string,int>::const_iterator ci=facetmap.begin();ci!=facetmap.end();++ci) {
 	     if (ci->second != 1) {
 	         // this is a multi-facet image
 	         ASKAPLOG_INFO_STR(logger, "Restoring faceted image " << ci->first );
-            
-             boost::shared_ptr<casa::TempImage<float> > image(SynthesisParamsHelper::tempImage(ip, ci->first));
-             askap::synthesis::Image2DConvolver<float> convolver;	
-	         const casa::IPosition pixelAxes(2, 0, 1);	
-	         convolver.convolve(*image, *image, casa::VectorKernel::GAUSSIAN,
-			       pixelAxes, restoringBeam, true, 1.0, false);
-	         SynthesisParamsHelper::update(ip, ci->first, *image);
-	         // for some reason update makes the parameter free as well
-	         ip.fix(ci->first);
+
+             // convolve with restoring beam before adding residuals, but wait until after
+             // preconditioning to calculate restoring beam size. This is done once for
+             // the set of facets.
+             itsModelNeedsConvolving = true;
 	        
 	         // add residuals
 	         for (int xFacet = 0; xFacet<ci->second; ++xFacet) {
@@ -195,24 +177,14 @@ namespace askap
 	                   // ci->first may have taylor suffix defined, load it first and then add facet indices
 	                   ImageParamsHelper iph(ci->first);	                   
 	                   iph.makeFacet(xFacet,yFacet);
-	                   addResiduals(iph.paramName(),ip.value(iph.paramName()).shape(),
-	                                SynthesisParamsHelper::getFacet(ip,iph.paramName()));
+	                   addResiduals(ip, ci->first, iph.paramName());
 	                   
 	              }
 	         }
 	         
-	         SynthesisParamsHelper::setBeam(ip, ci->first, restoringBeam);
+	         SynthesisParamsHelper::setBeam(ip, ci->first, itsBeamHelper.value());
 	         
 	     }
-	}
-
-    // remove parts of each faceted image
-	for (vector<string>::const_iterator ci=names.begin(); ci !=names.end(); ++ci) {
-	     ImageParamsHelper iph(*ci);
-         if (iph.isFacet()) {
-             ASKAPLOG_INFO_STR(logger, "Remove facet patch "<<*ci<<" from the parameters");
-             ip.remove(*ci);
-         }
 	}
 	
 	quality.setDOF(nParameters);
@@ -232,15 +204,31 @@ namespace askap
     /// to fill may not have exactly the same shape as the dirty (residual) image corresponding
     /// to the given parameter. This method assumes that the centres of both images are the same
     /// and extracts only data required.
-    /// @param[in] name name of the parameter to work with
-    /// @param[in] shape shape of the parameter (we wouldn't need it if the shape of the
-    ///                   output was always the same as the shape of the paramter. It is not
-    ///                   the case for faceting).
-    /// @param[in] out output array
-    void ImageRestoreSolver::addResiduals(const std::string &name, const casa::IPosition &shape,
-                         casa::Array<double> out) const
+    /// @param[in,out] ip param object containing all of the parameters
+    /// @param[in] imagename name of the parameter to work with
+    /// @param[in] facetname name of the current facet, if using facets
+    void ImageRestoreSolver::addResiduals(askap::scimath::Params& ip,
+                                          const std::string &imagename,
+                                          const std::string facetname)
+
     {
-           ASKAPTRACE("ImageRestoreSolver::addResiduals");
+       ASKAPTRACE("ImageRestoreSolver::addResiduals");
+
+       // when convolving model images with the restoring beam and
+       // adding residuals, the full, merged model needs to be used.
+       std::string name;
+       casa::Array<double> out;
+       if (facetname == "") {
+         name = imagename;
+         out.reference(ip.value(name));
+       }
+       else {
+         name = facetname;
+         out.reference(SynthesisParamsHelper::getFacet(ip,name));
+       }
+       const casa::IPosition shape = ip.value(name).shape();
+       const scimath::Axes axes = ip.axes(name);
+
 	   // Axes are dof, dof for each parameter
 	   //casa::IPosition vecShape(1, out.shape().product());
 	   for (scimath::MultiDimArrayPlaneIter planeIter(shape); planeIter.hasMore(); planeIter.next()) {
@@ -311,7 +299,37 @@ namespace askap
 	        }
 	  
 	        // Add the residual image        
-	        // the code below involves an extra copying. We can replace it later with a copyless version
+            // First, convolve the model image to the resolution of the synthesised beam if not already done.
+            casa::Vector<casa::Quantum<double> > restoringBeam;
+            if (itsModelNeedsConvolving) {
+                if (itsBeamHelper.fitRequired()) {
+                    casa::Array<double> psfDArray(psfArray.shape());
+                    casa::convertArray<double, float>(psfDArray, psfArray);
+                    restoringBeam = SynthesisParamsHelper::fitBeam(psfDArray, axes);
+                    ASKAPDEBUGASSERT(restoringBeam.size() == 3);
+                    ASKAPLOG_INFO_STR(logger, "Restore solver will convolve with the 2D gaussian: " <<
+                        restoringBeam[0].getValue("arcsec") << " x "<<restoringBeam[1].getValue("arcsec") <<
+                        " arcsec at position angle "<<restoringBeam[2].getValue("deg")<<" deg");
+                    itsBeamHelper.assign(restoringBeam);
+                } else {
+                    restoringBeam = itsBeamHelper.value();
+                }
+
+	            // Create a temporary image
+                boost::shared_ptr<casa::TempImage<float> >
+                    image(SynthesisParamsHelper::tempImage(ip, imagename));
+                askap::synthesis::Image2DConvolver<float> convolver;
+                const casa::IPosition pixelAxes(2, 0, 1);
+                convolver.convolve(*image, *image, casa::VectorKernel::GAUSSIAN,
+                                   pixelAxes, restoringBeam, true, 1.0, false);
+                SynthesisParamsHelper::update(ip, imagename, *image);
+                // for some reason update makes the parameter free as well
+                ip.fix(imagename);
+                // this only needs to be done once per parameter
+                itsModelNeedsConvolving = false;
+            }
+
+	        // The code below involves an extra copying. We can replace it later with a copyless version
 	        // doing element by element adding explicitly.
 	        const casa::IPosition outSliceShape = planeIter.planeShape(out.shape());
 	        // convertedResidual contains just one plane of residuals
@@ -367,7 +385,8 @@ namespace askap
        const vector<string> beam = parset.getStringVector("beam");
        if (beam.size() == 1) {
            ASKAPCHECK(beam[0] == "fit", 
-               "beam parameter should be either equal to 'fit' or contain 3 elements defining the beam size. You have "<<beam[0]);
+               "beam parameter should be either equal to 'fit' or contain 3 elements defining the beam size. You have "
+               <<beam[0]);
            rbh.configureFit(parset.getDouble("beam.cutoff",0.05));
        } else {
           ASKAPCHECK(beam.size() == 3, "Need three elements for beam or a single word 'fit'. You have "<<beam);

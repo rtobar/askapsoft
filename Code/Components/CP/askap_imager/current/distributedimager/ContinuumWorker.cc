@@ -102,7 +102,9 @@ ContinuumWorker::ContinuumWorker(LOFAR::ParameterSet& parset,
         posInGroup = nWorkersPerGroup;
     }
     posInGroup = posInGroup - 1;
+
     this->baseChannel = posInGroup * nchanpercore;
+
     ASKAPLOG_INFO_STR(logger,"Distribution: Id " << id << " nWorkers " << nWorkers << " nGroups " << itsComms.nGroups());
 
     ASKAPLOG_INFO_STR(logger,"Distribution: Base channel " << this->baseChannel << " PosInGrp " << posInGroup);
@@ -130,7 +132,7 @@ void ContinuumWorker::run(void)
     // Send the initial request for work
     ContinuumWorkRequest wrequest;
 
-    ASKAPLOG_INFO_STR(logger,"Worker is sending request for work");
+    ASKAPLOG_DEBUG_STR(logger,"Worker is sending request for work");
 
     wrequest.sendRequest(itsMaster,itsComms);
 
@@ -138,23 +140,23 @@ void ContinuumWorker::run(void)
     while (1) {
 
         ContinuumWorkUnit wu;
-        ASKAPLOG_INFO_STR(logger,"Worker is waiting for work allocation");
+        ASKAPLOG_DEBUG_STR(logger,"Worker is waiting for work allocation");
         wu.receiveUnitFrom(itsMaster,itsComms);
         if (wu.get_payloadType() == ContinuumWorkUnit::DONE) {
-            ASKAPLOG_INFO_STR(logger,"Worker has received complete allocation");
+            ASKAPLOG_DEBUG_STR(logger,"Worker has received complete allocation");
             break;
         }
         else if (wu.get_payloadType() == ContinuumWorkUnit::NA) {
-            ASKAPLOG_INFO_STR(logger,"Worker has received non applicable allocation");
+            ASKAPLOG_DEBUG_STR(logger,"Worker has received non applicable allocation");
             sleep(1);
             wrequest.sendRequest(itsMaster,itsComms);
             continue;
         }
         else {
 
-            ASKAPLOG_INFO_STR(logger,"Worker has received valid allocation");
+            ASKAPLOG_DEBUG_STR(logger,"Worker has received valid allocation");
             const string ms = wu.get_dataset();
-            ASKAPLOG_INFO_STR(logger, "Received Work Unit for dataset " << ms
+            ASKAPLOG_DEBUG_STR(logger, "Received Work Unit for dataset " << ms
                               << ", local (topo) channel " << wu.get_localChannel()
                               << ", global (topo) channel " << wu.get_globalChannel()
                               << ", frequency " << wu.get_channelFrequency()/1.e6 << " MHz"
@@ -168,11 +170,11 @@ void ContinuumWorker::run(void)
             }
 
             if (wu.get_payloadType() == ContinuumWorkUnit::LAST) {
-                ASKAPLOG_INFO_STR(logger,"Worker has received last job");
+                ASKAPLOG_DEBUG_STR(logger,"Worker has received last job");
                 break;
             }
             else {
-                ASKAPLOG_INFO_STR(logger,"Worker is sending request for work");
+                ASKAPLOG_DEBUG_STR(logger,"Worker is sending request for work");
                 wrequest.sendRequest(itsMaster,itsComms);
             }
         }
@@ -180,12 +182,11 @@ void ContinuumWorker::run(void)
     }
 
     itsComms.barrier(itsComms.theWorkers());
-    const int nwriters = itsParset.getInt32("nwriters", 1);
-    const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
+
     synthesis::AdviseDI advice(itsComms,itsParset);
     advice.addMissingParameters();
     advice.updateComms();
-
+    this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
 
     if (workUnits.size()>=1) {
 
@@ -202,6 +203,9 @@ void ContinuumWorker::run(void)
         ASKAPLOG_WARN_STR(logger,"Data allocations complete but this worker received no work");
 
     }
+    ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " finished");
+
+    itsComms.barrier(itsComms.theWorkers());
 }
 void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 {
@@ -209,16 +213,21 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 
 
     // This also needs to set the frequencies and directions for all the images
-    ASKAPLOG_INFO_STR(logger,"In processWorkUnit");
+    ASKAPLOG_DEBUG_STR(logger,"In processWorkUnit");
     LOFAR::ParameterSet unitParset = itsParset;
 
     char ChannelPar[64];
 
     sprintf(ChannelPar,"[1,%d]",wu.get_localChannel()+1);
 
+    string param = "beams";
+    std::ostringstream bstr;
 
+    bstr<<"[" << wu.get_beam() << "]";
 
-    bool usetmpfs = unitParset.getBool("usetmpfs",true);
+    unitParset.replace(param, bstr.str().c_str());
+
+    bool usetmpfs = unitParset.getBool("usetmpfs",false);
 
     if (usetmpfs)
     {
@@ -235,12 +244,7 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 
         const string outms_flag = pstr.str();
 
-        string param = "beams";
-        std::ostringstream bstr;
 
-        bstr<<"[" << wu.get_beam() << "]";
-
-        unitParset.replace(param, bstr.str().c_str());
 
         if (itsComms.inGroup(0)) {
 
@@ -271,9 +275,9 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
         }
         ///wait for all groups this rank to get here
         if (itsComms.nGroups() > 1) {
-            ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " at barrier");
+            ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " at barrier");
             itsComms.barrier(itsComms.interGroupCommIndex());
-            ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
+            ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
         }
         wu.set_dataset(outms);
 
@@ -284,15 +288,15 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     unitParset.replace("Channels",ChannelPar);
 
 
-    ASKAPLOG_INFO_STR(logger,"getting advice on missing parameters");
+    ASKAPLOG_DEBUG_STR(logger,"getting advice on missing parameters");
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
-    ASKAPLOG_INFO_STR(logger,"advice received");
-    ASKAPLOG_INFO_STR(logger,"storing workUnit");
+    ASKAPLOG_DEBUG_STR(logger,"advice received");
+    ASKAPLOG_DEBUG_STR(logger,"storing workUnit");
     workUnits.push_back(wu);
-    ASKAPLOG_INFO_STR(logger,"storing parset");
+    ASKAPLOG_DEBUG_STR(logger,"storing parset");
     itsParsets.push_back(diadvise.getParset());
-    ASKAPLOG_INFO_STR(logger,"Finished processWorkUnit");
+    ASKAPLOG_DEBUG_STR(logger,"Finished processWorkUnit");
 
 }
 
@@ -303,14 +307,14 @@ ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 }
 void ContinuumWorker::buildSpectralCube() {
 
-    ASKAPLOG_INFO_STR(logger,"Processing multiple channels local solver mode");
+    ASKAPLOG_DEBUG_STR(logger,"Processing multiple channels local solver mode");
     /// This is the spectral cube builder
     /// it marshalls the following tasks:
     /// 1. building a spectral cube image
     /// 2. local minor cycle solving of each channel
     /// 3. Conversion to FITS and output
     /// Note: at this stage it will generate a cube per
-    /// node.
+    /// writer.
     /// Therefore the cube will be distributed across the
     /// supercomputer as a function of frequency and beams
     ///
@@ -328,34 +332,35 @@ void ContinuumWorker::buildSpectralCube() {
     int nchanperwriter = nchantotal/nwriters;
     int nworkersperwriter = nWorkers/nwriters;
 
-    Quantity f0(workUnits[0].get_channelFrequency(),"Hz");
+    Quantity f0(this->baseFrequency,"Hz");
     /// The width of a channel. THis does <NOT> take account of the variable width
     /// of BArycentric channels
     Quantity freqinc(workUnits[0].get_channelWidth(),"Hz");
-
+    /// nchanperwriter is an estimate - some channels, especially at the edges may not exist
+    /// these will remain blank in the output cube
 
     ASKAPLOG_INFO_STR(logger,"Configuring Spectral Cube");
-    ASKAPLOG_INFO_STR(logger,"nchan: " << nchanpercore << " base f0: " << f0.getValue("MHz")
+    ASKAPLOG_INFO_STR(logger,"nchan: " << nchanperwriter << " base f0: " << f0.getValue("MHz")
     << " width: " << freqinc.getValue("MHz") <<" (" << workUnits[0].get_channelWidth() << ")");
 
     std::string root = "image";
 
-    std::string img_name = root + std::string(".ch.") \
-    + utility::toString(workUnits[0].get_globalChannel());
+    std::string img_name = root + std::string(".wr.") \
+    + utility::toString(itsComms.rank());
 
     root = "psf";
-    std::string psf_name = root + std::string(".ch.") \
-    + utility::toString(workUnits[0].get_globalChannel());
+    std::string psf_name = root + std::string(".wr.") \
+    + utility::toString(itsComms.rank());
 
     root = "residual";
 
-    std::string residual_name = root + std::string(".ch.") \
-    + utility::toString(workUnits[0].get_globalChannel());
+    std::string residual_name = root + std::string(".wr.") \
+    + utility::toString(itsComms.rank());
 
     root = "weights";
 
-    std::string weights_name = root + std::string(".ch.") \
-    + utility::toString(workUnits[0].get_globalChannel());
+    std::string weights_name = root + std::string(".wr.") \
+    + utility::toString(itsComms.rank());
 
     if (itsComms.isWriter()) {
 
@@ -367,20 +372,20 @@ void ContinuumWorker::buildSpectralCube() {
 
         if (itsParset.getBool("restore", false)) {
             root = "psf.image";
-            std::string psf_image_name = root + std::string(".ch.") \
-            + utility::toString(workUnits[0].get_globalChannel());
+            std::string psf_image_name = root + std::string(".wr.") \
+            + utility::toString(itsComms.rank());
             root = "image.restored";
-            std::string restored_image_name = root + std::string(".ch.") \
-            + utility::toString(workUnits[0].get_globalChannel());
+            std::string restored_image_name = root + std::string(".wr.") \
+            + utility::toString(itsComms.rank());
             // Only create these if we are restoring, as that is when they get made
             if (itsDoingPreconditioning) {
-                itsPSFimageCube.reset(new CubeBuilder(itsParsets[0], nchanpercore, f0, freqinc, psf_image_name));
+                itsPSFimageCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, psf_image_name));
             }
-            itsRestoredCube.reset(new CubeBuilder(itsParsets[0], nchanpercore, f0, freqinc, restored_image_name));
+            itsRestoredCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, restored_image_name));
         }
     }
     /// What are the plans for the deconvolution?
-    ASKAPLOG_INFO_STR(logger,"Ascertaining Cleaning Plan");
+    ASKAPLOG_DEBUG_STR(logger,"Ascertaining Cleaning Plan");
     const bool writeAtMajorCycle = itsParsets[0].getBool("Images.writeAtMajorCycle",false);
     const int nCycles = itsParsets[0].getInt32("ncycles", 0);
     std::string majorcycle = itsParsets[0].getString("threshold.majorcycle", "-1Jy");
@@ -393,184 +398,244 @@ void ContinuumWorker::buildSpectralCube() {
 
     const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(itsParsets[0].getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
 
-    ASKAPLOG_INFO_STR(logger,
+    ASKAPLOG_DEBUG_STR(logger,
                       "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
-    ASKAPLOG_INFO_STR(logger, "Tolerance on the directions is "
+    ASKAPLOG_DEBUG_STR(logger, "Tolerance on the directions is "
                       << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
-    // we need to loop over the channels
-    int workUnitCount = 0; // the workUnits include different epochs (for the same channel)
+  
+    
+    // the workUnits may include different epochs (for the same channel)
     // the order is strictly by channel - with multiple work units per channel.
     // so you can increment the workUnit until the frequency changes - then you know you
-    // have all the workunits
+    // have all the workunits for that channel
 
 
 
-    for (int chan=0; chan < nchanpercore; ++chan) { // not all of these will have work
+    for (int workUnitCount=0; workUnitCount < workUnits.size(); ) { // not all of these will have work
 
-        if (workUnitCount >= workUnits.size()) {
-            ASKAPLOG_INFO_STR(logger, "Out of work with workUnit " << workUnitCount);
-            break;
-        }
-        ASKAPLOG_INFO_STR(logger, "Starting to process channel " << chan \
-        << " with workUnit " << workUnitCount << " used for the root ");
+        try {
 
-        int initialChannelWorkUnit = workUnitCount+1;
-
-        double frequency=workUnits[workUnitCount].get_channelFrequency();
-        const string colName = itsParsets[workUnitCount].getString("datacolumn", "DATA");
-        const string ms = workUnits[workUnitCount].get_dataset();
-        TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
-
-        /// Need to set up the rootImager here
-        CalcCore rootImager(itsParsets[workUnitCount],itsComms,ds,workUnits[workUnitCount].get_localChannel());
-
-        /// set up the image for this channel
-        setupImage(rootImager.params(), frequency);
-
-
-
-        /// need to put in the major and minor cycle loops
-        /// If we are doing more than one major cycle I need to reset
-        /// the workUnit count to permit a re-read of the input data.
-        /// LOOP:
-
-        for (int majorCycleNumber=0; majorCycleNumber < nCycles; ++majorCycleNumber) {
-
-            workUnitCount = initialChannelWorkUnit;
-
-            /// But first lets test to see how we are doing.
-            /// calcNE for the rootImager
-
-            rootImager.calcNE();
-
-            while (workUnitCount < workUnits.size() && frequency == workUnits[workUnitCount].get_channelFrequency()) {
-                /// need a working imager to allow a merge over epochs for this channel
-
-
-                const string myMs = workUnits[workUnitCount].get_dataset();
-
-                TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
-
-                ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
-
-                CalcCore workingImager(itsParsets[workUnitCount],itsComms,ds,workUnits[workUnitCount].get_localChannel());
-
-            /// this loop does the calcNE and the merge
-                workingImager.replaceModel(rootImager.params());
-                workingImager.calcNE();
-                rootImager.getNE()->merge(*workingImager.getNE());
-
-                workUnitCount++;
+            if (workUnitCount >= workUnits.size()) {
+                ASKAPLOG_INFO_STR(logger, "Out of work with workUnit " << workUnitCount);
+                break;
             }
-            /// now we have a "full" set of NE we can SolveNE to update the model
-            rootImager.solveNE();
 
-            if (rootImager.params()->has("peak_residual")) {
-                const double peak_residual = rootImager.params()->scalarValue("peak_residual");
-                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
-                if (peak_residual < targetPeakResidual) {
-                    ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
-                                      << targetPeakResidual << " Jy. Stopping.");
-                    break;
-                } else {
-                    if (targetPeakResidual < 0) {
-                        ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
-                    } else {
-                        ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
-                                          << targetPeakResidual << " Jy. Continuing.");
+            ASKAPLOG_INFO_STR(logger, "Starting to process workunit " << workUnitCount);
+
+            int initialChannelWorkUnit = workUnitCount+1;
+
+            double frequency=workUnits[workUnitCount].get_channelFrequency();
+            const string colName = itsParsets[workUnitCount].getString("datacolumn", "DATA");
+            const string ms = workUnits[workUnitCount].get_dataset();
+
+            ASKAPLOG_INFO_STR(logger, "MS: " << ms \
+                              << " pulling out local channel " << workUnits[workUnitCount].get_localChannel() \
+                              << " which has a frequency " << frequency );
+
+            TableDataSource ds(ms, TableDataSource::DEFAULT, colName);
+
+            /// Need to set up the rootImager here
+
+
+            CalcCore rootImager(itsParsets[workUnitCount],itsComms,ds,workUnits[workUnitCount].get_localChannel());
+            /// set up the image for this channel
+            setupImage(rootImager.params(), frequency);
+
+
+            /// need to put in the major and minor cycle loops
+            /// If we are doing more than one major cycle I need to reset
+            /// the workUnit count to permit a re-read of the input data.
+            /// LOOP:
+
+            for (int majorCycleNumber=0; majorCycleNumber < nCycles; ++majorCycleNumber) {
+
+                workUnitCount = initialChannelWorkUnit;
+
+                /// But first lets test to see how we are doing.
+                /// calcNE for the rootImager
+
+                rootImager.calcNE();
+
+                while (workUnitCount < workUnits.size() && frequency == workUnits[workUnitCount].get_channelFrequency()) {
+
+                    /// need a working imager to allow a merge over epochs for this channel
+
+                    const string myMs = workUnits[workUnitCount].get_dataset();
+
+                    TableDataSource ds(myMs, TableDataSource::DEFAULT, colName);
+
+                    ds.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
+                    try {
+
+                        CalcCore workingImager(itsParsets[workUnitCount],itsComms,ds,workUnits[workUnitCount].get_localChannel());
+
+                    /// this loop does the calcNE and the merge of the residual images
+
+                        workingImager.replaceModel(rootImager.params());
+                        workingImager.calcNE();
+                        rootImager.getNE()->merge(*workingImager.getNE());
                     }
+                    catch( const askap::AskapError& e) {
+                        ASKAPLOG_WARN_STR(logger, "Askap error in imaging - skipping accumulation: " << e.what());
+                        std::cerr << "Askap error in: " << e.what() << std::endl;
+                    }
+
+                    workUnitCount++;
+                }
+                /// now we have a "full" set of NE we can SolveNE to update the model
+
+                rootImager.solveNE();
+
+                if (rootImager.params()->has("peak_residual")) {
+                    const double peak_residual = rootImager.params()->scalarValue("peak_residual");
+                    ASKAPLOG_DEBUG_STR(logger, "Reached peak residual of " << peak_residual);
+                    if (peak_residual < targetPeakResidual) {
+                        ASKAPLOG_DEBUG_STR(logger, "It is below the major cycle threshold of "
+                                           << targetPeakResidual << " Jy. Stopping.");
+                        break;
+                    } else {
+                        if (targetPeakResidual < 0) {
+                            ASKAPLOG_DEBUG_STR(logger, "Major cycle flux threshold is not used.");
+                        } else {
+                            ASKAPLOG_DEBUG_STR(logger, "It is above the major cycle threshold of "
+                                               << targetPeakResidual << " Jy. Continuing.");
+                        }
+                    }
+
+                }
+                if (majorCycleNumber+1 == nCycles) {
+                    ASKAPLOG_DEBUG_STR(logger,"Reached maximum majorcycle count");
+
+                }
+                else {
+
+                    /// But we dont want to keep merging into the same NE
+                    /// so lets reset
+                    ASKAPLOG_DEBUG_STR(logger,"Reset normal equations");
+                    rootImager.getNE()->reset();
+                    // the model is now updated but the NE are empty ... - lets go again
+                }
+                if (writeAtMajorCycle) {
+                    ASKAPLOG_WARN_STR(logger,"Write at major cycle not currently supported in this mode");
                 }
 
             }
-            if (majorCycleNumber+1 == nCycles) {
-                ASKAPLOG_INFO_STR(logger,"Reached maximum majorcycle count");
+            ASKAPLOG_INFO_STR(logger,"Adding model.slice");
+            ASKAPCHECK(rootImager.params()->has("image.slice"), "Params are missing image.slice parameter");
+            rootImager.params()->add("model.slice", rootImager.params()->value("image.slice"));
+            ASKAPCHECK(rootImager.params()->has("model.slice"), "Params are missing model.slice parameter");
 
+            rootImager.check();
+
+
+            if (itsParsets[0].getBool("restore", false)) {
+                ASKAPLOG_INFO_STR(logger,"Running restore");
+                rootImager.restoreImage();
+            }
+
+
+
+            ASKAPLOG_INFO_STR(logger,"writing channel into cube");
+
+            if (itsComms.isWriter()) {
+
+                ASKAPLOG_INFO_STR(logger,"I have (including my own) " << itsComms.getOutstanding() << " units to write");
+                int cubeChannel = workUnits[workUnitCount-1].get_globalChannel()-baseChannel;
+                ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
+                ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+                handleImageParams(rootImager.params(),cubeChannel);
+                ASKAPLOG_INFO_STR(logger,"Written channel " << cubeChannel);
+
+                itsComms.removeChannelFromWriter(itsComms.rank());
+                /// write everyone elses
+
+                /// how many should be write out
+                /// there are some number of workers per writer but not all
+                /// may have a channel due to the barycentreing. THere is no
+                /// simple way to calculate this - so if I just wait for nWorkersperWriter
+                /// it should be relatively efficient.
+
+                ///
+                int targetOutstanding = itsComms.getOutstanding() - (nworkersperwriter - 1);
+                if (targetOutstanding < 0){
+                    targetOutstanding = 0;
+                }
+                ASKAPLOG_INFO_STR(logger,"this iteration target is " << targetOutstanding);
+
+                while (itsComms.getOutstanding()>targetOutstanding){
+
+                    ASKAPLOG_INFO_STR(logger,"iteration count is " << itsComms.getOutstanding());
+
+                    ContinuumWorkRequest result;
+                    int id;
+                    /// this is a blocking receive
+                    result.receiveRequest(id,itsComms);
+                    ASKAPLOG_INFO_STR(logger,"Received a request to write from rank " << id);
+                    int cubeChannel = result.get_globalChannel()-baseChannel;
+                    ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
+                    ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+                    handleImageParams(result.get_params(),cubeChannel);
+                    ASKAPLOG_INFO_STR(logger,"Written the slice from rank" << id);
+                    itsComms.removeChannelFromWriter(itsComms.rank());
+                }
+                    
             }
             else {
 
-                /// But we dont want to keep merging into the same NE
-                /// so lets reset
-                ASKAPLOG_INFO_STR(logger,"Reset normal equations");
-                rootImager.getNE()->reset();
-                // the model is now updated but the NE are empty ... - lets go again
-            }
-            if (writeAtMajorCycle) {
-                ASKAPLOG_WARN_STR(logger,"Write at major cycle not currently supported in this mode");
-            }
-
-        }
-        ASKAPLOG_INFO_STR(logger,"Adding model.slice");
-        ASKAPCHECK(rootImager.params()->has("image.slice"), "Params are missing image.slice parameter");
-        rootImager.params()->add("model.slice", rootImager.params()->value("image.slice"));
-        ASKAPCHECK(rootImager.params()->has("model.slice"), "Params are missing model.slice parameter");
-
-        rootImager.check();
-
-
-        if (itsParsets[0].getBool("restore", false)) {
-            ASKAPLOG_INFO_STR(logger,"Running restore");
-            rootImager.restoreImage();
-        }
-        ASKAPLOG_INFO_STR(logger,"writing channel into cube");
-        if (itsComms.isWriter()) {
-            ASKAPLOG_INFO_STR(logger,"I am a writer");
-            ASKAPLOG_INFO_STR(logger,"I have (including my own) " << itsComms.getOutstanding() << " units to write");
-            handleImageParams(rootImager.params(),  \
-            workUnits[workUnitCount-1].get_globalChannel()-baseChannel);
-            itsComms.removeChannelFromWriter(itsComms.rank());
-            /// write everyone elses
-
-            /// how many should be write out
-            /// there are some number of workers per writer but not all
-            /// may have a channel due to the barycentreing. THere is no
-            /// simple way to calculate this - so if I just wait for nWorkersperWriter
-            /// it should be relatively efficient.
-            int targetOutstanding = itsComms.getOutstanding() - (nworkersperwriter - 1);
-            if (targetOutstanding < 0){
-                targetOutstanding = 0;
-            }
-            ASKAPLOG_INFO_STR(logger,"this iteration target is " << targetOutstanding);
-
-            while (itsComms.getOutstanding()>targetOutstanding){
-
                 ContinuumWorkRequest result;
-                int id;
+                result.set_params(rootImager.params());
+                result.set_globalChannel(workUnits[workUnitCount-1].get_globalChannel());
+                /// send the work to the writer with a blocking send
+                result.sendRequest(workUnits[workUnitCount-1].get_writer(),itsComms);
 
-                result.receiveRequest(id,itsComms);
-                ASKAPLOG_INFO_STR(logger,"I have received a request to write from " << id);
-                ASKAPLOG_INFO_STR(logger,"I am attempting to write channel " << result.get_globalChannel()-baseChannel);
-                handleImageParams(result.get_params(),result.get_globalChannel()-baseChannel);
-                ASKAPLOG_INFO_STR(logger,"I have written the slice from " << id);
-                itsComms.removeChannelFromWriter(itsComms.rank());
             }
 
+            /// outside the clean-loop write out the slice
         }
-        else {
+        catch (const askap::AskapError& e) {
+            ASKAPLOG_WARN_STR(logger, "Askap error in channel processing skipping: " << e.what());
+            std::cerr << "Askap error in: " << e.what() << std::endl;
+
+            // Need to either send an empty map - or
+            if (itsComms.isWriter()) {
+                 itsComms.removeChannelFromWriter(itsComms.rank());
+            }
+            else {
+                askap::scimath::Params::ShPtr blankParams;
+                setupImage(blankParams, workUnits[workUnitCount].get_channelFrequency());
+                ContinuumWorkRequest result;
+                result.set_params(blankParams);
+                result.set_globalChannel(workUnits[workUnitCount].get_globalChannel());
+                /// send the work to the writer with a blocking send
+                result.sendRequest(workUnits[workUnitCount].get_writer(),itsComms);
+            }
+            workUnitCount++;
+
+        }
+
+        catch (const std::exception& e) {
+            ASKAPLOG_WARN_STR(logger, "Unexpected exception in: " << e.what());
+            std::cerr << "Unexpected exception in: " << e.what();
+            
+        }
+
+    }
+    // cleanup
+    if (itsComms.isWriter()) {
+        while (itsComms.getOutstanding()>0) {
 
             ContinuumWorkRequest result;
-            result.set_params(rootImager.params());
-            result.set_globalChannel(workUnits[workUnitCount-1].get_globalChannel());
-            result.sendRequest(workUnits[workUnitCount-1].get_writer(),itsComms);
-
+            int id;
+            result.receiveRequest(id,itsComms);
+            ASKAPLOG_INFO_STR(logger,"Received a request to write from rank " << id);
+            int cubeChannel = result.get_globalChannel()-baseChannel;
+            ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
+            ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+            handleImageParams(result.get_params(),cubeChannel);
+            ASKAPLOG_INFO_STR(logger,"Written the slice from rank" << id);
+            itsComms.removeChannelFromWriter(itsComms.rank());
         }
-
-        /// outside the clean-loop write out the slice
-
-
     }
-
-    while (itsComms.getOutstanding()>0) {
-
-        ContinuumWorkRequest result;
-        int id;
-        result.receiveRequest(id,itsComms);
-        ASKAPLOG_INFO_STR(logger,"I have received a request to write from " << id);
-        ASKAPLOG_INFO_STR(logger,"I am attempting to write channel " << result.get_globalChannel()-baseChannel);
-        handleImageParams(result.get_params(),result.get_globalChannel()-baseChannel);
-        ASKAPLOG_INFO_STR(logger,"I have written the slice from " << id);
-        itsComms.removeChannelFromWriter(itsComms.rank());
-    }
-
 }
 void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
         unsigned int chan)
@@ -598,6 +663,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
 
     // Write image
     {
+        ASKAPLOG_INFO_STR(logger,"Writing model for (local) channel " << chan);
         const casa::Array<double> imagePixels(params->value("model.slice"));
         casa::Array<float> floatImagePixels(imagePixels.shape());
         casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -606,6 +672,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
 
     // Write PSF
     {
+        ASKAPLOG_INFO_STR(logger,"Writing PSF");
         const casa::Array<double> imagePixels(params->value("psf.slice"));
         casa::Array<float> floatImagePixels(imagePixels.shape());
         casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -614,6 +681,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
 
     // Write residual
     {
+        ASKAPLOG_INFO_STR(logger,"Writing Residual");
         const casa::Array<double> imagePixels(params->value("residual.slice"));
         casa::Array<float> floatImagePixels(imagePixels.shape());
         casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -622,6 +690,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
 
     // Write weights
     {
+        ASKAPLOG_INFO_STR(logger,"Writing Weights");
         const casa::Array<double> imagePixels(params->value("weights.slice"));
         casa::Array<float> floatImagePixels(imagePixels.shape());
         casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -634,6 +703,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
         if (itsDoingPreconditioning) {
             // Write preconditioned PSF image
             {
+                ASKAPLOG_INFO_STR(logger,"Writing preconditioned PSF");
                 const casa::Array<double> imagePixels(params->value("psf.image.slice"));
                 casa::Array<float> floatImagePixels(imagePixels.shape());
                 casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -643,6 +713,7 @@ void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
 
         // Write Restored image
         {
+            ASKAPLOG_INFO_STR(logger,"Writing Restored Image");
             const casa::Array<double> imagePixels(params->value("image.slice"));
             casa::Array<float> floatImagePixels(imagePixels.shape());
             casa::convertArray<float, double>(floatImagePixels, imagePixels);
@@ -660,7 +731,7 @@ void ContinuumWorker::recordBeam(const askap::scimath::Axes &axes,
     if (axes.has("MAJMIN")) {
         // this is a restored image with beam parameters set
         ASKAPCHECK(axes.has("PA"), "PA axis should always accompany MAJMIN");
-        ASKAPLOG_INFO_STR(logger, "Found beam for image.slice, channel " <<
+        ASKAPLOG_DEBUG_STR(logger, "Found beam for image.slice, channel " <<
                           globalChannel << ", with shape " <<
                           axes.start("MAJMIN") * 180. / M_PI * 3600. << "x" <<
                           axes.end("MAJMIN") * 180. / M_PI * 3600. << ", " <<
@@ -700,7 +771,7 @@ void ContinuumWorker::logBeamInfo()
                 beams.push_back(beam->second);
             }
             beamlog.beamlist() = beams;
-            ASKAPLOG_INFO_STR(logger, "Writing list of individual channel beams to beam log "
+            ASKAPLOG_DEBUG_STR(logger, "Writing list of individual channel beams to beam log "
                               << beamlog.filename());
             beamlog.write();
         }
@@ -733,9 +804,9 @@ void ContinuumWorker::processChannels()
 
     const double uvwMachineCacheTolerance = SynthesisParamsHelper::convertQuantity(unitParset.getString("uvwMachineDirTolerance", "1e-6rad"), "rad");
 
-    ASKAPLOG_INFO_STR(logger,
+    ASKAPLOG_DEBUG_STR(logger,
                       "UVWMachine cache will store " << uvwMachineCacheSize << " machines");
-    ASKAPLOG_INFO_STR(logger, "Tolerance on the directions is "
+    ASKAPLOG_DEBUG_STR(logger, "Tolerance on the directions is "
                       << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
 
     const bool localSolver = unitParset.getBool("solverpercore",false);
@@ -744,7 +815,7 @@ void ContinuumWorker::processChannels()
         this->buildSpectralCube();
         return;
     }
-    ASKAPLOG_INFO_STR(logger,"Processing multiple channels central solver mode");
+    ASKAPLOG_DEBUG_STR(logger,"Processing multiple channels central solver mode");
     TableDataSource ds0(ms, TableDataSource::DEFAULT, colName);
 
     ds0.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
@@ -795,21 +866,21 @@ void ContinuumWorker::processChannels()
             workingImager.calcNE();
 
             if (i>0) {
-                ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
+                ASKAPLOG_DEBUG_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
                 rootImager.getNE()->merge(*workingImager.getNE());
 
-                ASKAPLOG_INFO_STR(logger,"Merged");
+                ASKAPLOG_DEBUG_STR(logger,"Merged");
             }
 
 
         }
 
-        ASKAPLOG_INFO_STR(logger,"Sending NE to master for single cycle ");
+        ASKAPLOG_DEBUG_STR(logger,"Sending NE to master for single cycle ");
 
         rootImager.sendNE();
         rootImager.getNE()->reset();
 
-        ASKAPLOG_INFO_STR(logger,"Sent");
+        ASKAPLOG_DEBUG_STR(logger,"Sent");
 
 
 
@@ -823,33 +894,33 @@ void ContinuumWorker::processChannels()
                 ASKAPLOG_WARN_STR(logger,"Write at major cycle not currently supported in this mode");
             }
 
-            ASKAPLOG_INFO_STR(logger,"Worker waiting to receive new model");
+            ASKAPLOG_DEBUG_STR(logger,"Worker waiting to receive new model");
             rootImager.receiveModel();
-            ASKAPLOG_INFO_STR(logger, "Worker received model for cycle  " << n);
+            ASKAPLOG_DEBUG_STR(logger, "Worker received model for cycle  " << n);
 
             if (rootImager.params()->has("peak_residual")) {
                 const double peak_residual = rootImager.params()->scalarValue("peak_residual");
-                ASKAPLOG_INFO_STR(logger, "Reached peak residual of " << peak_residual);
+                ASKAPLOG_DEBUG_STR(logger, "Reached peak residual of " << peak_residual);
                 if (peak_residual < targetPeakResidual) {
-                    ASKAPLOG_INFO_STR(logger, "It is below the major cycle threshold of "
+                    ASKAPLOG_DEBUG_STR(logger, "It is below the major cycle threshold of "
                                       << targetPeakResidual << " Jy. Stopping.");
                     break;
                 } else {
                     if (targetPeakResidual < 0) {
-                        ASKAPLOG_INFO_STR(logger, "Major cycle flux threshold is not used.");
+                        ASKAPLOG_DEBUG_STR(logger, "Major cycle flux threshold is not used.");
                     } else {
-                        ASKAPLOG_INFO_STR(logger, "It is above the major cycle threshold of "
+                        ASKAPLOG_DEBUG_STR(logger, "It is above the major cycle threshold of "
                                           << targetPeakResidual << " Jy. Continuing.");
                     }
                 }
             }
 
-            ASKAPLOG_INFO_STR(logger, "Worker calculating NE");
+            ASKAPLOG_DEBUG_STR(logger, "Worker calculating NE");
             rootImager.calcNE();
 
             std::vector<std::string> names = rootImager.getNE()->unknowns();
 
-            ASKAPLOG_INFO_STR(logger,"Unknowns are " << names);
+            ASKAPLOG_DEBUG_STR(logger,"Unknowns are " << names);
 
             rootImager.check();
 
@@ -872,21 +943,21 @@ void ContinuumWorker::processChannels()
                 CalcCore workingImager(itsParsets[i],itsComms,ds,localChannel);
 
                 workingImager.replaceModel(rootImager.params());
-                ASKAPLOG_INFO_STR(logger, "workingImager Model" << workingImager.params());
-                ASKAPLOG_INFO_STR(logger, "rootImager Model" << rootImager.params());
+                ASKAPLOG_DEBUG_STR(logger, "workingImager Model" << workingImager.params());
+                ASKAPLOG_DEBUG_STR(logger, "rootImager Model" << rootImager.params());
                 workingImager.calcNE();
 
                 if (i>0) {
-                    ASKAPLOG_INFO_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
+                    ASKAPLOG_DEBUG_STR(logger,"Merging " << i << " of " << workUnits.size()-1 << " into NE");
                     rootImager.getNE()->merge(*workingImager.getNE());
 
-                    ASKAPLOG_INFO_STR(logger,"Merged");
+                    ASKAPLOG_DEBUG_STR(logger,"Merged");
                 }
 
 
             }
 
-            ASKAPLOG_INFO_STR(logger,"Worker sending NE to master for cycle " << n);
+            ASKAPLOG_DEBUG_STR(logger,"Worker sending NE to master for cycle " << n);
             rootImager.sendNE();
 
         }
@@ -901,7 +972,7 @@ void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
                                     double channelFrequency)
 {
     try {
-        ASKAPLOG_INFO_STR(logger,"Setting up image");
+        ASKAPLOG_DEBUG_STR(logger,"Setting up image");
         const LOFAR::ParameterSet parset = itsParset.makeSubset("Images.");
 
         const int nfacets = parset.getInt32("nfacets", 1);
@@ -913,7 +984,7 @@ void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
         const int nchan = 1;
 
         if (!parset.isDefined("polarisation")) {
-            ASKAPLOG_INFO_STR(logger, "Polarisation frame is not defined, "
+            ASKAPLOG_DEBUG_STR(logger, "Polarisation frame is not defined, "
                               << "only stokes I will be generated");
         }
         const vector<string> stokesVec = parset.getStringVector("polarisation",
@@ -931,9 +1002,9 @@ void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
 
         const bool ewProj = parset.getBool("ewprojection", false);
         if (ewProj) {
-            ASKAPLOG_INFO_STR(logger, "Image will have SCP/NCP projection");
+            ASKAPLOG_DEBUG_STR(logger, "Image will have SCP/NCP projection");
         } else {
-            ASKAPLOG_INFO_STR(logger, "Image will have plain SIN projection");
+            ASKAPLOG_DEBUG_STR(logger, "Image will have plain SIN projection");
         }
 
         ASKAPCHECK(nfacets > 0,
@@ -952,7 +1023,7 @@ void ContinuumWorker::setupImage(const askap::scimath::Params::ShPtr& params,
             const int facetstep = parset.getInt32("facetstep", casa::min(shape[0], shape[1]));
             ASKAPCHECK(facetstep > 0,
                        "facetstep parameter is supposed to be positive, you have " << facetstep);
-            ASKAPLOG_INFO_STR(logger, "Facet centers will be " << facetstep <<
+            ASKAPLOG_DEBUG_STR(logger, "Facet centers will be " << facetstep <<
                               " pixels apart, each facet size will be "
                               << shape[0] << " x " << shape[1]);
             // SynthesisParamsHelper::add(*params, name, direction, cellsize, shape, ewProj,

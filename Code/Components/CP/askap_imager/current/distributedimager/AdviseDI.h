@@ -104,6 +104,8 @@ namespace askap {
             vector<casa::MFrequency> getTopoFrequencies() {return itsTopoFrequencies;};
 
             cp::ContinuumWorkUnit getAllocation(int id);
+            
+            double getBaseFrequencyAllocation(int workerNumber);
 
             void updateComms();
 
@@ -158,6 +160,9 @@ namespace askap {
             std::vector< std::vector<cp::ContinuumWorkUnit> > itsAllocatedWork;
 
             int match(int ms_number,  casa::MVFrequency freq);
+
+            std::vector<int> getBeams();
+
 
         };
 

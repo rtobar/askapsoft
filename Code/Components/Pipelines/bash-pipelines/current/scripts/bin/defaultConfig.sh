@@ -183,16 +183,13 @@ BEAM_MIN=0
 BEAM_MAX=8
 BEAMLIST=""
 
-# How many antennas
-NUM_ANT=6
-
 ####################
 ##  BANDPASS CAL
 
 # Base name for the 1934 measurement sets after splitting
 MS_BASE_1934="1934_beam%b.ms"
-# Channel range for splitting
-CHAN_RANGE_1934="1-16416"
+# Channel range for splitting - defaults to full set of channels in MS
+CHAN_RANGE_1934=""
 # Location of 1934-638, formatted for use in cbpcalibrator
 DIRECTION_1934="[19h39m25.036, -63.42.45.63, J2000]"
 # Name of the table for the bandpass calibration parameters
@@ -232,16 +229,17 @@ FIELD_SELECTION_SCIENCE=""
 # Base name for the science observation measurement set
 MS_BASE_SCIENCE=scienceObservation_beam%b.ms
 # Name for the channel-averaged science measurement set (if blank, it
-# will be set using MS_BASE_SCIENCE
+# will be set using MS_BASE_SCIENCE)
 MS_SCIENCE_AVERAGE=""
-# Direction of the science field
+# Direction of the science field - defaults to centre of MS
 DIRECTION_SCI=""
 # Make the images at the centres of the beams, rather than the same
 # image centre for each beam
 IMAGE_AT_BEAM_CENTRES=true
 
-# Range of channels in science observation (used in splitting and averaging)
-CHAN_RANGE_SCIENCE="1-16416"
+# Range of channels in science observation (used in splitting and
+# averaging)  - defaults to full set of channels in MS
+CHAN_RANGE_SCIENCE=""
 # Number of channels to be averaged to create continuum measurement set
 NUM_CHAN_TO_AVERAGE=54
 
@@ -286,7 +284,7 @@ RESTORING_BEAM_CONT=fit
 GRIDDER_SNAPSHOT_IMAGING=true
 GRIDDER_SNAPSHOT_WTOL=2600
 GRIDDER_SNAPSHOT_LONGTRACK=true
-GRIDDER_SNAPSHOT_CLIPPING=0
+GRIDDER_SNAPSHOT_CLIPPING=0.01
 GRIDDER_WMAX=2600
 GRIDDER_NWPLANES=99
 GRIDDER_OVERSAMPLE=4
@@ -311,6 +309,11 @@ PRECONDITIONER_LIST="[Wiener, GaussianTaper]"
 PRECONDITIONER_GAUSS_TAPER="[30arcsec, 30arcsec, 0deg]"
 PRECONDITIONER_WIENER_ROBUSTNESS=0.5
 PRECONDITIONER_WIENER_TAPER=""
+# Parameters for preconditioning for the restore solver alone
+RESTORE_PRECONDITIONER_LIST="[Wiener, GaussianTaper]"
+RESTORE_PRECONDITIONER_GAUSS_TAPER="[30arcsec, 30arcsec, 0deg]"
+RESTORE_PRECONDITIONER_WIENER_ROBUSTNESS=-1
+RESTORE_PRECONDITIONER_WIENER_TAPER=""
 
 
 ####################
@@ -320,7 +323,7 @@ PRECONDITIONER_WIENER_TAPER=""
 # via a components parset ("Components")
 SELFCAL_METHOD="Cmodel"
 # Interval [sec] over which to solve for self-calibration
-SELFCAL_INTERVAL=10
+SELFCAL_INTERVAL=300
 # Number of loops of self-calibration
 SELFCAL_NUM_LOOPS=5
 # Should we keep the images from the intermediate selfcal loops?
@@ -402,7 +405,7 @@ DO_COPY_SL=false
 # Channel range to copy
 CHAN_RANGE_SL_SCIENCE=""
 # Tile size for SL measurement set
-TILENCHAN_SL=1
+TILENCHAN_SL=10
 # Whether to apply a gains solution
 DO_APPLY_CAL_SL=false
 # Whether to subtract a continuum model
@@ -450,7 +453,7 @@ PRECONDITIONER_SPECTRAL_WIENER_TAPER=""
 GRIDDER_SPECTRAL_SNAPSHOT_IMAGING=true
 GRIDDER_SPECTRAL_SNAPSHOT_WTOL=2600
 GRIDDER_SPECTRAL_SNAPSHOT_LONGTRACK=true
-GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING=0
+GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING=0.01
 GRIDDER_SPECTRAL_WMAX=2600
 GRIDDER_SPECTRAL_NWPLANES=99
 GRIDDER_SPECTRAL_OVERSAMPLE=4

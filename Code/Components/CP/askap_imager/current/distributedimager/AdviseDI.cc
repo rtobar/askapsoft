@@ -83,16 +83,16 @@ bool in_range(double end1, double end2, double test) {
 
 
     if (test >= end1 && test <= end2) {
-        ASKAPLOG_INFO_STR(logger,"Test frequency " << test \
+        ASKAPLOG_DEBUG_STR(logger,"Test frequency " << test \
         << " between " << end1 << " and " << end2);
         return true;
     }
     if (test <= end1 && test >= end2) {
-        ASKAPLOG_INFO_STR(logger,"Test frequency " << test \
+        ASKAPLOG_DEBUG_STR(logger,"Test frequency " << test \
         << " between " << end1 << " and " << end2);
         return true;
     }
-    ASKAPLOG_INFO_STR(logger,"Test frequency " << test \
+    ASKAPLOG_DEBUG_STR(logger,"Test frequency " << test \
     << " NOT between " << end1 << " and " << end2);
     return false;
 }
@@ -123,22 +123,22 @@ void AdviseDI::prepare() {
     const vector<string> ms = getDatasets();
 
     unsigned int nWorkers = itsComms.nProcs() - 1;
-    ASKAPLOG_INFO_STR(logger, "nWorkers " << nWorkers);
+    ASKAPLOG_DEBUG_STR(logger, "nWorkers " << nWorkers);
 
     unsigned int nWorkersPerGroup = nWorkers/itsComms.nGroups();
-    ASKAPLOG_INFO_STR(logger, "nWorkersPerGroup " << nWorkersPerGroup);
+    ASKAPLOG_DEBUG_STR(logger, "nWorkersPerGroup " << nWorkersPerGroup);
     unsigned int nGroups = itsComms.nGroups();
-    ASKAPLOG_INFO_STR(logger, "nGroups " << nGroups);
+    ASKAPLOG_DEBUG_STR(logger, "nGroups " << nGroups);
     const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
-    ASKAPLOG_INFO_STR(logger,"nchanpercore " << nchanpercore);
+    ASKAPLOG_DEBUG_STR(logger,"nchanpercore " << nchanpercore);
     const int nwriters = itsParset.getInt32("nwriters", 1);
-    ASKAPLOG_INFO_STR(logger,"nwriters " << nwriters);
+    ASKAPLOG_DEBUG_STR(logger,"nwriters " << nwriters);
     unsigned int nWorkersPerWriter = floor(nWorkers / nwriters);
-    ASKAPLOG_INFO_STR(logger,"nwriters " << nwriters);
+    ASKAPLOG_DEBUG_STR(logger,"nwriters " << nwriters);
     if (nWorkersPerWriter < 1) {
         nWorkersPerWriter = 1;
     }
-    ASKAPLOG_INFO_STR(logger,"nWorkersPerWriter " << nWorkersPerWriter);
+    ASKAPLOG_DEBUG_STR(logger,"nWorkersPerWriter " << nWorkersPerWriter);
     casa::uInt srow = 0;
     chanFreq.resize(ms.size());
     chanWidth.resize(ms.size());
@@ -166,7 +166,7 @@ void AdviseDI::prepare() {
         resolution[n].resize(0);
         centre[n].resize(0);
     // Open the input measurement set
-        ASKAPLOG_INFO_STR(logger, "Opening " << ms[n] << " filecount " << n );
+        ASKAPLOG_DEBUG_STR(logger, "Opening " << ms[n] << " filecount " << n );
         const casa::MeasurementSet in(ms[n]);
         const casa::ROMSColumns srcCols(in);
         const casa::ROMSSpWindowColumns& sc = srcCols.spectralWindow();
@@ -222,11 +222,11 @@ void AdviseDI::prepare() {
         else {
            ASKAPLOG_WARN_STR(logger,"Assuming subsequent measurement sets share Epoch,Position and Direction");
         }
-        ASKAPLOG_INFO_STR(logger, "Completed filecount " << n);
+        ASKAPLOG_DEBUG_STR(logger, "Completed filecount " << n);
     }
 
 
-    ASKAPLOG_INFO_STR(logger, "Assuming tangent point: "<<printDirection(itsTangent)<<" (J2000)");
+    ASKAPLOG_DEBUG_STR(logger, "Assuming tangent point: "<<printDirection(itsTangent)<<" (J2000)");
 
 
 
@@ -293,8 +293,8 @@ void AdviseDI::prepare() {
 
     for (unsigned int ch = 0; ch < itsTopoFrequencies.size(); ++ch) {
 
-        ASKAPLOG_INFO_STR(logger,"Topocentric Channel " << ch << ":" << itsTopoFrequencies[ch]);
-        ASKAPLOG_INFO_STR(logger,"Barycentric Channel " << ch << ":" << itsBaryFrequencies[ch]);
+        ASKAPLOG_DEBUG_STR(logger,"Topocentric Channel " << ch << ":" << itsTopoFrequencies[ch]);
+        ASKAPLOG_DEBUG_STR(logger,"Barycentric Channel " << ch << ":" << itsBaryFrequencies[ch]);
         unsigned int allocation_index = floor(ch / nchanpercore);
         /// We allocate the frequencies based upon the topocentric range.
         /// We do this becuase it is easier for the user to understand.
@@ -304,7 +304,7 @@ void AdviseDI::prepare() {
         /// Beware the syntactic confusion here - we are allocating a frequency that is from
         /// the Topocentric list. But will match a channel based upon the barycentric frequency
 
-        ASKAPLOG_INFO_STR(logger,"Allocating frequency "<< itsTopoFrequencies[ch].getValue() \
+        ASKAPLOG_DEBUG_STR(logger,"Allocating frequency "<< itsTopoFrequencies[ch].getValue() \
         << " to worker " << allocation_index+1);
 
         itsAllocatedFrequencies[allocation_index].push_back(itsTopoFrequencies[ch].getValue());
@@ -316,9 +316,15 @@ void AdviseDI::prepare() {
     // for each Epoch.
 
     int globalChannel = 0;
+    vector<int> itsBeams = getBeams();
 
+    // initially lets just use the first beam in the list
+
+    int myBeam = itsBeams[0];
+
+    //
     for (unsigned int work = 0; work < itsAllocatedFrequencies.size(); ++work) {
-        ASKAPLOG_INFO_STR(logger,"Allocating frequency channels for worker " << work);
+        ASKAPLOG_DEBUG_STR(logger,"Allocating frequency channels for worker " << work);
         // loop over the measurement sets and find the local channel number
         // associated with the barycentric channel
 
@@ -329,7 +335,7 @@ void AdviseDI::prepare() {
 
             // need to allocate the measurement sets for this channel to this allocation
             // this may require appending new work units.
-            ASKAPLOG_INFO_STR(logger,"Allocating " << thisAllocation[frequency] \
+            ASKAPLOG_DEBUG_STR(logger,"Allocating " << thisAllocation[frequency] \
             << "Global channel " << globalChannel);
 
             bool allocated = false;
@@ -348,6 +354,7 @@ void AdviseDI::prepare() {
                     wu.set_writer(mywriter);
                     wu.set_payloadType(cp::ContinuumWorkUnit::WORK);
                     wu.set_channelFrequency(thisAllocation[frequency]);
+                    wu.set_beam(myBeam);
 
                     if (itsTopoFrequencies.size() > 1)
                         wu.set_channelWidth(fabs(itsTopoFrequencies[1].getValue() - itsTopoFrequencies[0].getValue()));
@@ -359,9 +366,10 @@ void AdviseDI::prepare() {
                     wu.set_dataset(ms[set]);
                     itsAllocatedWork[work].push_back(wu);
                     itsWorkUnitCount++;
-                    ASKAPLOG_INFO_STR(logger,"Allocating " << thisAllocation[frequency] \
-                    << " with local channel " << lc << " of width " << wu.get_channelWidth() << " in set: " << ms[set] \
-                    << " to worker " << work << "Count " << itsWorkUnitCount );
+                    ASKAPLOG_DEBUG_STR(logger,"Allocating " << thisAllocation[frequency] \
+                    << " with local channel " << lc << " of width " << wu.get_channelWidth()  \
+                    << " in set: " << ms[set] <<  " to rank " << work+1 << " this rank has " \
+                    << itsAllocatedWork[work].size() << " of a total count " << itsWorkUnitCount );
                     allocated = true;
                 }
 
@@ -382,22 +390,22 @@ void AdviseDI::prepare() {
 
         }
 
-
+    }
         // expand the channels by the number of groups - this is cheap on memory and
         // allows easier indexing
         // But this is only really needed by the master
 
-        for (int grp = 1; grp < itsComms.nGroups(); grp++) {
-            for (int wrk = 0; wrk < nWorkersPerGroup; wrk++) {
-                itsAllocatedWork[grp*nWorkersPerGroup+wrk] = itsAllocatedWork[wrk];
+    for (int grp = 1; grp < itsComms.nGroups(); grp++) {
+        for (int wrk = 0; wrk < nWorkersPerGroup; wrk++) {
+            itsAllocatedWork[grp*nWorkersPerGroup+wrk] = itsAllocatedWork[wrk];
 
-                itsWorkUnitCount=itsWorkUnitCount + itsAllocatedWork[wrk].size();
+            itsWorkUnitCount=itsWorkUnitCount + itsAllocatedWork[wrk].size();
 
-                ASKAPLOG_INFO_STR(logger,"Allocating worker " << grp*nWorkersPerGroup+wrk \
-                << " the same units as worker " << wrk << " Count " << itsWorkUnitCount);
-            }
+            ASKAPLOG_DEBUG_STR(logger,"Allocating rank " << grp*nWorkersPerGroup+wrk+1 \
+            << " the same units as rank " << wrk+1 << "(" << itsAllocatedWork[wrk].size() << ")"<< " Count " << itsWorkUnitCount);
         }
     }
+
 
     /// Now if required we need to allocate the writers for a parallel writers
     /// The writers do not need to be dedicated cores - they can write in addition
@@ -406,12 +414,12 @@ void AdviseDI::prepare() {
 
 
     isPrepared = true;
-    ASKAPLOG_INFO_STR(logger, "Prepared the advice");
+    ASKAPLOG_DEBUG_STR(logger, "Prepared the advice");
 }
 cp::ContinuumWorkUnit AdviseDI::getAllocation(int id) {
     cp::ContinuumWorkUnit rtn;
     if (itsAllocatedWork[id].empty() == true) {
-        ASKAPLOG_INFO_STR(logger, "Stack is empty for " << id+1);
+        ASKAPLOG_DEBUG_STR(logger, "Stack is empty for " << id+1);
         rtn.set_payloadType(cp::ContinuumWorkUnit::DONE);
         return rtn;
     }
@@ -422,12 +430,12 @@ cp::ContinuumWorkUnit AdviseDI::getAllocation(int id) {
     }
     if (itsAllocatedWork[id].empty() == true) {
         // this is the last unitParset
-        ASKAPLOG_INFO_STR(logger, "Final job for " << id+1);
+        ASKAPLOG_DEBUG_STR(logger, "Final job for " << id+1);
         if (rtn.get_payloadType() != cp::ContinuumWorkUnit::NA){
             rtn.set_payloadType(cp::ContinuumWorkUnit::LAST);
         }
         else {
-            ASKAPLOG_INFO_STR(logger, "Final job is bad for " << id+1);
+            ASKAPLOG_DEBUG_STR(logger, "Final job is bad for " << id+1);
             rtn.set_payloadType(cp::ContinuumWorkUnit::DONE);
         }
     }
@@ -446,7 +454,7 @@ int AdviseDI::match(int ms_number, casa::MVFrequency testFreq) {
         int ch = 0;
         it_current=chanFreq[ms_number].begin();
         for (ch=0 ; ch < chanFreq[ms_number].size(); ++ch) {
-            ASKAPLOG_INFO_STR(logger, "looking for " << testVal << \
+            ASKAPLOG_DEBUG_STR(logger, "looking for " << testVal << \
             " in test frequency channel " << *it_current << \
                 " width " << chanWidth[ms_number][ch]);
             double one_edge = (*it_current) - chanWidth[ms_number][ch]/2.;
@@ -468,11 +476,11 @@ int AdviseDI::match(int ms_number, casa::MVFrequency testFreq) {
 void AdviseDI::addMissingParameters()
 {
     if (isPrepared == false) {
-        ASKAPLOG_INFO_STR(logger,"Running prepare from addMissingParameters");
+        ASKAPLOG_DEBUG_STR(logger,"Running prepare from addMissingParameters");
         this->prepare();
     }
 
-    ASKAPLOG_INFO_STR(logger,"Adding missing params ");
+    ASKAPLOG_DEBUG_STR(logger,"Adding missing params ");
 
     /*
     std::vector<casa::MFrequency>::iterator begin_it;
@@ -515,7 +523,7 @@ void AdviseDI::addMissingParameters()
        std::ostringstream pstr;
        // Only J2000 is implemented at the moment.
        pstr<<"["<<printLon(itsTangent)<<", "<<printLat(itsTangent)<<", J2000]";
-       ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
+       ASKAPLOG_DEBUG_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
        itsParset.add(param, pstr.str().c_str());
    }
    param = "Images.restFrequency";
@@ -524,7 +532,7 @@ void AdviseDI::addMissingParameters()
        std::ostringstream pstr;
        // Only J2000 is implemented at the moment.
        pstr<<"HI";
-       ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
+       ASKAPLOG_DEBUG_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
        itsParset.add(param, pstr.str().c_str());
    }
 
@@ -540,7 +548,7 @@ void AdviseDI::addMissingParameters()
                 const vector<string> cellSizeVector = itsParset.getStringVector("Images.cellsize");
                 std::ostringstream pstr;
                 pstr<<"["<< cellSizeVector[0].c_str() <<"arcsec,"<<cellSizeVector[1].c_str() <<"arcsec]";
-                ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
+                ASKAPLOG_DEBUG_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
                 itsParset.add(param, pstr.str().c_str());
             }
        }
@@ -563,7 +571,7 @@ void AdviseDI::addMissingParameters()
            std::ostringstream pstr;
            // Only J2000 is implemented at the moment.
            pstr<<"["<<printLon(itsTangent)<<", "<<printLat(itsTangent)<<", J2000]";
-           ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
+           ASKAPLOG_DEBUG_STR(logger, "  Advising on parameter " << param << ": " << pstr.str().c_str());
            itsParset.add(param, pstr.str().c_str());
        }
        param = "Images."+imageNames[img]+".nterms"; // if nterms is set, store it for later
@@ -584,7 +592,7 @@ void AdviseDI::addMissingParameters()
        if (!itsParset.isDefined(param)) {
            std::ostringstream pstr;
            pstr<<"MFS";
-           ASKAPLOG_INFO_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
+           ASKAPLOG_DEBUG_STR(logger, "  Advising on parameter " << param <<": " << pstr.str().c_str());
            itsParset.add(param, pstr.str().c_str());
        }
 
@@ -604,7 +612,7 @@ in distributed mode");
    } else if ( shapeNeeded && !itsParset.isDefined("Images.shape") ) {
 
    }
-   ASKAPLOG_INFO_STR(logger,"Done adding missing params ");
+   ASKAPLOG_DEBUG_STR(logger,"Done adding missing params ");
 
 }
 // Utility function to get dataset names from parset.
@@ -643,15 +651,28 @@ void AdviseDI::updateComms() {
     for (int worker=0; worker < itsAllocatedWork.size() ; worker++) {
         for (int alloc=0; alloc < itsAllocatedWork[worker].size() ; alloc++) {
             if (itsAllocatedWork[worker][alloc].get_payloadType() != cp::ContinuumWorkUnit::NA) {
-                ASKAPLOG_INFO_STR(logger,"Allocating worker " << worker \
-            << " to writer " << itsAllocatedWork[worker][alloc].get_writer());
                 itsCubeComms.addWriter(itsAllocatedWork[worker][alloc].get_writer());
                 itsCubeComms.addChannelToWriter(itsAllocatedWork[worker][alloc].get_writer());
             }
         }
     }
 }
+std::vector<int> AdviseDI::getBeams()
+{
+    std::vector<int> bs;
 
+    if (itsParset.isDefined("beams")) {
+        bs = itsParset.getInt32Vector("beams",bs);
+
+    }
+    else {
+        bs.push_back(0);
+    }
+    return bs;
+}
+double AdviseDI::getBaseFrequencyAllocation(int workerNumber) {
+    return itsAllocatedFrequencies[workerNumber][0];
+}
 } // namespace synthesis
 
 } // namespace askap
