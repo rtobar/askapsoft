@@ -23,41 +23,28 @@
  * 
  * @author Daniel Collins <daniel.collins@csiro.au>
  */
-package askap.cp.manager;
-
-import org.apache.log4j.Logger;
-
-import askap.interfaces.schedblock._ISBStateMonitorDisp;
-import askap.interfaces.schedblock.ObsState;
+package askap.cp.manager.notifications;
 
 /**
- * Subscriber to the askap.interfaces.schedblock.ISBStateMonitor.changed topic.
  *
  * @author Daniel Collins <daniel.collins@csiro.au>
  */
-public class SBStateMonitor extends _ISBStateMonitorDisp {
-
-	private static final Logger logger = Logger.getLogger(CpManager.class.getName());
+public final class SBStateMonitorFactory {
 
 	/**
-	 * SBStateMonitor.changed event handler.
-	 *
-	 * @param sbid The scheduling block ID.
-	 * @param newState The new observation state.
-	 * @param updateTime Timestamp of the state change.
-	 * @param current The current Ice method invocation information object.
+	 * Factory method for SBStateMonitor.
+	 * 
+	 * @param type: Identifies the type of state monitor to create.
+	 * @return SBStateMonitor
 	 */
-	@Override
-	public void changed(
-			long sbid,
-			ObsState newState,
-			String updateTime,
-			Ice.Current current) {
-		logger.debug("Schedblock state changed: " + newState.toString());
-
-		if (0 == newState.compareTo(ObsState.PROCESSING)) {
-			logger.debug("Schedblock state changed to PROCESSING. Emitting notification");
-			// TODO: notify, probably via an injected notification interface
+	public static SBStateMonitor getInstance(String type) {
+		switch (type) {
+			case "test":
+				return new TestSBStateChangedMonitor();
+			case "jira":
+				return new JiraSBStateChangedMonitor();
+			default:
+				throw new IllegalArgumentException(type);
 		}
 	}
 }

@@ -25,11 +25,14 @@
  */
 package askap.cp.manager;
 
+import askap.cp.manager.notifications.SBStateMonitor;
 import IceStorm.NoSuchTopic;
 import IceStorm.TopicPrx;
 import org.apache.log4j.Logger;
 
 import askap.cp.manager.monitoring.MonitoringSingleton;
+import askap.cp.manager.notifications.SBStateMonitorFactory;
+import askap.cp.manager.notifications.TestSBStateChangedMonitor;
 import askap.util.ServiceApplication;
 import askap.util.ServiceManager;
 import java.util.logging.Level;
@@ -212,7 +215,8 @@ public final class CpManager extends ServiceApplication {
         }
 
 		// Instantiate our schedblock state monitor servant and register with the adapter
-		SBStateMonitor monitor = new SBStateMonitor();
+		// TODO: get the monitor type from parset
+		SBStateMonitor monitor = SBStateMonitorFactory.getInstance("test");
 		sbStateChangedSubscriber = adapter.addWithUUID(monitor).ice_oneway();
 		adapter.activate();
 
