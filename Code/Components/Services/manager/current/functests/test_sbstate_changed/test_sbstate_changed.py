@@ -80,7 +80,7 @@ class TestSBStateChanged(object):
         self.setup_icestorm(topic=None)
         # wait a little while to give CP Manager time to start up and
         # create the topic
-        # sleep(5)
+        sleep(5)
         try:
             self.topic_manager.retrieve('sbstatechange')
         except Exception as e:
