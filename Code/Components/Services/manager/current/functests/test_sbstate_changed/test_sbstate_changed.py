@@ -9,12 +9,13 @@
 """
 
 import os
+from datetime import datetime
+from time import sleep
+
 from unittest import skip
 
 import Ice, IceStorm
 from askap.iceutils import IceSession, get_service_object
-
-# always import from askap.slice before trying to import any interfaces
 from askap.slice import CP, SchedulingBlockService
 from askap.interfaces.cp import ICPObsServicePrx
 from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
@@ -25,7 +26,6 @@ class TestSBStateChanged(object):
         self.igsession = None
         self.service = None
         self.topic_manager = None
-        self.topic = "sbstatechange"
         self.publisher_proxy = None
 
     def setUp(self):
@@ -44,13 +44,11 @@ class TestSBStateChanged(object):
                 self.igsession.communicator,
                 "CentralProcessorService@CentralProcessorAdapter",
                 ICPObsServicePrx)
-        except Exception, ex:
+        except Exception as ex:
             self.igsession.terminate()
             raise
 
-        self.setup_icestorm()
-
-    def setup_icestorm(self):
+    def setup_icestorm(self, topic="sbstatechange"):
         """Create the IceStorm connection
         Modelled on the TOS TypedValuePublisher Python class
         """
@@ -60,14 +58,17 @@ class TestSBStateChanged(object):
             'IceStorm/TopicManager@IceStorm.TopicManager',
             IceStorm.TopicManagerPrx)
 
+        if not topic:
+            return
+
+        self.topic = topic
         try:
-            topic = self.topic_manager.retrieve(self.topic)
+            topic = self.topic_manager.retrieve(topic)
         except IceStorm.NoSuchTopic:
             try:
-                topic = self.topic_manager.create(self.topic)
+                topic = self.topic_manager.create(topic)
             except IceStorm.TopicExists:
                 return
-
         publisher = topic.getPublisher().ice_oneway()
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
@@ -75,10 +76,30 @@ class TestSBStateChanged(object):
         self.igsession.terminate()
         self.igsession = None
 
+    def test_manager_creates_topic(self):
+        self.setup_icestorm(topic=None)
+        # wait a little while to give CP Manager time to start up and
+        # create the topic
+        # sleep(5)
+        try:
+            self.topic_manager.retrieve('sbstatechange')
+        except Exception as e:
+            assert False, 'Failed with {0}'.format(e)
+
     def test_sbstate_processing(self):
+        self.setup_icestorm()
+
         assert self.igsession
         assert self.service
-        assert self.manager
+        assert self.topic_manager
         assert self.publisher_proxy
-        self.publisher_proxy.publish(ObsState.PROCESSING)
+
+        sbid = 1
+        timestamp = datetime.now()
+        self.publisher_proxy.changed(
+            sbid,
+            ObsState.PROCESSING,
+            str(timestamp))
+
         # TODO: determine whether the manager process responded
+        assert False, 'placeholder until I implement the reverse connection'

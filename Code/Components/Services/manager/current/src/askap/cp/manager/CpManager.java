@@ -25,11 +25,14 @@
  */
 package askap.cp.manager;
 
+import IceStorm.NoSuchTopic;
+import IceStorm.TopicPrx;
 import org.apache.log4j.Logger;
 
 import askap.cp.manager.monitoring.MonitoringSingleton;
 import askap.util.ServiceApplication;
 import askap.util.ServiceManager;
+import java.util.logging.Level;
 
 public final class CpManager extends ServiceApplication {
 
@@ -154,8 +157,7 @@ public final class CpManager extends ServiceApplication {
 			logger.debug("monitoring.ice.adaptername: " + adapterName);
 		}
 
-		MonitoringSingleton.init(communicator(),
-				serviceName, adapterName);
+		MonitoringSingleton.init(communicator(), serviceName, adapterName);
 		return true;
 	}
 
@@ -216,24 +218,41 @@ public final class CpManager extends ServiceApplication {
 
 		// subscribe to the topic
 		try {
-			sbStateChangedTopic = topicManager.retrieve(topicName);
+			sbStateChangedTopic = getTopic(topicManager, topicName);
 			java.util.Map<String, String> qos = null;
 			sbStateChangedTopic.subscribeAndGetPublisher(qos, sbStateChangedSubscriber);
 		}
-		// TODO: do I want to catch this here, print a message and allow execution to continue? Or should we abort?
-		catch (IceStorm.NoSuchTopic ex) {
-			logger.error(ex);
-			return false;
-		}
-		catch (IceStorm.AlreadySubscribed ex) {
-			logger.error(ex);
-			return false;
-		}
-		catch (IceStorm.BadQoS ex) {
-			logger.error(ex);
-			return false;
+		catch (IceStorm.NoSuchTopic | IceStorm.AlreadySubscribed | IceStorm.BadQoS ex) {
+            throw new RuntimeException("ICE topic subscription failed", ex);
 		}
 
 		return true;
+	}
+
+	/**
+	 * Gets an IceStorm topic, creating the topic if it does not already exist.
+	 * @param topicManager: The IceStorm topic manager
+	 * @param topicName: the topic name
+	 * @return The IceStorm TopicPrx instance.
+	 * 
+	 * @throws IceStorm.NoSuchTopic
+	 */
+	private static TopicPrx getTopic(
+			IceStorm.TopicManagerPrx topicManager,
+			String topicName) throws NoSuchTopic {
+		IceStorm.TopicPrx topic = null;
+		try {
+			topic = topicManager.retrieve(topicName);
+		}
+		catch (IceStorm.NoSuchTopic nst) {
+			try {
+				topic = topicManager.create(topicName);
+			}
+			catch (IceStorm.TopicExists te) {
+				topic = topicManager.retrieve(topicName);
+			}
+		}
+
+		return topic;
 	}
 }
