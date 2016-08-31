@@ -58,7 +58,7 @@ public abstract class SBStateMonitor
 		logger.debug("Schedblock state changed: " + newState.toString());
 
 		if (0 == newState.compareTo(ObsState.PROCESSING)) {
-			logger.debug("Schedblock state changed to PROCESSING. Emitting notification");
+			logger.debug("Schedblock state changed to PROCESSING.");
 			notify(sbid, newState, updateTime);
 		}
 	}
