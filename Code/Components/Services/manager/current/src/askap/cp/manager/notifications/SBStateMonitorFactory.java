@@ -25,6 +25,8 @@
  */
 package askap.cp.manager.notifications;
 
+import askap.util.ParameterSet;
+
 /**
  *
  * @author Daniel Collins <daniel.collins@csiro.au>
@@ -35,14 +37,19 @@ public final class SBStateMonitorFactory {
 	 * Factory method for SBStateMonitor.
 	 * 
 	 * @param type: Identifies the type of state monitor to create.
+	 * @param config: The parameter set.
+	 * @param communicator
 	 * @return SBStateMonitor
 	 */
-	public static SBStateMonitor getInstance(String type) {
+	public static SBStateMonitor getInstance(
+			String type,
+			ParameterSet config,
+			Ice.Communicator communicator) {
 		switch (type) {
 			case "test":
-				return new TestSBStateChangedMonitor();
+				return new TestSBStateChangedMonitor(config, communicator);
 			case "jira":
-				return new JiraSBStateChangedMonitor();
+				return new JiraSBStateChangedMonitor(config, communicator);
 			default:
 				throw new IllegalArgumentException(type);
 		}

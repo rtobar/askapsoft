@@ -213,9 +213,10 @@ public final class CpManager extends ServiceApplication {
         }
 
 		// Instantiate our schedblock state monitor servant and register with the adapter
-		// TODO: get the monitor type from parset
 		SBStateMonitor monitor = SBStateMonitorFactory.getInstance(
-			config().getString("sbstatemonitor.notificationagenttype"));
+			config().getString("sbstatemonitor.notificationagenttype"),
+			config(),
+			communicator());
 		sbStateChangedSubscriber = adapter.addWithUUID(monitor).ice_oneway();
 		adapter.activate();
 

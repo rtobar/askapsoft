@@ -25,7 +25,9 @@
  */
 package askap.cp.manager.notifications;
 
+import Ice.Communicator;
 import askap.interfaces.schedblock.ObsState;
+import askap.util.ParameterSet;
 
 /**
  * Implements Scheduling block state change notifications via JIRA.
@@ -33,6 +35,21 @@ import askap.interfaces.schedblock.ObsState;
  * @author Daniel Collins <daniel.collins@csiro.au>
  */
 public final class JiraSBStateChangedMonitor extends SBStateMonitor {
+
+	private final ParameterSet config;
+	private final Communicator communicator;
+
+	/**
+	 * 
+	 * @param config
+	 * @param communicator
+	 */
+	public JiraSBStateChangedMonitor(
+		ParameterSet config,
+		Communicator communicator) {
+		this.config = config;
+		this.communicator = communicator;
+	}
 
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
