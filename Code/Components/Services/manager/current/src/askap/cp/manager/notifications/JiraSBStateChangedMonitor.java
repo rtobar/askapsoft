@@ -25,7 +25,6 @@
  */
 package askap.cp.manager.notifications;
 
-import Ice.Communicator;
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
 
@@ -37,18 +36,13 @@ import askap.util.ParameterSet;
 public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 
 	private final ParameterSet config;
-	private final Communicator communicator;
 
 	/**
 	 * 
 	 * @param config
-	 * @param communicator
 	 */
-	public JiraSBStateChangedMonitor(
-		ParameterSet config,
-		Communicator communicator) {
+	public JiraSBStateChangedMonitor(ParameterSet config) {
 		this.config = config;
-		this.communicator = communicator;
 	}
 
 	@Override

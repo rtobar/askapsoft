@@ -25,10 +25,6 @@
  */
 package askap.cp.manager.notifications;
 
-import Ice.Communicator;
-import IceStorm.NoSuchTopic;
-import askap.interfaces.schedblock.ISBStateMonitorPrx;
-import askap.interfaces.schedblock.ISBStateMonitorPrxHelper;
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
 import org.apache.log4j.Logger;
@@ -41,55 +37,17 @@ public final class TestSBStateChangedMonitor extends SBStateMonitor {
 
 	private static final Logger logger = Logger.getLogger(TestSBStateChangedMonitor.class.getName());
 	private final ParameterSet config;
-    private Communicator communicator;
-	private ISBStateMonitorPrx monitor;
 
 	/**
 	 * 
 	 * @param config
-	 * @param communicator
-	 * @throws IceStorm.NoSuchTopic
 	 */
-	public TestSBStateChangedMonitor(
-		ParameterSet config,
-		Communicator communicator) throws NoSuchTopic {
+	public TestSBStateChangedMonitor(ParameterSet config) {
 		this.config = config;
-		this.communicator = communicator;
-
-		// Get the names of the topic manager and topic from the parset
-		String topicManagerName = config.getString("sbstatemonitor.topicmanager");
-		String topicName = config.getString("sbstatemonitor.topic");
-
-		// get a proxy to the IceStorm topic manager
-		logger.debug("Getting topic manager proxy: " + topicManagerName);
-		Ice.ObjectPrx obj = communicator.stringToProxy(topicManagerName);
-		IceStorm.TopicManagerPrx topicManager = IceStorm.TopicManagerPrxHelper.checkedCast(obj);
-
-		// get the topic
-		IceStorm.TopicPrx topic = null;
-		while (topic == null) {
-			try {
-				topic = topicManager.retrieve(topicName);
-			} catch (IceStorm.NoSuchTopic nst) {
-				try {
-					topic = topicManager.create(topicName);
-				} catch (IceStorm.TopicExists te) {
-					// Another client created the topic.
-					topic = topicManager.retrieve(topicName);
-				}
-			}
-		}
-
-		// Get the publisher
-		Ice.ObjectPrx publisher = topic.getPublisher().ice_oneway();
-		monitor = ISBStateMonitorPrxHelper.uncheckedCast(publisher);
 	}
 
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
-		// publish the notification back 
-		// TODO: this is probably a bad idea. Should create a new test interface.
-		monitor.changed(sbid, newState, updateTime);
 	}
 	
 }

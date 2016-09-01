@@ -38,18 +38,14 @@ public final class SBStateMonitorFactory {
 	 * 
 	 * @param type: Identifies the type of state monitor to create.
 	 * @param config: The parameter set.
-	 * @param communicator
 	 * @return SBStateMonitor
 	 */
-	public static SBStateMonitor getInstance(
-			String type,
-			ParameterSet config,
-			Ice.Communicator communicator) {
+	public static SBStateMonitor getInstance(String type, ParameterSet config) {
 		switch (type) {
 			case "test":
-				return new TestSBStateChangedMonitor(config, communicator);
+				return new TestSBStateChangedMonitor(config);
 			case "jira":
-				return new JiraSBStateChangedMonitor(config, communicator);
+				return new JiraSBStateChangedMonitor(config);
 			default:
 				throw new IllegalArgumentException(type);
 		}
