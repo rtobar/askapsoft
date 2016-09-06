@@ -55,10 +55,8 @@ public abstract class SBStateMonitor
 			ObsState newState,
 			String updateTime,
 			Ice.Current current) {
-		logger.debug("Schedblock state changed: " + newState.toString());
-
 		if (0 == newState.compareTo(ObsState.PROCESSING)) {
-			logger.debug("Schedblock state changed to PROCESSING.");
+			logger.debug("Schedblock state changed: PROCESSING");
 			notify(sbid, newState, updateTime);
 		}
 	}

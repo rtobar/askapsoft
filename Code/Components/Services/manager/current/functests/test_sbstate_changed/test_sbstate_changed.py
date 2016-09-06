@@ -17,8 +17,16 @@ from unittest import skip
 import Ice, IceStorm
 from askap.iceutils import IceSession, get_service_object
 from askap.slice import CP, SchedulingBlockService
-from askap.interfaces.cp import ICPObsServicePrx
+from askap.interfaces.cp import ICPObsServicePrx, ICPFuncTestReporter
 from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
+
+
+class FuncTestReporterI(ICPFuncTestReporter):
+    def __init__(self):
+        self.notify_history = []
+
+    def notifySBStateChanged(self, sbid, obsState):
+        self.notify_history.append((sbid, obsState))
 
 
 class TestSBStateChanged(object):
@@ -72,6 +80,16 @@ class TestSBStateChanged(object):
         publisher = topic.getPublisher().ice_oneway()
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
+    def setup_functest_reporter_service(self):
+        adapter = self.igsession.communicator.createObjectAdapterWithEndpoints(
+            'CPFuncTestReporterAdapter',
+            'tcp -p 4061')
+        self.functest_reporter_service = CPFuncTestReporterI()
+        adapter.add(
+            self.functest_reporter_service,
+            ic.stringToIdentity('CPFuncTestReporter'))
+        adapter.activate()
+
     def tearDown(self):
         self.igsession.terminate()
         self.igsession = None
@@ -87,6 +105,7 @@ class TestSBStateChanged(object):
             assert False, 'Failed with {0}'.format(e)
 
     def test_sbstate_processing(self):
+        self.setup_functest_reporter_service()
         self.setup_icestorm()
 
         assert self.igsession
@@ -101,5 +120,7 @@ class TestSBStateChanged(object):
             ObsState.PROCESSING,
             str(timestamp))
 
-        # TODO: determine whether the manager process responded
-        assert False, 'placeholder until I implement the reverse connection'
+        # Exactly 1 notification should have been sent
+        assert len(self.functest_reporter_service.notify_history) == 1
+        assert self.functest_reporter_service.notify_history[0][0] == sbid
+        assert self.functest_reporter_service.notify_history[0][1] == ObsState.PROCESSING

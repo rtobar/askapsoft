@@ -25,8 +25,8 @@
  */
 package askap.cp.manager.notifications;
 
+import askap.cp.manager.svcclients.FuncTestReporterClient;
 import askap.interfaces.schedblock.ObsState;
-import askap.util.ParameterSet;
 import org.apache.log4j.Logger;
 
 /**
@@ -36,18 +36,19 @@ import org.apache.log4j.Logger;
 public final class TestSBStateChangedMonitor extends SBStateMonitor {
 
 	private static final Logger logger = Logger.getLogger(TestSBStateChangedMonitor.class.getName());
-	private final ParameterSet config;
+	private final FuncTestReporterClient funcTestReporterClient;
 
 	/**
-	 * 
-	 * @param config
+	 * Instantiate the TestSBStateChangedMonitor
 	 */
-	public TestSBStateChangedMonitor(ParameterSet config) {
-		this.config = config;
+	public TestSBStateChangedMonitor(FuncTestReporterClient client) { 
+		funcTestReporterClient = client;
 	}
 
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
+		logger.debug("notify called");
+		funcTestReporterClient.notifySBStateChanged(sbid, newState);
 	}
 	
 }
