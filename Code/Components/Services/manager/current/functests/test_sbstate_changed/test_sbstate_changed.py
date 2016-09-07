@@ -9,19 +9,20 @@
 """
 
 import os
+import sys
 from datetime import datetime
 from time import sleep
 
 from unittest import skip
 
 import Ice, IceStorm
-from askap.iceutils import IceSession, get_service_object
+from askap.iceutils import IceSession, get_service_object, Server
 from askap.slice import CP, SchedulingBlockService
 from askap.interfaces.cp import ICPObsServicePrx, ICPFuncTestReporter
 from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
 
 
-class FuncTestReporterI(ICPFuncTestReporter):
+class TestReportingService(ICPFuncTestReporter):
     def __init__(self):
         self.notify_history = []
 
@@ -29,12 +30,27 @@ class FuncTestReporterI(ICPFuncTestReporter):
         self.notify_history.append((sbid, obsState))
 
 
+class FuncTestServer(Server):
+    def __init__(self, test_reporting_service, comm, **kwargs):
+        self.test_reporting_service = test_reporting_service
+        super(FuncTestServer, self).__init__(comm, kwargs)
+
+    def initialize_services(self):
+        self.add_service('FuncTestReporter', self.test_reporting_service)
+
+    def get_config(self):
+        # I don't need the parameters functionality
+        pass
+
+
 class TestSBStateChanged(object):
     def __init__(self):
         self.igsession = None
-        self.service = None
+        self.cpclient = None
         self.topic_manager = None
         self.publisher_proxy = None
+        self.server = None
+        self.test_reporting_service = None
 
     def setUp(self):
         # Note that the working directory is 'functests', thus paths are
@@ -45,13 +61,23 @@ class TestSBStateChanged(object):
             os.path.expandvars("$TEST_DIR/applications.txt"),
             cleanup=True)
 
-        # Get the CP Manager service object
+        print >>sys.stderr, sys.argv
+
         try:
             self.igsession.start()
-            self.service = get_service_object(
+
+            # Create a server to host the functional test service
+            self.test_reporting_service = TestReportingService()
+            self.server = FuncTestServer(
+                self.test_reporting_service,
+                self.igsession.communicator)
+
+            # Get the CP Manager service object
+            self.cpclient = get_service_object(
                 self.igsession.communicator,
                 "CentralProcessorService@CentralProcessorAdapter",
                 ICPObsServicePrx)
+
         except Exception as ex:
             self.igsession.terminate()
             raise
@@ -80,19 +106,11 @@ class TestSBStateChanged(object):
         publisher = topic.getPublisher().ice_oneway()
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
-    def setup_functest_reporter_service(self):
-        adapter = self.igsession.communicator.createObjectAdapter(
-            'CPFuncTestReporterAdapter')
-        self.functest_reporter_service = FuncTestReporterI()
-        adapter.add(
-            self.functest_reporter_service,
-            self.igsession.communicator.stringToIdentity('CPFuncTestReporter'))
-        adapter.activate()
-
     def tearDown(self):
         self.igsession.terminate()
         self.igsession = None
 
+    # @skip('too slow!')
     def test_manager_creates_topic(self):
         self.setup_icestorm(topic=None)
         # wait a little while to give CP Manager time to start up and
@@ -103,14 +121,12 @@ class TestSBStateChanged(object):
         except Exception as e:
             assert False, 'Failed with {0}'.format(e)
 
+    # @skip('too slow!')
     def test_sbstate_processing(self):
         self.setup_icestorm()
-        self.setup_functest_reporter_service()
 
-        assert self.igsession
-        assert self.service
-        assert self.topic_manager
         assert self.publisher_proxy
+        assert self.test_reporting_service
 
         sbid = 1
         timestamp = datetime.now()
@@ -120,6 +136,7 @@ class TestSBStateChanged(object):
             str(timestamp))
 
         # Exactly 1 notification should have been sent
-        assert len(self.functest_reporter_service.notify_history) == 1
-        assert self.functest_reporter_service.notify_history[0][0] == sbid
-        assert self.functest_reporter_service.notify_history[0][1] == ObsState.PROCESSING
+        assert len(self.test_reporting_service.notify_history) == 1
+        actual_sbid, actual_state = self.test_reporting_service.notify_history[0]
+        assert actual_sbid == sbid
+        assert actual_state == ObsState.PROCESSING
