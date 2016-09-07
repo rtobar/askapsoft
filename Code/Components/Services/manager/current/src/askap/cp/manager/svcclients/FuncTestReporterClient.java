@@ -47,7 +47,7 @@ public class FuncTestReporterClient {
     /**
      * Logger.
      */
-    private static final Logger logger = Logger.getLogger(IceDataServiceClient.class.getName());
+    private static final Logger logger = Logger.getLogger(FuncTestReporterClient.class.getName());
 
 	/** 
 	 * The Ice client proxy.
@@ -75,6 +75,7 @@ public class FuncTestReporterClient {
                 logger.warn("No endpoint exception" + baseWarn);
             } catch (Ice.NotRegisteredException e) {
                 logger.warn("Not registered exception" + baseWarn);
+				logger.error(e);
             } catch (Ice.ConnectFailedException e) {
                 logger.warn("Connect failed exception" + baseWarn);
             } catch (Ice.DNSException e) {

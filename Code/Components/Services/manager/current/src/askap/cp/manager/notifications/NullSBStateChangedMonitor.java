@@ -25,39 +25,26 @@
  */
 package askap.cp.manager.notifications;
 
-import Ice.Communicator;
-import askap.cp.manager.svcclients.FuncTestReporterClient;
-import askap.util.ParameterSet;
+import org.apache.log4j.Logger;
+import askap.interfaces.schedblock.ObsState;
 
 /**
- *
+ * Null object for Scheduling block state change notifications 
+ * 
  * @author Daniel Collins <daniel.collins@csiro.au>
  */
-public final class SBStateMonitorFactory {
+public final class NullSBStateChangedMonitor extends SBStateMonitor {
+
+	private static final Logger logger = Logger.getLogger(NullSBStateChangedMonitor.class.getName());
 
 	/**
-	 * Factory method for SBStateMonitor.
 	 * 
-	 * @param type: Identifies the type of state monitor to create.
-	 * @param config: The parameter set.
-	 * @return SBStateMonitor
 	 */
-	public static SBStateMonitor getInstance(
-			String type,
-			ParameterSet config,
-			Communicator communicator) {
-		switch (type) {
-			case "test":
-				FuncTestReporterClient client = new FuncTestReporterClient(
-						communicator,
-						config.getString("cpfunctestreporter.identity"));
-				return new TestSBStateChangedMonitor(client);
-			case "jira":
-				return new JiraSBStateChangedMonitor(config);
-			case "null":
-				return new NullSBStateChangedMonitor();
-			default:
-				throw new IllegalArgumentException(type);
-		}
+	public NullSBStateChangedMonitor() {
+	}
+
+	@Override
+	public void notify(long sbid, ObsState newState, String updateTime) {
+		logger.debug("notify called. ObsState: " + newState);
 	}
 }

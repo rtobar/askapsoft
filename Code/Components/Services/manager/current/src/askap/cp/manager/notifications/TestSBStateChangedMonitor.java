@@ -47,7 +47,7 @@ public final class TestSBStateChangedMonitor extends SBStateMonitor {
 
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
-		logger.debug("notify called");
+		logger.debug("notify called. ObsState: " + newState);
 		funcTestReporterClient.notifySBStateChanged(sbid, newState);
 	}
 	

@@ -81,13 +81,12 @@ class TestSBStateChanged(object):
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
     def setup_functest_reporter_service(self):
-        adapter = self.igsession.communicator.createObjectAdapterWithEndpoints(
-            'CPFuncTestReporterAdapter',
-            'tcp -p 4061')
-        self.functest_reporter_service = CPFuncTestReporterI()
+        adapter = self.igsession.communicator.createObjectAdapter(
+            'CPFuncTestReporterAdapter')
+        self.functest_reporter_service = FuncTestReporterI()
         adapter.add(
             self.functest_reporter_service,
-            ic.stringToIdentity('CPFuncTestReporter'))
+            self.igsession.communicator.stringToIdentity('CPFuncTestReporter'))
         adapter.activate()
 
     def tearDown(self):
@@ -105,8 +104,8 @@ class TestSBStateChanged(object):
             assert False, 'Failed with {0}'.format(e)
 
     def test_sbstate_processing(self):
-        self.setup_functest_reporter_service()
         self.setup_icestorm()
+        self.setup_functest_reporter_service()
 
         assert self.igsession
         assert self.service
