@@ -100,11 +100,7 @@ else
 	
 	if [ $DO_SCIENCE_FIELD == true ]; then
 
-        if [ $DO_ALT_IMAGER == true ]; then
-            . ${PIPELINEDIR}/scienceCalIm_alt.sh
-        else
-            . ${PIPELINEDIR}/scienceCalIm.sh
-        fi
+        . ${PIPELINEDIR}/scienceCalIm.sh
 	    
 	fi
 

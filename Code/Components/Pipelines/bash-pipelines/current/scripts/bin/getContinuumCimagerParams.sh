@@ -134,14 +134,18 @@ Cimager.visweights.MFS.reffreq                  = ${MFS_REF_FREQ}"
 fi
 
 # This is for the new (alt) imager
-altImagerParams="# These parameters are specific to the new imager"
-if ["${NCHAN_PER_CORE}" == ""]; then
-    nchanpercore = 1
-else
-    nchanpercore = "${NCHAN_PER_CORE}"
-fi
-altImagerParams = "${altImagerParams}
+altImagerParams=""
+if ["${DO_ALT_IMAGER}" == "true"]; then
+
+    if ["${NCHAN_PER_CORE}" == ""]; then
+        nchanpercore = 1
+    else
+        nchanpercore = "${NCHAN_PER_CORE}"
+    fi
+    altImagerParams = "${altImagerParams}
+# These parameters are specific to the new imager
 Cimager.nchanpercore = ${nchanpercore}"
+fi
 
 cleaningPars="# These parameters define the clean algorithm
 Cimager.solver                                  = ${SOLVER}"
@@ -181,6 +185,8 @@ ${directionDefinition}
 Cimager.Images.image.${imageBase}.nchan        = 1
 #
 ${mfsParams}
+#
+${altImagerParams}
 #
 # This defines the parameters for the gridding.
 Cimager.gridder.snapshotimaging                 = ${GRIDDER_SNAPSHOT_IMAGING}
