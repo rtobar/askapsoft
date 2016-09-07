@@ -134,7 +134,7 @@ Cimager.visweights.MFS.reffreq                  = ${MFS_REF_FREQ}"
 fi
 
 # This is for the new (alt) imager
-altImagerParams=""
+altImagerParams="# Options for the alternate imager"
 if [${DO_ALT_IMAGER} == true]; then
 
     if ["${NCHAN_PER_CORE}" == ""]; then
@@ -143,8 +143,9 @@ if [${DO_ALT_IMAGER} == true]; then
         nchanpercore = "${NCHAN_PER_CORE}"
     fi
     altImagerParams = "${altImagerParams}
-# These parameters are specific to the new imager
 Cimager.nchanpercore = ${nchanpercore}"
+else
+    altImagerParams ="${altImagerParams} are not required"
 fi
 
 cleaningPars="# These parameters define the clean algorithm
