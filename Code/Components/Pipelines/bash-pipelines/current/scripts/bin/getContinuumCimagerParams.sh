@@ -137,7 +137,8 @@ fi
 altImagerParams="# Options for the alternate imager"
 if [ $DO_ALT_IMAGER == true ]; then
 
-    if [ ${NCHAN_PER_CORE} == "" ]; then
+
+    if [ "${NCHAN_PER_CORE}" == "" ]; then
         nchanpercore=1
     else
         nchanpercore="${NCHAN_PER_CORE}"
@@ -151,7 +152,7 @@ Cimager.nchanpercore                           = ${nchanpercore}"
     fi
 altImagerParams="${altImagerParams}
 Cimager.usetmpfs                               = ${usetmpfs}"
-    if [ ${TMPFS} == "" ]; then
+    if [ "${TMPFS}" == "" ]; then
         tmpfs="/dev/shm"
     else
         tmpfs="${TMPFS}"
