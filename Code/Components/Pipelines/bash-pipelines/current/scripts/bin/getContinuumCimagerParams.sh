@@ -133,7 +133,17 @@ else
 Cimager.visweights.MFS.reffreq                  = ${MFS_REF_FREQ}"
 fi
 
-cleaningPars="# These parameters define the clean algorithm 
+# This is for the new (alt) imager
+altImagerParams="# These parameters are specific to the new imager"
+if ["${NCHAN_PER_CORE}" == ""]; then
+    nchanpercore = 1
+else
+    nchanpercore = "${NCHAN_PER_CORE}"
+fi
+altImagerParams = "${altImagerParams}
+Cimager.nchanpercore = ${nchanpercore}"
+
+cleaningPars="# These parameters define the clean algorithm
 Cimager.solver                                  = ${SOLVER}"
 if [ ${SOLVER} == "Clean" ]; then
     cleaningPars="${cleaningPars}
