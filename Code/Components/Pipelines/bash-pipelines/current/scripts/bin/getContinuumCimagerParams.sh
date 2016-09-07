@@ -135,7 +135,7 @@ fi
 
 # This is for the new (alt) imager
 altImagerParams=""
-if ["${DO_ALT_IMAGER}" == "true"]; then
+if [${DO_ALT_IMAGER} == true]; then
 
     if ["${NCHAN_PER_CORE}" == ""]; then
         nchanpercore = 1
