@@ -87,9 +87,9 @@ for FIELD in ${FIELD_LIST}; do
         . ${PIPELINEDIR}/averageScience.sh
 
         if [ $DO_SELFCAL == true ]; then
-            . ${PIPELINEDIR}/continuumImageScienceSelfcal.sh
+            . ${PIPELINEDIR}/continuumImageScienceSelfcal_alt.sh
         else
-	    . ${PIPELINEDIR}/continuumImageScience.sh
+            . ${PIPELINEDIR}/continuumImageScience_alt.sh
         fi
 
         . ${PIPELINEDIR}/applyCalContinuumScience.sh
