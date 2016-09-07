@@ -35,8 +35,6 @@
 # Define the Cimager parset and associated parameters
 . ${PIPELINEDIR}/getContinuumCimagerParams.sh
 
-echo ${cimagerParams}
-
 ID_CONTIMG_SCI_SC=""
 
 DO_IT=$DO_CONT_IMAGING

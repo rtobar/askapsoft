@@ -135,15 +135,15 @@ fi
 
 # This is for the new (alt) imager
 altImagerParams="# Options for the alternate imager"
-if [${DO_ALT_IMAGER} == true]; then
+if [ $DO_ALT_IMAGER == true ]; then
 
-    if ["${NCHAN_PER_CORE}" == ""]; then
-        nchanpercore = 1
+    if [ "${NCHAN_PER_CORE}" == "" ]; then
+        nchanpercore=1
     else
-        nchanpercore = "${NCHAN_PER_CORE}"
+        nchanpercore="${NCHAN_PER_CORE}"
     fi
-    altImagerParams = "${altImagerParams}
-Cimager.nchanpercore = ${nchanpercore}"
+    altImagerParams="${altImagerParams}
+Cimager.nchanpercore                           = ${nchanpercore}"
 else
     altImagerParams ="${altImagerParams} are not required"
 fi
