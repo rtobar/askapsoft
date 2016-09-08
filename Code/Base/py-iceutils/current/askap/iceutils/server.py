@@ -60,23 +60,31 @@ class Server(object):
     :param retries:
 
     """
-    def __init__(self, comm, fcmkey='', retries=-1):
-        self.parameters = None
+    def __init__(
+            self,
+            comm,
+            fcmkey='',
+            retries=-1,
+            monitoring=False,
+            configurable=True):
         self._comm = comm
+        self.service_key = fcmkey
+        self._retries = retries
+        self.monitoring = monitoring
+        """Enable provision of monitoring (default `False`. This automatically
+        creates a :class:`MonitoringProvider` and adapter using the class
+        name for adapter naming. e.g. a class named TestServer results
+        in  MonitoringService@TestServerAdapter
+        """
+
+        self.configurable = configurable
+        """Control configuration via FCM/command-line (default `True`)"""
+
+        self.parameters = None
         self._adapter = None
         self._mon_adapter = None
         self._services = []
-        self._retries = retries
-        self.service_key = fcmkey
         self.logger = logger
-        self.monitoring = False
-        """Enable provision of monitoring (default `False`. This automatically
-        creates a :class:`MonitoringProvider` and adapter using the class
-        name for adpater naming. e.g. a class named TestServer results
-        in  MonitoringService@TestServerAdapter
-        """
-        self.configurable = True
-        """Control configuration via FCM/command-line (default `True`)"""
 
     def set_retries(self, retries):
         """
