@@ -85,8 +85,14 @@ OUTPUT=.
 # Options are true or false
 CLOBBER=false
 
-# Lustre filesystem striping to use within the current directory
+# Lustre filesystem stripe count to use within the current directory
 LUSTRE_STRIPING=4
+
+# Lustre filesystem stripe size - default=1MB
+LUSTRE_STRIPE_SIZE=1048576
+
+# Storage manager bucket size - I/O quantum for MS writing
+BUCKET_SIZE=1048576
 
 ####################
 # Locations of the executables. 
@@ -504,7 +510,8 @@ BEAM_PITCH=""
 # This is the set of beam offsets used by linmos. This can be set manually instead of getting them from footprint.py
 LINMOS_BEAM_OFFSETS=""
 # Which frequency band are we in - determines beam arrangement (1,2,3,4 - 1 is lowest frequency)
-FREQ_BAND_NUMBER=1
+# This is over-ridden with BEAM_PITCH.
+FREQ_BAND_NUMBER=""
 # Scale factor for beam arrangement, in format like '1deg'. Do not change if using the footprint.py names.
 LINMOS_BEAM_SPACING="1deg"
 # Reference beam for PSF

@@ -319,26 +319,82 @@ fi"
 ##############################
 # BEAM FOOTPRINTS AND CENTRES
 
+function getMSname()
+{
+    # Returns just the filename of the science MS, stripping off the
+    # leading directories and the .ms suffix. For example, the MS
+    # /path/to/2016-01-02-0345.ms returns 2016-01-02-0345
+    # Usage:     getMSname MS
+    # Returns:   $msname
+    
+    msname=${1##*/}
+    msname=${msname%%.*}
+}
+
+function setFootprintArgs()
+{
+    # Function to set the arguments to footprint.py, based on the
+    # input parameters. They only contribute if they are not blank.
+    # The arguments that are set and the parameters used are:
+    #  * summary output (the -t flag)
+    #  * name (-n $FP_NAME),
+    #  * band (-b $FREQ_BAND_NUMBER)
+    #  * PA (-a $FP_PA)
+    #  * pitch (-p $FP_PITCH)
+    # Returns: $footprintArgs
+
+    # Start with getting the summary output
+    footprintArgs="-t"
+
+    # Specify the name of the footprint
+    if [ "$FP_NAME" != "" ]; then
+        footprintArgs="$footprintArgs -n $FP_NAME"
+    fi
+
+    # Specify the band number (from BETA days) to get default pitch values
+    if [ "$FREQ_BAND_NUMBER" != "" ]; then
+        footprintArgs="$footprintArgs -b $FREQ_BAND_NUMBER"
+    fi
+
+    # Specify the position angle of the footprint
+    if [ "$FP_PA" != "" ]; then
+        footprintArgs="$footprintArgs -a $FP_PA"
+    fi
+
+    # Specify the pitch of the footprint - separation of beams
+    if [ "$FP_PITCH" != "" ]; then
+        footprintArgs="$footprintArgs -p $FP_PITCH"
+    fi
+} 
+
 function setFootprintFile()
 {
     # Function to define a file containing the beam locations for the
     # requested footprint, which is created for a given run and a given
-    # field name.
-    #  Required inputs:
-    #     * NOW - date/time of current pipeline run
+    # field name. Need a new one for each run of the pipeline as we
+    # may (conceivably) change footprints from run to run.
+    # Format will be
+    # footprintOutput-sbSBID-FIELDNAME-FOOTPRINTNAME-bandBAND-aPA-pPITCH.txt
+    # where blank parameters are left out.
+    #  Required available parameters:
     #     * FIELD - name of field
+    #     * SB_SCIENCE - SBID
     #  Returns: $footprintOut
 
-    footprintOut="${parsets}/footprintOutput-${NOW}-${FIELD}.txt"
+    footprintOut="${metadata}/footprintOutput"
+    if [ "$SB_SCIENCE" != "" ]; then
+        footprintOut="$footprintOut-sb${SB_SCIENCE}"
+    fi
+    footprintOut="$footprintOut-${FIELD}.txt"
 }
 
 function getBeamOffsets()
 {
     # Function to return beam offsets (as would be used in a linmos
     # parset) for the full set of beams for a given field.
-    #  Required inputs:
-    #     * NOW - date/time of current pipeline run
+    #  Required available parameters
     #     * FIELD - name of field
+    #     * SB_SCIENCE
     #     * BEAM_MAX - how many beams to consider
     #  Returns: $LINMOS_BEAM_OFFSETS (in the process, setting $footprintOut)
 
@@ -349,8 +405,8 @@ function getBeamOffsets()
 function getBeamCentre()
 {
     # Function to return the centre direction of a given beam
-    #  Required inputs:
-    #     * NOW - date/time of current pipeline run
+    #  Required available parameters:
+    #     * SB_SCIENCE
     #     * FIELD - name of field
     #     * BEAM - the beam ID to obtain the centre for
     #     * BEAM_MAX - how many beams to consider
@@ -377,6 +433,7 @@ else
     stats=${BASEDIR}/stats
 fi
 mkdir -p $stats
+lfs setstripe -c 1 $stats
 
 function writeStats()
 {

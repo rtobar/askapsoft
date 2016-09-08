@@ -39,12 +39,20 @@ logs=${BASEDIR}/logs
 slurms=${BASEDIR}/slurmFiles
 slurmOut=${BASEDIR}/slurmOutput
 tools=${BASEDIR}/tools
+metadata=${BASEDIR}/metadata
 
 mkdir -p $parsets
+lfs setstripe -c 1 $parsets
 mkdir -p $logs
+lfs setstripe -c 1 $logs
 mkdir -p $slurms
+lfs setstripe -c 1 $slurms
 mkdir -p $slurmOut
+lfs setstripe -c 1 $slurmOut
 mkdir -p $tools
+lfs setstripe -c 1 $tools
+mkdir -p $metadata
+lfs setstripe -c 1 $metadata
 
 ####################
 # Date and time stamp

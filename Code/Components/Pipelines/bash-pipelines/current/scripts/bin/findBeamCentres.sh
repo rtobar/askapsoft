@@ -54,17 +54,30 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
         
     else
 
+        # Run schedblock to get footprint information (if present)
+        sbinfo="${metadata}/schedblock-info-${SB_SCIENCE}.txt"
+        module load askapcli
+        if [ "`which schedblock`" == "" ]; then
+            echo "WARNING - no schedblock executable found - try loading askapcli module."
+        else
+            schedblock info -p ${SB_SCIENCE} > $sbinfo
+            defaultFPname=`grep "%d.footprint.name" ${sbinfo} | awk '{print $3}'`
+            defaultFPpitch=`grep "%d.footprint.pitch" ${sbinfo} | awk '{print $3}'`
+            defaultFPangle=`grep "%d.pol_axis" ${sbinfo} | awk '{print $4}' | sed -e 's/\]//g'`
+        fi
+        if [ "$defaultFPname" == "" ]; then
+            # Not in the schedblock information (predates footprint service?)
+            # We get the default values from the config file
+            defaultFPname=${BEAM_FOOTPRINT_NAME}
+            defaultFPpitch=${BEAM_PITCH}
+            defaultFPangle=${BEAM_FOOTPRINT_PA}
+        fi
+        
         # Check to see that the footprint provided is valid.
         invalid=false
-        if [ "${BEAM_FOOTPRINT_NAME}" == "" ]; then
+        if [ "${BEAM_FOOTPRINT_NAME}" == "" ] ||
+               [ "`footprint.py -n ${BEAM_FOOTPRINT_NAME} 2>&1 | grep invalid`" != "" ]; then
             invalid=true
-        else
-            tempfile=$parsets/fpTest
-            rm -f $tempfile
-            footprint.py -n ${BEAM_FOOTPRINT_NAME} 2>&1 > $tempfile
-            if [ "`grep invalid $tempfile`" != "" ]; then
-                invalid=true
-            fi
         fi
         
         if [ "$invalid" == "true" ]; then
@@ -82,37 +95,52 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
 
             # Find the number of fields in the MS
             nfields=`grep Fields ${MS_METADATA} | head -1 | cut -f 4- | cut -d' ' -f 2`
-            fieldlist=$parsets/fieldlist
-            rm -f $fieldlist
-            grep -A${nfields} RA ${MS_METADATA} | tail -n ${nfields} | cut -f 4- >> $fieldlist
-
-            FIELD_LIST=`sort -k2 $fieldlist | uniq | awk '{print $2}'`
-
-            # Set the args for footprint: summary output, name, band, PA, pitch
-            footprintArgs="-t"
-            if [ "$BEAM_FOOTPRINT_NAME" != "" ]; then
-                footprintArgs="$footprintArgs -n $BEAM_FOOTPRINT_NAME"
-            fi
-            if [ "$FREQ_BAND_NUMBER" != "" ]; then
-                footprintArgs="$footprintArgs -b $FREQ_BAND_NUMBER"
-            fi
-            if [ "$BEAM_FOOTPRINT_PA" != "" ]; then
-                footprintArgs="$footprintArgs -a $BEAM_FOOTPRINT_PA"
-            fi
-            if [ "$BEAM_PITCH" != "" ]; then
-                footprintArgs="$footprintArgs -p $BEAM_PITCH"
+            getMSname ${MS_INPUT_SCIENCE}
+            fieldlist=${metadata}/fieldlist-${msname}.txt
+            if [ ! -e $fieldlist ]; then
+                grep -A${nfields} RA ${MS_METADATA} | tail -n ${nfields} | cut -f 4- >> $fieldlist
             fi
 
+            FIELD_LIST=`sort -k2 $fieldlist | awk '{print $2}' | uniq `
+            
             echo "List of fields: $FIELD_LIST"
             
             for FIELD in ${FIELD_LIST}; do
-                ra=`grep $FIELD $fieldlist | awk '{print $3}'`
-                dec=`grep $FIELD $fieldlist | awk '{print $4}'`
+                echo "Finding footprint for field $FIELD"
+                
+                ra=`grep $FIELD $fieldlist | awk '{print $3}' | head -1`
+                dec=`grep $FIELD $fieldlist | awk '{print $4}' | head -1`
                 dec=`echo $dec | awk -F'.' '{printf "%s:%s:%s.%s",$1,$2,$3,$4}'`
+
+                awkcomp="\$3==\"$FIELD\""
+                srcstr=`awk $awkcomp $sbinfo | awk -F".field_name" '{print $1}'`
+                FP_NAME=`grep "$srcstr.footprint.name" $sbinfo | awk '{print $3}'`
+                FP_PITCH=`grep "$srcstr.footprint.pitch" $sbinfo | awk '{print $3}'`
+                FP_PA=`grep "$srcstr.pol_axis" $sbinfo | awk '{print $4}' | sed -e 's/\]//g'`
+                if [ "$FP_NAME" == "" ]; then
+                    FP_NAME=$defaultFPname
+                fi
+                if [ "$FP_PITCH" == "" ]; then
+                    FP_PITCH=$defaultFPpitch
+                fi
+                if [ "$FP_PA" == "" ]; then
+                    FP_PA=$defaultFPangle
+                fi
+                
+                # Use the function defined in utils.sh to set the arguments to footprint.py
+                setFootprintArgs
+
+                echo "Footprint arguments are:  $footprintArgs"
+                
                 # define the output file as $footprintOut
                 setFootprintFile
-                echo "Writing footprint for field $FIELD to file $footprintOut"
-                footprint.py $footprintArgs -r "$ra,$dec" 2>&1 > ${footprintOut}
+                if [ ! -e ${footprintOut} ]; then
+                    echo "Writing footprint for field $FIELD to file $footprintOut"
+                    module load aces
+                    footprint.py $footprintArgs -r "$ra,$dec" 2>&1 > ${footprintOut}
+                else
+                    echo "Reusing footprint file $footprintOut for field $FIELD"
+                fi
 
                 # error handling, in case something goes wrong.
                 if [ `wc -l $footprintOut | awk '{print $1}'` -eq 0 ]; then
