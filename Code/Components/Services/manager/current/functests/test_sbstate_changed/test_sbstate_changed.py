@@ -32,8 +32,8 @@ class TestReportingService(ICPFuncTestReporter):
     def __init__(self):
         self.notify_history = []
 
-    def notifySBStateChanged(self, sbid, obsState):
-        print >> sys.stderr, '\nSB %d state changed: %s' % sbid, obsState
+    def sbStateChangedNotification(self, sbid, obsState, current=None):
+        # print >> sys.stderr, '\nSB {0} state changed: {1}'.format(sbid, obsState)
         self.notify_history.append((sbid, obsState))
 
 
@@ -49,11 +49,10 @@ class FuncTestServer(Server):
 
     def initialize_services(self):
         self.add_service('FuncTestReporter', self.test_reporting_service)
-        self.add_service('FuncTestReporter2', TestReportingService())
 
     def wait_async(self):
         def worker():
-            print >> sys.stderr, 'FuncTestServer thread waiting'
+            # print >> sys.stderr, 'FuncTestServer thread waiting'
             self.wait()
 
         t = threading.Thread(target=worker)
@@ -89,7 +88,7 @@ class TestSBStateChanged(object):
                 self.test_reporting_service,
                 self.ice_session.communicator)
             self.server.setup_services()
-            self.server_thread = self.server.wait_async()
+            # self.server_thread = self.server.wait_async()
 
             # Get the CP Manager service object
             self.cpclient = get_service_object(
@@ -156,10 +155,12 @@ class TestSBStateChanged(object):
             ObsState.PROCESSING,
             str(timestamp))
 
-        print >> sys.stderr, 'notify_history: %d' % len(self.test_reporting_service.notify_history)
+        # We need to allow some time for the round-trip message propagation.
+        # it would be better to poll here.
+        sleep(4)
 
         # Exactly 1 notification should have been sent
-        # assert len(self.test_reporting_service.notify_history) == 1
-        # actual_sbid, actual_state = self.test_reporting_service.notify_history[0]
-        # assert actual_sbid == sbid
-        # assert actual_state == ObsState.PROCESSING
+        assert len(self.test_reporting_service.notify_history) == 1
+        actual_sbid, actual_state = self.test_reporting_service.notify_history[0]
+        assert actual_sbid == sbid
+        assert actual_state == ObsState.PROCESSING
