@@ -107,6 +107,7 @@ if [ "$ASKAP_ROOT" != "" ]; then
     ccalibrator=$ASKAP_ROOT/Code/Components/Synthesis/synthesis/current/apps/ccalibrator.sh
     ccontsubtract=$ASKAP_ROOT/Code/Components/Synthesis/synthesis/current/apps/ccontsubtract.sh
     simager=${ASKAP_ROOT}/Code/Components/CP/simager/current/apps/simager.sh
+    altimager=${ASKAP_ROOT}/Code/Components/CP/askap_imager/current/apps/imager.sh
     linmos=${ASKAP_ROOT}/Code/Components/Synthesis/synthesis/current/apps/linmos.sh
     selavy=${ASKAP_ROOT}/Code/Components/Analysis/analysis/current/apps/selavy.sh
     cimstat=${ASKAP_ROOT}/Code/Components/Analysis/analysis/current/apps/cimstat.sh
@@ -125,6 +126,7 @@ else
     ccalibrator=ccalibrator
     ccontsubtract=ccontsubtract
     simager=simager
+    altimager=imager
     linmos=linmos
     selavy=selavy
     cimstat=cimstat
@@ -278,6 +280,22 @@ MFS_REF_FREQ=""
 # Restoring beam: 'fit' will fit the PSF to determine the appropriate
 # beam, else give a size
 RESTORING_BEAM_CONT=fit
+
+
+###########################
+# parameters from the new (alt) imager
+# number of channels each core will process
+NCHAN_PER_CORE=1
+# store the visibilities in shared memory.
+# this will give a performance boost at the expense of memory usage
+USE_TMPFS=false
+# where is the shared memory mounted
+TMPFS="/dev/shm"
+# barycentre?
+DO_BARY=false
+# local solver - distribute the minor cycle - each channel is solved individually
+# this mimics simager behaviour
+DO_LOCAL_SOLVER=false
 
 
 ####################
