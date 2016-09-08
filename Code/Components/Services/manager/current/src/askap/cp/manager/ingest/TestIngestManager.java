@@ -23,6 +23,7 @@
  */
 package askap.cp.manager.ingest;
 
+import askap.cp.manager.svcclients.FuncTestReporterClient;
 import java.io.File;
 
 import org.apache.log4j.Logger;
@@ -39,16 +40,21 @@ public class TestIngestManager extends AbstractIngestManager {
      * Logger
      */
     private static final Logger logger = Logger.getLogger(TestIngestManager.class.getName());
+	private final FuncTestReporterClient funcTestReporterClient;
 
     /**
      * Constructor
+	 * @param parset
+	 * @param client
      */
-    public TestIngestManager(ParameterSet parset) {
+    public TestIngestManager(ParameterSet parset, FuncTestReporterClient client) {
         super(parset);
+		funcTestReporterClient = client;
     }
 
     /**
      * Dummy execute - does nothing except log a message
+	 * @param workdir
      */
     @Override
     protected void executeIngestPipeline(File workdir) {
@@ -56,7 +62,7 @@ public class TestIngestManager extends AbstractIngestManager {
     }
 
     /**
-     * Dummy abort - does nothnig except log a message
+     * Dummy abort - does nothing except log a message
      */
     @Override
     protected void abortIngestPipeline() {
@@ -66,6 +72,7 @@ public class TestIngestManager extends AbstractIngestManager {
     /**
      * Always returns false. This essentially mimics an ingest pipeline
      * that starts and finishes immediately.
+	 * @return false
      */
     @Override
     public boolean isRunning() {
