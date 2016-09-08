@@ -167,7 +167,7 @@ class Server(object):
                 time.sleep(delay)
         if registry:
             self.logger.info("Connected to {0}".format(servicename))
-            print >> sys.stderr, servicename, "found"
+            # print >> sys.stderr, servicename, "found"
         return retval
 
     def setup_services(self):
