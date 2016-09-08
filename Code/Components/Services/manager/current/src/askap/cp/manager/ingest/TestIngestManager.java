@@ -30,20 +30,20 @@ import org.apache.log4j.Logger;
 import askap.util.ParameterSet;
 
 /**
- * This dummy ingest pipeline manager does nothing when execute/abort
+ * This test ingest pipeline manager does nothing when execute/abort
  * is called except log messages at level INFO.
  */
-public class DummyIngestManager extends AbstractIngestManager {
+public class TestIngestManager extends AbstractIngestManager {
 
     /**
      * Logger
      */
-    private static final Logger logger = Logger.getLogger(DummyIngestManager.class.getName());
+    private static final Logger logger = Logger.getLogger(TestIngestManager.class.getName());
 
     /**
      * Constructor
      */
-    public DummyIngestManager(ParameterSet parset) {
+    public TestIngestManager(ParameterSet parset) {
         super(parset);
     }
 
