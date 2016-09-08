@@ -39,7 +39,7 @@ import askap.interfaces.schedblock.ObsState;
 public abstract class SBStateMonitor 
 		extends _ISBStateMonitorDisp {
 
-	private static final Logger logger = Logger.getLogger(CpManager.class.getName());
+	private static final Logger logger = Logger.getLogger(SBStateMonitor.class.getName());
 
 	/**
 	 * SBStateMonitor.changed event handler.
@@ -56,7 +56,6 @@ public abstract class SBStateMonitor
 			String updateTime,
 			Ice.Current current) {
 		if (0 == newState.compareTo(ObsState.PROCESSING)) {
-			logger.debug("Schedblock state changed: PROCESSING");
 			notify(sbid, newState, updateTime);
 		}
 	}
