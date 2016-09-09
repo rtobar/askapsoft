@@ -3,6 +3,7 @@
 
 import os
 import sys
+from time import sleep
 from unittest import skip
 
 from askap.iceutils import CPFuncTestBase, get_service_object
@@ -48,5 +49,11 @@ class Test(CPFuncTestBase):
         self.cpclient.abortObs()
         self.cpclient.waitObs(-1)
 
+        for retries in range(5):
+            if len(fbs.history) < 3:
+                sleep(1)
+            else:
+                break
+
         print >> sys.stderr, fbs.history.__str__()
-        # assert len(fbs.history) == 1
+        assert len(fbs.history) == 3

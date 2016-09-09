@@ -104,6 +104,14 @@ public class FuncTestReporterClient {
 	 */
 	public void notifySBStateChanged(long sbid, ObsState obsState) {
 		itsProxy.sbStateChangedNotification(sbid, obsState);
-        logger.debug("emitted SB state change notification");
+	}
+
+	/**
+	 * Generic functional test feedback method where the only required
+     * feedback is that a particular method has been called.
+	 * @param name The method name to be reported back to the test driver.
+	 */
+	public void methodCalled(String name) {
+		itsProxy.methodCalled(name);
 	}
 }

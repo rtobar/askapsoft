@@ -9,6 +9,7 @@
 """
 
 import os
+import sys
 from datetime import datetime
 from time import sleep
 
@@ -97,6 +98,7 @@ class TestSBStateChanged(CPFuncTestBase):
         sleep(4)
 
         # Exactly 1 notification should have been sent
+        print >> sys.stderr, fbs.history.__str__()
         assert len(fbs.history) == 1
         name, args = fbs.history[0]
         assert name == 'sbStateChangedNotification'

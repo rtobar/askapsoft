@@ -52,13 +52,26 @@ public class TestIngestManager extends AbstractIngestManager {
 		funcTestReporterClient = client;
     }
 
+	/**
+	 * 
+	 * @param timeout
+	 * @return 
+	 */
+	@Override
+    public boolean waitIngest(long timeout) {
+        logger.info("waitIngest");
+		funcTestReporterClient.methodCalled("waitIngest");
+		return super.waitIngest(timeout);
+	}
+
     /**
      * Dummy execute - does nothing except log a message
 	 * @param workdir
      */
     @Override
     protected void executeIngestPipeline(File workdir) {
-        logger.info("DummyIngestPipeline: Execute");
+        logger.info("Execute");
+		funcTestReporterClient.methodCalled("startIngest");
     }
 
     /**
@@ -66,7 +79,8 @@ public class TestIngestManager extends AbstractIngestManager {
      */
     @Override
     protected void abortIngestPipeline() {
-        logger.info("DummyIngestPipeline: Abort");
+        logger.info("Abort");
+		funcTestReporterClient.methodCalled("abortIngest");
     }
 
     /**

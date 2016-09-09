@@ -128,9 +128,24 @@ module cp
      */
     interface ICPFuncTestReporter
     {
+        /**
+         * Schedulingblockservice specific feedback method for state change 
+         * notifications.
+         *
+         * @param sbid The scheduling block ID.
+         * @param newState The new scheduling block state.
+         */
         void sbStateChangedNotification(
             long sbid,
             askap::interfaces::schedblock::ObsState newState);
+
+        /**
+         * Generic functional test feedback method where the only required 
+         * feedback is that a particular method has been called.
+         *
+         * @param name The method name that has been called.
+         */
+        void methodCalled(string name);
     };
 };
 };

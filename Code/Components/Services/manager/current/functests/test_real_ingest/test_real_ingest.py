@@ -10,6 +10,7 @@ from askap.iceutils import IceSession, get_service_object
 from askap.slice import CP
 from askap.interfaces.cp import ICPObsServicePrx
 
+@skip
 class TestRealIngest(object):
     def __init__(self):
         self.igsession = None
