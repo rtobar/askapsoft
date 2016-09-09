@@ -387,7 +387,7 @@ EOFINNER
     fi
 
     # Run the imager, calibrating if not the first time.
-    echo "--- Imaging with $cimager ---" >> \$log
+    echo "--- Imaging with $theimager ---" >> \$log
     NCORES=${NUM_CPUS_CONTIMG_SCI}
     NPPN=${CPUS_PER_CORE_CONT_IMAGING}
     aprun -n \${NCORES} -N \${NPPN} $theimager -c \$parset >> \$log
