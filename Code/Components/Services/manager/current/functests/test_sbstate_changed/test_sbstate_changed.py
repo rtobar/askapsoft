@@ -23,24 +23,36 @@ from askap.interfaces.cp import ICPObsServicePrx, ICPFuncTestReporter
 from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
 
 
-class TestReportingService(ICPFuncTestReporter):
+class FeedbackService(ICPFuncTestReporter):
     """ Service implementation of the askap.interfaces.cp.ICPFuncTestReporter
     Ice interface.
 
     Used for feedback from processes under test to the test driver.
     """
     def __init__(self):
-        self.notify_history = []
+        self.history = []
+        """The method call history. Each entry is a (str, dict) tuple. The str
+        gives the method name, and the dict gives the method args as name:value
+        pairs.
+        """
+
+    def clear_history(self):
+        """ Clears the history list. """
+        self.history = []
 
     def sbStateChangedNotification(self, sbid, obsState, current=None):
         # print >> sys.stderr, '\nSB {0} state changed: {1}'.format(sbid, obsState)
-        self.notify_history.append((sbid, obsState))
+        self.history.append(
+            ('sbStateChangedNotification', {
+                'sbid': sbid,
+                'obsState': obsState,
+            }))
 
 
 class FuncTestServer(Server):
-    """ Ice Server for hosting the TestReportingService. """
-    def __init__(self, test_reporting_service, comm):
-        self.test_reporting_service = test_reporting_service
+    """ Ice Server for hosting the FeedbackService. """
+    def __init__(self, feedback_service, comm):
+        self.feedback_service = feedback_service
         super(FuncTestServer, self).__init__(
             comm,
             configurable=False,
@@ -48,7 +60,7 @@ class FuncTestServer(Server):
             monitoring=False)
 
     def initialize_services(self):
-        self.add_service('FuncTestReporter', self.test_reporting_service)
+        self.add_service('FuncTestReporter', self.feedback_service)
 
     def wait_async(self):
         def worker():
@@ -60,52 +72,70 @@ class FuncTestServer(Server):
         return t
 
 
-class TestSBStateChanged(object):
+class CPFuncTestBase(object):
     def __init__(self):
         self.ice_session = None
+        self.server = None
+        self.server_thread = None
+        self.feedback_service = None
+
+    def setUp(self):
+        self.ice_session = IceSession(
+            os.path.expandvars("$TEST_DIR/applications.txt"),
+            cleanup=True)
+        try:
+            self.ice_session.start()
+            self.setup_feedback_service()
+        except Exception as ex:
+            self.ice_session.communicator.destroy()
+            self.ice_session.terminate()
+            raise
+
+    def tearDown(self):
+        self.shutdown()
+
+    def shutdown(self):
+        self.ice_session.communicator.destroy()
+        self.ice_session.terminate()
+        self.ice_session = None
+
+    def setup_feedback_service(self):
+        self.feedback_service = FeedbackService()
+        self.server = FuncTestServer(
+            self.feedback_service,
+            self.ice_session.communicator)
+        self.server.setup_services()
+        # self.server_thread = self.server.wait_async()
+
+
+class TestSBStateChanged(CPFuncTestBase):
+    def __init__(self):
+        super(TestSBStateChanged, self).__init__()
         self.cpclient = None
         self.topic_manager = None
         self.publisher_proxy = None
-        self.server = None
-        self.server_thread = None
-        self.test_reporting_service = None
 
     def setUp(self):
         # Note that the working directory is 'functests', thus paths are
         # relative to that location.
         os.environ["ICE_CONFIG"] = "config-files/ice.cfg"
         os.environ['TEST_DIR'] = 'test_sbstate_changed'
-        self.ice_session = IceSession(
-            os.path.expandvars("$TEST_DIR/applications.txt"),
-            cleanup=True)
+
+        super(TestSBStateChanged, self).setUp()
 
         try:
-            self.ice_session.start()
-
-            # Create a server to host the functional test reporting service
-            self.test_reporting_service = TestReportingService()
-            self.server = FuncTestServer(
-                self.test_reporting_service,
-                self.ice_session.communicator)
-            self.server.setup_services()
-            # self.server_thread = self.server.wait_async()
-
-            # Get the CP Manager service object
             self.cpclient = get_service_object(
                 self.ice_session.communicator,
                 "CentralProcessorService@CentralProcessorAdapter",
                 ICPObsServicePrx)
-
         except Exception as ex:
-            self.ice_session.communicator.destroy()
-            self.ice_session.terminate()
+            self.shutdown()
             raise
 
     def setup_icestorm(self, topic="sbstatechange"):
         """Create the IceStorm connection
         Modelled on the TOS TypedValuePublisher Python class
         """
-
         self.topic_manager = get_service_object(
             self.ice_session.communicator,
             'IceStorm/TopicManager@IceStorm.TopicManager',
@@ -125,11 +155,6 @@ class TestSBStateChanged(object):
         publisher = topic.getPublisher().ice_oneway()
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
-    def tearDown(self):
-        self.ice_session.communicator.destroy()
-        self.ice_session.terminate()
-        self.ice_session = None
-
     # @skip('too slow!')
     def test_manager_creates_topic(self):
         self.setup_icestorm(topic=None)
@@ -145,8 +170,8 @@ class TestSBStateChanged(object):
     def test_sbstate_processing(self):
         self.setup_icestorm()
 
-        assert self.publisher_proxy
-        assert self.test_reporting_service
+        fbs = self.feedback_service
+        fbs.clear_history()
 
         sbid = 1
         timestamp = datetime.now()
@@ -160,7 +185,8 @@ class TestSBStateChanged(object):
         sleep(4)
 
         # Exactly 1 notification should have been sent
-        assert len(self.test_reporting_service.notify_history) == 1
-        actual_sbid, actual_state = self.test_reporting_service.notify_history[0]
-        assert actual_sbid == sbid
-        assert actual_state == ObsState.PROCESSING
+        assert len(fbs.history) == 1
+        name, args = fbs.history[0]
+        assert name == 'sbStateChangedNotification'
+        assert args['sbid'] == sbid
+        assert args['obsState'] == ObsState.PROCESSING
