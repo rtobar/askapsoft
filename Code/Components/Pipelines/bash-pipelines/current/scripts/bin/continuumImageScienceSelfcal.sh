@@ -46,6 +46,12 @@ if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${outputImage} ]; then
     DO_IT=false
 fi
 
+if [ $DO_ALT_IMAGER == true ]; then
+    theimager=$altimager
+else
+    theimager=$cimager
+fi
+
 if [ $DO_IT == true ] && [ $DO_SELFCAL == true ]; then
 
     if [ $NUM_CPUS_CONTIMG_SCI -lt 19 ]; then
@@ -384,7 +390,7 @@ EOFINNER
     echo "--- Imaging with $cimager ---" >> \$log
     NCORES=${NUM_CPUS_CONTIMG_SCI}
     NPPN=${CPUS_PER_CORE_CONT_IMAGING}
-    aprun -n \${NCORES} -N \${NPPN} $cimager -c \$parset >> \$log
+    aprun -n \${NCORES} -N \${NPPN} $theimager -c \$parset >> \$log
     err=\$?
     rejuvenate *.${imageBase}*
     rejuvenate ${OUTPUT}/${gainscaltab}
