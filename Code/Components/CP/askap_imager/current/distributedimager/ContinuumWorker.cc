@@ -185,14 +185,17 @@ void ContinuumWorker::run(void)
     ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
 
     const bool localSolver = itsParset.getBool("solverpercore",false);
-    
+
+    ASKAPLOG_INFO_STR(logger,"Getting basic advice");
     synthesis::AdviseDI advice(itsComms,itsParset);
     
     if (!localSolver) {
+        ASKAPLOG_INFO_STR(logger,"In local solver mode - reprocessing allocations (running prepare())");
         advice.prepare();
         advice.updateComms();
         this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
     }
+    ASKAPLOG_INFO_STR(logger,"Adding missing parameters");
     advice.addMissingParameters();
 
     if (workUnits.size()>=1) {
