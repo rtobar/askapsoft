@@ -93,11 +93,15 @@ class TestSBStateChanged(CPFuncTestBase):
             str(timestamp))
 
         # We need to allow some time for the round-trip message propagation.
-        # it would be better to poll here.
-        sleep(4)
+        expected_history_length = 1
+        for retries in range(5):
+            if len(fbs.history) < expected_history_length:
+                sleep(1)
+            else:
+                break
 
         # Exactly 1 notification should have been sent
-        assert len(fbs.history) == 1
+        assert len(fbs.history) == expected_history_length
         name, args = fbs.history[0]
         assert name == 'sbStateChangedNotification'
         assert args['sbid'] == sbid
