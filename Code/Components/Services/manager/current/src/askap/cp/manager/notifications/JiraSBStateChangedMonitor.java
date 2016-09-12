@@ -63,15 +63,26 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 	 */
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
-        List<String> cmdline = new ArrayList<>();
-		// TODO: Build cmdline
 		// TODO: Do I need to load the module? 
-		
         try {
 			logger.debug("creating ProcessBuilder");
-			// TODO: grab stdout and stderr
-			// TODO: ensure that JIRA authentication environment variables are set
-            ProcessBuilder pb = new ProcessBuilder(cmdline);
+			// TODO: the following command line is a guess, I need to test this on Galaxy!
+            ProcessBuilder pb = new ProcessBuilder(
+				"schedblock",
+				"annotate",
+				Long.toString(sbid),
+				"\"Ready for data processing\"");
+
+			// ensure that JIRA authentication environment variables are set
+			if (!(pb.environment().containsKey("JIRA_USER") ||
+				  pb.environment().containsKey("JIRA_PASSWORD"))) {
+				logger.error("JIRA credentials not set");
+				// TODO: Appropriate Ice exception for failed notification
+				//throw new PipelineStartException(e.getMessage());
+			}
+
+			// TODO: do I need to grab stdout and stderr? EG for error parsing?
+
             Process p = pb.start();
 			int exitCode = p.waitFor();
 			// TODO: check for success/failure
