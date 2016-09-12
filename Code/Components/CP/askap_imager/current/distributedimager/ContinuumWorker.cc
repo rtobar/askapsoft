@@ -154,9 +154,9 @@ void ContinuumWorker::run(void)
         }
         else {
 
-            ASKAPLOG_DEBUG_STR(logger,"Worker has received valid allocation");
+            ASKAPLOG_INFO_STR(logger,"Worker has received valid allocation");
             const string ms = wu.get_dataset();
-            ASKAPLOG_DEBUG_STR(logger, "Received Work Unit for dataset " << ms
+            ASKAPLOG_INFO_STR(logger, "Received Work Unit for dataset " << ms
                               << ", local (topo) channel " << wu.get_localChannel()
                               << ", global (topo) channel " << wu.get_globalChannel()
                               << ", frequency " << wu.get_channelFrequency()/1.e6 << " MHz"
@@ -182,10 +182,16 @@ void ContinuumWorker::run(void)
     }
 
     itsComms.barrier(itsComms.theWorkers());
-
+    const bool localSolver = itsParset.getBool("solverpercore",false);
+    
     synthesis::AdviseDI advice(itsComms,itsParset);
+    
+    if (!localSolver) {
+        advice.prepare();
+        advice.updateComms();
+    }
     advice.addMissingParameters();
-    advice.updateComms();
+
     this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
 
     if (workUnits.size()>=1) {
@@ -288,13 +294,18 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     unitParset.replace("Channels",ChannelPar);
 
 
-    ASKAPLOG_INFO_STR(logger,"getting advice on missing parameters");
+    ASKAPLOG_INFO_STR(logger,"Getting advice on missing parameters");
     synthesis::AdviseDI diadvise(itsComms,unitParset);
+    
+    /// this is running prepare and it should not have to.
+    /// currently everyone is calulating the allocations superflously why has
+    /// this complication developed clean it up ?
+    
     diadvise.addMissingParameters();
     ASKAPLOG_INFO_STR(logger,"advice received");
-    ASKAPLOG_INFO_STR(logger,"storing workUnit");
+    ASKAPLOG_INFO_STR(logger,"Storing workUnit");
     workUnits.push_back(wu);
-    ASKAPLOG_INFO_STR(logger,"storing parset");
+    ASKAPLOG_INFO_STR(logger,"Storing parset");
     itsParsets.push_back(diadvise.getParset());
     ASKAPLOG_INFO_STR(logger,"Finished processWorkUnit");
 
@@ -312,7 +323,6 @@ void ContinuumWorker::buildSpectralCube() {
     /// it marshalls the following tasks:
     /// 1. building a spectral cube image
     /// 2. local minor cycle solving of each channel
-    /// 3. Conversion to FITS and output
     /// Note: at this stage it will generate a cube per
     /// writer.
     /// Therefore the cube will be distributed across the
