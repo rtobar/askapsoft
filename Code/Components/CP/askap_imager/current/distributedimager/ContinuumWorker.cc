@@ -288,15 +288,15 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     unitParset.replace("Channels",ChannelPar);
 
 
-    ASKAPLOG_DEBUG_STR(logger,"getting advice on missing parameters");
+    ASKAPLOG_INFO_STR(logger,"getting advice on missing parameters");
     synthesis::AdviseDI diadvise(itsComms,unitParset);
     diadvise.addMissingParameters();
-    ASKAPLOG_DEBUG_STR(logger,"advice received");
-    ASKAPLOG_DEBUG_STR(logger,"storing workUnit");
+    ASKAPLOG_INFO_STR(logger,"advice received");
+    ASKAPLOG_INFO_STR(logger,"storing workUnit");
     workUnits.push_back(wu);
-    ASKAPLOG_DEBUG_STR(logger,"storing parset");
+    ASKAPLOG_INFO_STR(logger,"storing parset");
     itsParsets.push_back(diadvise.getParset());
-    ASKAPLOG_DEBUG_STR(logger,"Finished processWorkUnit");
+    ASKAPLOG_INFO_STR(logger,"Finished processWorkUnit");
 
 }
 
