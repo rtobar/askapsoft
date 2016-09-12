@@ -191,10 +191,9 @@ void ContinuumWorker::run(void)
     if (!localSolver) {
         advice.prepare();
         advice.updateComms();
+        this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
     }
     advice.addMissingParameters();
-
-    this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
 
     if (workUnits.size()>=1) {
 
