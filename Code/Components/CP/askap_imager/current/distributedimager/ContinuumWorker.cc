@@ -189,7 +189,7 @@ void ContinuumWorker::run(void)
     ASKAPLOG_INFO_STR(logger,"Getting basic advice");
     synthesis::AdviseDI advice(itsComms,itsParset);
     
-    if (!localSolver) {
+    if (localSolver) {
         ASKAPLOG_INFO_STR(logger,"In local solver mode - reprocessing allocations (running prepare())");
         advice.prepare();
         advice.updateComms();
