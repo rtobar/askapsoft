@@ -47,7 +47,6 @@ class FeedbackService(ICPFuncTestReporter):
     Used for feedback from processes under test to the test driver.
     """
     def __init__(self):
-        print >> sys.stderr, 'FeedbackService init'
         self.history = []
         """The method call history. Each entry is a (str, dict) tuple. The str
         gives the method name, and the dict gives the method args as name:value
@@ -70,7 +69,6 @@ class FeedbackService(ICPFuncTestReporter):
         """ Generic functional test feedback method where the only required
         feedback is that a particular method has been called.
         """
-        print >> sys.stderr, 'methodCalled: ' + name
         self.history.append((name, None))
 
 

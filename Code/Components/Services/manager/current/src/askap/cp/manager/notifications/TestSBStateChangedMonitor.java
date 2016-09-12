@@ -49,7 +49,6 @@ public final class TestSBStateChangedMonitor extends SBStateMonitor {
 	public void notify(long sbid, ObsState newState, String updateTime) {
 		logger.debug("Notifying SB state change, new state: " + newState);
 		funcTestReporterClient.notifySBStateChanged(sbid, newState);
-		funcTestReporterClient.methodCalled("home time");
 	}
 	
 }

@@ -13,6 +13,7 @@ from askap.slice import CP
 from askap.interfaces.cp import ICPObsServicePrx
 
 
+# @skip
 class Test(CPFuncTestBase):
     def __init__(self):
         super(Test, self).__init__()
@@ -34,19 +35,19 @@ class Test(CPFuncTestBase):
             self.shutdown()
             raise
 
-    # @skip('too slow!')
     def test_get_service_version(self):
         #Don't test the full string, as the version changes with SVN revision or tag.
         process_name = self.cpclient.getServiceVersion().split(';')[0]
         assert 'manager' == process_name
 
-    # @skip('too slow!')
     def test_start_abort_wait_observation_sequence(self):
         fbs = self.feedback_service
         fbs.clear_history()
 
         self.cpclient.startObs(0)
+        sleep(0.2)
         self.cpclient.abortObs()
+        sleep(0.2)
         self.cpclient.waitObs(-1)
 
         for retries in range(5):
@@ -55,5 +56,7 @@ class Test(CPFuncTestBase):
             else:
                 break
 
-        print >> sys.stderr, fbs.history.__str__()
         assert len(fbs.history) == 3
+        assert fbs.history[0][0] == 'startIngest'
+        assert fbs.history[1][0] == 'abortIngest'
+        assert fbs.history[2][0] == 'waitIngest'

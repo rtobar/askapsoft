@@ -22,6 +22,7 @@ from askap.interfaces.cp import ICPObsServicePrx
 from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
 
 
+# @skip
 class TestSBStateChanged(CPFuncTestBase):
     def __init__(self):
         super(TestSBStateChanged, self).__init__()
@@ -68,7 +69,6 @@ class TestSBStateChanged(CPFuncTestBase):
         publisher = topic.getPublisher().ice_oneway()
         self.publisher_proxy = ISBStateMonitorPrx.uncheckedCast(publisher)
 
-    # @skip('too slow!')
     def test_manager_creates_topic(self):
         self.setup_icestorm(topic=None)
         # wait a little while to give CP Manager time to start up and
@@ -79,7 +79,6 @@ class TestSBStateChanged(CPFuncTestBase):
         except Exception as e:
             assert False, 'Failed with {0}'.format(e)
 
-    # @skip('too slow!')
     def test_sbstate_processing(self):
         self.setup_icestorm()
 
@@ -98,7 +97,6 @@ class TestSBStateChanged(CPFuncTestBase):
         sleep(4)
 
         # Exactly 1 notification should have been sent
-        print >> sys.stderr, fbs.history.__str__()
         assert len(fbs.history) == 1
         name, args = fbs.history[0]
         assert name == 'sbStateChangedNotification'
