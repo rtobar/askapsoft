@@ -883,7 +883,7 @@ void ContinuumWorker::processChannels()
     globalChannel = workUnits[0].get_globalChannel();
     
 
-    ASKAPLOG_INFO_STR(logger,"Building imager for channel ", localChannel);
+    ASKAPLOG_INFO_STR(logger,"Building imager for channel " << localChannel);
     CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
 
 
