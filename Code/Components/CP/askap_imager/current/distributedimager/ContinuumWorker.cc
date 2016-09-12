@@ -864,7 +864,7 @@ void ContinuumWorker::processChannels()
         this->buildSpectralCube();
         return;
     }
-    ASKAPLOG_DEBUG_STR(logger,"Processing multiple channels central solver mode");
+    ASKAPLOG_INFO_STR(logger,"Processing multiple channels central solver mode");
     TableDataSource ds0(ms, TableDataSource::DEFAULT, colName);
 
     ds0.configureUVWMachineCache(uvwMachineCacheSize, uvwMachineCacheTolerance);
@@ -881,15 +881,17 @@ void ContinuumWorker::processChannels()
         localChannel = workUnits[0].get_localChannel();
     }
     globalChannel = workUnits[0].get_globalChannel();
+    
 
+    ASKAPLOG_INFO_STR(logger,"Building imager for channel ", localChannel);
     CalcCore rootImager(itsParsets[0],itsComms,ds0,localChannel);
 
 
     if (nCycles == 0) {
 
-        ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " at barrier");
+        ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " at barrier");
         itsComms.barrier(itsComms.theWorkers());
-        ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
+        ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
 
         rootImager.receiveModel();
         rootImager.calcNE();
