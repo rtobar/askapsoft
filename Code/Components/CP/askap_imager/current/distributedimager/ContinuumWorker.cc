@@ -888,7 +888,7 @@ void ContinuumWorker::processChannels()
     if (nCycles == 0) {
 
         ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " at barrier");
-        itsComms.barrier(itsComms.interGroupCommIndex());
+        itsComms.barrier(itsComms.theWorkers());
         ASKAPLOG_DEBUG_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
 
         rootImager.receiveModel();
@@ -946,7 +946,7 @@ void ContinuumWorker::processChannels()
                 ASKAPLOG_WARN_STR(logger,"Write at major cycle not currently supported in this mode");
             }
             ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " at barrier");
-            itsComms.barrier(itsComms.interGroupCommIndex());
+            itsComms.barrier(itsComms.theWorkers());
             ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
 
             ASKAPLOG_INFO_STR(logger,"Worker waiting to receive new model");
