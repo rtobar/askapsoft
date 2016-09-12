@@ -143,11 +143,11 @@ void ContinuumWorker::run(void)
         ASKAPLOG_DEBUG_STR(logger,"Worker is waiting for work allocation");
         wu.receiveUnitFrom(itsMaster,itsComms);
         if (wu.get_payloadType() == ContinuumWorkUnit::DONE) {
-            ASKAPLOG_DEBUG_STR(logger,"Worker has received complete allocation");
+            ASKAPLOG_INFO_STR(logger,"Worker has received complete allocation");
             break;
         }
         else if (wu.get_payloadType() == ContinuumWorkUnit::NA) {
-            ASKAPLOG_DEBUG_STR(logger,"Worker has received non applicable allocation");
+            ASKAPLOG_WARN_STR(logger,"Worker has received non applicable allocation");
             sleep(1);
             wrequest.sendRequest(itsMaster,itsComms);
             continue;
@@ -170,18 +170,20 @@ void ContinuumWorker::run(void)
             }
 
             if (wu.get_payloadType() == ContinuumWorkUnit::LAST) {
-                ASKAPLOG_DEBUG_STR(logger,"Worker has received last job");
+                ASKAPLOG_INFO_STR(logger,"Worker has received last job");
                 break;
             }
             else {
-                ASKAPLOG_DEBUG_STR(logger,"Worker is sending request for work");
+                ASKAPLOG_INFO_STR(logger,"Worker is sending request for work");
                 wrequest.sendRequest(itsMaster,itsComms);
             }
         }
 
     }
-
+    ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " received data from master - waiting at barrier");
     itsComms.barrier(itsComms.theWorkers());
+    ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
+
     const bool localSolver = itsParset.getBool("solverpercore",false);
     
     synthesis::AdviseDI advice(itsComms,itsParset);
