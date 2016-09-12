@@ -27,6 +27,11 @@ package askap.cp.manager.notifications;
 
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import org.apache.log4j.Logger;
 
 /**
  * Implements Scheduling block state change notifications via JIRA.
@@ -35,6 +40,10 @@ import askap.util.ParameterSet;
  */
 public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 
+    /**
+     * Logger
+     */
+    private static final Logger logger = Logger.getLogger(JiraSBStateChangedMonitor.class.getName());
 	private final ParameterSet config;
 
 	/**
@@ -45,9 +54,36 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 		this.config = config;
 	}
 
+	/**
+	 * Issues a scheduling block state changed notification.
+	 * 
+	 * @param sbid: The scheduling block ID.
+	 * @param newState: The new scheduling block state.
+	 * @param updateTime: The update timestamp string. 
+	 */
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) {
-		throw new UnsupportedOperationException("Not supported yet."); 
+        List<String> cmdline = new ArrayList<>();
+		// TODO: Build cmdline
+		// TODO: Do I need to load the module? 
+		
+        try {
+			logger.debug("creating ProcessBuilder");
+			// TODO: grab stdout and stderr
+			// TODO: ensure that JIRA authentication environment variables are set
+            ProcessBuilder pb = new ProcessBuilder(cmdline);
+            Process p = pb.start();
+			int exitCode = p.waitFor();
+			// TODO: check for success/failure
+        } catch (IOException e) {
+            logger.error("Failed to issue JIRA notification: " + e.getMessage());
+			// TODO: Appropriate Ice exception for failed notification
+            //throw new PipelineStartException(e.getMessage());
+        } catch (InterruptedException e) {
+			logger.error(e);
+			// TODO: Appropriate Ice exception for failed notification
+            //throw new PipelineStartException(e.getMessage());
+		}
 	}
 	
 }
