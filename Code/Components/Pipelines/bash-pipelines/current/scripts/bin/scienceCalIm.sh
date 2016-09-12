@@ -96,7 +96,17 @@ for FIELD in ${FIELD_LIST}; do
         . ${PIPELINEDIR}/continuumCubeImagingScience.sh
 
         . ${PIPELINEDIR}/prepareSpectralData.sh
-        . ${PIPELINEDIR}/spectralImageScience.sh
+
+
+        if [ $DO_ALT_IMAGER == true ]; then
+
+            . ${PIPELINEDIR}/altSpectralImageScience.sh
+        else
+
+            . ${PIPELINEDIR}/spectralImageScience.sh
+
+        fi
+
         . ${PIPELINEDIR}/spectralImContSub.sh
 
     done
