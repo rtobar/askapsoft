@@ -301,8 +301,12 @@ TMPFS="/dev/shm"
 DO_BARY=false
 # local solver - distribute the minor cycle - each channel is solved individually
 # this mimics simager behaviour
+# automatically set to true in the spectral imaging
 DO_LOCAL_SOLVER=false
-
+# How many sub-cubes to write out.
+# This improves performance of the imaging - and also permits parallelisation
+# of the LINMOS step
+NSUB_CUBES=16
 
 ####################
 # Gridding parameters for continuum imaging

@@ -98,14 +98,9 @@ for FIELD in ${FIELD_LIST}; do
         . ${PIPELINEDIR}/prepareSpectralData.sh
 
 
-        if [ $DO_ALT_IMAGER == true ]; then
 
-            . ${PIPELINEDIR}/altSpectralImageScience.sh
-        else
+        . ${PIPELINEDIR}/spectralImageScience.sh
 
-            . ${PIPELINEDIR}/spectralImageScience.sh
-
-        fi
 
         . ${PIPELINEDIR}/spectralImContSub.sh
 
