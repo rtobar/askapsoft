@@ -66,11 +66,11 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 		// TODO: Do I need to load the module? 
         try {
 			logger.debug("creating ProcessBuilder");
-			// TODO: the following command line is a guess, I need to test this on Galaxy!
             ProcessBuilder pb = new ProcessBuilder(
 				"schedblock",
 				"annotate",
 				Long.toString(sbid),
+				"--comment",
 				"\"Ready for data processing\"");
 
 			// ensure that JIRA authentication environment variables are set
@@ -85,7 +85,10 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 
             Process p = pb.start();
 			int exitCode = p.waitFor();
-			// TODO: check for success/failure
+			if (exitCode != 0) {
+				logger.error("schedblock annotate command failed with exit code: " + exitCode);
+
+			}
         } catch (IOException e) {
             logger.error("Failed to issue JIRA notification: " + e.getMessage());
 			// TODO: Appropriate Ice exception for failed notification
