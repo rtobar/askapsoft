@@ -106,7 +106,11 @@ for FIELD in ${FIELD_LIST}; do
 
     done
 
-    . ${PIPELINEDIR}/linmos.sh
+    if [ $DO_ALT_IMAGER == true ]; then
+        . ${PIPELINEDIR}/altLinmos.sh
+    else
+        . ${PIPELINEDIR}/linmos.sh
+    fi
 
     cd ..
 

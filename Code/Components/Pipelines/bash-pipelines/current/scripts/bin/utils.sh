@@ -64,7 +64,13 @@ function rejuvenate()
         find $1 -exec touch {} \;
     fi
 }
-
+##############################
+# Get the list of subcubes
+#
+function getAltPrefix()
+{
+    wrList=`ls -1d image.wr*cube*.beam00 | awk -F. '{print $3}' | sort -n`
+}
 ##############################
 # JOB ID MANAGEMENT
 
