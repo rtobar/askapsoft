@@ -37,10 +37,10 @@ setImageBaseSpectral
 DO_IT=$DO_SPECTRAL_IMAGING
 
 if [ $DO_ALT_IMAGER == true ]; then
-    theimager=$altimager
+    theImager=$altimager
     Imager="Cimager"
 else
-    theimager=$cimager
+    theImager=$cimager
     Imager="Simager"
 fi
 
