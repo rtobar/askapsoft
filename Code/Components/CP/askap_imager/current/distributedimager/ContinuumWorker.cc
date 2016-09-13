@@ -461,7 +461,7 @@ void ContinuumWorker::buildSpectralCube() {
             /// the workUnit count to permit a re-read of the input data.
             /// LOOP:
 
-            for (int majorCycleNumber=0; majorCycleNumber < nCycles; ++majorCycleNumber) {
+            for (int majorCycleNumber=0; majorCycleNumber <= nCycles; ++majorCycleNumber) {
 
                 int tempWorkUnitCount = initialChannelWorkUnit; // clearer if it were called nextWorkUnit
 
@@ -534,7 +534,7 @@ void ContinuumWorker::buildSpectralCube() {
                     }
 
                 }
-                if (majorCycleNumber+1 == nCycles) {
+                if (majorCycleNumber+1 > nCycles) {
                     ASKAPLOG_INFO_STR(logger,"Reached maximum majorcycle count");
                     workUnitCount = tempWorkUnitCount; // this is to remember what was processed.
                 }
