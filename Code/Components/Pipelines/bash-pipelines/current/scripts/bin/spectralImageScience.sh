@@ -255,7 +255,7 @@ log=${logs}/science_spectral_imager_beam${BEAM}_\${SLURM_JOB_ID}.log
 # Now run the simager
 NCORES=${NUM_CPUS_SPECIMG_SCI}
 NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
-aprun -n \${NCORES} -N \${NPPN} ${imager} -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} ${theImager} -c \$parset > \$log
 err=\$?
 rejuvenate ${msSciSL}
 rejuvenate *.${imageBase}*
