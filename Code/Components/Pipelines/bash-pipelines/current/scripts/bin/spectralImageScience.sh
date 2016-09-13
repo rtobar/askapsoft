@@ -167,6 +167,13 @@ else
     altImagerParams ="${altImagerParams} are not required"
 fi
 
+namestr="${Imager}.Images."
+if [ $DO_ALT_IMAGER == true ]; then
+namestr="${namestr}.Names                           = [image.${imageBase}]"
+else
+namestr="${namestr}.name                            = image.${imageBase}"
+fi
+
 
 if [ $DO_IT == true ]; then
 
@@ -211,12 +218,6 @@ else
     directionDefinition="${Imager}.Images.direction                       = [\${ra}, \${dec}, \${epoch}]"
 fi
 
-namestr="${Imager}.Images."
-if [ $DO_ALT_IMAGER == true ]; then
-    namestr="${namestr}.Names                           = [image.${imageBase}]"
-else
-    namestr="${namestr}.name                            = image.${imageBase}"
-fi
 
 parset=${parsets}/science_spectral_imager_beam${BEAM}_\${SLURM_JOB_ID}.in
 cat > \$parset << EOF
