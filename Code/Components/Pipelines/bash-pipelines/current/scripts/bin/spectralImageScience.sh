@@ -167,7 +167,7 @@ else
     altImagerParams ="${altImagerParams} are not required"
 fi
 
-namestr="${Imager}.Images."
+namestr="${Imager}.Images"
 if [ $DO_ALT_IMAGER == true ]; then
 namestr="${namestr}.Names                           = [image.${imageBase}]"
 else
