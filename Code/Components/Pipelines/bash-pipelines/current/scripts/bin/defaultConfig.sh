@@ -292,6 +292,8 @@ RESTORING_BEAM_CONT=fit
 # parameters from the new (alt) imager
 # number of channels each core will process
 NCHAN_PER_CORE=1
+# the spectral line imager needs its own otherwise we lose some flexibility
+NCHAN_PER_CORE_SL=54
 # store the visibilities in shared memory.
 # this will give a performance boost at the expense of memory usage
 USE_TMPFS=false

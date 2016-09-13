@@ -133,36 +133,40 @@ altImagerParams="# Options for the alternate imager"
 if [ $DO_ALT_IMAGER == true ]; then
 
 
-    if [ "${NCHAN_PER_CORE}" == "" ]; then
+    if [ "${NCHAN_PER_CORE_SL}" == "" ]; then
         nchanpercore=1
     else
-        nchanpercore="${NCHAN_PER_CORE}"
+        nchanpercore="${NCHAN_PER_CORE_SL}"
     fi
     altImagerParams="${altImagerParams}
-    Cimager.nchanpercore                           = ${nchanpercore}"
+Cimager.nchanpercore                           = ${nchanpercore}"
     if [ ${USE_TMPFS} == true ]; then
         usetmpfs="true"
     else
         usetmpfs="false"
     fi
     altImagerParams="${altImagerParams}
-    Cimager.usetmpfs                               = ${usetmpfs}"
+Cimager.usetmpfs                               = ${usetmpfs}"
     if [ "${TMPFS}" == "" ]; then
         tmpfs="/dev/shm"
     else
         tmpfs="${TMPFS}"
     fi
     altImagerParams="${altImagerParams}
-    Cimager.tmpfs                                   = ${tmpfs}"
+Cimager.tmpfs                                   = ${tmpfs}"
     altImagerParams="${altImagerParams}
 # barycentre and multiple solver mode not supported in continuum imaging (yet)
-    Cimager.barycentre                              = true
-    Cimager.solverpercore                           = true
-    Cimager.nwriters                                = ${NSUB_CUBES}"
+Cimager.barycentre                              = true
+Cimager.solverpercore                           = true
+Cimager.nwriters                                = ${NSUB_CUBES}"
+
+# we also need to change the CPU allocations
+
 
 else
     altImagerParams ="${altImagerParams} are not required"
 fi
+
 
 if [ $DO_IT == true ]; then
 
