@@ -34,7 +34,7 @@ ID_LINMOS_SCI=""
 DO_IT=$DO_MOSAIC
 
 BEAM=all
-setImageBaseCont
+setImageBaseSpectral
 getAltPrefix
 
 for subband in ${wrList}; do
