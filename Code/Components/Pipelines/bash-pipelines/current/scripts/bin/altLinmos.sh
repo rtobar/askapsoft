@@ -96,7 +96,7 @@ parset=${parsets}/science_linmos_\${SLURM_JOB_ID}.in
 log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
 
 # bit of image name before the beam ID
-imagePrefix=image.wr.${subband}.${IMAGE_BASE_CONT}
+imagePrefix=image.wr.${subband}.${IMAGE_BASE_SPECTRAL}
 # bit of image name after the beam ID
 nterms=${NUM_TAYLOR_TERMS}
 if [ \${nterms} -gt 1 ]; then
