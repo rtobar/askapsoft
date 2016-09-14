@@ -97,11 +97,11 @@ log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
 
 # bit of image name before the beam ID
 imagePrefix=image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-
+imagePartialPrefix=wr.${subband}.${IMAGE_BASE_SPECTRAL}
 beamList=""
 for BEAM in ${BEAMS_TO_USE}; do
     if [ -e \${imagePrefix}.beam\${BEAM} ]; then
-        beamList="\${beamList}beam\${BEAM} "
+        beamList="\${beamList}\${imagePartialPrefix}.beam\${BEAM} "
     else
         echo "WARNING: Beam \${BEAM} image not present - not including in mosaic!"
     fi 
