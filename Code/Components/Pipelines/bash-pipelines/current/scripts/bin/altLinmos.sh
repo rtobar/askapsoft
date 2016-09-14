@@ -96,17 +96,11 @@ parset=${parsets}/science_linmos_\${SLURM_JOB_ID}.in
 log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
 
 # bit of image name before the beam ID
-imagePrefix=image.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-# bit of image name after the beam ID
-nterms=${NUM_TAYLOR_TERMS}
-if [ \${nterms} -gt 1 ]; then
-    imageSuffix=taylor.0.restored
-else
-    imageSuffix=restored
-fi
+imagePrefix=image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
+
 beamList=""
 for BEAM in ${BEAMS_TO_USE}; do
-    if [ -e \${imagePrefix}.beam\${BEAM}.\${imageSuffix} ]; then
+    if [ -e \${imagePrefix}.beam\${BEAM} ]; then
         beamList="\${beamList}beam\${BEAM} "
     else
         echo "WARNING: Beam \${BEAM} image not present - not including in mosaic!"
