@@ -4,40 +4,33 @@
 import os
 from unittest import skip
 
-from askap.iceutils import IceSession, get_service_object
+from askap.iceutils import CPFuncTestBase, get_service_object
 
 # always import from askap.slice before trying to import any interfaces
 from askap.slice import CP
 from askap.interfaces.cp import ICPObsServicePrx
 
 # @skip
-class TestRealIngest(object):
+class Test(CPFuncTestBase):
     def __init__(self):
-        self.igsession = None
-        self.service = None
+        super(Test, self).__init__()
+        self.cpclient = None
 
     def setUp(self):
         # Note that the working directory is 'functests', thus paths are
         # relative to that location.
         os.environ["ICE_CONFIG"] = "config-files/ice.cfg"
         os.environ['TEST_DIR'] = 'test_real_ingest'
-        self.igsession = IceSession(
-            os.path.expandvars("$TEST_DIR/applications.txt"),
-            cleanup=True)
-        try:
-            self.igsession.start()
-            self.service = get_service_object(
-                self.igsession.communicator,
-                "CentralProcessorService@CentralProcessorAdapter",
-                ICPObsServicePrx
-            )
-        except Exception, ex:
-            self.igsession.terminate()
-            raise
+        super(Test, self).setUp()
 
-    def tearDown(self):
-        self.igsession.terminate()
-        self.igsession = None
+        try:
+            self.cpclient = get_service_object(
+                self.ice_session.communicator,
+                "CentralProcessorService@CentralProcessorAdapter",
+                ICPObsServicePrx)
+        except Exception as ex:
+            self.shutdown()
+            raise
 
     def test_get_service_version(self):
         #Don't test the full string, as the version changes with SVN revision or tag.
