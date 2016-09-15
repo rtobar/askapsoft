@@ -85,7 +85,7 @@ class TestSBStateChanged(CPFuncTestBase):
         fbs = self.feedback_service
         fbs.clear_history()
 
-        sbid = 1
+        sbid = 2056
         timestamp = datetime.now()
         self.publisher_proxy.changed(
             sbid,
