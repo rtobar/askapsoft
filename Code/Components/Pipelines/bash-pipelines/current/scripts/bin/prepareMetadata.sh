@@ -97,7 +97,7 @@ if [ $DO_1934_CAL == true ] && [ "${MS_INPUT_1934}" != "" ]; then
     getMSname ${MS_INPUT_1934}
     MS_METADATA=$metadata/mslist-cal-${msname}.txt
     if [ ! -e ${MS_METADATA} ]; then
-        mslist --full $MS_INPUT_1934 1>& ${MS_METADATA}
+        ${mslist} --full $MS_INPUT_1934 1>& ${MS_METADATA}
     fi
 
     # Number of antennas used in the calibration observation
