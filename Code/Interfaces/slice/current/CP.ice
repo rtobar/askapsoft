@@ -50,8 +50,8 @@ module cp
     };
 
     /**
-     * Used to indicate the a pipeline failed to start due to some
-     * problem other than the above.
+     * Used to indicate that a pipeline failed to start due to some
+     * problem other than it being already running.
      */
     exception PipelineStartException extends askap::interfaces::AskapIceException
     {
@@ -129,7 +129,7 @@ module cp
     interface ICPFuncTestReporter
     {
         /**
-         * Schedulingblockservice specific feedback method for state change 
+         * Schedulingblockservice specific feedback method for state change
          * notifications.
          *
          * @param sbid The scheduling block ID.
@@ -140,7 +140,7 @@ module cp
             askap::interfaces::schedblock::ObsState newState);
 
         /**
-         * Generic functional test feedback method where the only required 
+         * Generic functional test feedback method where the only required
          * feedback is that a particular method has been called.
          *
          * @param name The method name that has been called.

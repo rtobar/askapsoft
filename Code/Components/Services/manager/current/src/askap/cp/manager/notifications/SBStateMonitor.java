@@ -25,7 +25,6 @@
  */
 package askap.cp.manager.notifications;
 
-import askap.cp.manager.CpManager;
 import org.apache.log4j.Logger;
 
 import askap.interfaces.schedblock._ISBStateMonitorDisp;
@@ -56,7 +55,11 @@ public abstract class SBStateMonitor
 			String updateTime,
 			Ice.Current current) {
 		if (0 == newState.compareTo(ObsState.PROCESSING)) {
-			notify(sbid, newState, updateTime);
+			try {
+				notify(sbid, newState, updateTime);
+			} catch (NotificationException ex) {
+				logger.error(ex);
+			}
 		}
 	}
 
@@ -66,6 +69,8 @@ public abstract class SBStateMonitor
 	 * @param sbid: The scheduling block ID.
 	 * @param newState: The new scheduling block state.
 	 * @param updateTime: The update timestamp string. 
+	 * @throws askap.cp.manager.notifications.NotificationException 
 	 */
-	protected abstract void notify(long sbid, ObsState newState, String updateTime);
+	protected abstract void notify(long sbid, ObsState newState, String updateTime)
+			throws NotificationException;
 }

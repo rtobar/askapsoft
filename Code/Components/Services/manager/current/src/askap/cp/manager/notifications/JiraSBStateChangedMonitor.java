@@ -28,9 +28,6 @@ package askap.cp.manager.notifications;
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -60,9 +57,11 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 	 * @param sbid: The scheduling block ID.
 	 * @param newState: The new scheduling block state.
 	 * @param updateTime: The update timestamp string. 
+	 * @throws askap.cp.manager.notifications.NotificationException 
 	 */
 	@Override
-	public void notify(long sbid, ObsState newState, String updateTime) {
+	public void notify(long sbid, ObsState newState, String updateTime) 
+			throws NotificationException {
 		// TODO: Do I need to load the module? 
         try {
 			logger.debug("creating ProcessBuilder");
@@ -77,8 +76,6 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 			if (!(pb.environment().containsKey("JIRA_USER") ||
 				  pb.environment().containsKey("JIRA_PASSWORD"))) {
 				logger.error("JIRA credentials not set");
-				// TODO: Appropriate Ice exception for failed notification
-				//throw new PipelineStartException(e.getMessage());
 			}
 
 			// TODO: do I need to grab stdout and stderr? EG for error parsing?
@@ -86,17 +83,12 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
             Process p = pb.start();
 			int exitCode = p.waitFor();
 			if (exitCode != 0) {
-				logger.error("schedblock annotate command failed with exit code: " + exitCode);
-
+				throw new NotificationException("schedblock annotate command failed with exit code: " + exitCode);
 			}
         } catch (IOException e) {
-            logger.error("Failed to issue JIRA notification: " + e.getMessage());
-			// TODO: Appropriate Ice exception for failed notification
-            //throw new PipelineStartException(e.getMessage());
+            throw new NotificationException("Failed to issue JIRA notification: ", e);
         } catch (InterruptedException e) {
-			logger.error(e);
-			// TODO: Appropriate Ice exception for failed notification
-            //throw new PipelineStartException(e.getMessage());
+            throw new NotificationException(e);
 		}
 	}
 	
