@@ -131,7 +131,7 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     getMSname ${MS_INPUT_SCIENCE}
     MS_METADATA=$metadata/mslist-${msname}.txt
     if [ ! -e ${MS_METADATA} ]; then
-        mslist --full $MS_INPUT_SCIENCE 1>& ${MS_METADATA}
+        ${mslist} --full $MS_INPUT_SCIENCE 1>& ${MS_METADATA}
     fi
 
     # Get the observation time
