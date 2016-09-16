@@ -35,23 +35,23 @@ class Test(CPFuncTestBase):
     def test_get_service_version(self):
         #Don't test the full string, as the version changes with SVN revision or tag.
         print "Calling getServiceVersion...",
-        process_name = self.service.getServiceVersion().split(';')[0]
+        process_name = self.cpclient.getServiceVersion().split(';')[0]
         print "DONE"
         assert 'manager' == process_name
 
     def test_start_abort_wait_observation_sequence(self):
         print "Starting observation...",
-        self.service.startObs(0)
+        self.cpclient.startObs(0)
         print "DONE"
 
         print "Waiting 5s for observation to complete (it shouldn't)...",
-        self.service.waitObs(5000)
+        self.cpclient.waitObs(5000)
         print "DONE"
 
         print "Aborting observation...",
-        self.service.abortObs()
+        self.cpclient.abortObs()
         print "DONE"
 
         print "Waiting for observation to abort...",
-        self.service.waitObs(-1)
+        self.cpclient.waitObs(-1)
         print "DONE"

@@ -23,9 +23,9 @@ from askap.interfaces.schedblock import ISBStateMonitorPrx, ObsState
 
 
 # @skip
-class TestSBStateChanged(CPFuncTestBase):
+class Test(CPFuncTestBase):
     def __init__(self):
-        super(TestSBStateChanged, self).__init__()
+        super(Test, self).__init__()
         self.cpclient = None
         self.topic_manager = None
         self.publisher_proxy = None
@@ -35,7 +35,7 @@ class TestSBStateChanged(CPFuncTestBase):
         # relative to that location.
         os.environ["ICE_CONFIG"] = "config-files/ice.cfg"
         os.environ['TEST_DIR'] = 'test_sbstate_changed'
-        super(TestSBStateChanged, self).setUp()
+        super(Test, self).setUp()
 
         try:
             self.cpclient = get_service_object(
@@ -92,15 +92,9 @@ class TestSBStateChanged(CPFuncTestBase):
             ObsState.PROCESSING,
             str(timestamp))
 
-        # We need to allow some time for the round-trip message propagation.
         expected_history_length = 1
-        for retries in range(5):
-            if len(fbs.history) < expected_history_length:
-                sleep(1)
-            else:
-                break
+        fbs.wait(expected_history_length, retries=10)
 
-        # Exactly 1 notification should have been sent
         assert len(fbs.history) == expected_history_length
         name, args = fbs.history[0]
         assert name == 'sbStateChangedNotification'

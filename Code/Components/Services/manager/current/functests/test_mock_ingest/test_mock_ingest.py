@@ -45,16 +45,10 @@ class Test(CPFuncTestBase):
         fbs.clear_history()
 
         self.cpclient.startObs(0)
-        sleep(0.2)
         self.cpclient.abortObs()
-        sleep(0.2)
         self.cpclient.waitObs(-1)
 
-        for retries in range(5):
-            if len(fbs.history) < 3:
-                sleep(1)
-            else:
-                break
+        fbs.wait(3, retries=10)
 
         assert len(fbs.history) == 3
         assert fbs.history[0][0] == 'startIngest'

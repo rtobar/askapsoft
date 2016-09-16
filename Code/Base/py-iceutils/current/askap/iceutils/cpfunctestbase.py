@@ -27,8 +27,8 @@ SDP Functional Test Base Class
 
 import os
 import sys
+from time import sleep
 
-# import Ice, IceStorm
 from askap.slice import CP
 from askap.interfaces.cp import ICPFuncTestReporter
 #shouldn't need this
@@ -52,6 +52,26 @@ class FeedbackService(ICPFuncTestReporter):
         gives the method name, and the dict gives the method args as name:value
         pairs.
         """
+
+    def wait(self, expected_history_length, retries=5, sleep_seconds=1):
+        """
+        Wait for the round-trip message propagation.
+
+        :param expected_history_length: The expected final number of entries
+            in the call history.
+        :param retries: Max number of retries.
+        :param sleep_seconds: Number of seconds to sleep between retesting
+            the history length.
+
+        :return: True if the expected history length was reached, otherwise False.
+        """
+        for n in range(retries):
+            if len(self.history) < expected_history_length:
+                sleep(sleep_seconds)
+            else:
+                return True
+
+        return False  # Timed out
 
     def clear_history(self):
         """ Clears the history list. """
