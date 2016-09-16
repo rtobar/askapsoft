@@ -69,7 +69,8 @@ function rejuvenate()
 #
 function getAltPrefix()
 {
-    wrList=`ls -1d image.wr*cube*.beam00 | awk -F. '{print $3}' | sort -n`
+    wrList=$(seq 1 $NSUB_CUBES)
+    echo ${wrList}
 }
 ##############################
 # JOB ID MANAGEMENT
