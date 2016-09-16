@@ -35,6 +35,8 @@ echo "Setting up and calibrating the science observation"
 FLAG_IMAGING_DEP=""
 
 ORIGINAL_OUTPUT=${OUTPUT}
+FIELD_ID=0
+
 for FIELD in ${FIELD_LIST}; do
 
     mkdir -p ${FIELD}
@@ -46,6 +48,19 @@ for FIELD in ${FIELD_LIST}; do
     getBeamOffsets
 
     for BEAM in ${BEAMS_TO_USE}; do
+
+        parsets=$parsetsBase/$FIELD
+        mkdir -p $parsets
+        logs=$logsBase/$FIELD
+        mkdir -p $logs
+        slurms=$slurmsBase/$FIELD
+        mkdir -p $slurms
+        slurmOut=$slurmOutBase/$FIELD
+        mkdir -p $slurmOut
+
+        echo "Processing field $FIELD"
+        echo "-----------------------"
+
         
         mkdir -p ${OUTPUT}/Checkfiles
         # an empty file that will indicate that the flagging has been done
@@ -83,6 +98,10 @@ for FIELD in ${FIELD_LIST}; do
         . ${PIPELINEDIR}/applyBandpassScience.sh
 
         . ${PIPELINEDIR}/averageScience.sh
+        FIELDBEAM=`echo $FIELD_ID $BEAM | awk '{printf "F%02d_B%s",$1,$2}'`
+            
+        findScienceMSnames
+
 
         if [ $DO_SELFCAL == true ]; then
             . ${PIPELINEDIR}/continuumImageScienceSelfcal.sh
@@ -102,16 +121,27 @@ for FIELD in ${FIELD_LIST}; do
         . ${PIPELINEDIR}/spectralImageScience.sh
 
 
-        . ${PIPELINEDIR}/spectralImContSub.sh
+
+        FIELDBEAM=`echo $FIELD_ID | awk '{printf "F%02d",$1}'`
+
+        if [ $DO_ALT_IMAGER == true ]; then
+            . ${PIPELINEDIR}/altLinmos.sh
+        else
+            . ${PIPELINEDIR}/linmos.sh
+            . ${PIPELINEDIR}/spectralImContSub.sh
+
+        fi
+
+
+
 
     done
 
-    if [ $DO_ALT_IMAGER == true ]; then
-        . ${PIPELINEDIR}/altLinmos.sh
-    else
-        . ${PIPELINEDIR}/linmos.sh
-    fi
+
 
     cd ..
+
+    FIELD_ID=`expr $FIELD_ID + 1`
+    
 
 done

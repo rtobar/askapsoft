@@ -70,7 +70,7 @@ function rejuvenate()
 function getAltPrefix()
 {
     wrList=$(seq 1 $NSUB_CUBES)
-    echo ${wrList}
+    
 }
 ##############################
 # JOB ID MANAGEMENT

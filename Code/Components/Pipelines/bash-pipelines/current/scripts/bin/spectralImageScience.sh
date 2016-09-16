@@ -179,7 +179,7 @@ if [ $DO_IT == true ]; then
 
     echo "Imaging the spectral-line science observation"
 
-    sbatchfile=$slurms/science_spectral_imager_beam$BEAM.sbatch
+    sbatchfile=$slurms/science_spectral_imager_${FIELDBEAM}.sbatch
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -218,8 +218,8 @@ else
     directionDefinition="${Imager}.Images.direction                       = [\${ra}, \${dec}, \${epoch}]"
 fi
 
+parset=${parsets}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 
-parset=${parsets}/science_spectral_imager_beam${BEAM}_\${SLURM_JOB_ID}.in
 cat > \$parset << EOF
 ${Imager}.dataset                                 = ${msSciSL}
 #
@@ -250,7 +250,7 @@ ${preconditioning}
 ${restorePars}
 EOF
 
-log=${logs}/science_spectral_imager_beam${BEAM}_\${SLURM_JOB_ID}.log
+log=${logs}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 
 # Now run the simager
 NCORES=${NUM_CPUS_SPECIMG_SCI}
