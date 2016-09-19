@@ -145,3 +145,9 @@ for FIELD in ${FIELD_LIST}; do
     
 
 done
+
+OUTPUT=${ORIGINAL_OUTPUT}
+parsets=$parsetsBase
+logs=$logsBase
+slurms=$slurmsBase
+slurmOut=$slurmOutBase
