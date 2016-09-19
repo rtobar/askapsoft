@@ -209,6 +209,9 @@ void MsSplitApp::getRowsToKeep(const casa::MeasurementSet& ms) {
             lastGoodRow = *(it+1);
         }
     }
+    mapOfRows.insert ( std::pair<int,int>(lastGoodRow,nGood) );
+    ASKAPLOG_INFO_STR(logger,"last good row " << lastGoodRow << " followed by " << nGood << " contiguous rows ");
+
     std::map<int,int>::iterator myMap;
 
     for (myMap=mapOfRows.begin() ;myMap != mapOfRows.end(); ++myMap) {
