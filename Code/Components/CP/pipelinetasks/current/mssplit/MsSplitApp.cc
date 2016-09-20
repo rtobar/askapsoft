@@ -196,7 +196,7 @@ void MsSplitApp::getRowsToKeep(const casa::MeasurementSet& ms) {
     int lastGoodRow = *it;
     ASKAPLOG_INFO_STR(logger,"First good row for this split is " << *it); 
     int nextGoodRow = 0;
-    int nGood = 0;
+    int nGood = 1; // there is always at least 1 good one
     for (it = rowsToKeep.begin(); it != rowsToKeep.end()-1;++it) {
         nextGoodRow = (*it)+1;
         if (*(it+1) == nextGoodRow) {
@@ -205,7 +205,7 @@ void MsSplitApp::getRowsToKeep(const casa::MeasurementSet& ms) {
         else {
             mapOfRows.insert ( std::pair<int,int>(lastGoodRow,nGood) );
             ASKAPLOG_INFO_STR(logger,"last good row " << lastGoodRow << " followed by " << nGood << " contiguous rows ");
-            nGood = 0;
+            nGood = 1;
             lastGoodRow = *(it+1);
         }
     }
