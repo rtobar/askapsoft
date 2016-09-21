@@ -35,6 +35,12 @@ ID_CONTIMG_SCI=""
 
 DO_IT=$DO_CONT_IMAGING
 
+if [ $DO_ALT_IMAGER == true ]; then
+    theimager=$altimager
+else
+    theimager=$cimager
+fi
+
 if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${outputImage} ]; then
     if [ $DO_IT == true ]; then
         echo "Image ${outputImage} exists, so not running continuum imaging for beam ${BEAM}"
@@ -54,7 +60,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_CONT_IMAGE}
 #SBATCH --ntasks=${NUM_CPUS_CONTIMG_SCI}
 #SBATCH --ntasks-per-node=${CPUS_PER_CORE_CONT_IMAGING}
-#SBATCH --job-name=clean${BEAM}
+#SBATCH --job-name=cont_${FIELDBEAMJOB}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-contImaging-%j.out
@@ -81,7 +87,7 @@ log=${logs}/science_imaging_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 
 NCORES=${NUM_CPUS_CONTIMG_SCI}
 NPPN=${CPUS_PER_CORE_CONT_IMAGING}
-aprun -n \${NCORES} -N \${NPPN} $cimager -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} $theimager -c \$parset > \$log
 err=\$?
 rejuvenate *.${imageBase}*
 rejuvenate ${OUTPUT}/${msSciAv}

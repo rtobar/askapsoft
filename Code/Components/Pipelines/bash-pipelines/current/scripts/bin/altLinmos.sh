@@ -34,35 +34,41 @@ ID_LINMOS_SCI=""
 DO_IT=$DO_MOSAIC
 
 BEAM=all
-setImageBaseCont
-mosImage=image.${imageBase}
-if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
-    mosImage="${mosImage}.taylor.0"
-fi
-mosImage="${mosImage}.restored"
+setImageBaseSpectral
+getAltPrefix
 
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${mosImage} exists, so not running continuum mosaicking"
+for subband in ${wrList}; do
+
+    mosImage=image.${subband}.${imageBase}
+
+    if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
+        mosImage="${mosImage}.taylor.0"
     fi
-    DO_IT=false
-fi
 
-if [ $DO_IT == true ]; then
+    mosImage="${mosImage}.restored"
 
-    if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
-        reference="# No reference image or offsets, as we take the image centres"
-    else
-        reference="# Reference image for offsets
+    if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
+        if [ $DO_IT == true ]; then
+            echo "Image ${mosImage} exists, so not running continuum mosaicking"
+        fi
+        DO_IT=false
+    fi
+
+    if [ $DO_IT == true ]; then
+
+        if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+            reference="# No reference image or offsets, as we take the image centres"
+        else
+            reference="# Reference image for offsets
 linmos.feeds.centreref  = 0
 linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 # Beam offsets
 ${LINMOS_BEAM_OFFSETS}"
-    fi
+        fi
 
     
-    sbatchfile=$slurms/science_linmos_${FIELDBEAM}.sbatch
-    cat > $sbatchfile <<EOFOUTER
+        sbatchfile=$slurms/science_linmos_${subband}.sbatch
+        cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -71,7 +77,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_LINMOS}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=linmos_${FIELDBEAMJOB}
+#SBATCH --job-name=linmos
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-linmos-%j.out
@@ -86,22 +92,16 @@ cd $OUTPUT
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
-parset=${parsets}/science_linmos_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-log=${logs}/science_linmos_${FIELDBEAM}_\${SLURM_JOB_ID}.log
+parset=${parsets}/science_linmos_\${SLURM_JOB_ID}.in
+log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
 
 # bit of image name before the beam ID
-imagePrefix=image.${IMAGE_BASE_CONT}
-# bit of image name after the beam ID
-nterms=${NUM_TAYLOR_TERMS}
-if [ \${nterms} -gt 1 ]; then
-    imageSuffix=taylor.0.restored
-else
-    imageSuffix=restored
-fi
+imagePrefix=image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
+imagePartialPrefix=wr.${subband}.${IMAGE_BASE_SPECTRAL}
 beamList=""
 for BEAM in ${BEAMS_TO_USE}; do
-    if [ -e \${imagePrefix}.beam\${BEAM}.\${imageSuffix} ]; then
-        beamList="\${beamList}beam\${BEAM} "
+    if [ -e \${imagePrefix}.beam\${BEAM} ]; then
+        beamList="\${beamList}\${imagePartialPrefix}.beam\${BEAM} "
     else
         echo "WARNING: Beam \${BEAM} image not present - not including in mosaic!"
     fi 
@@ -140,18 +140,18 @@ else
 fi
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_SCI=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_SCI} "Make a mosaic image of the science observation, with flags \"${FLAG_IMAGING_DEP}\""
-    else
-	echo "Would make a mosaic image  of the science observation with slurm file $sbatchfile"
+        if [ $SUBMIT_JOBS == true ]; then
+            FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
+        ID_LINMOS_SCI=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
+        recordJob ${ID_LINMOS_SCI} "Make a mosaic image of the science observation, with flags \"${FLAG_IMAGING_DEP}\""
+        else
+            echo "Would make a mosaic image  of the science observation with slurm file $sbatchfile"
+        fi
+
+        echo " "
+
     fi
-
-    echo " "
-
-fi
-
+done
 
 if [ ${DO_SOURCE_FINDING_MOSAIC} == true ]; then
     # Run the sourcefinder on the mosaicked image.

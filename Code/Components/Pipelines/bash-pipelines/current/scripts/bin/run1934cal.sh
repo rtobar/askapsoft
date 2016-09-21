@@ -43,6 +43,10 @@ mkdir -p ${OUTPUT}/Checkfiles
 lfs setstripe -c 1 ${OUTPUT}/Checkfiles
 
 for BEAM in ${BEAMS_TO_USE}; do
+parsets=$parsetsBase
+logs=$logsBase
+slurms=$slurmsBase
+slurmOut=$slurmOutBase
 
     parsets=$parsetsBase/$FIELD
     mkdir -p $parsets
@@ -57,6 +61,7 @@ for BEAM in ${BEAMS_TO_USE}; do
     FLAG_1934_CHECK_FILE="${OUTPUT}/Checkfiles/FLAGGING_DONE_1934_BEAM${BEAM}"
 
     FIELDBEAM="${FIELD}_B${BEAM}"
+    FIELDBEAMJOB=$FIELDBEAM
     
     . ${PIPELINEDIR}/split1934.sh
     . ${PIPELINEDIR}/flag1934.sh
@@ -71,4 +76,8 @@ FIELDBEAM=$FIELD
 cd ..
 
 OUTPUT=${ORIGINAL_OUTPUT}
+parsets=$parsetsBase
+logs=$logsBase
+slurms=$slurmsBase
+slurmOut=$slurmOutBase
 

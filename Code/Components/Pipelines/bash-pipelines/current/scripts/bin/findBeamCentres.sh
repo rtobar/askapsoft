@@ -109,7 +109,6 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
                 echo "$COUNT - ${FIELD}"
                 COUNT=`expr $COUNT + 1`
             done
-            #echo $FIELD_LIST
             
             for FIELD in ${FIELD_LIST}; do
                 echo "Finding footprint for field $FIELD"
@@ -140,18 +139,24 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
                 
                 # define the output file as $footprintOut
                 setFootprintFile
-                if [ ! -e ${footprintOut} ]; then
+                # If the footprint output file exists, we don't re-run footprint.py.
+                # The only exception to that is if it exists but is empty - a previous footprint.py
+                # run might have failed, so we try again
+                if [ -e ${footprintOut} ] && [ `wc -l $footprintOut | awk '{print $1}'` -gt 0 ]; then
+                    echo "Reusing footprint file $footprintOut for field $FIELD"
+                else
+                    if [ -e ${footprintOut} ]; then
+                        rm -f $footprintOut
+                    fi
                     echo "Writing footprint for field $FIELD to file $footprintOut"
                     module load aces
                     footprint.py $footprintArgs -r "$ra,$dec" 2>&1 > ${footprintOut}
-                else
-                    echo "Reusing footprint file $footprintOut for field $FIELD"
                 fi
 
                 # error handling, in case something goes wrong.
                 if [ `wc -l $footprintOut | awk '{print $1}'` -eq 0 ]; then
                     # Something has failed with footprint.py
-                    echo "ERROR - The footprint.py command has failed."
+                    echo "ERROR - The ${footprintOut} command has failed."
                     if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ]; then
                         echo "      Not running - change your config file or locate footprint.py."
                         SUBMIT_JOBS=false

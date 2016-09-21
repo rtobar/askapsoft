@@ -32,6 +32,12 @@
 
 ID_CONTCUBE_SCI=""
 
+if [ $DO_ALT_IMAGER == true ]; then
+theimager=$altimager
+else
+theimager=$cimager
+fi
+
 for POLN in $POL_LIST; do
 
     # make a lower-case version of the polarisation, for image name
@@ -110,7 +116,7 @@ Simager.solver.Clean.verbose                    = False
 Simager.solver.Clean.tolerance                  = 0.01
 Simager.solver.Clean.weightcutoff               = zero
 Simager.solver.Clean.weightcutoff.clean         = false
-Simager.solver.Clean.psfwidth                   = 512
+Simager.solver.Clean.psfwidth                   = ${CLEAN_CONTCUBE_PSFWIDTH}
 Simager.solver.Clean.logevery                   = 50
 Simager.threshold.minorcycle                    = ${CLEAN_CONTCUBE_THRESHOLD_MINORCYCLE}
 Simager.threshold.majorcycle                    = ${CLEAN_CONTCUBE_THRESHOLD_MAJORCYCLE}
@@ -145,7 +151,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_CONTCUBE_IMAGE}
 #SBATCH --ntasks=${NUM_CPUS_CONTCUBE_SCI}
 #SBATCH --ntasks-per-node=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-#SBATCH --job-name contcube${BEAM}${POLN}
+#SBATCH --job-name contcube_${FIELDBEAMJOB}${POLN}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-contcubeImaging-${BEAM}-${POLN}-%j.out
@@ -211,7 +217,7 @@ log=${logs}/science_contcube_imager_${FIELDBEAM}_${POLN}_\${SLURM_JOB_ID}.log
 # Now run the simager
 NCORES=${NUM_CPUS_CONTCUBE_SCI}
 NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-aprun -n \${NCORES} -N \${NPPN} ${simager} -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} ${theimager} -c \$parset > \$log
 err=\$?
 rejuvenate \${ms}
 rejuvenate *.${imageBase}*

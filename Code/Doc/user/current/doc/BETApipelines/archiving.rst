@@ -51,7 +51,9 @@ scripts, and they are detailed here.
 +--------------------------------+---------------------------------+---------------------------------+-----------------------------------------------------------------+
 | ``IMAGE_LIST``                 | "image psf psf.image residual   | none                            | The list of image prefixes that will be used for generating FITS|
 |                                | sensitivity"                    |                                 | files and determining the list of images to be uploaded to      |
-|                                |                                 |                                 | CASDA.                                                          |
+|                                |                                 |                                 | CASDA. In addition, the images image.XXX.restored and           |
+|                                |                                 |                                 | image.XXX.alt.restored (in the latter's case, if present) will  |
+|                                |                                 |                                 | also be processed.                                              |
 +--------------------------------+---------------------------------+---------------------------------+-----------------------------------------------------------------+
 | ``ARCHIVE_BEAM_IMAGES``        | false                           | none                            | Whether the individual beam images should be included in the    |
 |                                |                                 |                                 | archiving (true) or if only the mosaicked image should be       |
@@ -88,7 +90,9 @@ scripts, and they are detailed here.
 +--------------------------------+---------------------------------+---------------------------------+-----------------------------------------------------------------+
 | ``WRITE_CASDA_READY``          | false                           | writeREADYfile                  | Whether to write the READY file in the staging directory,       |
 |                                |                                 | (:doc:`../utils/casdaupload`)   | indicating that no further changes are to be made and the data  |
-|                                |                                 |                                 | is ready to go into CASDA.                                      |
+|                                |                                 |                                 | is ready to go into CASDA. Setting this to true will also       |
+|                                |                                 |                                 | transition the scheduling block from PROCESSING to              |
+|                                |                                 |                                 | PENDINGARCHIVE.                                                 |
 +--------------------------------+---------------------------------+---------------------------------+-----------------------------------------------------------------+
 | ``CASDA_OUTPUT_DIR``           | /scratch2/casda/prd             | outputdir                       | The output directory to put the staged data. It may be that some|
 |                                |                                 | (:doc:`../utils/casdaupload`)   | users will not have write access to this directory - in this    |
