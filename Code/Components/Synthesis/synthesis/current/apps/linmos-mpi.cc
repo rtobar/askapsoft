@@ -1,5 +1,7 @@
 
 ///local includes
+#include <askap_synthesis.h>
+
 #include <measurementequation/SynthesisParamsHelper.h>
 ///ASKAP includes
 #include <askap/Application.h>
@@ -16,6 +18,15 @@ ASKAP_LOGGER(logger, ".linmos");
 using namespace askap;
 using namespace askap::synthesis;
 
+
+// @brief do the merge
+/// @param[in] parset subset with parameters
+static void mergeMPI(const LOFAR::ParameterSet &parset) {
+
+    ASKAPLOG_INFO_STR(logger, "ASKAP linear (parallel) mosaic task " << ASKAP_PACKAGE_VERSION);
+    ASKAPLOG_INFO_STR(logger, "Parset parameters:\n" << parset);
+
+}
 class linmosMPIApp : public askap::Application
 {
     public:
@@ -26,6 +37,7 @@ class linmosMPIApp : public askap::Application
                 StatReporter stats;
                 LOFAR::ParameterSet subset(config().makeSubset("linmos."));
                 SynthesisParamsHelper::setUpImageHandler(subset);
+                mergeMPI(subset);
                 stats.logSummary();
                 return 0;
             }
