@@ -36,7 +36,7 @@ fi
 
 if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
 
-    if [ "`which footprint.py`" == "" ]; then
+    if [ "`which footprint.py 2> /tmp/whchftprnt`" == "" ]; then
 	# If we are here, footprint.py is not in our path. Give an
 	# error message and turn off linmos
 
@@ -57,7 +57,7 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
         # Run schedblock to get footprint information (if present)
         sbinfo="${metadata}/schedblock-info-${SB_SCIENCE}.txt"
         module load askapcli
-        if [ "`which schedblock`" == "" ]; then
+        if [ "`which schedblock 2> /tmp/whchschdblk`" == "" ]; then
             echo "WARNING - no schedblock executable found - try loading askapcli module."
         else
             if [ -e ${sbinfo} ] && [ `wc -l $sbinfo | awk '{print $1}'` -gt 1 ]; then
@@ -113,7 +113,8 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
             echo "List of fields: "
             COUNT=0
             for FIELD in ${FIELD_LIST}; do
-                echo "$COUNT - ${FIELD}"
+                ID=`echo $COUNT | awk '{printf "%02d",$1}'`
+                echo "${ID} - ${FIELD}"
                 COUNT=`expr $COUNT + 1`
             done
             
@@ -163,7 +164,7 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$needBeams" == "true" ]; then
                 # error handling, in case something goes wrong.
                 if [ `wc -l $footprintOut | awk '{print $1}'` -eq 0 ]; then
                     # Something has failed with footprint.py
-                    echo "ERROR - The ${footprintOut} command has failed."
+                    echo "ERROR - The footprint.py command has failed."
                     if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ]; then
                         echo "      Not running - change your config file or locate footprint.py."
                         SUBMIT_JOBS=false
