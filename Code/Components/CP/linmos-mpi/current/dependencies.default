@@ -1,5 +1,0 @@
-# @file
-# dependencies.default for Code/Components
-
-askap=Code/Base/askap/current
-common=3rdParty/LOFAR/Common/Common-3.3
