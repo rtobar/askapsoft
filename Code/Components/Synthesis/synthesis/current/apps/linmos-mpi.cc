@@ -1,7 +1,7 @@
 
 ///local includes
 #include <askap_synthesis.h>
-
+#include <utils/linmosUtils.h>
 #include <measurementequation/SynthesisParamsHelper.h>
 ///ASKAP includes
 #include <askap/Application.h>
@@ -25,6 +25,8 @@ static void mergeMPI(const LOFAR::ParameterSet &parset) {
 
     ASKAPLOG_INFO_STR(logger, "ASKAP linear (parallel) mosaic task " << ASKAP_PACKAGE_VERSION);
     ASKAPLOG_INFO_STR(logger, "Parset parameters:\n" << parset);
+
+
 
 }
 class linmosMPIApp : public askap::Application

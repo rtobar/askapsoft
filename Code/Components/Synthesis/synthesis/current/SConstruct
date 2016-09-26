@@ -1,4 +1,4 @@
-# @file
+#@file
 # SConstruct build script for this module.
 # This is currently a test case, please edit this comment when deemed stable
 #
@@ -41,6 +41,7 @@ pkg.AddSubPackage("parallel")
 pkg.AddSubPackage("simulation")
 pkg.AddSubPackage("deconvolution")
 pkg.AddSubPackage("opcal")
+pkg.AddSubPackage("utils")
 
 # run the build process
 pkg()
