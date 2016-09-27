@@ -35,6 +35,8 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
     imagemath::LinmosAccumulator<float> accumulator;
 
+    // Original shape
+    int originalNchan = -1;
     // load the parset
     if ( !accumulator.loadParset(parset) ) return;
 
@@ -65,6 +67,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         // get input files for this mosaic
         inImgNames = accumulator.inImgNameVecs()[outImgName];
         ASKAPLOG_INFO_STR(logger, " - input images: "<<inImgNames);
+
         if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
             inWgtNames = accumulator.inWgtNameVecs()[outImgName];
             ASKAPLOG_INFO_STR(logger, " - input weights images: " << inWgtNames);
@@ -72,6 +75,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         else if (accumulator.weightType() == FROM_BP_MODEL) {
             accumulator.beamCentres(loadBeamCentres(parset,iacc,inImgNames));
         }
+
         if (accumulator.doSensitivity()) {
             inSenNames = accumulator.inSenNameVecs()[outImgName];
             ASKAPLOG_INFO_STR(logger, " - input sensitivity images: " << inSenNames);
@@ -124,11 +128,12 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         }
 
         // set up an indexing vector for the arrays
-        IPosition curpos(outPix.shape());
+        casa::IPosition curpos(outPix.shape());
         ASKAPASSERT(curpos.nelements()>=2);
         for (uInt dim=0; dim<curpos.nelements(); ++dim) {
             curpos[dim] = 0;
         }
+
 
         // loop over the input images, reading each in an adding to the output pixel arrays
         for (uInt img = 0; img < inImgNames.size(); ++img ) {
@@ -151,7 +156,12 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             const casa::IPosition shape = inImg.shape();
             casa::IPosition blc(shape.nelements(),0);
             casa::IPosition trc(shape);
-
+            if (originalNchan < 0) {
+                originalNchan = trc[3];
+            }
+            else {
+                ASKAPCHECK(originalNchan == trc[3],"Nchan missmatch in merge" );
+            }
             blc[3] = comms.rank();
             trc[3] = 1; // this could be nchan/nWorkers ...
 
@@ -292,30 +302,55 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         }
         // write accumulated images and weight images
         ASKAPLOG_INFO_STR(logger, "Writing accumulated image to " << outImgName);
-        iacc.create(outImgName, accumulator.outShape(), accumulator.outCoordSys());
-        iacc.write(outImgName,outPix);
+        casa::IPosition outShape = accumulator.outShape();
+
+        ASKAPLOG_INFO_STR(logger, " - Shape " << outShape << " OriginalNchan " << originalNchan);
+        outShape[3] = originalNchan;
+
+        if (comms.isMaster()) {
+            iacc.create(outImgName, outShape, accumulator.outCoordSys());
+        }
+        else {
+            int buf;
+            int from = comms.rank() - 1;
+            comms.receive((void *) &buf,sizeof(int),from);
+        }
+        casa::IPosition loc(outShape.nelements());
+        loc[3] = comms.rank();
+        iacc.write(outImgName,outPix,loc);
         iacc.setUnits(outImgName,units);
+
         if (psf.nelements()>=3)
             iacc.setBeamInfo(outImgName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
 
         if (accumulator.outWgtDuplicates()[outImgName]) {
             ASKAPLOG_INFO_STR(logger, "Accumulated weight image " << outWgtName << " already written");
         } else {
-            ASKAPLOG_INFO_STR(logger, "Writing accumulated weight image to " << outWgtName);
-            iacc.create(outWgtName, accumulator.outShape(), accumulator.outCoordSys());
-            iacc.write(outWgtName,outWgtPix);
+            if (comms.isMaster()) {
+                ASKAPLOG_INFO_STR(logger, "Writing accumulated weight image to " << outWgtName);
+                iacc.create(outWgtName, outShape, accumulator.outCoordSys());
+            }
+            iacc.write(outWgtName,outWgtPix,loc);
             iacc.setUnits(outWgtName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outWgtName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
         }
 
         if (accumulator.doSensitivity()) {
-            ASKAPLOG_INFO_STR(logger, "Writing accumulated sensitivity image to " << outSenName);
-            iacc.create(outSenName, accumulator.outShape(), accumulator.outCoordSys());
-            iacc.write(outSenName,outSenPix);
+            if (comms.isMaster()) {
+                ASKAPLOG_INFO_STR(logger, "Writing accumulated sensitivity image to " << outSenName);
+                iacc.create(outSenName, outShape, accumulator.outCoordSys());
+            }
+            iacc.write(outSenName,outSenPix,loc);
             iacc.setUnits(outSenName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outSenName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
+        }
+
+        if (comms.rank() < comms.nProcs()-1) {
+            int buf;
+            int to = comms.rank()+1;
+            comms.send((void *) &buf,sizeof(int),to);
         }
 
     }
