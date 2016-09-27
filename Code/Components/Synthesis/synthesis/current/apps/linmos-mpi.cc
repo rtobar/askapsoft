@@ -203,7 +203,27 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
     if ( regridRequired ) {
 
         ASKAPLOG_INFO_STR(logger, " - regridding -- input pixel grid is different from the output");
+        // currently all output planes have full-size, so only initialise once
+        // would be faster if this was reduced to the size of the current input image
+        if ( accumulator.outputBufferSetupRequired() ) {
+            ASKAPLOG_INFO_STR(logger, " - initialising output buffers and the regridder");
+            // set up temp images required for regridding
+            //accumulator.initialiseOutputBuffers();
+            // set up regridder
+            accumulator.initialiseRegridder();
+        }
 
+        // set up temp images required for regridding
+        // need to do this here if some do and some do not have sensitivity images
+        accumulator.initialiseOutputBuffers();
+
+        // set up temp images required for regridding
+        // are those of the previous iteration correctly freed?
+        accumulator.initialiseInputBuffers();
+
+        } else {
+        ASKAPLOG_INFO_STR(logger, " - not regridding -- input pixel grid is the same as the output");
+        }
     }
 }
 class linmosMPIApp : public askap::Application
