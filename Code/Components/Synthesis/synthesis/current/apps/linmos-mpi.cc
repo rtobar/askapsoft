@@ -77,92 +77,77 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             ASKAPLOG_INFO_STR(logger, " - input sensitivity images: " << inSenNames);
         }
 
-    }
+
+
 
     // set the output coordinate system and shape, based on the overlap of input images
-    vector<IPosition> inShapeVec;
-    vector<CoordinateSystem> inCoordSysVec;
-    for (vector<string>::iterator it = inImgNames.begin(); it != inImgNames.end(); ++it) {
-        casa::PagedImage<casa::Float> img(*it);
-        ASKAPCHECK(img.ok(),"Error loading "<< *it);
-        ASKAPCHECK(img.shape().nelements()>=3,"Work with at least 3D cubes!");
-        const casa::IPosition shape = img.shape();
-        ASKAPLOG_INFO_STR(logger," - Shape " << shape);
-        casa::IPosition blc(shape.nelements(),0);
-        casa::IPosition trc(shape);
+        vector<IPosition> inShapeVec;
+        vector<CoordinateSystem> inCoordSysVec;
+        for (vector<string>::iterator it = inImgNames.begin(); it != inImgNames.end(); ++it) {
+            casa::PagedImage<casa::Float> img(*it);
+            ASKAPCHECK(img.ok(),"Error loading "<< *it);
+            ASKAPCHECK(img.shape().nelements()>=3,"Work with at least 3D cubes!");
+            const casa::IPosition shape = img.shape();
+            ASKAPLOG_INFO_STR(logger," - Shape " << shape);
+            casa::IPosition blc(shape.nelements(),0);
+            casa::IPosition trc(shape);
 
-        blc[3] = comms.rank();
-        trc[3] = 1; // this could be nchan/nWorkers ...
+            blc[3] = comms.rank();
+            trc[3] = 1; // this could be nchan/nWorkers ...
 
-        ASKAPCHECK(blc[3]>=0 && blc[3]<shape[3], "Start channel is outside the number of channels or negative, shape: "<<shape);
-        ASKAPCHECK(trc[3]<=shape[3], "Subcube extends beyond the original cube, shape:"<<shape);
-
-
-        ASKAPLOG_INFO_STR(logger, " - Corners " << "blc  = " << blc << ", trc = " << trc << "\n");
+            ASKAPCHECK(blc[3]>=0 && blc[3]<shape[3], "Start channel is outside the number of channels or negative, shape: "<<shape);
+            ASKAPCHECK(trc[3]<=shape[3], "Subcube extends beyond the original cube, shape:"<<shape);
 
 
-        casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
-        ASKAPLOG_INFO_STR(logger, " - Slicer " << slc);
+            ASKAPLOG_INFO_STR(logger, " - Corners " << "blc  = " << blc << ", trc = " << trc << "\n");
 
-        casa::SubImage<casa::Float> si = casa::SubImage<casa::Float>(img,slc,casa::AxesSpecifier(casa::True));
 
-        // get the shape of a single channel slice based upon rank
-        inShapeVec.push_back(si.shape());
-        inCoordSysVec.push_back(si.coordinates());
+            casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
+            ASKAPLOG_INFO_STR(logger, " - Slicer " << slc);
 
-    }
-    accumulator.setOutputParameters(inShapeVec, inCoordSysVec);
+            casa::SubImage<casa::Float> si = casa::SubImage<casa::Float>(img,slc,casa::AxesSpecifier(casa::True));
 
-    // set up the output pixel arrays
-    Array<float> outPix(accumulator.outShape(),0.);
-    Array<float> outWgtPix(accumulator.outShape(),0.);
-    Array<float> outSenPix;
-    if (accumulator.doSensitivity()) {
-        outSenPix = Array<float>(accumulator.outShape(),0.);
-    }
+            // get the shape of a single channel slice based upon rank
+            // not sure where this is used
+            inShapeVec.push_back(si.shape());
+            inCoordSysVec.push_back(si.coordinates());
 
-    // set up an indexing vector for the arrays
-    IPosition curpos(outPix.shape());
-    ASKAPASSERT(curpos.nelements()>=2);
-    for (uInt dim=0; dim<curpos.nelements(); ++dim) {
-        curpos[dim] = 0;
-    }
-
-    // loop over the input images, reading each in an adding to the output pixel arrays
-    for (uInt img = 0; img < inImgNames.size(); ++img ) {
-
-        // short cuts
-        string inImgName = inImgNames[img];
-        string inWgtName, inSenName;
-
-        ASKAPLOG_INFO_STR(logger, "Processing input image " << inImgName);
-        if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
-            inWgtName = inWgtNames[img];
-            ASKAPLOG_INFO_STR(logger, " - and input weight image " << inWgtName);
         }
+        accumulator.setOutputParameters(inShapeVec, inCoordSysVec);
+
+        // set up the output pixel arrays
+        Array<float> outPix(accumulator.outShape(),0.);
+        Array<float> outWgtPix(accumulator.outShape(),0.);
+        Array<float> outSenPix;
         if (accumulator.doSensitivity()) {
-            inSenName = inSenNames[img];
-            ASKAPLOG_INFO_STR(logger, " - and input sensitivity image " << inSenName);
+            outSenPix = Array<float>(accumulator.outShape(),0.);
         }
 
-        casa::PagedImage<casa::Float> inImg(inImgName);
-        const casa::IPosition shape = inImg.shape();
-        casa::IPosition blc(shape.nelements(),0);
-        casa::IPosition trc(shape);
+        // set up an indexing vector for the arrays
+        IPosition curpos(outPix.shape());
+        ASKAPASSERT(curpos.nelements()>=2);
+        for (uInt dim=0; dim<curpos.nelements(); ++dim) {
+            curpos[dim] = 0;
+        }
 
-        blc[3] = comms.rank();
-        trc[3] = 1; // this could be nchan/nWorkers ...
+        // loop over the input images, reading each in an adding to the output pixel arrays
+        for (uInt img = 0; img < inImgNames.size(); ++img ) {
 
-        casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
+            // short cuts
+            string inImgName = inImgNames[img];
+            string inWgtName, inSenName;
 
-        Array<float> inPix = inImg.getSlice(slc);
+            ASKAPLOG_INFO_STR(logger, "Processing input image " << inImgName);
+            if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
+                inWgtName = inWgtNames[img];
+                ASKAPLOG_INFO_STR(logger, " - and input weight image " << inWgtName);
+            }
+            if (accumulator.doSensitivity()) {
+                inSenName = inSenNames[img];
+                ASKAPLOG_INFO_STR(logger, " - and input sensitivity image " << inSenName);
+            }
 
-        Array<float> inWgtPix;
-        Array<float> inSenPix;
-
-        if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
-
-            casa::PagedImage<casa::Float> inImg(inWgtName);
+            casa::PagedImage<casa::Float> inImg(inImgName);
             const casa::IPosition shape = inImg.shape();
             casa::IPosition blc(shape.nelements(),0);
             casa::IPosition trc(shape);
@@ -172,58 +157,167 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
             casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
 
-            inWgtPix = inImg.getSlice(slc);
+            casa::SubImage<casa::Float> si = casa::SubImage<casa::Float>(inImg,slc,casa::AxesSpecifier(casa::True));
 
-            ASKAPASSERT(inPix.shape() == inWgtPix.shape());
+            accumulator.setInputParameters(si.shape(), si.coordinates(), img);
+
+            Array<float> inPix = inImg.getSlice(slc);
+
+            Array<float> inWgtPix;
+            Array<float> inSenPix;
+
+            if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
+
+                casa::PagedImage<casa::Float> inImg(inWgtName);
+                const casa::IPosition shape = inImg.shape();
+                casa::IPosition blc(shape.nelements(),0);
+                casa::IPosition trc(shape);
+
+                blc[3] = comms.rank();
+                trc[3] = 1; // this could be nchan/nWorkers ...
+
+                casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
+
+                inWgtPix = inImg.getSlice(slc);
+
+                ASKAPASSERT(inPix.shape() == inWgtPix.shape());
+            }
+            if (accumulator.doSensitivity()) {
+
+                casa::PagedImage<casa::Float> inImg(inSenName);
+                const casa::IPosition shape = inImg.shape();
+                casa::IPosition blc(shape.nelements(),0);
+                casa::IPosition trc(shape);
+
+                blc[3] = comms.rank();
+                trc[3] = 1; // this could be nchan/nWorkers ...
+
+                casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
+
+                inSenPix = inImg.getSlice(slc);
+
+                ASKAPASSERT(inPix.shape() == inSenPix.shape());
+            }
+
+            // set up an iterator for all directionCoordinate planes in the input image
+            scimath::MultiDimArrayPlaneIter planeIter(accumulator.inShape());
+
+            // test whether to simply add weighted pixels, or whether a regrid is required
+            bool regridRequired = !accumulator.coordinatesAreEqual();
+
+            // if regridding is required, set up buffer some images
+            if ( regridRequired ) {
+
+                ASKAPLOG_INFO_STR(logger, " - regridding -- input pixel grid is different from the output");
+                // currently all output planes have full-size, so only initialise once
+                // would be faster if this was reduced to the size of the current input image
+                if ( accumulator.outputBufferSetupRequired() ) {
+                    ASKAPLOG_INFO_STR(logger, " - initialising output buffers and the regridder");
+                    // set up temp images required for regridding
+                    //accumulator.initialiseOutputBuffers();
+                    // set up regridder
+                    accumulator.initialiseRegridder();
+                }
+
+                // set up temp images required for regridding
+                // need to do this here if some do and some do not have sensitivity images
+                accumulator.initialiseOutputBuffers();
+
+                // set up temp images required for regridding
+                // are those of the previous iteration correctly freed?
+                accumulator.initialiseInputBuffers();
+
+            }
+
+            else {
+                ASKAPLOG_INFO_STR(logger, " - not regridding -- input pixel grid is the same as the output");
+            }
+            // iterator over planes (e.g. freq & polarisation), regridding and accumulating weights and weighted images
+            for (; planeIter.hasMore(); planeIter.next()) {
+
+                // set the indices of any higher-order dimensions for this slice
+                curpos = planeIter.position();
+
+                ASKAPLOG_INFO_STR(logger, " - slice " << curpos);
+
+                if ( regridRequired ) {
+
+                    // load input buffer for the current plane
+                    accumulator.loadInputBuffers(planeIter, inPix, inWgtPix, inSenPix);
+                    // call regrid for any buffered images
+                    accumulator.regrid();
+                    // update the accululation arrays for this plane
+                    accumulator.accumulatePlane(outPix, outWgtPix, outSenPix, curpos);
+
+                } else {
+
+                    // Update the accululation arrays for this plane.
+                    accumulator.accumulatePlane(outPix, outWgtPix, outSenPix, inPix, inWgtPix, inSenPix, curpos);
+
+                }
+
+            }
         }
-        if (accumulator.doSensitivity()) {
 
-            casa::PagedImage<casa::Float> inImg(inSenName);
-            const casa::IPosition shape = inImg.shape();
-            casa::IPosition blc(shape.nelements(),0);
-            casa::IPosition trc(shape);
-
-            blc[3] = comms.rank();
-            trc[3] = 1; // this could be nchan/nWorkers ...
-
-            casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
-
-            inSenPix = inImg.getSlice(slc);
-
-            ASKAPASSERT(inPix.shape() == inSenPix.shape());
-        }
-    }
-    // set up an iterator for all directionCoordinate planes in the input image
-    scimath::MultiDimArrayPlaneIter planeIter(accumulator.inShape());
-
-    // test whether to simply add weighted pixels, or whether a regrid is required
-    bool regridRequired = !accumulator.coordinatesAreEqual();
-
-    // if regridding is required, set up buffer some images
-    if ( regridRequired ) {
-
-        ASKAPLOG_INFO_STR(logger, " - regridding -- input pixel grid is different from the output");
-        // currently all output planes have full-size, so only initialise once
-        // would be faster if this was reduced to the size of the current input image
-        if ( accumulator.outputBufferSetupRequired() ) {
-            ASKAPLOG_INFO_STR(logger, " - initialising output buffers and the regridder");
-            // set up temp images required for regridding
-            //accumulator.initialiseOutputBuffers();
-            // set up regridder
-            accumulator.initialiseRegridder();
+        // deweight the image pixels
+        // use another iterator to loop over planes
+        ASKAPLOG_INFO_STR(logger, "Deweighting accumulated images");
+        scimath::MultiDimArrayPlaneIter deweightIter(accumulator.outShape());
+        for (; deweightIter.hasMore(); deweightIter.next()) {
+            curpos = deweightIter.position();
+            accumulator.deweightPlane(outPix, outWgtPix, outSenPix, curpos);
         }
 
-        // set up temp images required for regridding
-        // need to do this here if some do and some do not have sensitivity images
-        accumulator.initialiseOutputBuffers();
+        // set one of the input images as a reference for metadata (the first by default)
+        uint psfref = 0;
+        if (parset.isDefined("psfref")) psfref = parset.getUint("psfref");
 
-        // set up temp images required for regridding
-        // are those of the previous iteration correctly freed?
-        accumulator.initialiseInputBuffers();
+        ASKAPLOG_INFO_STR(logger, "Getting PSF beam info for the output image from input number " << psfref);
+        // get pixel units from the selected reference image
+        Table tmpTable(inImgNames[psfref]);
+        string units = tmpTable.keywordSet().asString("units");
+        // get psf beam information from the selected reference image
+        Vector<Quantum<double> > psf;
+        Vector<Quantum<double> > psftmp = iacc.beamInfo(inImgNames[psfref]);
+        if (psftmp.nelements()<3) {
+            ASKAPLOG_WARN_STR(logger, inImgNames[psfref] <<
+                ": beamInfo needs at least 3 elements. Not writing PSF");
+        }
+        else if ((psftmp[0].getValue("rad")==0) || (psftmp[1].getValue("rad")==0)) {
+            ASKAPLOG_WARN_STR(logger, inImgNames[psfref] <<
+                ": beamInfo invalid. Not writing PSF");
+        }
+        else {
+            psf = psftmp;
+        }
+        // write accumulated images and weight images
+        ASKAPLOG_INFO_STR(logger, "Writing accumulated image to " << outImgName);
+        iacc.create(outImgName, accumulator.outShape(), accumulator.outCoordSys());
+        iacc.write(outImgName,outPix);
+        iacc.setUnits(outImgName,units);
+        if (psf.nelements()>=3)
+            iacc.setBeamInfo(outImgName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
 
+        if (accumulator.outWgtDuplicates()[outImgName]) {
+            ASKAPLOG_INFO_STR(logger, "Accumulated weight image " << outWgtName << " already written");
         } else {
-        ASKAPLOG_INFO_STR(logger, " - not regridding -- input pixel grid is the same as the output");
+            ASKAPLOG_INFO_STR(logger, "Writing accumulated weight image to " << outWgtName);
+            iacc.create(outWgtName, accumulator.outShape(), accumulator.outCoordSys());
+            iacc.write(outWgtName,outWgtPix);
+            iacc.setUnits(outWgtName,units);
+            if (psf.nelements()>=3)
+                iacc.setBeamInfo(outWgtName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
         }
+
+        if (accumulator.doSensitivity()) {
+            ASKAPLOG_INFO_STR(logger, "Writing accumulated sensitivity image to " << outSenName);
+            iacc.create(outSenName, accumulator.outShape(), accumulator.outCoordSys());
+            iacc.write(outSenName,outSenPix);
+            iacc.setUnits(outSenName,units);
+            if (psf.nelements()>=3)
+                iacc.setBeamInfo(outSenName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
+        }
+
     }
 }
 class linmosMPIApp : public askap::Application
