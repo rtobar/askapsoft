@@ -307,14 +307,14 @@ function convertToFITStext()
 
     # Check whether imageToFITS is defined in askapsoft module being
     # used
-    if [ "`which imageToFITS 2> /tmp/whchim2fts`" == "" ]; then
+    if [ "`which imageToFITS 2> ${tmp}/whchim2fts`" == "" ]; then
         # Not found - use casa to do conversion
 
         fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
 if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
     # The FITS version of this image doesn't exist
 
-    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+    script=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.py
     log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
     ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
     if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
@@ -623,7 +623,7 @@ function parseLog()
 function findWorkerStats()
 {
     logfile=$1
-    tmpfile=tmpout
+    tmpfile=${tmp}/tmpout
     
     PEAK_VM_WORKERS="---"
     PEAK_RSS_WORKERS="---"
