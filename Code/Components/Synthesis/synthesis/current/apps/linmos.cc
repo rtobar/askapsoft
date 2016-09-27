@@ -2,7 +2,7 @@
 ///
 /// @brief combine a number of images as a linear mosaic
 /// @details This is a utility to merge images into a mosaic. Images can be set
-/// explicitly or found automatically based on input tags. 
+/// explicitly or found automatically based on input tags.
 ///
 /// @copyright (c) 2012,2014,2015 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -49,6 +49,7 @@
 // Local packages includes
 #include <measurementequation/SynthesisParamsHelper.h>
 #include <linmos/LinmosAccumulator.h>
+#include <utils/LinmosUtils.h>
 
 ASKAP_LOGGER(logger, ".linmos");
 
@@ -56,122 +57,6 @@ using namespace casa;
 using namespace askap;
 using namespace askap::synthesis;
 
-/// @brief helper method to load beam offsets from the parset file
-/// @details shares the same format as csimulator feed definition. This is needed to support ASKAP BETA,
-///    which initially uses the same image centre for all beams, leaving beam offsets unspecified.
-///    Therefore, this information has to be supplied by other means. Copied from testlinmos.
-/// @param[in] const LOFAR::ParameterSet &parset : parset containing spacing and offset parameters
-/// @param[in] const Vector<std::string> beamNames : which offsets to get from the parset
-/// @param[in] MVDirection centre : the pointing centre, which all offsets are relative to
-/// @return Vector<MVDirection> : a MVDirection for each name in beamNames
-Vector<MVDirection> loadBeamOffsets(const LOFAR::ParameterSet &parset,
-                                    const Vector<std::string> beamNames,
-                                    MVDirection centre) {
-
-    Vector<MVDirection> centres (beamNames.size(), centre);
-
-    ASKAPLOG_INFO_STR(linmoslogger, " -> looking for the feed spacing");
-    Quantity qspacing = askap::asQuantity(parset.getString("feeds.spacing"));
-    double spacing = qspacing.getValue("rad");
-    ASKAPLOG_INFO_STR(linmoslogger, "    beam spacing set to " << qspacing);       
-
-    ASKAPLOG_INFO_STR(linmoslogger, " -> looking for a feed offset for each image");
-    for (uint beam = 0; beam < beamNames.size(); ++beam) {
-         const string parName = "feeds." + beamNames[beam];
-         const Vector<double> xy(parset.getDoubleVector(parName));
-         //ASKAPCHECK(xy.size() == 2, "Expect two elements for each offset");
-         // the shift appears to be positive in HA, so multiply by -1. Simulator.cc states:
-         // "x direction is flipped to convert az-el type frame to ra-dec"
-         centres[beam].shift(-xy[0]*spacing, xy[1]*spacing, casa::True);
-         ASKAPLOG_INFO_STR(linmoslogger, " -> " << parName << " centre: " << centres[beam] );
-    }
-    return centres;
-}
-
-/// @brief helper method to get beam centres from parset and/or image metadata
-/// @details separate from loadParset to allow metadata to be read from input images
-/// @param[in] const LOFAR::ParameterSet &parset: linmos parset
-/// @param[in] const accessors::IImageAccess &iacc: image accessor
-/// @param[in] const string outImgName: current mosaic name
-/// @return bool true=success, false=fail
-Vector<MVDirection> loadBeamCentres(const LOFAR::ParameterSet &parset,
-                                    const accessors::IImageAccess &iacc,
-                                    const vector<string> &inImgNames) {
-
-    // if setting weights using beam models, check the input for extra information
-
-    ASKAPLOG_INFO_STR(linmoslogger, "Looking for parset options associated with primary-beam models");
-
-    MVDirection centre;
-    bool centreDefined = false;
-
-    // set the centre of the "feeds" offset parameters (e.g. the boresight of the PAF)
-    if (parset.isDefined("feeds.centre")) {
-        ASKAPLOG_INFO_STR(linmoslogger, "Found centre of the feeds to use in beam models:");
-        const vector<string> feedsCentre(parset.getStringVector("feeds.centre"));
-        ASKAPCHECK(feedsCentre.size()==2, " -> the feeds.centre vector should have 2 elements");
-        centre = convertDir(feedsCentre[0], feedsCentre[1]);
-        ASKAPLOG_INFO_STR(linmoslogger, " -> "<<feedsCentre<<", = "<<centre);
-        centreDefined = true;
-    }
-    else if (parset.isDefined("feeds.centreref")) {
-        uint centreref = parset.getInt("feeds.centreref");
-        if (centreref<inImgNames.size()) {
-            ASKAPLOG_INFO_STR(linmoslogger, "Using the reference pixel of input image "<<centreref<<
-                " as the centre of the feeds to use in beam models");
-            const CoordinateSystem coordSys = iacc.coordSys(inImgNames[centreref]);
-            const int DCpos = coordSys.findCoordinate(Coordinate::DIRECTION,-1);
-            const DirectionCoordinate DC = coordSys.directionCoordinate(DCpos);
-            DC.toWorld(centre,DC.referencePixel());
-            ASKAPLOG_INFO_STR(linmoslogger, " -> "<<centre);
-            centreDefined = true;
-        }
-        else {
-            ASKAPLOG_WARN_STR(linmoslogger, "Found unsuitable centreref parameter: "<<centreref);
-        }
-    }
-
-    // centres for each beam
-    if (centreDefined) {
-
-        if (parset.isDefined("feeds.offsetsfile")) {
-
-            ASKAPLOG_INFO_STR(linmoslogger,  "Loading beam offsets from " << parset.getString("feeds.offsetsfile"));
-            LOFAR::ParameterSet feed_parset(parset.getString("feeds.offsetsfile"));
-
-            vector<string> beamNames;
-            ASKAPLOG_INFO_STR(linmoslogger, " -> looking for feed names");
-            if (parset.isDefined("feeds.names")) {
-                beamNames = parset.getStringVector("feeds.names", true);
-                ASKAPLOG_INFO_STR(linmoslogger,  "    using names given in the main parset");
-            } else if (feed_parset.isDefined("feeds.names")) {
-                beamNames = feed_parset.getStringVector("feeds.names", true);
-                ASKAPLOG_INFO_STR(linmoslogger,  "    using names given in the feed-offset parset");
-            }
-            ASKAPCHECK(beamNames.size() > 0, "No beams specified");
-            ASKAPCHECK(beamNames.size() == inImgNames.size(),
-               "Number of beams does not match number of input files");
-
-            return loadBeamOffsets(feed_parset, beamNames, centre);
-
-            if (parset.isDefined("feeds.spacing")) {
-                ASKAPLOG_WARN_STR(linmoslogger, "Feed info specified in parset but ignored. Using offset file");
-            }
-
-        } else {
-
-            ASKAPCHECK(parset.isDefined("names"), "No names specified in parset");
-            return loadBeamOffsets(parset, parset.getStringVector("names", true), centre);
-
-        }
-
-    } else {
-        ASKAPLOG_WARN_STR(linmoslogger, "Centre of the feeds not found. Setting beam centres to input ref. pixels");
-    }
-
-    return Vector<MVDirection>();
-
-}
 
 /// @brief do the merge
 /// @param[in] parset subset with parameters
@@ -378,7 +263,7 @@ static void merge(const LOFAR::ParameterSet &parset) {
         iacc.create(outImgName, accumulator.outShape(), accumulator.outCoordSys());
         iacc.write(outImgName,outPix);
         iacc.setUnits(outImgName,units);
-        if (psf.nelements()>=3) 
+        if (psf.nelements()>=3)
             iacc.setBeamInfo(outImgName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
 
         if (accumulator.outWgtDuplicates()[outImgName]) {
@@ -388,7 +273,7 @@ static void merge(const LOFAR::ParameterSet &parset) {
             iacc.create(outWgtName, accumulator.outShape(), accumulator.outCoordSys());
             iacc.write(outWgtName,outWgtPix);
             iacc.setUnits(outWgtName,units);
-            if (psf.nelements()>=3) 
+            if (psf.nelements()>=3)
                 iacc.setBeamInfo(outWgtName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
         }
 
@@ -397,7 +282,7 @@ static void merge(const LOFAR::ParameterSet &parset) {
             iacc.create(outSenName, accumulator.outShape(), accumulator.outCoordSys());
             iacc.write(outSenName,outSenPix);
             iacc.setUnits(outSenName,units);
-            if (psf.nelements()>=3) 
+            if (psf.nelements()>=3)
                 iacc.setBeamInfo(outSenName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
         }
 
