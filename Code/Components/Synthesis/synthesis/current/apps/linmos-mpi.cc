@@ -97,7 +97,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             casa::IPosition trc(shape);
 
             blc[3] = comms.rank();
-            trc[3] = 1; // this could be nchan/nWorkers ...
+            trc[3] = trc[3]/comms.nProcs();
 
             ASKAPCHECK(blc[3]>=0 && blc[3]<shape[3], "Start channel is outside the number of channels or negative, shape: "<<shape);
             ASKAPCHECK(trc[3]<=shape[3], "Subcube extends beyond the original cube, shape:"<<shape);
@@ -163,7 +163,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 ASKAPCHECK(originalNchan == trc[3],"Nchan missmatch in merge" );
             }
             blc[3] = comms.rank();
-            trc[3] = 1; // this could be nchan/nWorkers ...
+            trc[3] = trc[3]/comms.nProcs(); // this could be nchan/nWorkers ...
 
             casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
 
@@ -184,7 +184,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 casa::IPosition trc(shape);
 
                 blc[3] = comms.rank();
-                trc[3] = 1; // this could be nchan/nWorkers ...
+                trc[3] = trc[3]/comms.nProcs(); // this could be nchan/nWorkers ...
 
                 casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
 
@@ -200,7 +200,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 casa::IPosition trc(shape);
 
                 blc[3] = comms.rank();
-                trc[3] = 1; // this could be nchan/nWorkers ...
+                trc[3] = trc[3]/comms.nProcs(); // this could be nchan/nWorkers ...
 
                 casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
 
@@ -316,7 +316,8 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             comms.receive((void *) &buf,sizeof(int),from);
         }
         casa::IPosition loc(outShape.nelements());
-        loc[3] = comms.rank();
+        loc[3] = comms.rank()*originalNchan/comms.nProcs();
+
         iacc.write(outImgName,outPix,loc);
         iacc.setUnits(outImgName,units);
 
