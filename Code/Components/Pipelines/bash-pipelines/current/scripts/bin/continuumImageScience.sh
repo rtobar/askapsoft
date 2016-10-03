@@ -50,7 +50,7 @@ fi
 
 if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/science_continuumImage_${FIELDBEAM}.sbatch
+    setJob science_continuumImage cont
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -60,7 +60,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_CONT_IMAGE}
 #SBATCH --ntasks=${NUM_CPUS_CONTIMG_SCI}
 #SBATCH --ntasks-per-node=${CPUS_PER_CORE_CONT_IMAGING}
-#SBATCH --job-name=cont_${FIELDBEAMJOB}
+#SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-contImaging-%j.out
@@ -91,7 +91,7 @@ aprun -n \${NCORES} -N \${NPPN} $theimager -c \$parset > \$log
 err=\$?
 rejuvenate *.${imageBase}*
 rejuvenate ${OUTPUT}/${msSciAv}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} contImaging_B${BEAM} "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
@@ -102,9 +102,10 @@ EOFOUTER
 	DEP=""
         DEP=`addDep "$DEP" "$DEP_START"`
         DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
         DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
+        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
         DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
+        DEP=`addDep "$DEP" "$ID_FLAG_SCI_AV"`
 	ID_CONTIMG_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
 	recordJob ${ID_CONTIMG_SCI} "Make a continuum image for beam $BEAM of the science observation, with flags \"$DEP\""
         FLAG_IMAGING_DEP=`addDep "$FLAG_IMAGING_DEP" "$ID_CONTIMG_SCI"`

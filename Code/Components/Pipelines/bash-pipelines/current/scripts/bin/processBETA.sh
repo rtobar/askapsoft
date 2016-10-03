@@ -40,7 +40,7 @@
 USAGE="processBETA.sh -c <config file>"
 
 if [ "${PIPELINEDIR}" == "" ]; then
-  
+    
     echo "ERROR - the environment variable PIPELINEDIR has not been set. Cannot find the scripts!"
 
 else 
@@ -89,18 +89,10 @@ else
 	
 	lfs setstripe -c ${LUSTRE_STRIPING} .
         
-	if [ $DO_1934_CAL == true ]; then
+	. ${PIPELINEDIR}/run1934cal.sh
 	    
-	    . ${PIPELINEDIR}/run1934cal.sh
-	    
-	fi
-	
-	if [ $DO_SCIENCE_FIELD == true ]; then
-
         . ${PIPELINEDIR}/scienceCalIm.sh
 	    
-	fi
-
         . ${PIPELINEDIR}/gatherStats.sh
         
         . ${PIPELINEDIR}/archive.sh

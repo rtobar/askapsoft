@@ -39,7 +39,7 @@ fi
 
 if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/apply_gains_cal_cont_${FIELDBEAM}.sbatch
+    setJob apply_gains_cal_cont applyCalC
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -49,7 +49,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_CONT_APPLYCAL}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=applyCalC_${FIELDBEAMJOB}
+#SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-calappCont${BEAM}-%j.out
@@ -94,7 +94,7 @@ aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c \${parset} > \${log}
 err=\$?
 rejuvenate ${msSciAvCal}
 rejuvenate ${gainscaltab}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} calapply_cont_B${BEAM} "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 else
@@ -117,9 +117,10 @@ EOFOUTER
             DEP=""
             DEP=`addDep "$DEP" "$DEP_START"`
             DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
             DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-            DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
+            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
+            DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
+            DEP=`addDep "$DEP" "$ID_FLAG_SCI_AV"`
             DEP=`addDep "$DEP" "$ID_CONTIMG_SCI_SC"`
             ID_CAL_APPLY_CONT_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
             recordJob ${ID_CAL_APPLY_CONT_SCI} "Apply gains calibration to the continuum dataset for imaging beam $BEAM of the science observation, with flags \"$DEP\""

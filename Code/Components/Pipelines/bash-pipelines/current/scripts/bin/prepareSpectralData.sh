@@ -63,7 +63,7 @@ fi
 
 if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/split_spectralline_science_${FIELDBEAM}.sbatch
+    setJob split_spectralline_science splitSL
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -73,7 +73,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_SPECTRAL_SPLIT}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=splitSL_${FIELDBEAMJOB}
+#SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-splitSLsci-%j.out
@@ -117,7 +117,7 @@ NPPN=1
 aprun -n \${NCORES} -N \${NPPN} ${mssplit} -c \${parset} > \${log}
 err=\$?
 rejuvenate ${msSciSL}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} splitScience_B${BEAM} "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
@@ -129,8 +129,8 @@ EOFOUTER
 	DEP=""
         DEP=`addDep "$DEP" "$DEP_START"`
         DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
         DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
+        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
         ID_SPLIT_SL_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
         recordJob ${ID_SPLIT_SL_SCI} "Copy the required spectral-line dataset for imaging beam $BEAM of the science observation, with flags \"$DEP\""
     else
@@ -155,7 +155,7 @@ fi
 
 if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/apply_gains_cal_spectralline_${FIELDBEAM}.sbatch
+    setJob apply_gains_cal_spectralline applyCalS
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -165,7 +165,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_SPECTRAL_APPLYCAL}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=applyCalS_${FIELDBEAMJOB}
+#SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-calappSLsci-%j.out
@@ -204,7 +204,7 @@ aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c \${parset} > \${log}
 err=\$?
 rejuvenate ${msSciSL}
 rejuvenate ${gainscaltab}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} calapply_spectral_B${BEAM} "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 else
@@ -227,10 +227,12 @@ EOFOUTER
             DEP=""
             DEP=`addDep "$DEP" "$DEP_START"`
             DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
             DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-            DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
+            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
+            DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
+            DEP=`addDep "$DEP" "$ID_FLAG_SCI_AV"`
             DEP=`addDep "$DEP" "$ID_CONTIMG_SCI_SC"`
+            DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
             ID_CAL_APPLY_SL_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
             recordJob ${ID_CAL_APPLY_SL_SCI} "Apply gains calibration to the spectral-line dataset for imaging beam $BEAM of the science observation, with flags \"$DEP\""
         fi
