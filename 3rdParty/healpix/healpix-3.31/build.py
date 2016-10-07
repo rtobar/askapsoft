@@ -36,8 +36,6 @@ builder = Builder(
 cfitsio = builder.dep.get_install_path("cfitsio")
 builder.add_option("--with-libcfitsio={0}".format(cfitsio))
 
-builder.add_option("--prefix={0}/install".format(os.getcwd()))
-
 builder.remote_archive = "Healpix_3.31_2016Aug26.tar.gz"
 
 builder.nowarnings = True
