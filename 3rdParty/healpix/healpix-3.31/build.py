@@ -9,7 +9,6 @@ path = "{0}/src/cxx".format(package_name)
 
 def run_autoconf():
     "HealPix requires autoconf prior to configure"
-    print("running autoconf step for {0}".format(path))
     subprocess.call("autoconf", cwd=path)
 
 def install():
