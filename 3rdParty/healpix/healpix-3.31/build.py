@@ -13,12 +13,14 @@ def run_autoconf():
 builder = Builder(
     archivename="Healpix_3.31_2016Aug26.tar.gz",
     pkgname=package_name,
-    buildsubdir="src/cxx",
-)
+    buildsubdir="src/cxx")
+
+# setup the cfitsio dependency
+cfitsio = builder.dep.get_install_path("cfitsio")
+builder.add_option("--with-libcfitsio={0}".format(cfitsio))
 
 builder.remote_archive = "Healpix_3.31_2016Aug26.tar.gz"
 
-# builder.add_option('--with-libraries=python,date_time,filesystem,program_options,thread,system,regex --prefix=builder._prefix' )
 builder.nowarnings = True
 
 builder.add_precallback(run_autoconf)
