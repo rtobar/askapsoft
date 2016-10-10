@@ -2,11 +2,11 @@
 # > 0 for fail, accompanied by stderr detail about the failure.
 # Anything else is not supported
 
-Import("env")
-myenv = env.Clone()
+#Import("functestenv")
+#myenv = functestenv.Clone()
 
 ### EDIT this to add tests
-tests = []
+#tests = []
 
 # build a test implicitly
 #a = myenv.Program(source="a.cc")
@@ -14,5 +14,5 @@ tests = []
 # example of tests to be built and run and just run
 #tests = [a, "b", "c"]
 
-ftest = myenv.FuncTest(source=tests)
-myenv.Alias("functest", ftest)
+#ftest = myenv.FuncTest(source=tests)
+#myenv.Alias("functest", ftest)

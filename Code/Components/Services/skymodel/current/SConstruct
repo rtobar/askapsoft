@@ -5,9 +5,14 @@
 # @author Daniel Collins <daniel.collins@csiro.au>
 #
 
+# Always import this
+from askapenv import env
 import os
+import sys
 
-from askapenv import env    # Always import this.
+if 'AIPSPATH' not in os.environ:
+   os.environ['AIPSPATH']=os.environ['ASKAP_ROOT']+'/Code/Base/accessors/current'
+env["ENV"]["AIPSPATH"] = os.environ['AIPSPATH']
 
 #env.Append(CCFLAGS=['-O2', '-DASKAP_DEBUG', '-g'])
 
