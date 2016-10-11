@@ -42,7 +42,7 @@ class SkyModelService {
         ///
         /// @param[in]  parset  the parameter set containing
         ///                     the configuration.
-        SkyModelService(LOFAR::ParameterSet& parset);
+        SkyModelService(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
         ~SkyModelService();
@@ -53,7 +53,7 @@ class SkyModelService {
     private:
 
         // Parameter set
-        LOFAR::ParameterSet& itsParset;
+        const LOFAR::ParameterSet& itsParset;
 
         // No support for assignment
         SkyModelService& operator=(const SkyModelService& rhs);

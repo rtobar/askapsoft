@@ -45,7 +45,7 @@ ASKAP_LOGGER(logger, ".SkyModelService");
 using namespace askap;
 using namespace askap::services;
 
-SkyModelService::SkyModelService(LOFAR::ParameterSet& parset) :
+SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     itsParset(parset)
 {
     ASKAPLOG_INFO_STR(logger, "ASKAP Sky Model Service - " << ASKAP_PACKAGE_VERSION);

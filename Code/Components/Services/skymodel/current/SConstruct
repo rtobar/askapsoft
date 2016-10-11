@@ -20,7 +20,7 @@ env["ENV"]["AIPSPATH"] = os.environ['AIPSPATH']
 pkg = env.AskapPackage("skymodel")
 
 # add subpackages
-# pkg.AddSubPackages("subpackage_name")
+pkg.AddSubPackage("service")
 
 # enable if this package should be built as a shared library
 # pkg.build_shared = True

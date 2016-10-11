@@ -42,37 +42,29 @@
 #include <Common/ParameterSet.h>
 
 // Local Package includes
-//#include "service/SkyModelService.h"
+#include "service/SkyModelService.h"
 
 using namespace askap;
+using namespace askap::services;
 
 ASKAP_LOGGER(logger, ".main");
 
-class SmsApp : public askap::Application
-{
+class SmsApp : public askap::Application {
     public:
         virtual int run(int argc, char* argv[])
         {
             StatReporter stats;
 
             try {
-                // Slice out the SMS parameters
-                // TODO: Should this still be a subset, or should the whole
-                // parameters file be SMS specific?
-                LOFAR::ParameterSet subset(config().makeSubset("sms."));
-
-                // Instantiate the Sky Model Service implementation
-                // TODO: Reinstate once I have a class
-                //SkyModelService sms(subset);
-                //sms.run();
+                SkyModelService sms(config());
+                sms.run();
             } catch (const askap::AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
                 std::cerr << "Askap error in " << argv[0] << ": " << e.what() << std::endl;
                 return 1;
             } catch (const std::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Unexpected exception in " << argv[0] << ": " << e.what());
-                std::cerr << "Unexpected exception in " << argv[0] << ": " << e.what()
-                    << std::endl;
+                std::cerr << "Unexpected exception in " << argv[0] << ": " << e.what() << std::endl;
                 return 1;
             }
 
