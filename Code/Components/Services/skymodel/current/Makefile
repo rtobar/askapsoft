@@ -26,3 +26,10 @@ clean:
 	rm -rf functests/data/
 	rm ./doxy.conf.tmp
 	rm ./askap_skymodel.cc
+
+.PHONY: all
+all: install test ftest
+
+.PHONY: rebuild
+rebuild: clean
+	rbuild $(RBUILD_FLAGS) -R -t install
