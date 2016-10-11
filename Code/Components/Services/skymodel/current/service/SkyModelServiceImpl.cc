@@ -1,4 +1,4 @@
-/// @file SkyModelService.cc
+/// @file SkyModelServiceImpl.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,36 +25,41 @@
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
 // Include own header file first
-#include "SkyModelService.h"
+#include "SkyModelServiceImpl.h"
 
 // Include package level header file
 #include "askap_skymodel.h"
 
-// System includes
-#include <string>
-
 // ASKAPsoft includes
-#include <askap/AskapLogging.h>
-#include <askap/AskapError.h>
-#include <Common/ParameterSet.h>
+#include "Ice/Ice.h"
 
-// Local includes
+// Local package includes
 
-ASKAP_LOGGER(logger, ".SkyModelService");
 
-using namespace askap;
 using namespace askap::cp::sms;
+using namespace askap::interfaces::skymodelservice;
 
-SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
-    itsParset(parset)
-{
-    ASKAPLOG_INFO_STR(logger, "ASKAP Sky Model Service - " << ASKAP_PACKAGE_VERSION);
-}
-
-SkyModelService::~SkyModelService()
+/// @brief Constructor.
+SkyModelServiceImpl::SkyModelServiceImpl()
 {
 }
 
-void SkyModelService::run(void)
+/// @brief Destructor.
+SkyModelServiceImpl::~SkyModelServiceImpl()
 {
+}
+
+ComponentIdSeq SkyModelServiceImpl::coneSearch(
+    double rightAscension,
+    double declination,
+    double searchRadius,
+    double fluxLimit)
+{
+    return ComponentIdSeq();
+}
+
+ComponentSeq SkyModelServiceImpl::getComponents(
+        ComponentIdSeq componentIds)
+{
+    return ComponentSeq();
 }

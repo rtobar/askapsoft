@@ -24,7 +24,7 @@ clean:
 	find functests/ -type f -name '*.stdout' -exec rm -f {} +
 	find . -type f -name '*.log' -exec rm -f {} +
 	rm -rf functests/data/
-	rm ./doxy.conf.tmp
+	rm ./doxy.conf.tmp ./options.cache
 	rm ./askap_skymodel.cc
 
 .PHONY: all

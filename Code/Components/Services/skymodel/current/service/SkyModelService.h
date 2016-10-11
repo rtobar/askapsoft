@@ -24,10 +24,14 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_SERVICES_SMS_H
-#define ASKAP_SERVICES_SMS_H
+#ifndef ASKAP_CP_SMS_SKYMODELSERVICE_H
+#define ASKAP_CP_SMS_SKYMODELSERVICE_H
 
 // ASKAPsoft includes
+#include <boost/scoped_ptr.hpp>
+#include <boost/noncopyable.hpp>
+#include <Ice/Ice.h>
+#include <iceutils/ServiceManager.h>
 #include <Common/ParameterSet.h>
 
 // Local package includes
@@ -38,7 +42,7 @@ namespace cp {
 namespace sms {
 
 /// @brief Main class for the Sky Model Service
-class SkyModelService {
+class SkyModelService : private boost::noncopyable {
     public:
         /// @brief Construct a Sky Model Service Instance
         ///
@@ -56,12 +60,6 @@ class SkyModelService {
 
         // Parameter set
         const LOFAR::ParameterSet& itsParset;
-
-        // No support for assignment
-        SkyModelService& operator=(const SkyModelService& rhs);
-
-        // No support for copy constructor
-        SkyModelService(const SkyModelService& src);
 };
 
 };
