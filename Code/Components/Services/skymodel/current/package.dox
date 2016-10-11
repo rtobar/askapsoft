@@ -1,5 +1,5 @@
 /// The central processor sky model service namespace.
-namespace askap::services {};
+namespace askap::cp::sms {};
 
 /// @mainpage ASKAP Central Processor Sky Model Service
 ///

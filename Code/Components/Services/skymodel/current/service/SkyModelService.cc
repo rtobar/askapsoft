@@ -43,7 +43,7 @@
 ASKAP_LOGGER(logger, ".SkyModelService");
 
 using namespace askap;
-using namespace askap::services;
+using namespace askap::cp::sms;
 
 SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     itsParset(parset)

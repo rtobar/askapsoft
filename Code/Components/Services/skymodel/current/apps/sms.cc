@@ -45,7 +45,7 @@
 #include "service/SkyModelService.h"
 
 using namespace askap;
-using namespace askap::services;
+using namespace askap::cp::sms;
 
 ASKAP_LOGGER(logger, ".main");
 

@@ -32,8 +32,10 @@
 
 // Local package includes
 
+
 namespace askap {
-namespace services {
+namespace cp {
+namespace sms {
 
 /// @brief Main class for the Sky Model Service
 class SkyModelService {
@@ -62,6 +64,7 @@ class SkyModelService {
         SkyModelService(const SkyModelService& src);
 };
 
+};
 };
 };
 
