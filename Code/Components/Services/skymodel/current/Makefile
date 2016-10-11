@@ -21,6 +21,6 @@ test:
 .PHONY: clean
 clean:
 	#find . -type f -name '*junit-results.xml' -exec rm -f {} +
+	rbuild $(RBUILD_FLAGS) -t clean
 	rm ./doxy.conf.tmp
 	rm ./askap_skymodel.cc
-	rbuild $(RBUILD_FLAGS) -t clean
