@@ -1,11 +1,6 @@
-# @file
-# SConstruct build script for this module.
-# This is template.
-#
+# @file Sky Model Service SCons build file
 # @author Daniel Collins <daniel.collins@csiro.au>
-#
 
-# Always import this
 from askapenv import env
 import os
 import sys
@@ -16,17 +11,6 @@ env["ENV"]["AIPSPATH"] = os.environ['AIPSPATH']
 
 #env.Append(CCFLAGS=['-O2', '-DASKAP_DEBUG', '-g'])
 
-# create build object with library name
 pkg = env.AskapPackage("skymodel")
-
-# add subpackages
 pkg.AddSubPackage("service")
-
-# enable if this package should be built as a shared library
-# pkg.build_shared = True
-
-# add functional tests
-env.SConscript("functests/SConscript")
-
-# Run the build process.
 pkg()

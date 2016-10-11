@@ -1,5 +1,12 @@
-# @file
-# dependencies.default for Code/Components
-
+# SMS application dependencies
 askap=Code/Base/askap/current
 interfaces=Code/Interfaces/slice/current
+boost=3rdParty/boost/boost-1.56.0
+log4cxx=3rdParty/log4cxx/log4cxx-0.10.0
+ice=3rdParty/Ice/Ice-3.5.0;IceStorm Ice IceUtil
+cppiceinterfaces=Code/Interfaces/cpp/current
+
+# Functional test dependencies
+pyiceinterfaces=Code/Interfaces/python/current
+py-askap=Code/Base/py-askap/current
+iceutils=Code/Base/py-iceutils/current
