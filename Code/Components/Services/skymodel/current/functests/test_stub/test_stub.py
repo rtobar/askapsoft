@@ -8,13 +8,13 @@ from time import sleep
 
 from unittest import skip
 
-import IceStorm
+# import IceStorm
 from askap.iceutils import CPFuncTestBase, get_service_object
-from askap.slice import CP, SchedulingBlockService
-# from askap.interfaces.cp import ICPObsServicePrx
+from askap.slice import CP, SkyModelService
+from askap.interfaces.skymodelservice import ISkyModelServicePrx
 
 
-@skip
+# @skip
 class Test(CPFuncTestBase):
     def __init__(self):
         super(Test, self).__init__()
@@ -30,8 +30,8 @@ class Test(CPFuncTestBase):
         try:
             self.sms_client = get_service_object(
                 self.ice_session.communicator,
-                "CentralProcessorService@CentralProcessorAdapter",
-                ICPObsServicePrx)
+                "SkyModelService@SkyModelServiceAdapter",
+                ISkyModelServicePrx)
         except Exception as ex:
             self.shutdown()
             raise
@@ -39,4 +39,4 @@ class Test(CPFuncTestBase):
     def test_get_service_version(self):
         # fbs = self.feedback_service
         # fbs.clear_history()
-        assert self.sms_client.getServiceVersion()
+        assert self.sms_client.getServiceVersion() == "1"

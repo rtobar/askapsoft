@@ -8,11 +8,11 @@ install:
 	rbuild $(RBUILD_FLAGS) -t install
 
 .PHONY: ftest
-ftest:
+ftest: install
 	rbuild $(RBUILD_FLAGS) -t functests
 
 .PHONY: test
-test:
+test: install
 	rbuild $(RBUILD_FLAGS) -t test
 
 .PHONY: clean
