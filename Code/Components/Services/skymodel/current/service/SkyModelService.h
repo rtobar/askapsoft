@@ -60,6 +60,8 @@ class SkyModelService : private boost::noncopyable {
 
         // Parameter set
         const LOFAR::ParameterSet& itsParset;
+        Ice::CommunicatorPtr itsComm;
+        boost::scoped_ptr<askap::cp::icewrapper::ServiceManager> itsServiceManager;
 };
 
 };

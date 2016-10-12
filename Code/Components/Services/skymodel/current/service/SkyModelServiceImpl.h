@@ -27,6 +27,9 @@
 #ifndef ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
 #define ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
 
+// System includes
+#include <string>
+
 // ASKAPsoft includes
 #include <boost/noncopyable.hpp>
 #include <Ice/Ice.h>
@@ -40,9 +43,11 @@ namespace askap {
 namespace cp {
 namespace sms {
 
+namespace sms_interface = askap::interfaces::skymodelservice;
+
 /// This class implements the "ISkyModelService" Ice interface.
 class SkyModelServiceImpl : 
-    public askap::interfaces::skymodelservice::ISkyModelService,
+    public sms_interface::ISkyModelService,
     private boost::noncopyable {
     public:
         /// @brief Constructor.
@@ -51,14 +56,26 @@ class SkyModelServiceImpl :
         /// @brief Destructor.
         virtual ~SkyModelServiceImpl();
 
-        virtual askap::interfaces::skymodelservice::ComponentIdSeq coneSearch(
+        virtual std::string getServiceVersion(const Ice::Current&);
+
+        virtual sms_interface::ComponentIdSeq coneSearch(
             double rightAscension,
             double declination,
             double searchRadius, 
-            double fluxLimit);
+            double fluxLimit,
+            const Ice::Current&);
 
-        virtual askap::interfaces::skymodelservice::ComponentSeq getComponents(
-                askap::interfaces::skymodelservice::ComponentIdSeq componentIds);
+        virtual sms_interface::ComponentSeq getComponents(
+            const sms_interface::ComponentIdSeq& componentIds,
+            const Ice::Current&);
+
+        virtual sms_interface::ComponentIdSeq addComponents(
+            const sms_interface::ComponentSeq& components,
+            const Ice::Current&);
+
+        virtual void removeComponents(
+            const sms_interface::ComponentIdSeq& componentIds,
+            const Ice::Current&);
 
     private:
 };

@@ -49,17 +49,37 @@ SkyModelServiceImpl::~SkyModelServiceImpl()
 {
 }
 
+std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)
+{
+    return "1.0";
+}
+
 ComponentIdSeq SkyModelServiceImpl::coneSearch(
     double rightAscension,
     double declination,
     double searchRadius,
-    double fluxLimit)
+    double fluxLimit,
+    const Ice::Current&)
 {
     return ComponentIdSeq();
 }
 
 ComponentSeq SkyModelServiceImpl::getComponents(
-        ComponentIdSeq componentIds)
+    const ComponentIdSeq& componentIds,
+    const Ice::Current&)
 {
     return ComponentSeq();
+}
+
+ComponentIdSeq SkyModelServiceImpl::addComponents(
+    const ComponentSeq& components,
+    const Ice::Current&)
+{
+    return ComponentIdSeq();
+}
+
+void SkyModelServiceImpl::removeComponents(
+    const ComponentIdSeq& componentIds,
+    const Ice::Current&)
+{
 }
