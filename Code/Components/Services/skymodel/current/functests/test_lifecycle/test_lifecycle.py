@@ -1,4 +1,4 @@
-""" Functional test stub for the Sky Model Service
+""" Sky Model Service lifecycle test
 """
 
 import os
@@ -24,7 +24,7 @@ class Test(CPFuncTestBase):
         # Note that the working directory is 'functests', thus paths are
         # relative to that location.
         os.environ["ICE_CONFIG"] = "config-files/ice.cfg"
-        os.environ['TEST_DIR'] = 'test_stub'
+        os.environ['TEST_DIR'] = 'test_lifecycle'
         super(Test, self).setUp()
 
         try:
