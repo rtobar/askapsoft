@@ -31,10 +31,11 @@
 #include "askap_skymodel.h"
 
 // ASKAPsoft includes
-#include "Ice/Ice.h"
+#include <askap/AskapLogging.h>
 
 // Local package includes
 
+ASKAP_LOGGER(logger, ".SkyModelService");
 
 using namespace askap::cp::sms;
 using namespace askap::interfaces::skymodelservice;
@@ -51,6 +52,8 @@ SkyModelServiceImpl::~SkyModelServiceImpl()
 
 std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)
 {
+    ASKAPLOG_DEBUG_STR(logger, "getServiceVersion");
+    // TODO: should this return ASKAP_PACKAGE_VERSION? Or a semantic version?
     return "1.0";
 }
 
@@ -61,6 +64,7 @@ ComponentIdSeq SkyModelServiceImpl::coneSearch(
     double fluxLimit,
     const Ice::Current&)
 {
+    ASKAPLOG_DEBUG_STR(logger, "getServiceVersion");
     return ComponentIdSeq();
 }
 
@@ -68,6 +72,7 @@ ComponentSeq SkyModelServiceImpl::getComponents(
     const ComponentIdSeq& componentIds,
     const Ice::Current&)
 {
+    ASKAPLOG_DEBUG_STR(logger, "getComponents");
     return ComponentSeq();
 }
 
@@ -75,6 +80,7 @@ ComponentIdSeq SkyModelServiceImpl::addComponents(
     const ComponentSeq& components,
     const Ice::Current&)
 {
+    ASKAPLOG_DEBUG_STR(logger, "addComponents");
     return ComponentIdSeq();
 }
 
@@ -82,4 +88,5 @@ void SkyModelServiceImpl::removeComponents(
     const ComponentIdSeq& componentIds,
     const Ice::Current&)
 {
+    ASKAPLOG_DEBUG_STR(logger, "removeComponents");
 }

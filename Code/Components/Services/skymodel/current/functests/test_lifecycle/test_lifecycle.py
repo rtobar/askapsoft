@@ -39,4 +39,4 @@ class Test(CPFuncTestBase):
     def test_get_service_version(self):
         # fbs = self.feedback_service
         # fbs.clear_history()
-        assert self.sms_client.getServiceVersion() == "1"
+        assert self.sms_client.getServiceVersion() == "1.0"

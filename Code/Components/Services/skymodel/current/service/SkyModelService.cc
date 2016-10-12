@@ -53,10 +53,10 @@ using namespace askap::cp::icewrapper;
 SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     itsParset(parset)
 {
-    ASKAPLOG_INFO_STR(logger, "ASKAP Sky Model Service - " << ASKAP_PACKAGE_VERSION);
+    ASKAPLOG_INFO_STR(logger, ASKAP_PACKAGE_VERSION);
 
     // grab Ice config from parset
-    const LOFAR::ParameterSet& iceParset = parset.makeSubset("ice");
+    const LOFAR::ParameterSet& iceParset = parset.makeSubset("ice.");
     const string locatorHost = iceParset.get("locator_host");
     const string locatorPort = iceParset.get("locator_port");
     const string serviceName = iceParset.get("service_name");
@@ -81,6 +81,8 @@ SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
 
 SkyModelService::~SkyModelService()
 {
+    ASKAPLOG_INFO_STR(logger, "Shutting down");
+
     // stop the service manager
     if (itsServiceManager.get()) {
         itsServiceManager->stop();
@@ -93,5 +95,6 @@ SkyModelService::~SkyModelService()
 
 void SkyModelService::run(void)
 {
+    ASKAPLOG_INFO_STR(logger, "Running");
     itsServiceManager->start(false);
 }
