@@ -46,6 +46,7 @@ namespace sms {
 namespace sms_interface = askap::interfaces::skymodelservice;
 
 /// This class implements the "ISkyModelService" Ice interface.
+/// In Ice terminology, it is a servant class.
 class SkyModelServiceImpl : 
     public sms_interface::ISkyModelService,
     private boost::noncopyable {

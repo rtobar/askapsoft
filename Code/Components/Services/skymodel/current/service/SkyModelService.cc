@@ -61,14 +61,16 @@ SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     const string locatorPort = iceParset.get("locator_port");
     const string serviceName = iceParset.get("service_name");
     const string adapterName = iceParset.get("adapter_name");
+    const string adapterEndpoints = iceParset.get("adapter_endpoints");
     ASKAPLOG_DEBUG_STR(logger, "locator host: " << locatorHost);
     ASKAPLOG_DEBUG_STR(logger, "locator port: " << locatorPort);
     ASKAPLOG_DEBUG_STR(logger, "service name: " << serviceName);
     ASKAPLOG_DEBUG_STR(logger, "adapter name: " << adapterName);
+    ASKAPLOG_DEBUG_STR(logger, "adapter endpoints: " << adapterEndpoints);
 
     // instantiate communicator
     CommunicatorConfig cc(locatorHost, locatorPort);
-    cc.setAdapter(adapterName, "tcp", true);
+    cc.setAdapter(adapterName, adapterEndpoints, true);
     CommunicatorFactory commFactory;
     itsComm = commFactory.createCommunicator(cc);
 
@@ -98,5 +100,5 @@ void SkyModelService::run(void)
     ASKAPLOG_INFO_STR(logger, "Running");
     itsServiceManager->start(true);
     itsServiceManager->waitForShutdown();
-    ASKAPLOG_INFO_STR(logger, "Post-running");
+    ASKAPLOG_INFO_STR(logger, "Post-waitForShutdown");
 }
