@@ -96,5 +96,7 @@ SkyModelService::~SkyModelService()
 void SkyModelService::run(void)
 {
     ASKAPLOG_INFO_STR(logger, "Running");
-    itsServiceManager->start(false);
+    itsServiceManager->start(true);
+    itsServiceManager->waitForShutdown();
+    ASKAPLOG_INFO_STR(logger, "Post-running");
 }

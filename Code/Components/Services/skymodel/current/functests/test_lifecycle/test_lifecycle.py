@@ -10,7 +10,7 @@ from unittest import skip
 
 # import IceStorm
 from askap.iceutils import CPFuncTestBase, get_service_object
-from askap.slice import CP, SkyModelService
+from askap.slice import SkyModelService
 from askap.interfaces.skymodelservice import ISkyModelServicePrx
 
 
