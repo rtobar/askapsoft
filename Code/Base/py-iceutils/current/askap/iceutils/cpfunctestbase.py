@@ -144,8 +144,8 @@ class CPFuncTestBase(object):
 
     def shutdown(self):
         """ Shut down the Ice session and servers """
-        self.ice_session.communicator.destroy()
         self.ice_session.terminate()
+        self.ice_session.communicator.destroy()
         self.ice_session = None
 
     def __setup_feedback_service(self):
