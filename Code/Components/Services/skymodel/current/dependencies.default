@@ -10,6 +10,8 @@ interfaces=Code/Interfaces/slice/current
 log4cxx=3rdParty/log4cxx/log4cxx-0.10.0
 logappenders=Code/Base/logappenders/current
 logfilters=Code/Base/logfilters/current
+odb=3rdParty/odb/odb-2.4.0/odb
+libodb=3rdParty/odb/odb-2.4.0/libodb
 
 # Functional test dependencies
 pyiceinterfaces=Code/Interfaces/python/current
