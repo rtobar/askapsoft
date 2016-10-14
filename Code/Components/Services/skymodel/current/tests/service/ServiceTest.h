@@ -1,4 +1,4 @@
-/// @file tstub.cc
+/// @file ServiceTest.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,17 +24,41 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-// ASKAPsoft includes
-#include <AskapTestRunner.h>
+// CPPUnit includes
+#include <cppunit/extensions/HelperMacros.h>
 
-// Test includes
-#include "StubTest.h"
+// Support classes
+#include <string>
 
-int main(int argc, char *argv[])
-{
-    askapdev::testutils::AskapTestRunner runner(argv[0]);
-    runner.addTest(askap::cp::sms::StubTest::suite());
-    const bool wasSucessful = runner.run();
+// Classes to test
+//#include "your_test_class.h"
 
-    return wasSucessful ? 0 : 1;
+using std::string;
+using std::vector;
+
+namespace askap {
+namespace cp {
+namespace sms {
+
+class ServiceTest : public CppUnit::TestFixture {
+        CPPUNIT_TEST_SUITE(ServiceTest);
+        CPPUNIT_TEST(testStub);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp() {
+        };
+
+        void tearDown() {
+        }
+
+        void testStub() {
+        }
+
+    private:
+
+};
+
+}
+}
 }

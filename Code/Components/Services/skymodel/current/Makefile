@@ -12,13 +12,13 @@ ftest: install
 	rbuild $(RBUILD_FLAGS) -t functests
 
 .PHONY: test
-test: install
+test:
 	rbuild $(RBUILD_FLAGS) -t test
 
 .PHONY: clean
 clean:
 	rbuild $(RBUILD_FLAGS) -t clean
-	find . -type f -name '*junit-results.xml' -exec rm -f {} +
+	find . -type f -name '*-results.xml' -exec rm -f {} +
 	find . -type f -name '*.pyc' -exec rm -f {} +
 	find functests/ -type f -name '*.stderr' -exec rm -f {} +
 	find functests/ -type f -name '*.stdout' -exec rm -f {} +
