@@ -99,6 +99,8 @@ void SkyModelService::run(void)
 {
     ASKAPLOG_INFO_STR(logger, "Running");
     itsServiceManager->start(true);
+    std::cerr << "Pre-waitForShutdown\n";
     itsServiceManager->waitForShutdown();
     ASKAPLOG_INFO_STR(logger, "Post-waitForShutdown");
+    std::cout << "Post-waitForShutdown";
 }

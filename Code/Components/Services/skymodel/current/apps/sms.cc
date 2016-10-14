@@ -40,6 +40,7 @@
 #include <askap/AskapError.h>
 #include <askap/StatReporter.h>
 #include <Common/ParameterSet.h>
+#include <IceUtil/Exception.h>
 
 // Local Package includes
 #include "service/SkyModelService.h"
@@ -62,10 +63,14 @@ class SmsApp : public askap::Application {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
                 std::cerr << "Askap error in " << argv[0] << ": " << e.what() << std::endl;
                 return 1;
+            } catch (const Ice::CommunicatorDestroyedException& e) {
+                ASKAPLOG_FATAL_STR(logger, "Ice communicator destroyed " << argv[0] << ": " << e.what());
+                std::cerr << "Ice communicator destroyed " << argv[0] << ": " << e.what() << std::endl;
+                return 2;
             } catch (const std::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Unexpected exception in " << argv[0] << ": " << e.what());
                 std::cerr << "Unexpected exception in " << argv[0] << ": " << e.what() << std::endl;
-                return 1;
+                return 3;
             }
 
             stats.logSummary();
