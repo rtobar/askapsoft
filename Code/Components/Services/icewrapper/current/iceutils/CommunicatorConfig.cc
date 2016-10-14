@@ -130,7 +130,7 @@ std::string CommunicatorConfig::nodeName(void)
     if (error) {
         ASKAPTHROW(AskapError, "gethostname() returned error: " << error);
     }
-    std::cerr<<"nodeName returns: "<<name<<std::endl;
+    //std::cerr<<"nodeName returns: "<<name<<std::endl;
     //return name;
     //return "146.118.80.214";
     //return "galaxy-ingest14.pawsey.org.au";
