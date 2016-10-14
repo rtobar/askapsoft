@@ -53,6 +53,7 @@ class ServiceTest : public CppUnit::TestFixture {
         }
 
         void testStub() {
+            //CPPUNIT_ASSERT_EQUAL(true, false);
         }
 
     private:
