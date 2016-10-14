@@ -103,6 +103,7 @@ public final class CpManager extends ServiceApplication {
 
 			// Block until shutdown
 			manager.waitForShutdown();
+			logger.debug("Post-waitForShutdown");
 
 			// Unsubscribe all IceStorm subscribers
 			if (monitorSbStates) {
