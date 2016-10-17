@@ -134,8 +134,8 @@ class CPFuncTestBase(object):
             self.ice_session.start()
             self.__setup_feedback_service()
         except Exception as ex:
-            self.ice_session.communicator.destroy()
             self.ice_session.terminate()
+            self.ice_session.communicator.destroy()
             raise ex
 
     def tearDown(self):
