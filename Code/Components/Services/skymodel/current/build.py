@@ -3,6 +3,7 @@
 
 import glob
 import os
+import shutil
 import subprocess
 from askapdev.rbuild.builders import Scons as Builder
 from askapdev.rbuild.utils import runcmd
@@ -39,6 +40,9 @@ def odb_prebuild():
         '--output-dir', odb_output_dir,  # output location for generated files
         '--database', database,
         '-I', odb_includes,  # ODB headers
+        '--cxx-suffix', '.cc',  # Use the ASKAP default .cc instead of .cxx
+        '--hxx-suffix', '.h',  # Use the ASKAP default .h instead of .hxx
+        '--ixx-suffix', '.i',  # Use .i instead of .ixx
         # '',  #
         ]
 
@@ -49,12 +53,16 @@ def odb_prebuild():
     if not os.path.exists(odb_output_dir):
         os.mkdir(odb_output_dir)
 
-    # I want a failed ODB compile to abort the whole build. Using check_call
-    # with the raised exception on failure seems the simplest way to achieve
-    # this.
-    # print(cmd)
+    # even though odb supports compilation from separate source and output
+    # directories, it generates code that expects the input headers to be in the
+    # same directory. Sigh...
+    for src in sources:
+        dst = os.path.join(odb_output_dir, os.path.basename(src))
+        shutil.copy(src, dst)
+
+    # I want a failed ODB compile to abort the whole build. Using check_call with
+    # the raised exception on failure seems the simplest way to achieve this.
     return subprocess.check_call(cmd)
-    # return runcmd(cmd)[2]
 
 
 b = Builder(".")

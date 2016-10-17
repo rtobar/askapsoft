@@ -44,7 +44,7 @@ class ContinuumComponent {
     friend class odb::access;
 
     public:
-        ContinuumComponent();
+        ContinuumComponent() {}
 
         long sbid;
 
@@ -55,7 +55,6 @@ class ContinuumComponent {
 
         #pragma db id auto
         unsigned long id;
-
 };
 
 };

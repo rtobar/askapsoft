@@ -14,4 +14,6 @@ env.AppendUnique(CCFLAGS=['-DASKAP_DEBUG'])
 
 pkg = env.AskapPackage("skymodel")
 pkg.AddSubPackage("service")
+pkg.AddSubPackage("datamodel")
+#pkg.AddSubPackage("schema")
 pkg()
