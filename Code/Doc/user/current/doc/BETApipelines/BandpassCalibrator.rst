@@ -64,7 +64,7 @@ beams are split and flagged.
 | ``FLAG_THRESHOLD_DYNAMIC_1934_SPECTRA`` |  4.0                                  | amplitude_flagger.integrateSpectra.threshold           | Dynamic threshold applied to amplitudes when flagging 1934|
 |                                         |                                       | (:doc:`../calim/cflag`)                                | data in integrateSpectra mode [sigma]                     |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-|  ``FLAG_DYNAMIC_1934_INTEGRATE_TIMES``  | true                                  | amplitude_flagger.integrateTimes                       | Whether to integrate across spectra and flag time samples |
+|  ``FLAG_DYNAMIC_1934_INTEGRATE_TIMES``  | false                                 | amplitude_flagger.integrateTimes                       | Whether to integrate across spectra and flag time samples |
 |                                         |                                       | (:doc:`../calim/cflag`)                                | during the dynamic flagging task.                         |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 |  ``FLAG_THRESHOLD_DYNAMIC_1934_TIMES``  |  4.0                                  | amplitude_flagger.integrateTimes.threshold             | Dynamic threshold applied to amplitudes when flagging 1934|
@@ -107,7 +107,7 @@ beams are split and flagged.
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 | ``NCYCLES_BANDPASS_CAL``                | 25                                    | ncycles (:doc:`../calim/cbpcalibrator`)                | Number of cycles used in cbpcalibrator.                   |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``NUM_CPUS_CBPCAL``                     | 400                                   | none                                                   | The number of cpus allocated to the cbpcalibrator job. The|
+| ``NUM_CPUS_CBPCAL``                     | 100                                   | none                                                   | The number of cpus allocated to the cbpcalibrator job. The|
 |                                         |                                       |                                                        | job will use all 20 cpus on each node (the memory         |
 |                                         |                                       |                                                        | footprint is small enough to allow this).                 |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
