@@ -8,8 +8,6 @@ builder = Builder(pkgname="libodb-mysql-2.4.0")
 libodb = builder.dep.get_install_path("libodb")
 builder.add_option("CPPFLAGS=-I{0}/include".format(libodb))
 builder.add_option("LDFLAGS=-L{0}/lib".format(libodb))
-# --with-libodb isn't working, but CPPFLAGS and LDFLAGS are OK
-# builder.add_option("--with-libodb={0}".format(libodb))
 
 builder.remote_archive = "libodb-mysql-2.4.0.tar.gz"
 builder.nowarnings = True
