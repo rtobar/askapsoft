@@ -12,8 +12,9 @@ env["ENV"]["AIPSPATH"] = os.environ['AIPSPATH']
 #env.Append(CCFLAGS=['-O2', '-DASKAP_DEBUG', '-g'])
 env.AppendUnique(CCFLAGS=['-DASKAP_DEBUG'])
 
+env.Append(CCFLAGS=['-Wno-unknown-pragmas'])
+
 pkg = env.AskapPackage("skymodel")
 pkg.AddSubPackage("service")
 pkg.AddSubPackage("datamodel")
-#pkg.AddSubPackage("schema")
 pkg()

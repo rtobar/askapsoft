@@ -2,6 +2,7 @@
   <model version="1">
     <table name="sms.ContinuumComponent" options="ENGINE=InnoDB" kind="object">
       <column name="id" type="BIGINT" null="false"/>
+      <column name="version" type="BIGINT UNSIGNED" null="false"/>
       <column name="rightAscension" type="DOUBLE" null="false"/>
       <column name="declination" type="DOUBLE" null="false"/>
       <column name="positionAngle" type="DOUBLE" null="false"/>
@@ -14,6 +15,9 @@
       <primary-key auto="true">
         <column name="id"/>
       </primary-key>
+      <index name="healpixIndex_i">
+        <column name="healpixIndex"/>
+      </index>
     </table>
   </model>
 </changelog>

@@ -39,14 +39,17 @@ namespace sms {
 namespace datamodel {
 
 // Datamodel versioning
-#pragma db model version(1, 1)
+// Disabled for now as I don't need it until we get closer to production.
+//#pragma db model version(1, 1)
 
+// Map C++ bool to an INT NOT NULL database type
+#pragma db value(bool) type("INT")
 
 /// @brief Datamodel class for Continuum Components
 /// Do not edit the version of this file in the `datamodel` directory, as it is
 /// a copy of the files in the `schema` directory.
 
-#pragma db object
+#pragma db object optimistic
 struct ContinuumComponent {
         ContinuumComponent() {}
 
@@ -55,6 +58,12 @@ struct ContinuumComponent {
          **/
         #pragma db id auto
         long id;
+
+        /**
+         * Optimistic concurrency version field
+         **/
+        #pragma db version
+        unsigned long version;
 
         /**
          * Right ascension in the J2000 coordinate system
@@ -108,6 +117,7 @@ struct ContinuumComponent {
          * HEALPix Index
          * Units: N/A
          **/
+        #pragma db index
         long healpixIndex;
 };
 

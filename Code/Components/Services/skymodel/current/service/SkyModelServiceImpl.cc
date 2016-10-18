@@ -45,11 +45,20 @@ using namespace askap::interfaces::skymodelservice;
 /// @brief Constructor.
 SkyModelServiceImpl::SkyModelServiceImpl()
 {
+    // need the parset
+    
+    // call a database factory method to create the right database based on the
+    // parset
+
+    // check for whether the schema already exists.
+    // Depending on parset flag, either emit an error for missing schema or 
+    // in test mode create a fresh one.
 }
 
 /// @brief Destructor.
 SkyModelServiceImpl::~SkyModelServiceImpl()
 {
+    // shutdown the database
 }
 
 std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)

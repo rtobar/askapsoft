@@ -32,10 +32,14 @@
 
 // ASKAPsoft includes
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <Ice/Ice.h>
 
 // Ice interfaces
 #include <SkyModelService.h>
+
+// ODB
+#include <odb/database.hxx>
 
 // Local package includes
 
@@ -79,6 +83,7 @@ class SkyModelServiceImpl :
             const Ice::Current&);
 
     private:
+        boost::scoped_ptr<odb::database> itsDb;
 };
 
 }
