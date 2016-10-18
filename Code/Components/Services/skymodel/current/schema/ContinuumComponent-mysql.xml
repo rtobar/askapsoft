@@ -1,0 +1,19 @@
+<changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
+  <model version="1">
+    <table name="sms.ContinuumComponent" options="ENGINE=InnoDB" kind="object">
+      <column name="id" type="BIGINT" null="false"/>
+      <column name="rightAscension" type="DOUBLE" null="false"/>
+      <column name="declination" type="DOUBLE" null="false"/>
+      <column name="positionAngle" type="DOUBLE" null="false"/>
+      <column name="majorAxis" type="DOUBLE" null="false"/>
+      <column name="minorAxis" type="DOUBLE" null="false"/>
+      <column name="i1400" type="DOUBLE" null="false"/>
+      <column name="spectralIndex" type="DOUBLE" null="false"/>
+      <column name="spectralCurvature" type="DOUBLE" null="false"/>
+      <column name="healpixIndex" type="BIGINT" null="false"/>
+      <primary-key auto="true">
+        <column name="id"/>
+      </primary-key>
+    </table>
+  </model>
+</changelog>

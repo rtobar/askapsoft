@@ -17,12 +17,6 @@ odb_output_dir = os.path.abspath("./datamodel")
 
 def odb_prebuild():
 
-    # Target database. Using SQLite for now, but will
-    # need to switch to a dynamic option later
-    # Valid values are mssql, mysql, oracle, pgsql, sqlite, and common
-    # (multi-database mode only).
-    database = "sqlite"
-
     # Build some important paths
     odb_compiler = os.path.join(
         os.path.expandvars("$ASKAP_ROOT"),
@@ -40,14 +34,20 @@ def odb_prebuild():
         '--generate-query',  # Generate query support code
         '--generate-schema',  # Generate database schema
         '--schema-format', 'embedded',
+        # '--schema-format', 'sql',
         '--schema', 'sms',  # Database namespace
         '--output-dir', odb_output_dir,  # output location for generated files
-        '--database', database,
         '-I', odb_includes,  # ODB headers
         '--cxx-suffix', '.cc',  # Use the ASKAP default .cc instead of .cxx
         '--hxx-suffix', '.h',  # Use the ASKAP default .h instead of .hxx
         '--ixx-suffix', '.i',  # Use .i instead of .ixx
         '--std', 'c++98',  # Generate C++98 compliant code. Other options are c++11, c++14.
+        # generate support code for both sqlite and mysql. Specific instance
+        # will be selected from the parset at runtime
+        '--multi-database', 'dynamic',
+        '--database', 'common',
+        '--database', 'sqlite',
+        '--database', 'mysql',
         ]
 
     # append the list of sources
