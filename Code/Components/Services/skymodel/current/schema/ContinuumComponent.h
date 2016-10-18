@@ -41,17 +41,70 @@ namespace datamodel {
 /// @brief Datamodel class for Continuum Components
 /// Do not edit the version of this file in the `datamodel` directory, as it is
 /// a copy of the files in the `schema` directory.
+
 #pragma db object
 struct ContinuumComponent {
         ContinuumComponent() {}
 
-        long sbid;
-
-        double fluxPeak;
-        double fluxPeakError;
-
+        /**
+         * Unique component index number
+         **/
         #pragma db id auto
-        unsigned long id;
+        long id;
+
+        /**
+         * Right ascension in the J2000 coordinate system
+         * Units: degrees
+         **/
+        double rightAscension;
+
+        /**
+         * Declination in the J2000 coordinate system
+         * Units: degrees
+         **/
+        double declination;
+
+        /**
+         * Position angle, Counted east from north
+         * Units: radians
+         **/
+        double positionAngle;
+
+        /**
+         * Major axis
+         * Units: arcsecs
+         **/
+        double majorAxis;
+
+        /**
+         * Minor axis
+         * Units: arcsecs
+         **/
+        double minorAxis;
+
+        /**
+         * Flux at 1400 Mhz
+         * Units: Jy
+         **/
+        double i1400;
+
+        /**
+         * Spectral index
+         * Units: N/A
+         **/
+        double spectralIndex;
+
+        /**
+         * Spectral curvature
+         * Units: N/A
+         **/
+        double spectralCurvature;
+
+        /**
+         * HEALPix Index
+         * Units: N/A
+         **/
+        long healpixIndex;
 };
 
 };
