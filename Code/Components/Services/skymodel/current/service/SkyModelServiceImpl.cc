@@ -34,6 +34,8 @@
 #include <askap/AskapLogging.h>
 
 // Local package includes
+// Just for testing, see if the ODB generated datamodel code compiles...
+#include "datamodel/ContinuumComponent-odb.h"
 
 ASKAP_LOGGER(logger, ".SkyModelService");
 

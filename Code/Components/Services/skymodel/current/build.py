@@ -19,6 +19,8 @@ def odb_prebuild():
 
     # Target database. Using SQLite for now, but will
     # need to switch to a dynamic option later
+    # Valid values are mssql, mysql, oracle, pgsql, sqlite, and common
+    # (multi-database mode only).
     database = "sqlite"
 
     # Build some important paths
@@ -36,14 +38,16 @@ def odb_prebuild():
     cmd = [
         odb_compiler,  # The ODB compiler
         '--generate-query',  # Generate query support code
-        '--generate-schema',  # Generate database schema SQL
+        '--generate-schema',  # Generate database schema
+        '--schema-format', 'embedded',
+        '--schema', 'sms',  # Database namespace
         '--output-dir', odb_output_dir,  # output location for generated files
         '--database', database,
         '-I', odb_includes,  # ODB headers
         '--cxx-suffix', '.cc',  # Use the ASKAP default .cc instead of .cxx
         '--hxx-suffix', '.h',  # Use the ASKAP default .h instead of .hxx
         '--ixx-suffix', '.i',  # Use .i instead of .ixx
-        # '',  #
+        '--std', 'c++98',  # Generate C++98 compliant code. Other options are c++11, c++14.
         ]
 
     # append the list of sources
