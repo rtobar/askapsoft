@@ -32,7 +32,8 @@
 
 // ASKAPsoft includes
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+#include <Common/ParameterSet.h>
 #include <Ice/Ice.h>
 
 // Ice interfaces
@@ -55,11 +56,21 @@ class SkyModelServiceImpl :
     public sms_interface::ISkyModelService,
     private boost::noncopyable {
     public:
-        /// @brief Constructor.
-        SkyModelServiceImpl();
+
+        /// @brief Factory method for constructing the SkyModelService
+        /// implementation.
+        ///
+        /// @return The SkyModelServiceImpl instance.
+        /// @throw AskapError   If the implementation cannot be constructed.
+        static SkyModelServiceImpl* create(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
         virtual ~SkyModelServiceImpl();
+
+        /// @brief Initialises an empty database with the schema
+        ///
+        /// @return true if the schema was created; false if the schema already exists
+        bool createSchema();
 
         virtual std::string getServiceVersion(const Ice::Current&);
 
@@ -83,7 +94,15 @@ class SkyModelServiceImpl :
             const Ice::Current&);
 
     private:
-        boost::scoped_ptr<odb::database> itsDb;
+        /// @brief Constructor. 
+        /// Private. Use the factory method to create.
+        /// @param itsDb The odb::database instance.
+        SkyModelServiceImpl(boost::shared_ptr<odb::database> database);
+
+        void createSchemaSqlite();
+
+        /// @brief The odb database
+        boost::shared_ptr<odb::database> itsDb;
 };
 
 }

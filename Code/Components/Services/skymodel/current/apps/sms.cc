@@ -42,6 +42,9 @@
 #include <Common/ParameterSet.h>
 #include <IceUtil/Exception.h>
 
+// ODB includes
+#include <odb/exception.hxx>
+
 // Local Package includes
 #include "service/SkyModelService.h"
 
@@ -61,15 +64,15 @@ class SmsApp : public askap::Application {
                 sms.run();
             } catch (const askap::AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
-                std::cerr << "Askap error in " << argv[0] << ": " << e.what() << std::endl;
                 return 1;
             } catch (const Ice::CommunicatorDestroyedException& e) {
                 ASKAPLOG_FATAL_STR(logger, "Ice communicator destroyed " << argv[0] << ": " << e.what());
-                std::cerr << "Ice communicator destroyed " << argv[0] << ": " << e.what() << std::endl;
                 return 2;
+            } catch (const odb::exception& e) {
+                ASKAPLOG_FATAL_STR(logger, "Database exception in " << argv[0] << ": " << e.what());
+                return 3;
             } catch (const std::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Unexpected exception in " << argv[0] << ": " << e.what());
-                std::cerr << "Unexpected exception in " << argv[0] << ": " << e.what() << std::endl;
                 return 3;
             }
 

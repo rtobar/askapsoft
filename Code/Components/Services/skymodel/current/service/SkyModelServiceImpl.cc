@@ -30,35 +30,108 @@
 // Include package level header file
 #include "askap_skymodel.h"
 
+// System includes
+#include <string>
+
 // ASKAPsoft includes
+#include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
 
+// ODB includes
+#include <odb/mysql/database.hxx>
+#include <odb/sqlite/database.hxx>
+#include <odb/schema-catalog.hxx>
+#include <odb/connection.hxx>
+#include <odb/transaction.hxx>
+
 // Local package includes
-// Just for testing, see if the ODB generated datamodel code compiles...
 #include "datamodel/ContinuumComponent-odb.h"
 
 ASKAP_LOGGER(logger, ".SkyModelService");
 
+using namespace odb;
 using namespace askap::cp::sms;
 using namespace askap::interfaces::skymodelservice;
 
-/// @brief Constructor.
-SkyModelServiceImpl::SkyModelServiceImpl()
-{
-    // need the parset
-    
-    // call a database factory method to create the right database based on the
-    // parset
 
-    // check for whether the schema already exists.
-    // Depending on parset flag, either emit an error for missing schema or 
-    // in test mode create a fresh one.
+SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& parset)
+{
+    SkyModelServiceImpl* pImpl = 0;
+    const string dbType = parset.get("database.backend");
+    ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
+
+    if (dbType.compare("sqlite") == 0) {
+        // get parameters
+        const LOFAR::ParameterSet& dbParset = parset.makeSubset("sqlite.");
+        const string dbName = dbParset.get("name");
+
+        ASKAPLOG_INFO_STR(logger, "Instantiating sqlite backend into " << dbName);
+
+        // create the database
+        boost::shared_ptr<odb::database> pDb(
+            new sqlite::database(
+                dbName,
+                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
+
+
+        // create the implementation
+        pImpl = new SkyModelServiceImpl(pDb);
+    }
+    else if (dbType.compare("mysql") == 0) {
+        // TODO Implement support for MySQL
+        ASKAPTHROW(AskapError, "MySQL support not implemented yet");
+    }
+    else {
+        ASKAPTHROW(AskapError, "Unsupported database backend: " << dbType);
+    }
+
+    ASKAPCHECK(pImpl, "SkyModelServiceImpl creation failed");
+    return pImpl;
 }
 
-/// @brief Destructor.
+SkyModelServiceImpl::SkyModelServiceImpl(
+        boost::shared_ptr<odb::database> database)
+    :
+    itsDb(database)
+{
+}
+
 SkyModelServiceImpl::~SkyModelServiceImpl()
 {
+    ASKAPLOG_DEBUG_STR(logger, "dtor");
     // shutdown the database
+}
+
+bool SkyModelServiceImpl::createSchema()
+{
+    // If the schema does not exist, then create it
+    if (!schema_catalog::exists(*itsDb))
+    {
+        if (itsDb->id () == odb::id_sqlite) {
+            createSchemaSqlite();
+        }
+        return true;
+    }
+
+    return false;
+}
+
+void SkyModelServiceImpl::createSchemaSqlite()
+{
+    // Create the database schema. Due to bugs in SQLite foreign key
+    // support for DDL statements, we need to temporarily disable
+    // foreign keys.
+    ASKAPLOG_INFO_STR(logger, "Initialising empty database");
+
+    connection_ptr c(itsDb->connection());
+
+    c->execute ("PRAGMA foreign_keys=OFF");
+
+    transaction t(c->begin());
+    schema_catalog::create_schema(*itsDb);
+    t.commit();
+
+    c->execute("PRAGMA foreign_keys=ON");
 }
 
 std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)

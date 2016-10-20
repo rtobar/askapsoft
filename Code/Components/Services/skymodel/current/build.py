@@ -42,10 +42,12 @@ def odb_prebuild():
         '--hxx-suffix', '.h',  # Use the ASKAP default .h instead of .hxx
         '--ixx-suffix', '.i',  # Use .i instead of .ixx
         '--std', 'c++98',  # Generate C++98 compliant code. Other options are c++11, c++14.
-        # generate support code for both sqlite and mysql. Specific instance
-        # will be selected from the parset at runtime
+        # Generate support code for both sqlite and mysql. Specific instance
+        # will be selected from the parset at runtime. Note that for production
+        # builds, it will be slightly more efficient to disable multi-database
+        # support, and only generate code for the production database.
         '--multi-database', 'dynamic',
-        '--database', 'common',
+        '--database', 'common',  # Generate the database-agnostic code
         '--database', 'sqlite',
         '--database', 'mysql',
         ]
