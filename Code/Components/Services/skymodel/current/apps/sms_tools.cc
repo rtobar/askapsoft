@@ -1,4 +1,5 @@
-/// @file sms.cc
+/// @file sms_tools.cc
+/// @brief Entry point for Sky Model Service tools and utility functions.
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -40,40 +41,42 @@
 #include <askap/AskapError.h>
 #include <askap/StatReporter.h>
 #include <Common/ParameterSet.h>
-#include <IceUtil/Exception.h>
 
 // ODB includes
 #include <odb/exception.hxx>
 
 // Local Package includes
 #include "service/SkyModelService.h"
+#include "service/Utility.h"
+
 
 using namespace askap;
-using namespace askap::cp::sms;
+using namespace askap::cp::sms::utility;
 
-ASKAP_LOGGER(logger, ".main");
+ASKAP_LOGGER(logger, ".sms_tools");
 
-class SmsApp : public askap::Application {
+#define CREATE_SCHEMA "create-schema"
+
+class SmsToolsApp : public askap::Application {
     public:
         virtual int run(int argc, char* argv[])
         {
             StatReporter stats;
 
             try {
-                SkyModelService sms(config());
-                sms.run();
+                // Dispatch to the requested utility function
+                if (parameterExists(CREATE_SCHEMA)) {
+                    createSchema(config());
+                }
             } catch (const askap::AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
                 return 1;
-            } catch (const Ice::CommunicatorDestroyedException& e) {
-                ASKAPLOG_FATAL_STR(logger, "Ice communicator destroyed " << argv[0] << ": " << e.what());
-                return 2;
             } catch (const odb::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Database exception in " << argv[0] << ": " << e.what());
-                return 3;
+                return 2;
             } catch (const std::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Unexpected exception in " << argv[0] << ": " << e.what());
-                return 4;
+                return 3;
             }
 
             stats.logSummary();
@@ -84,6 +87,7 @@ class SmsApp : public askap::Application {
 
 int main(int argc, char *argv[])
 {
-    SmsApp app;
+    SmsToolsApp app;
+    app.addParameter(CREATE_SCHEMA, "s", "Initialises an empty database", false);
     return app.main(argc, argv);
 }
