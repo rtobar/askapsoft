@@ -28,6 +28,8 @@ package askap.cp.manager.notifications;
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
@@ -62,23 +64,43 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 	@Override
 	public void notify(long sbid, ObsState newState, String updateTime) 
 			throws NotificationException {
-		// TODO: Do I need to load the module? 
         try {
 			logger.debug("creating ProcessBuilder");
-            ProcessBuilder pb = new ProcessBuilder(
-				"schedblock",
-				"annotate",
-				Long.toString(sbid),
-				"--comment",
-				"\"Ready for data processing\"");
+
+			List<String> commandList = new ArrayList<String>();
+			commandList.add("schedblock");
+			commandList.add("annotate");
+			commandList.add(Long.toString(sbid));
+			commandList.add("--comment");
+			commandList.add("\"Ready for data processing\"");
+
+			// The JIRA project is valid even if the issue ID is not specified
+			final String jiraProject = config.getString("sbstatemonitor.jira.project", null);
+			if (jiraProject != null) {
+				logger.debug("Using JIRA project " + jiraProject);
+				commandList.add("--project");
+				commandList.add(jiraProject);
+			}
+
+			final String jiraIssueId = config.getString("sbstatemonitor.jira.issue_id", null);
+			if (jiraIssueId != null) {
+				if (jiraProject == null) {
+					logger.warn("JIRA issue ID specified without a project specification");
+				} 
+
+				logger.debug("Using JIRA issue ID " + jiraIssueId);
+				commandList.add("--issue");
+				commandList.add(jiraIssueId);
+			}
+
+            ProcessBuilder pb = new ProcessBuilder(commandList);
 
 			// ensure that JIRA authentication environment variables are set
+			// TODO: should we abort in this case?
 			if (!(pb.environment().containsKey("JIRA_USER") ||
 				  pb.environment().containsKey("JIRA_PASSWORD"))) {
 				logger.error("JIRA credentials not set");
 			}
-
-			// TODO: do I need to grab stdout and stderr? EG for error parsing?
 
             Process p = pb.start();
 			int exitCode = p.waitFor();
