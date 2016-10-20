@@ -53,12 +53,9 @@ using namespace askap::cp::icewrapper;
 SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     itsParset(parset),
     itsComm(),
-    itsServiceManager(),
-    itsCreateSchemaAndExit(false)
+    itsServiceManager()
 {
     ASKAPLOG_INFO_STR(logger, ASKAP_PACKAGE_VERSION);
-
-    itsCreateSchemaAndExit = parset.getBool("create_schema_and_exit", false);
 
     // grab Ice config from parset
     const LOFAR::ParameterSet& iceParset = parset.makeSubset("ice.");
@@ -79,13 +76,13 @@ SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     CommunicatorFactory commFactory;
     itsComm = commFactory.createCommunicator(cc);
 
-    // instantiate Ice implementation class
-    SkyModelServiceImpl* pImpl = SkyModelServiceImpl::create(parset);
-    itsSmsImpl.reset(pImpl);
-    Ice::ObjectPtr smsImpl = pImpl;
-
     // assemble the service manager
-    itsServiceManager.reset(new ServiceManager(itsComm, smsImpl, serviceName, adapterName));
+    itsServiceManager.reset(
+        new ServiceManager(
+            itsComm,
+            SkyModelServiceImpl::create(parset),
+            serviceName,
+            adapterName));
 }
 
 SkyModelService::~SkyModelService()
@@ -94,11 +91,7 @@ SkyModelService::~SkyModelService()
 
     // stop the service manager
     if (itsServiceManager.get()) {
-
-        // Won't be running in this case
-        if (!itsCreateSchemaAndExit)
-            itsServiceManager->stop();
-
+        itsServiceManager->stop();
         itsServiceManager.reset();
     }
 
@@ -109,16 +102,10 @@ SkyModelService::~SkyModelService()
 
 void SkyModelService::run(void)
 {
-    if (itsCreateSchemaAndExit) {
-        ASKAPLOG_INFO_STR(logger, "Creating Database schema");
-        itsSmsImpl->createSchema();
-    }
-    else {
-        ASKAPLOG_INFO_STR(logger, "Running");
-        itsServiceManager->start(true);
-        std::cerr << "Pre-waitForShutdown\n";
-        itsServiceManager->waitForShutdown();
-        ASKAPLOG_INFO_STR(logger, "Post-waitForShutdown");
-        std::cerr << "Post-waitForShutdown\n";
-    }
+    ASKAPLOG_INFO_STR(logger, "Running");
+    itsServiceManager->start(true);
+    std::cerr << "Pre-waitForShutdown\n";
+    itsServiceManager->waitForShutdown();
+    ASKAPLOG_INFO_STR(logger, "Post-waitForShutdown");
+    std::cerr << "Post-waitForShutdown\n";
 }

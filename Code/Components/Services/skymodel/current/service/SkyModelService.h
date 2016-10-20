@@ -40,7 +40,7 @@
 namespace askap {
 namespace cp {
 namespace sms {
-  
+
 // forward declaration
 class SkyModelServiceImpl;
 
@@ -64,9 +64,7 @@ class SkyModelService : private boost::noncopyable {
         // Parameter set
         const LOFAR::ParameterSet& itsParset;
         Ice::CommunicatorPtr itsComm;
-        boost::shared_ptr<SkyModelServiceImpl> itsSmsImpl;
         boost::scoped_ptr<askap::cp::icewrapper::ServiceManager> itsServiceManager;
-        bool itsCreateSchemaAndExit;
 };
 
 };
