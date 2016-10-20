@@ -73,9 +73,14 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
                 dbName,
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
 
-
         // create the implementation
         pImpl = new SkyModelServiceImpl(pDb);
+        ASKAPCHECK(pImpl, "SkyModelServiceImpl construction failed");
+
+        // SQLite databases are used for testing, so we always create the schema
+        // if required
+        pImpl->createSchema();
+
     }
     else if (dbType.compare("mysql") == 0) {
         // TODO Implement support for MySQL
