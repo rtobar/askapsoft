@@ -74,20 +74,40 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 			commandList.add("--comment");
 			commandList.add("\"Ready for data processing\"");
 
+			// Fcm:
+			// common.jira.issue
+			// common.jira.project
+
+			// TODO: disabling the JIRA project handling for now. 
 			// The JIRA project is valid even if the issue ID is not specified
+			/*
 			final String jiraProject = config.getString("sbstatemonitor.jira.project", null);
 			if (jiraProject != null) {
 				logger.debug("Using JIRA project " + jiraProject);
 				commandList.add("--project");
 				commandList.add(jiraProject);
 			}
+			*/
 
+			// We have 3 prioritised sources of the JIRA issue ID:
+			// 1 - CP Manager parset, which overrides
+			// 2 - FCM common.jira.issue, which overrides
+			// 3 - schedblock annotate default behaviour
+
+			// Try the parset first
 			final String jiraIssueId = config.getString("sbstatemonitor.jira.issue_id", null);
-			if (jiraIssueId != null) {
-				if (jiraProject == null) {
-					logger.warn("JIRA issue ID specified without a project specification");
-				} 
 
+			// If parset not found, try FCM
+			if (jiraIssueId == null) {
+
+			}
+
+			// If we have an issue ID from parset or FCM, then append to the command,
+			// otherwise do nothing and fall back on the schedblock CLI defaults.
+			if (jiraIssueId != null) {
+//				if (jiraProject == null) {
+//					logger.warn("JIRA issue ID specified without a project specification");
+//				} 
 				logger.debug("Using JIRA issue ID " + jiraIssueId);
 				commandList.add("--issue");
 				commandList.add(jiraIssueId);
