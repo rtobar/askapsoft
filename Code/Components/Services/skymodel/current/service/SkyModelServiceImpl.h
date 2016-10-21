@@ -68,9 +68,9 @@ class SkyModelServiceImpl :
         virtual ~SkyModelServiceImpl();
 
         /// @brief Initialises an empty database with the schema
-        ///
+        /// @param dropTables Should existing tables be dropped or not.
         /// @return true if the schema was created; false if the schema already exists
-        bool createSchema();
+        bool createSchema(bool dropTables=true);
 
         virtual std::string getServiceVersion(const Ice::Current&);
 
@@ -98,8 +98,8 @@ class SkyModelServiceImpl :
         /// Private. Use the factory method to create.
         /// @param itsDb The odb::database instance.
         SkyModelServiceImpl(
-            boost::shared_ptr<odb::database> database,
-            const std::string& tablespace);
+            boost::shared_ptr<odb::database> database);
+            //const std::string& tablespace);
 
         /// @brief SQLite-specific schema creation method
         ///
@@ -109,7 +109,7 @@ class SkyModelServiceImpl :
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;
 
-        const std::string itsTablespace;
+        //const std::string itsTablespace;
 };
 
 }

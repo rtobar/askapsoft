@@ -58,9 +58,9 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
 {
     SkyModelServiceImpl* pImpl = 0;
     const string dbType = parset.get("database.backend");
-    const string tablespace = parset.get("database.tablespace");
+    //const string tablespace = parset.get("database.tablespace");
     ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
-    ASKAPLOG_DEBUG_STR(logger, "database tablespace: " << tablespace);
+    //ASKAPLOG_DEBUG_STR(logger, "database tablespace: " << tablespace);
 
     if (dbType.compare("sqlite") == 0) {
         // get parameters
@@ -76,7 +76,8 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
 
         // create the implementation
-        pImpl = new SkyModelServiceImpl(pDb, tablespace);
+        pImpl = new SkyModelServiceImpl(pDb);
+        //pImpl = new SkyModelServiceImpl(pDb, tablespace);
         ASKAPCHECK(pImpl, "SkyModelServiceImpl construction failed");
     }
     else if (dbType.compare("mysql") == 0) {
@@ -92,11 +93,11 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
 }
 
 SkyModelServiceImpl::SkyModelServiceImpl(
-    boost::shared_ptr<odb::database> database,
-    const std::string& tablespace)
+    boost::shared_ptr<odb::database> database)
+    //const std::string& tablespace)
     :
-    itsDb(database),
-    itsTablespace(tablespace)
+    itsDb(database)
+    //itsTablespace(tablespace)
 {
 }
 
@@ -106,11 +107,11 @@ SkyModelServiceImpl::~SkyModelServiceImpl()
     // shutdown the database
 }
 
-bool SkyModelServiceImpl::createSchema()
+bool SkyModelServiceImpl::createSchema(bool dropTables)
 {
     if (itsDb->id () == odb::id_sqlite) {
         ASKAPLOG_DEBUG_STR(logger, "Creating sqlite db");
-        createSchemaSqlite(true);
+        createSchemaSqlite(dropTables);
         return true;
     }
 
@@ -122,8 +123,6 @@ void SkyModelServiceImpl::createSchemaSqlite(bool dropTables)
     // Create the database schema. Due to bugs in SQLite foreign key
     // support for DDL statements, we need to temporarily disable
     // foreign keys.
-    ASKAPLOG_INFO_STR(logger, "Initialising empty database");
-
     connection_ptr c(itsDb->connection());
 
     c->execute ("PRAGMA foreign_keys=OFF");

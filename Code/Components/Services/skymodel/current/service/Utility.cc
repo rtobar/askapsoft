@@ -54,8 +54,9 @@ namespace utility {
 void createSchema(const LOFAR::ParameterSet& parset)
 {
     ASKAPLOG_INFO_STR(logger, "Creating Database schema");
+    bool dropTables = parset.getBool("database.create_schema.droptables", true);
     boost::scoped_ptr<SkyModelServiceImpl> pImpl(SkyModelServiceImpl::create(parset));
-    pImpl->createSchema();
+    pImpl->createSchema(dropTables);
 }
 
 };
