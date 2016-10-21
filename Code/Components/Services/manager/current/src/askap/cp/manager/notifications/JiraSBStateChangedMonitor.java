@@ -25,6 +25,7 @@
  */
 package askap.cp.manager.notifications;
 
+import askap.cp.manager.svcclients.IFCMClient;
 import askap.interfaces.schedblock.ObsState;
 import askap.util.ParameterSet;
 import java.io.IOException;
@@ -43,14 +44,25 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
      * Logger
      */
     private static final Logger logger = Logger.getLogger(JiraSBStateChangedMonitor.class.getName());
-	private final ParameterSet config;
+
+	/** 
+	 * The configuration.
+	 */
+	private final ParameterSet itsConfig;
+
+    /**
+     * Facility Configuration Manager client wrapper instance
+     */
+    private final IFCMClient itsFCM;
 
 	/**
 	 * 
-	 * @param config
+	 * @param config 	The configuration
+	 * @param fcm		The FCM client
 	 */
-	public JiraSBStateChangedMonitor(ParameterSet config) {
-		this.config = config;
+	public JiraSBStateChangedMonitor(ParameterSet config, IFCMClient fcm) {
+		this.itsConfig = config;
+		this.itsFCM = fcm;
 	}
 
 	/**
@@ -81,7 +93,7 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 			// TODO: disabling the JIRA project handling for now. 
 			// The JIRA project is valid even if the issue ID is not specified
 			/*
-			final String jiraProject = config.getString("sbstatemonitor.jira.project", null);
+			final String jiraProject = itsConfig.getString("sbstatemonitor.jira.project", null);
 			if (jiraProject != null) {
 				logger.debug("Using JIRA project " + jiraProject);
 				commandList.add("--project");
@@ -95,7 +107,7 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 			// 3 - schedblock annotate default behaviour
 
 			// Try the parset first
-			final String jiraIssueId = config.getString("sbstatemonitor.jira.issue_id", null);
+			final String jiraIssueId = itsConfig.getString("sbstatemonitor.jira.issue_id", null);
 
 			// If parset not found, try FCM
 			if (jiraIssueId == null) {

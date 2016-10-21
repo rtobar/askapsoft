@@ -226,7 +226,8 @@ public final class CpManager extends ServiceApplication {
 		SBStateMonitor monitor = SBStateMonitorFactory.getInstance(
 			config().getString("sbstatemonitor.notificationagenttype"),
 			config(),
-			communicator());
+			communicator(),
+			itsFCM);
 		sbStateChangedSubscriber = adapter.addWithUUID(monitor).ice_oneway();
 		adapter.activate();
 
