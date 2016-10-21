@@ -107,11 +107,15 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 			// 3 - schedblock annotate default behaviour
 
 			// Try the parset first
-			final String jiraIssueId = itsConfig.getString("sbstatemonitor.jira.issue_id", null);
+			String jiraIssueId = itsConfig.getString("common.jira.issue", null);
 
 			// If parset not found, try FCM
 			if (jiraIssueId == null) {
-
+				ParameterSet parset = itsFCM.get("common.jira.");
+				if (!parset.isEmpty()) {
+					jiraIssueId = parset.getString("issue", null);
+					logger.debug("JIRA issue from FCM: " + jiraIssueId);
+				}
 			}
 
 			// If we have an issue ID from parset or FCM, then append to the command,
@@ -123,6 +127,8 @@ public final class JiraSBStateChangedMonitor extends SBStateMonitor {
 				logger.debug("Using JIRA issue ID " + jiraIssueId);
 				commandList.add("--issue");
 				commandList.add(jiraIssueId);
+			} else {
+				logger.warn("Issuing JIRA notification without a JIRA Issue ID");
 			}
 
             ProcessBuilder pb = new ProcessBuilder(commandList);
