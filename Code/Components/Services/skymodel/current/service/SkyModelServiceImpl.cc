@@ -78,11 +78,6 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
         // create the implementation
         pImpl = new SkyModelServiceImpl(pDb, tablespace);
         ASKAPCHECK(pImpl, "SkyModelServiceImpl construction failed");
-
-        // SQLite databases are used for testing, so we always create the schema
-        // if required
-        pImpl->createSchema();
-
     }
     else if (dbType.compare("mysql") == 0) {
         // TODO Implement support for MySQL
@@ -113,23 +108,16 @@ SkyModelServiceImpl::~SkyModelServiceImpl()
 
 bool SkyModelServiceImpl::createSchema()
 {
-    ASKAPLOG_DEBUG_STR(logger, "Checking for database schema");
-    // If the schema does not exist, then create it
-    if (!schema_catalog::exists(*itsDb, ""))
-    //if (!schema_catalog::exists(*itsDb, itsTablespace))
-    {
-        ASKAPLOG_DEBUG_STR(logger, "Database schema not found, creating");
-        if (itsDb->id () == odb::id_sqlite) {
-            ASKAPLOG_DEBUG_STR(logger, "Creating sqlite db");
-            createSchemaSqlite();
-        }
+    if (itsDb->id () == odb::id_sqlite) {
+        ASKAPLOG_DEBUG_STR(logger, "Creating sqlite db");
+        createSchemaSqlite(true);
         return true;
     }
 
     return false;
 }
 
-void SkyModelServiceImpl::createSchemaSqlite()
+void SkyModelServiceImpl::createSchemaSqlite(bool dropTables)
 {
     // Create the database schema. Due to bugs in SQLite foreign key
     // support for DDL statements, we need to temporarily disable
@@ -141,8 +129,7 @@ void SkyModelServiceImpl::createSchemaSqlite()
     c->execute ("PRAGMA foreign_keys=OFF");
 
     transaction t(c->begin());
-    //schema_catalog::create_schema(*itsDb);
-    schema_catalog::create_schema(*itsDb, itsTablespace);
+    schema_catalog::create_schema(*itsDb, "", dropTables);
     t.commit();
 
     c->execute("PRAGMA foreign_keys=ON");

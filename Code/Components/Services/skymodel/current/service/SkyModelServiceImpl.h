@@ -101,7 +101,10 @@ class SkyModelServiceImpl :
             boost::shared_ptr<odb::database> database,
             const std::string& tablespace);
 
-        void createSchemaSqlite();
+        /// @brief SQLite-specific schema creation method
+        ///
+        /// @param dropTables Should existing tables be dropped or not.
+        void createSchemaSqlite(bool dropTables=true);
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;

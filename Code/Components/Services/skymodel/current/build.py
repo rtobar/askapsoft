@@ -34,9 +34,7 @@ def odb_prebuild():
         '--generate-query',  # Generate query support code
         '--generate-schema',  # Generate database schema
         '--schema-format', 'embedded',
-        # '--schema-format', 'sql',
-        '--schema', 'sms',
-        '--schema-name', 'sms',  # Database namespace or tablespace
+        '--schema-format', 'sql',
         '--output-dir', odb_output_dir,  # output location for generated files
         '-I', odb_includes,  # ODB headers
         '--cxx-suffix', '.cc',  # Use the ASKAP default .cc instead of .cxx
