@@ -58,7 +58,9 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
 {
     SkyModelServiceImpl* pImpl = 0;
     const string dbType = parset.get("database.backend");
+    const string tablespace = parset.get("database.tablespace");
     ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
+    ASKAPLOG_DEBUG_STR(logger, "database tablespace: " << tablespace);
 
     if (dbType.compare("sqlite") == 0) {
         // get parameters
@@ -74,7 +76,7 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
 
         // create the implementation
-        pImpl = new SkyModelServiceImpl(pDb);
+        pImpl = new SkyModelServiceImpl(pDb, tablespace);
         ASKAPCHECK(pImpl, "SkyModelServiceImpl construction failed");
 
         // SQLite databases are used for testing, so we always create the schema
@@ -95,9 +97,11 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
 }
 
 SkyModelServiceImpl::SkyModelServiceImpl(
-        boost::shared_ptr<odb::database> database)
+    boost::shared_ptr<odb::database> database,
+    const std::string& tablespace)
     :
-    itsDb(database)
+    itsDb(database),
+    itsTablespace(tablespace)
 {
 }
 
@@ -109,10 +113,14 @@ SkyModelServiceImpl::~SkyModelServiceImpl()
 
 bool SkyModelServiceImpl::createSchema()
 {
+    ASKAPLOG_DEBUG_STR(logger, "Checking for database schema");
     // If the schema does not exist, then create it
-    if (!schema_catalog::exists(*itsDb))
+    if (!schema_catalog::exists(*itsDb, ""))
+    //if (!schema_catalog::exists(*itsDb, itsTablespace))
     {
+        ASKAPLOG_DEBUG_STR(logger, "Database schema not found, creating");
         if (itsDb->id () == odb::id_sqlite) {
+            ASKAPLOG_DEBUG_STR(logger, "Creating sqlite db");
             createSchemaSqlite();
         }
         return true;
@@ -133,7 +141,8 @@ void SkyModelServiceImpl::createSchemaSqlite()
     c->execute ("PRAGMA foreign_keys=OFF");
 
     transaction t(c->begin());
-    schema_catalog::create_schema(*itsDb);
+    //schema_catalog::create_schema(*itsDb);
+    schema_catalog::create_schema(*itsDb, itsTablespace);
     t.commit();
 
     c->execute("PRAGMA foreign_keys=ON");

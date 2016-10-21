@@ -25,6 +25,7 @@ clean:
 	find . -type f -name '*.log' -exec rm -f {} +
 	rm -rf functests/data/
 	rm -f ./doxy.conf.tmp ./options.cache ./askap_skymodel.*
+	rm -f functests/test_lifecycle/lifecycle_test.dblite
 
 .PHONY: all
 all: install test ftest

@@ -97,12 +97,16 @@ class SkyModelServiceImpl :
         /// @brief Constructor. 
         /// Private. Use the factory method to create.
         /// @param itsDb The odb::database instance.
-        SkyModelServiceImpl(boost::shared_ptr<odb::database> database);
+        SkyModelServiceImpl(
+            boost::shared_ptr<odb::database> database,
+            const std::string& tablespace);
 
         void createSchemaSqlite();
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;
+
+        const std::string itsTablespace;
 };
 
 }
