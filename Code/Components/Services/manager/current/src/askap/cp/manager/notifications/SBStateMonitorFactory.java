@@ -27,6 +27,7 @@ package askap.cp.manager.notifications;
 
 import Ice.Communicator;
 import askap.cp.manager.svcclients.FuncTestReporterClient;
+import askap.cp.manager.svcclients.IFCMClient;
 import askap.util.ParameterSet;
 
 /**
@@ -40,12 +41,14 @@ public final class SBStateMonitorFactory {
 	 * 
 	 * @param type: Identifies the type of state monitor to create.
 	 * @param config: The parameter set.
+	 * @param fcm 	The FCM client
 	 * @return SBStateMonitor
 	 */
 	public static SBStateMonitor getInstance(
 			String type,
 			ParameterSet config,
-			Communicator communicator) {
+			Communicator communicator,
+			IFCMClient fcm) {
 		switch (type) {
 			case "test":
 				FuncTestReporterClient client = new FuncTestReporterClient(
@@ -53,7 +56,7 @@ public final class SBStateMonitorFactory {
 						config.getString("cpfunctestreporter.identity"));
 				return new TestSBStateChangedMonitor(client);
 			case "jira":
-				return new JiraSBStateChangedMonitor(config);
+				return new JiraSBStateChangedMonitor(config, fcm);
 			case "null":
 				return new NullSBStateChangedMonitor();
 			default:

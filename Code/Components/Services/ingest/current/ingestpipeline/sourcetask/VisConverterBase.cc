@@ -63,16 +63,21 @@ using namespace askap::cp::ingest;
 /// @param[in] params parameters specific to the associated source task
 ///                   used to set up mapping, etc
 /// @param[in] config configuration
-/// @param[in] id rank of the given ingest process
 VisConverterBase::VisConverterBase(const LOFAR::ParameterSet& params,
-                    const Configuration& config, int id) : 
+                    const Configuration& config) : 
        itsDatagramsExpected(0u),
        itsDatagramsCount(0u), itsDatagramsIgnored(0u), itsConfig(config),
        itsMaxNBeams(params.getUint32("maxbeams",0)),
        itsBeamsToReceive(0), // initialised in the initBeamMap call
        itsChannelManager(params),
-       itsBaselineMap(config.bmap()), itsId(id)
+       itsBaselineMap(config.bmap())
 {
+   if (config.receiverId() < 0) {
+       // this is non-receiving rank, VisConverterBase is created simply because ingest is an MPI program
+       // it will not be (or technically should not be) used
+       return;
+   }
+
    // Trigger a dummy frame conversion with casa measures to ensure 
    // all caches are setup early on
    const casa::MVEpoch dummyEpoch(56000.);
@@ -330,10 +335,13 @@ uint32_t VisConverterBase::calculateRow(uint32_t ant1, uint32_t ant2,
 void VisConverterBase::initVisChunk(const casa::uLong timestamp, 
                                     const CorrelatorMode &corrMode)
 {
+    ASKAPCHECK(itsConfig.receiverId() >= 0, "An attempt to use visibility converter for the rank ("<<
+               itsConfig.rank()<<") which is not meant to receive visibilities");
+
     itsAntWithValidData.resize(0);
     const casa::uInt nAntenna = itsConfig.antennas().size();
     ASKAPCHECK(nAntenna > 0, "Must have at least one antenna defined");
-    const casa::uInt nChannels = itsChannelManager.localNChannels(itsId);
+    const casa::uInt nChannels = itsChannelManager.localNChannels(itsConfig.receiverId());
     // number of polarisation products is determined by the correlator mode
     const casa::uInt nPol = corrMode.stokes().size();
     const casa::uInt nBaselines = nAntenna * (nAntenna + 1) / 2;

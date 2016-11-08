@@ -189,6 +189,15 @@ mkdir -p \$caldir
 
 copyImages=${SELFCAL_KEEP_IMAGES}
 
+# Parameters that can vary with self-calibration loop number
+SELFCAL_INTERVAL_ARRAY=(${SELFCAL_INTERVAL_ARRAY[@]})
+SELFCAL_SELAVY_THRESHOLD_ARRAY=(${SELFCAL_SELAVY_THRESHOLD_ARRAY[@]})
+SELFCAL_NORMALISE_GAINS_ARRAY=(${SELFCAL_NORMALISE_GAINS_ARRAY[@]})
+CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=(${CLEAN_THRESHOLD_MAJORCYCLE_ARRAY[@]})
+CLEAN_NUM_MAJORCYCLES_ARRAY=(${CLEAN_NUM_MAJORCYCLES_ARRAY[@]})
+CIMAGER_MINUV_ARRAY=(${CIMAGER_MINUV_ARRAY[@]})
+CCALIBRATOR_MINUV_ARRAY=(${CCALIBRATOR_MINUV_ARRAY[@]})
+
 for((LOOP=0;LOOP<=${SELFCAL_NUM_LOOPS};LOOP++)); do
 
     loopdir=\${caldir}/Loop\${LOOP}
@@ -220,16 +229,24 @@ Cimager.calibrate                               = false
 
     parset=${parsets}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}.in
 
+    # generate the loop-dependant cimager parameters --> loopParams & dataSelectionParams
+    cimagerSelfcalLoopParams
+    dataSelectionSelfcalLoop Cimager
+
     cat > \$parset <<EOFINNER
 ##########
 ## Continuum imaging with cimager
 ##
 ${cimagerParams}
 #
+\${loopParams}
+\${dataSelectionParams}
+#
 \${calparams}
 #
 EOFINNER
     if [ \${LOOP} -gt 0 ]; then
+            dataSelectionSelfcalLoop Cccalibrator
             cat >> \$parset <<EOFINNER
 ##########
 ## Shallow source-finding with selavy
@@ -248,7 +265,7 @@ Selavy.overlapx                                 = 50
 Selavy.overlapy                                 = 50
 #
 # The search threshold, in units of sigma
-Selavy.snrCut                                   = ${SELFCAL_SELAVY_THRESHOLD}
+Selavy.snrCut                                   = \${SELFCAL_SELAVY_THRESHOLD_ARRAY[\$LOOP-1]}
 # Grow the detections to a secondary threshold
 Selavy.flagGrowth                               = true
 Selavy.growthCut                                = 5
@@ -294,11 +311,12 @@ ${CmodelParset}
 ##
 # parameters for calibrator
 Ccalibrator.dataset                             = ${OUTPUT}/${msSciAv}
+\${dataSelectionParams}
 Ccalibrator.nAnt                                = ${NUM_ANT}
 Ccalibrator.nBeam                               = 1
 Ccalibrator.solve                               = antennagains
-Ccalibrator.normalisegains                      = ${SELFCAL_NORMALISE_GAINS}
-Ccalibrator.interval                            = ${SELFCAL_INTERVAL}
+Ccalibrator.normalisegains                      = \${SELFCAL_NORMALISE_GAINS_ARRAY[\$LOOP-1]}
+Ccalibrator.interval                            = \${SELFCAL_INTERVAL_ARRAY[\$LOOP-1]}
 #
 Ccalibrator.calibaccess                         = table
 Ccalibrator.calibaccess.table                   = \${caldata}
@@ -326,8 +344,6 @@ Ccalibrator.ncycles                             = 25
 EOFINNER
     fi
 
-    echo "=== Continuum imaging with Self-calibration, for beam ${BEAM}, self-cal loop \${LOOP} ===" > \$log
-
     # Other than for the first loop, run selavy to extract the
     #  component parset and use it to calibrate
     if [ \${LOOP} -gt 0 ]; then
@@ -337,6 +353,7 @@ EOFINNER
 
         log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}_selavy.log
         echo "--- Source finding with $selavy ---" > \$log
+        echo "---    Loop=\$LOOP, Threshold = \${SELFCAL_SELAVY_THRESHOLD_ARRAY[\$LOOP-1]} --" >> \$log
         NCORES=${NPROCS_SELAVY}
         NPPN=${CPUS_PER_CORE_SELFCAL}
         aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
@@ -363,7 +380,9 @@ EOFINNER
 
 
         log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}_ccalibrator.log
-        echo "--- Calibration with $ccalibrator ---" >> \$log
+        echo "--- Calibration with $ccalibrator ---" > \$log
+        echo "---    Loop \$LOOP, Interval = \${SELFCAL_INTERVAL_ARRAY[\$LOOP-1]} --" >> \$log
+        echo "---    Normalise gains = \${SELFCAL_NORMALISE_GAINS_ARRAY[\$LOOP-1]} --" >> \$log
         NCORES=1
         NPPN=1
         aprun -n \${NCORES} -N \${NPPN} $ccalibrator -c \$parset >> \$log

@@ -34,7 +34,7 @@ ID_LINMOS_SCI=""
 DO_IT=$DO_MOSAIC
 
 BEAM=all
-setImageBaseCont
+setImageBase cont
 mosImage=image.${imageBase}
 if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
     mosImage="${mosImage}.taylor.0"
@@ -134,8 +134,8 @@ EOFINNER
 else
 
     echo "ERROR - no good images were found for mosaicking!"
-    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- txt > stats/stats-\${SLURM_JOB_ID}-linmos.txt
-    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- csv > stats/stats-\${SLURM_JOB_ID}-linmos.csv
+    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- txt > $stats/stats-\${SLURM_JOB_ID}-linmos.txt
+    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- csv > $stats/stats-\${SLURM_JOB_ID}-linmos.csv
 
 fi
 EOFOUTER
@@ -158,7 +158,7 @@ if [ ${DO_SOURCE_FINDING_MOSAIC} == true ]; then
 
     # set the $imageBase variable to have 'linmos' in it
     BEAM="all"
-    setImageBaseCont
+    setImageBase cont
 
     . ${PIPELINEDIR}/sourcefinding.sh
 

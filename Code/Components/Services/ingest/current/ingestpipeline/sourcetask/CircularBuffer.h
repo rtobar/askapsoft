@@ -86,9 +86,11 @@ class CircularBuffer {
             while (itsBuffer.empty()) {
                 // While this call sleeps/blocks the mutex is released
                 if (timeout >= 0) {
-                    itsCondVar.timed_wait(lock, boost::posix_time::microseconds(timeout));
+                    // don't bother adjusting the wait time - it doesn't really matter in all our applications
+                    // checking the output protects against spurious wake ups
+                    const bool timeoutOccurred = !itsCondVar.timed_wait(lock, boost::posix_time::microseconds(timeout));
 
-                    if (itsBuffer.empty()) {
+                    if (itsBuffer.empty() && timeoutOccurred) {
                         return boost::shared_ptr<T>(); // Null pointer
                     }
                 } else {
@@ -114,9 +116,8 @@ class CircularBuffer {
         /// @param[in]  obj a pointer to be added to the circular
         ///                 buffer. The pointer is added to the "back"
         ///                 of the buffer.
-        /// @param[in] timeout how long to wait for data before returning
-        ///         a null pointer, in the case where the
-        ///         buffer is empty. The timeout is in microseconds,
+        /// @param[in] timeout how long to wait for the opportunity to add data.
+        ///         The timeout is in microseconds,
         ///         and anything less than zero will result in no
         ///         timeout (i.e. blocking functionality). A timeout of zero
         ///         will result in a non-blocking call.
@@ -126,9 +127,11 @@ class CircularBuffer {
             while (itsBuffer.size() == itsBuffer.capacity()) {
                 // While this call sleeps/blocks the mutex is released
                 if (timeout >= 0) {
-                    itsCondVar.timed_wait(lock, boost::posix_time::microseconds(timeout));
+                    // don't bother adjusting the wait time - it doesn't really matter in all our applications
+                    // checking the output protects against spurious wake ups
+                    const bool timeoutOccurred = !itsCondVar.timed_wait(lock, boost::posix_time::microseconds(timeout));
 
-                    if (itsBuffer.size() == itsBuffer.capacity()) {
+                    if (timeoutOccurred && (itsBuffer.size() == itsBuffer.capacity())) {
                         return false; // Timeout ocurred
                     }
                 } else {
@@ -144,7 +147,33 @@ class CircularBuffer {
             return true;
         }
  
+        /// @brief wait for the buffer to become empty
+        /// @details Lock the calling thread until the buffer becomes empty or timeout occurs
+        /// @param[in] timeout how long to wait for the buffer to become empty
+        ///         The timeout is in microseconds,
+        ///         and anything less than zero will result in no
+        ///         timeout (i.e. blocking functionality). A timeout of zero
+        ///         will result in a non-blocking call.
+        /// @return true, if wait was successful; return of false indicates the timeout.
+        bool waitUntilEmpty(const long timeout = -1) const {
+            boost::mutex::scoped_lock lock(itsMutex);
+            while (itsBuffer.size() != 0) {
+                // While this call sleeps/blocks the mutex is released
+                if (timeout >= 0) {
+                    // don't bother adjusting the wait time - it doesn't really matter in all our applications
+                    // checking the output protects against spurious wake ups
+                    const bool timeoutOccurred = !itsCondVar.timed_wait(lock, boost::posix_time::microseconds(timeout));
 
+                    if (timeoutOccurred && (itsBuffer.size() != 0)) {
+                        return false; // Timeout ocurred
+                    }
+                } else {
+                    itsCondVar.wait(lock);
+                }
+            }
+            return true;
+        }
+        
 
         /// @brief Returns the number of items in the circular buffer
         size_t size(void) const {
@@ -167,7 +196,7 @@ class CircularBuffer {
         mutable boost::mutex itsMutex;
 
         // Condition variable user for synchronisation between threads
-        boost::condition itsCondVar;
+        mutable boost::condition itsCondVar;
 };
 
 }

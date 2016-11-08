@@ -29,34 +29,6 @@
 
 if [ $DO_SOURCE_FINDING == true ]; then
 
-    # List of images to convert to FITS in the Selavy job
-    imlist=""
-
-    if [ $NUM_TAYLOR_TERMS == 1 ]; then
-        image=${OUTPUT}/image.${imageBase}.restored
-        weights=${OUTPUT}/weights.${imageBase}
-        imlist="${imlist} ${image}"
-    else
-        image=${OUTPUT}/image.${imageBase}.taylor.0.restored
-        weights=${OUTPUT}/weights.${imageBase}.taylor.0
-        imlist="${imlist} ${image}"
-        if [ -e ${OUTPUT}/image.${imageBase}.taylor.1.restored ]; then
-            imlist="${imlist} ${OUTPUT}/image.${imageBase}.taylor.1.restored"
-        fi
-        if [ -e ${OUTPUT}/image.${imageBase}.taylor.2.restored ]; then
-            imlist="${imlist} ${OUTPUT}/image.${imageBase}.taylor.2.restored"
-        fi
-            
-    fi
-
-    if [ $BEAM == "all" ]; then
-        weightpars="Selavy.Weights.weightsImage = ${weights##*/}.fits
-Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
-        imlist="${imlist} ${weights}"
-    else
-        weightpars="#"
-    fi
-
     # get the text that does the FITS conversion - put in $fitsConvertText
     convertToFITStext
 
@@ -93,8 +65,36 @@ ln -s ${logs} .
 ln -s ${parsets} .
 
 HAVE_IMAGES=true
+BEAM=$BEAM
+NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 
-for im in ${imlist}; do 
+# List of images to convert to FITS in the Selavy job
+imlist=""
+
+if [ $NUM_TAYLOR_TERMS == 1 ]; then
+    image=${OUTPUT}/image.${imageBase}.restored
+    weights=${OUTPUT}/weights.${imageBase}
+    imlist="\${imlist} \${image}"
+else
+    image=${OUTPUT}/image.${imageBase}.taylor.0.restored
+    weights=${OUTPUT}/weights.${imageBase}.taylor.0
+    imlist="\${imlist} \${image}"
+    if [ -e ${OUTPUT}/image.${imageBase}.taylor.1.restored ]; then
+        imlist="\${imlist} ${OUTPUT}/image.${imageBase}.taylor.1.restored"
+    fi
+    if [ -e ${OUTPUT}/image.${imageBase}.taylor.2.restored ]; then
+        imlist="\${imlist} ${OUTPUT}/image.${imageBase}.taylor.2.restored"
+    fi       
+fi
+if [ "\${BEAM}" == "all" ]; then
+    imlist="\${imlist} \${weights}"
+    weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
+Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
+else
+    weightpars="#"
+fi
+
+for im in \${imlist}; do 
     casaim="../\${im##*/}"
     fitsim="../\${im##*/}.fits"
     ${fitsConvertText}
@@ -114,7 +114,7 @@ if [ \${HAVE_IMAGES} == true ]; then
     log=${logs}/science_selavy_${FIELDBEAM}_\${SLURM_JOB_ID}.log
     
     cat > \$parset <<EOFINNER
-Selavy.image = ${image##*/}.fits
+Selavy.image = \${image##*/}.fits
 Selavy.SBid = ${SB_SCIENCE}
 Selavy.nsubx = ${SELAVY_NSUBX}
 Selavy.nsuby = ${SELAVY_NSUBY}
@@ -129,7 +129,7 @@ Selavy.VariableThreshold.ThresholdImageName=detThresh.img
 Selavy.VariableThreshold.NoiseImageName=noiseMap.img
 Selavy.VariableThreshold.AverageImageName=meanMap.img
 Selavy.VariableThreshold.SNRimageName=snrMap.img
-${weightpars}
+\${weightpars}
 #
 Selavy.Fitter.doFit = true
 Selavy.Fitter.fitTypes = [full]
@@ -164,8 +164,10 @@ EOFOUTER
 
     # Dependencies for the job
     DEP=""
-    if [ $BEAM == "all" ]; then
-        DEP=`addDep "$DEP" "$ID_LINMOS_SCI"`
+    if [ "$FIELD" == "." ]; then
+        DEP=`addDep "$DEP" "$ID_LINMOS_CONT_ALL"`
+    elif [ $BEAM == "all" ]; then
+        DEP=`addDep "$DEP" "$ID_LINMOS_CONT"`
     else
         if [ $DO_SELFCAL == true ]; then
             DEP=`addDep "$DEP" "$ID_CONTIMG_SCI_SC"`
@@ -176,7 +178,7 @@ EOFOUTER
     
     if [ $SUBMIT_JOBS == true ]; then
 	ID_SOURCEFINDING_SCI=`sbatch ${DEP} $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_SOURCEFINDING_SCI} "Run the source-finder on the science observation"
+	recordJob ${ID_SOURCEFINDING_SCI} "Run the source-finder on the science observation with flags \"$DEP\""
     else
 	echo "Would run the source-finder on the science observation with slurm file $sbatchfile"
     fi

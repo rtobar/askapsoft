@@ -69,16 +69,17 @@ using namespace askap::cp::ingest;
 
 NoMetadataSource::NoMetadataSource(const LOFAR::ParameterSet& params,
                                    const Configuration& config,
-                                   IVisSource::ShPtr visSrc,
-                                   int /*numTasks*/, int id) :
+                                   IVisSource::ShPtr visSrc) :
         itsVisSrc(visSrc),
         itsInterrupted(false),
         itsSignals(itsIOService, SIGINT, SIGTERM, SIGUSR1),
         itsCentreFreq(asQuantity(params.getString("centre_freq"))),
         itsTargetName(params.getString("target_name")),
         itsTargetDirection(asMDirection(params.getStringVector("target_direction"))),
-        itsLastTimestamp(0u), itsVisConverter(params, config, id)
+        itsLastTimestamp(0u), itsVisConverter(params, config)
 {
+    ASKAPCHECK(bool(visSrc) == config.receivingRank(), "Receiving ranks should get visibility source object, service ranks shouldn't");
+
     itsCorrelatorMode = config.lookupCorrelatorMode(params.getString("correlator_mode"));
 
     // log TAI_UTC casacore measures table version and date
@@ -98,6 +99,14 @@ NoMetadataSource::~NoMetadataSource()
 
 VisChunk::ShPtr NoMetadataSource::next(void)
 {
+    if (!itsVisConverter.config().receivingRank()) {
+        // service rank - simply return chunk with zero dimensions 
+        // for this source, this is effectively a no-operation
+        VisChunk::ShPtr dummy(new VisChunk(0,0,0,0));
+        return dummy;
+    }
+    ASKAPDEBUGASSERT(itsVisSrc);
+
     const long ONESECOND = 1000000; // 1 second timeout
     // Get the next VisDatagram if there isn't already one in the buffer
     while (!itsVis) {
@@ -215,7 +224,7 @@ VisChunk::ShPtr NoMetadataSource::createVisChunk(const casa::uLong timestamp)
 
     // Frequency vector is not of length nRows, but instead nChannels
     chunk->frequency() = itsVisConverter.channelManager().localFrequencies(
-            itsVisConverter.id(),
+            itsVisConverter.config().receiverId(),
             itsCentreFreq.getValue("Hz") - chunk->channelWidth() / 2.,
             chunk->channelWidth(),
             itsCorrelatorMode.nChan());

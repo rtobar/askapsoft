@@ -4,7 +4,7 @@
 # submission. This defines all necessary subdirectories and sets the
 # date-time stamp.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -34,25 +34,8 @@
 ${askapsoftModuleCommands}
 
 BASEDIR=`pwd`
-parsets=${BASEDIR}/parsets
-logs=${BASEDIR}/logs
-slurms=${BASEDIR}/slurmFiles
-slurmOut=${BASEDIR}/slurmOutput
-tools=${BASEDIR}/tools
-metadata=${BASEDIR}/metadata
 
-mkdir -p $parsets
-lfs setstripe -c 1 $parsets
-mkdir -p $logs
-lfs setstripe -c 1 $logs
-mkdir -p $slurms
-lfs setstripe -c 1 $slurms
-mkdir -p $slurmOut
-lfs setstripe -c 1 $slurmOut
-mkdir -p $tools
-lfs setstripe -c 1 $tools
-mkdir -p $metadata
-lfs setstripe -c 1 $metadata
+. ${PIPELINEDIR}/createDirectories.sh
 
 # These are used as the base directories for these types of files. We
 # make subdirectories in each for different fields (eg. parsets/field1
@@ -69,10 +52,6 @@ NOW_FMT=`date +%FT%T`
 
 # File to record list of jobs and descriptions
 JOBLIST="${slurmOut}/jobList-${NOW}.txt"
-
-# temp directory for certain files
-tmp=/tmp/tmp`whoami`pipe
-mkdir -p $tmp
 
 ####################
 # Define the default
