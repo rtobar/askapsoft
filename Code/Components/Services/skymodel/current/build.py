@@ -53,6 +53,7 @@ def odb_prebuild():
 
     # append the list of sources
     sources = glob.glob(os.path.join(schema_dir, "*.h"))
+    schema_sources = glob.glob(os.path.join(schema_dir, "*.i"))
     cmd.extend(sources)
 
     if not os.path.exists(odb_output_dir):
@@ -61,7 +62,7 @@ def odb_prebuild():
     # even though odb supports compilation from separate source and output
     # directories, it generates code that expects the input headers to be in the
     # same directory. Sigh...
-    for src in sources:
+    for src in sources + schema_sources:
         dst = os.path.join(odb_output_dir, os.path.basename(src))
         shutil.copy(src, dst)
 

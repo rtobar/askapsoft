@@ -1,22 +1,46 @@
 <changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
   <model version="1">
-    <table name="sms.ContinuumComponent" options="ENGINE=InnoDB" kind="object">
-      <column name="id" type="BIGINT" null="false"/>
+    <table name="ContinuumComponent" options="ENGINE=InnoDB" kind="object">
       <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="rightAscension" type="DOUBLE" null="false"/>
-      <column name="declination" type="DOUBLE" null="false"/>
-      <column name="positionAngle" type="DOUBLE" null="false"/>
-      <column name="majorAxis" type="DOUBLE" null="false"/>
-      <column name="minorAxis" type="DOUBLE" null="false"/>
-      <column name="i1400" type="DOUBLE" null="false"/>
-      <column name="spectralIndex" type="DOUBLE" null="false"/>
-      <column name="spectralCurvature" type="DOUBLE" null="false"/>
-      <column name="healpixIndex" type="BIGINT" null="false"/>
+      <column name="id" type="BIGINT" null="false"/>
+      <column name="sb_id" type="BIGINT" null="false"/>
+      <column name="island_id" type="TEXT" null="false"/>
+      <column name="component_id" type="TEXT" null="false"/>
+      <column name="ra_deg_cont" type="DOUBLE" null="false"/>
+      <column name="dec_deg_cont" type="DOUBLE" null="false"/>
+      <column name="ra_err" type="FLOAT" null="false"/>
+      <column name="dec_err" type="FLOAT" null="false"/>
+      <column name="freq" type="FLOAT" null="false"/>
+      <column name="flux_peak" type="FLOAT" null="false"/>
+      <column name="flux_peak_err" type="FLOAT" null="false"/>
+      <column name="flux_int" type="FLOAT" null="false"/>
+      <column name="flux_int_err" type="FLOAT" null="false"/>
+      <column name="maj_axis" type="FLOAT" null="false"/>
+      <column name="min_axis" type="FLOAT" null="false"/>
+      <column name="pos_ang" type="FLOAT" null="false"/>
+      <column name="maj_axis_err" type="FLOAT" null="false"/>
+      <column name="min_axis_err" type="FLOAT" null="false"/>
+      <column name="pos_ang_err" type="FLOAT" null="false"/>
+      <column name="maj_axis_deconv" type="FLOAT" null="false"/>
+      <column name="min_axis_deconv" type="FLOAT" null="false"/>
+      <column name="pos_ang_deconv" type="FLOAT" null="false"/>
+      <column name="chi_squared_fit" type="FLOAT" null="false"/>
+      <column name="rms_fit_Gauss" type="FLOAT" null="false"/>
+      <column name="spectral_index" type="FLOAT" null="false"/>
+      <column name="spectral_curvature" type="FLOAT" null="false"/>
+      <column name="rms_image" type="FLOAT" null="false"/>
+      <column name="flag_c1" type="INT" null="false"/>
+      <column name="flag_c2" type="INT" null="false"/>
+      <column name="flag_c3" type="INT" null="false"/>
+      <column name="flag_c4" type="INT" null="false"/>
       <primary-key auto="true">
         <column name="id"/>
       </primary-key>
-      <index name="healpixIndex_i">
-        <column name="healpixIndex"/>
+      <index name="id_i">
+        <column name="id"/>
+      </index>
+      <index name="sb_id_i">
+        <column name="sb_id"/>
       </index>
     </table>
   </model>

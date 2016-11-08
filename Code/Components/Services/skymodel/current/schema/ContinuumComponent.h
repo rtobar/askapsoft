@@ -27,6 +27,9 @@
 #ifndef ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
 #define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
 
+// System includes
+#include <string>
+
 // ASKAPsoft includes
 #include <odb/core.hxx>
 
@@ -40,7 +43,7 @@ namespace datamodel {
 
 // Datamodel versioning
 // Disabled for now as I don't need it until we get closer to production.
-//#pragma db model version(1, 1)
+#pragma db model version(1, 1)
 
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
@@ -51,74 +54,9 @@ namespace datamodel {
 
 #pragma db object optimistic
 struct ContinuumComponent {
-        ContinuumComponent() {}
+    ContinuumComponent() {}
 
-        /**
-         * Unique component index number
-         **/
-        #pragma db id auto
-        long id;
-
-        /**
-         * Optimistic concurrency version field
-         **/
-        #pragma db version
-        unsigned long version;
-
-        /**
-         * Right ascension in the J2000 coordinate system
-         * Units: degrees
-         **/
-        double rightAscension;
-
-        /**
-         * Declination in the J2000 coordinate system
-         * Units: degrees
-         **/
-        double declination;
-
-        /**
-         * Position angle, Counted east from north
-         * Units: radians
-         **/
-        double positionAngle;
-
-        /**
-         * Major axis
-         * Units: arcsecs
-         **/
-        double majorAxis;
-
-        /**
-         * Minor axis
-         * Units: arcsecs
-         **/
-        double minorAxis;
-
-        /**
-         * Flux at 1400 Mhz
-         * Units: Jy
-         **/
-        double i1400;
-
-        /**
-         * Spectral index
-         * Units: N/A
-         **/
-        double spectralIndex;
-
-        /**
-         * Spectral curvature
-         * Units: N/A
-         **/
-        double spectralCurvature;
-
-        /**
-         * HEALPix Index
-         * Units: N/A
-         **/
-        #pragma db index
-        long healpixIndex;
+    #include "continuum.i"
 };
 
 };
