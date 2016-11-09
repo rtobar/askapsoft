@@ -14,10 +14,6 @@
     #pragma db index
     long sb_id;
 
-    // @brief Island identifier
-    // @units none
-    std::string island_id;
-
     // @brief Component identifier
     // @units none
     std::string component_id;
@@ -30,7 +26,7 @@
     // @units deg
     double dec_deg_cont;
 
-    // @brief Error in Right Ascension 
+    // @brief Error in Right Ascension
     // @units arcsec
     float ra_err;
 
@@ -38,11 +34,11 @@
     // @units arcsec
     float dec_err;
 
-    // @brief Frequency 
+    // @brief Frequency
     // @units MHz
     float freq;
 
-    // @brief Peak flux density 
+    // @brief Peak flux density
     // @units mJy/beam
     float flux_peak;
 
