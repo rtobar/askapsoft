@@ -115,7 +115,6 @@ def get_fields(data_frame):
     "Unpacks a tablespec data frame into a list of field objects"
     fields = []
     for r in data_frame.itertuples(index=False):
-        print(r)
         field = Field(
             name=r[0],
             comment=r[1],

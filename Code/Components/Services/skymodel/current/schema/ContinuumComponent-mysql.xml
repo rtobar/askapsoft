@@ -2,6 +2,7 @@
   <model version="1">
     <table name="ContinuumComponent" options="ENGINE=InnoDB" kind="object">
       <column name="version" type="BIGINT UNSIGNED" null="false"/>
+      <column name="test" type="TEXT" null="false"/>
       <column name="continuum_component_id" type="BIGINT" null="false"/>
       <column name="sb_id" type="BIGINT" null="false"/>
       <column name="ra_deg_cont" type="DOUBLE" null="false"/>
@@ -34,6 +35,9 @@
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
+      <index name="test_i">
+        <column name="test"/>
+      </index>
       <index name="continuum_component_id_i">
         <column name="continuum_component_id"/>
       </index>
