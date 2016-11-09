@@ -28,12 +28,15 @@
 #define ASKAP_CP_SMS_CONTINUUMISLAND_H
 
 // System includes
+#include <memory>
 #include <string>
+#include <vector>
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
 
 // Local package includes
+#include "ContinuumComponent.h"
 
 
 namespace askap {
@@ -57,6 +60,10 @@ struct ContinuumIsland {
     ContinuumIsland() {}
 
     #include "ContinuumIsland.i"
+
+    // Define a To-Many relationship to ContinuumComponent
+    #pragma db value_not_null unordered
+    std::vector<ContinuumComponent*> components;
 };
 
 };

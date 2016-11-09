@@ -12,14 +12,11 @@ logappenders=Code/Base/logappenders/current
 logfilters=Code/Base/logfilters/current
 
 ## odb dependencies
-# Don't link to this one. It contains the odb build tools
-#odb=3rdParty/odb/odb-2.4.0/odb
-# odb core
+odb=3rdParty/odb/odb-2.4.0/odb
 libodb=3rdParty/odb/odb-2.4.0/libodb
-# sqlite libs
-libodbsqlite=3rdParty/odb/odb-2.4.0/libodb-sqlite
-# mysql
-libodbmysql=3rdParty/odb/odb-2.4.0/libodb-mysql
+odb-boost=3rdParty/odb/odb-2.4.0/libodb-boost
+odb-sqlite=3rdParty/odb/odb-2.4.0/libodb-sqlite
+odb-mysql=3rdParty/odb/odb-2.4.0/libodb-mysql
 
 # Functional test dependencies
 pyiceinterfaces=Code/Interfaces/python/current

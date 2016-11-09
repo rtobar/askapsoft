@@ -8,25 +8,22 @@ import subprocess
 from askapdev.rbuild.builders import Scons as Builder
 from askapdev.rbuild.utils import runcmd
 
+b = Builder(".")
+
+odb_output_dir = os.path.abspath("./datamodel")
+odb_dir = b.dep.get_install_path("odb")
+libodb_dir = b.dep.get_install_path("libodb")
+
 # Set up the custom build step for generating the ODB persistence code from our
 # data model
-
-# Keep this one outside the odb_prebuild function so I can use it as a clean
-# target for rbuild
-odb_output_dir = os.path.abspath("./datamodel")
-
 def odb_prebuild():
 
     # Build some important paths
-    odb_compiler = os.path.join(
-        os.path.expandvars("$ASKAP_ROOT"),
-        "3rdParty/odb/odb-2.4.0/odb/install/bin/odb")
-
+    odb_compiler = os.path.join(odb_dir, "bin/odb")
     schema_dir = os.path.abspath("./schema")
+    odb_includes = os.path.join(libodb_dir, "include")
 
-    odb_includes = os.path.join(
-        os.path.expandvars("$ASKAP_ROOT"),
-        "3rdParty/odb/odb-2.4.0/libodb/install/include")
+    print('odb: ' + odb_compiler)
 
     # build the command
     cmd = [
@@ -49,6 +46,8 @@ def odb_prebuild():
         '--database', 'common',  # Generate the database-agnostic code
         '--database', 'sqlite',
         '--database', 'mysql',
+        # enable the boost profile for boost smart pointer support
+        # '--profile', 'boost/smart-ptr',
         ]
 
     # append the list of sources
@@ -71,7 +70,6 @@ def odb_prebuild():
     return subprocess.check_call(cmd)
 
 
-b = Builder(".")
 b.add_precallback(odb_prebuild)
 b.add_extra_clean_targets(odb_output_dir)
 b.build()

@@ -35,5 +35,24 @@
         <column name="id"/>
       </index>
     </table>
+    <table name="ContinuumIsland_components" kind="container">
+      <column name="object_id" type="INTEGER" null="false"/>
+      <column name="value" type="INTEGER" null="false"/>
+      <foreign-key name="object_id_fk" on-delete="CASCADE">
+        <column name="object_id"/>
+        <references table="ContinuumIsland">
+          <column name="id"/>
+        </references>
+      </foreign-key>
+      <index name="ContinuumIsland_components_object_id_i">
+        <column name="object_id"/>
+      </index>
+      <foreign-key name="value_fk" deferrable="DEFERRED">
+        <column name="value"/>
+        <references table="ContinuumComponent">
+          <column name="id"/>
+        </references>
+      </foreign-key>
+    </table>
   </model>
 </changelog>
