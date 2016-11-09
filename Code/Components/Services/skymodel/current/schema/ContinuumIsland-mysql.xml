@@ -36,19 +36,19 @@
       </index>
     </table>
     <table name="ContinuumIsland_components" options="ENGINE=InnoDB" kind="container">
-      <column name="object_id" type="BIGINT" null="false"/>
-      <column name="value" type="BIGINT" null="false"/>
-      <foreign-key name="ContinuumIsland_components_object_id_fk" on-delete="CASCADE">
-        <column name="object_id"/>
+      <column name="continuum_island_id" type="BIGINT" null="false"/>
+      <column name="continuum_component_id" type="BIGINT" null="false"/>
+      <foreign-key name="ContinuumIsland_components_continuum_island_id_fk" on-delete="CASCADE">
+        <column name="continuum_island_id"/>
         <references table="ContinuumIsland">
           <column name="continuum_island_id"/>
         </references>
       </foreign-key>
-      <index name="object_id_i">
-        <column name="object_id"/>
+      <index name="continuum_island_id_i">
+        <column name="continuum_island_id"/>
       </index>
-      <foreign-key name="ContinuumIsland_components_value_fk" deferrable="DEFERRED">
-        <column name="value"/>
+      <foreign-key name="ContinuumIsland_components_continuum_component_id_fk" deferrable="DEFERRED">
+        <column name="continuum_component_id"/>
         <references table="ContinuumComponent">
           <column name="continuum_component_id"/>
         </references>

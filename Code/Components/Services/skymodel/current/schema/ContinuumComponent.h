@@ -32,8 +32,10 @@
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
+#include <odb/boost/lazy-ptr.hxx>
 
 // Local package includes
+#include "Polarisation.h"
 
 
 namespace askap {
@@ -56,6 +58,10 @@ struct ContinuumComponent {
     ContinuumComponent() {}
 
     #include "ContinuumComponent.i"
+    
+    // Define a To-Many relationship to Polarisation
+    #pragma db value_not_null unordered id_column("continuum_component_id") value_column("polarisation_id")
+    std::vector<odb::boost::lazy_shared_ptr<Polarisation> > polarisation;
 };
 
 };

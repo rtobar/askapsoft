@@ -61,7 +61,7 @@ struct ContinuumIsland {
     #include "ContinuumIsland.i"
 
     // Define a To-Many relationship to ContinuumComponent
-    #pragma db value_not_null unordered
+    #pragma db value_not_null unordered id_column("continuum_island_id") value_column("continuum_component_id")
     std::vector<odb::boost::lazy_shared_ptr<ContinuumComponent> > components;
 };
 

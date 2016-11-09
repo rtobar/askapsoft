@@ -70,7 +70,7 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
         ASKAPLOG_INFO_STR(logger, "Instantiating sqlite backend into " << dbName);
 
         // create the database
-        boost::shared_ptr<odb::database> pDb(
+        ::boost::shared_ptr<odb::database> pDb(
             new sqlite::database(
                 dbName,
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
@@ -93,7 +93,7 @@ SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& pars
 }
 
 SkyModelServiceImpl::SkyModelServiceImpl(
-    boost::shared_ptr<odb::database> database)
+    ::boost::shared_ptr<odb::database> database)
     //const std::string& tablespace)
     :
     itsDb(database)
