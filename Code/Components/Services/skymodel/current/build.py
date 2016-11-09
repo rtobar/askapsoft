@@ -11,17 +11,22 @@ from askapdev.rbuild.utils import runcmd
 b = Builder(".")
 
 odb_output_dir = os.path.abspath("./datamodel")
-odb_dir = b.dep.get_install_path("odb")
-libodb_dir = b.dep.get_install_path("libodb")
 
 # Set up the custom build step for generating the ODB persistence code from our
 # data model
 def odb_prebuild():
 
     # Build some important paths
+    odb_dir = b.dep.get_install_path("odb")
+    libodb_dir = b.dep.get_install_path("libodb")
+    libodb_boost_dir = b.dep.get_install_path("libodb-boost")
+    boost_dir = b.dep.get_install_path("boost")
+
     odb_compiler = os.path.join(odb_dir, "bin/odb")
     schema_dir = os.path.abspath("./schema")
     odb_includes = os.path.join(libodb_dir, "include")
+    odb_boost_includes = os.path.join(libodb_boost_dir, "include")
+    boost_includes = os.path.join(boost_dir, "include")
 
     print('odb: ' + odb_compiler)
 
@@ -33,7 +38,9 @@ def odb_prebuild():
         '--schema-format', 'embedded',
         '--schema-format', 'sql',
         '--output-dir', odb_output_dir,  # output location for generated files
+        '-I', boost_includes,  # Boost headers
         '-I', odb_includes,  # ODB headers
+        '-I', odb_boost_includes,  # ODB boost headers
         '--cxx-suffix', '.cc',  # Use the ASKAP default .cc instead of .cxx
         '--hxx-suffix', '.h',  # Use the ASKAP default .h instead of .hxx
         '--ixx-suffix', '.i',  # Use .i instead of .ixx
@@ -46,8 +53,8 @@ def odb_prebuild():
         '--database', 'common',  # Generate the database-agnostic code
         '--database', 'sqlite',
         '--database', 'mysql',
-        # enable the boost profile for boost smart pointer support
-        # '--profile', 'boost/smart-ptr',
+        # enable the ODB profile for boost smart pointer support
+        '--profile', 'boost/smart-ptr',
         ]
 
     # append the list of sources

@@ -14,9 +14,9 @@ logfilters=Code/Base/logfilters/current
 ## odb dependencies
 odb=3rdParty/odb/odb-2.4.0/odb
 libodb=3rdParty/odb/odb-2.4.0/libodb
-odb-boost=3rdParty/odb/odb-2.4.0/libodb-boost
-odb-sqlite=3rdParty/odb/odb-2.4.0/libodb-sqlite
-odb-mysql=3rdParty/odb/odb-2.4.0/libodb-mysql
+libodb-boost=3rdParty/odb/odb-2.4.0/libodb-boost
+libodb-sqlite=3rdParty/odb/odb-2.4.0/libodb-sqlite
+libodb-mysql=3rdParty/odb/odb-2.4.0/libodb-mysql
 
 # Functional test dependencies
 pyiceinterfaces=Code/Interfaces/python/current
