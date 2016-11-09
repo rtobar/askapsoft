@@ -28,12 +28,11 @@
 #define ASKAP_CP_SMS_CONTINUUMISLAND_H
 
 // System includes
-#include <memory>
 #include <string>
-#include <vector>
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
+#include <odb/boost/lazy-ptr.hxx>
 
 // Local package includes
 #include "ContinuumComponent.h"
@@ -62,8 +61,8 @@ struct ContinuumIsland {
     #include "ContinuumIsland.i"
 
     // Define a To-Many relationship to ContinuumComponent
-    //#pragma db value_not_null unordered
-    //std::vector<ContinuumComponent*> components;
+    #pragma db value_not_null unordered
+    std::vector<odb::boost::lazy_shared_ptr<ContinuumComponent> > components;
 };
 
 };
