@@ -42,7 +42,6 @@ namespace sms {
 namespace datamodel {
 
 // Datamodel versioning
-// Disabled for now as I don't need it until we get closer to production.
 #pragma db model version(1, 1)
 
 // Map C++ bool to an INT NOT NULL database type
@@ -56,7 +55,7 @@ namespace datamodel {
 struct ContinuumComponent {
     ContinuumComponent() {}
 
-    #include "continuum.i"
+    #include "ContinuumComponent.i"
 };
 
 };

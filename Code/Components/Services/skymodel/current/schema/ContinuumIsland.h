@@ -56,7 +56,7 @@ namespace datamodel {
 struct ContinuumIsland {
     ContinuumIsland() {}
 
-    #include "island.i"
+    #include "ContinuumIsland.i"
 };
 
 };

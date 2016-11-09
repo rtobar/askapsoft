@@ -1,4 +1,4 @@
-/// @file ContinuumComponent.h
+/// @file Polarisation.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,8 +24,8 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
-#define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
+#ifndef ASKAP_CP_SMS_POLARISATION_H
+#define ASKAP_CP_SMS_POLARISATION_H
 
 // System includes
 #include <string>
@@ -48,15 +48,15 @@ namespace datamodel {
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 
-/// @brief Datamodel class for Continuum Components
+/// @brief Datamodel class for continuum component polarisation data.
 /// Do not edit the version of this file in the `datamodel` directory, as it is
 /// a copy of the files in the `schema` directory.
 
 #pragma db object optimistic
-struct ContinuumComponent {
-    ContinuumComponent() {}
+struct Polarisation {
+    Polarisation() {}
 
-    #include "continuum.i"
+    #include "Polarisation.i"
 };
 
 };
