@@ -2,9 +2,8 @@
   <model version="1">
     <table name="ContinuumComponent" options="ENGINE=InnoDB" kind="object">
       <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="id" type="BIGINT" null="false"/>
+      <column name="continuum_component_id" type="BIGINT" null="false"/>
       <column name="sb_id" type="BIGINT" null="false"/>
-      <column name="component_id" type="TEXT" null="false"/>
       <column name="ra_deg_cont" type="DOUBLE" null="false"/>
       <column name="dec_deg_cont" type="DOUBLE" null="false"/>
       <column name="ra_err" type="FLOAT" null="false"/>
@@ -33,10 +32,10 @@
       <column name="flag_c3" type="INT" null="false"/>
       <column name="flag_c4" type="INT" null="false"/>
       <primary-key auto="true">
-        <column name="id"/>
+        <column name="continuum_component_id"/>
       </primary-key>
-      <index name="id_i">
-        <column name="id"/>
+      <index name="continuum_component_id_i">
+        <column name="continuum_component_id"/>
       </index>
       <index name="sb_id_i">
         <column name="sb_id"/>

@@ -5,9 +5,9 @@
 
     // @brief Primary key unique identifier
     // @units none
-    #pragma db id auto
     #pragma db index
-    long id;
+    #pragma db id auto
+    long polarisation_component_id;
 
     // @brief Band-median value for Stokes I spectrum
     // @units mJy/beam

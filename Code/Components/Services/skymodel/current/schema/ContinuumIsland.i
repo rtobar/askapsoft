@@ -5,13 +5,13 @@
 
     // @brief Primary key unique identifier
     // @units none
-    #pragma db id auto
     #pragma db index
-    long id;
+    #pragma db id auto
+    long continuum_island_id;
 
-    // @brief Island identifier
+    // @brief Scheduling Block identifier
     // @units none
-    std::string island_id;
+    long sb_id;
 
     // @brief Number of discrete components extracted from the island
     // @units none

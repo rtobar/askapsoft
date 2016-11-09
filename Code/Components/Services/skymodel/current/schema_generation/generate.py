@@ -15,19 +15,19 @@ files = [
     {
         'input': 'GSM_casda.continuum_component_description_v1.8.xlsx',
         'output': '../schema/ContinuumComponent.i',
-        'parse_cols': [1,2,3,5,6,9],
+        'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2],
     },
     {
         'input': 'GSM_casda_polarisation_v0.6.xlsx',
         'output': '../schema/Polarisation.i',
-        'parse_cols': [1,2,3,5,6,9],
+        'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2,3],
     },
     {
         'input': 'GSM_casda.continuum_island_description_v0.5.xlsx',
         'output': '../schema/ContinuumIsland.i',
-        'parse_cols': [1,2,3,5,6,9],
+        'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2,3],
     },
 ]
@@ -40,6 +40,7 @@ def load(
     converters={
             'Index': bool,
             'include in gsm': bool,
+            'pk': bool,
             }):
     """Load the table data from a CASDA definition spreadsheet"""
     data = pd.read_excel(
@@ -62,15 +63,15 @@ type_map = {
 }
 
 class Field(object):
-    def __init__(self, name='', comment='', dtype='', units='', indexed=False):
+    def __init__(self, name='', comment='', dtype='', units='', indexed=False, pk=False):
         self.name = name
         self.comment = comment
         self.dtype = dtype
         self.units = units
         self.indexed = indexed
+        self.pk = pk
 
         self._magic_names = {
-            'id': ['#pragma db id auto'],
             'version': ['#pragma db version'],
         }
 
@@ -87,6 +88,9 @@ class Field(object):
 
         if self.indexed:
             s.append('#pragma db index')
+
+        if self.pk:
+            s.append('#pragma db id auto')
 
         # the field definition
         s.append('{0} {1};'.format(
@@ -111,12 +115,14 @@ def get_fields(data_frame):
     "Unpacks a tablespec data frame into a list of field objects"
     fields = []
     for r in data_frame.itertuples(index=False):
+        print(r)
         field = Field(
             name=r[0],
             comment=r[1],
             dtype=type_map[r[2]],
             units=r[3],
-            indexed=r[4])
+            indexed=r[4],
+            pk=r[6])
         fields.append(field)
 
     return fields

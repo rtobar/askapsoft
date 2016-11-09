@@ -2,8 +2,8 @@
   <model version="1">
     <table name="ContinuumIsland" options="ENGINE=InnoDB" kind="object">
       <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="id" type="BIGINT" null="false"/>
-      <column name="island_id" type="TEXT" null="false"/>
+      <column name="continuum_island_id" type="BIGINT" null="false"/>
+      <column name="sb_id" type="BIGINT" null="false"/>
       <column name="n_components" type="INT" null="false"/>
       <column name="ra_deg_cont" type="DOUBLE" null="false"/>
       <column name="dec_deg_cont" type="DOUBLE" null="false"/>
@@ -29,11 +29,30 @@
       <column name="flag_c3" type="INT" null="false"/>
       <column name="flag_c4" type="INT" null="false"/>
       <primary-key auto="true">
-        <column name="id"/>
+        <column name="continuum_island_id"/>
       </primary-key>
-      <index name="id_i">
-        <column name="id"/>
+      <index name="continuum_island_id_i">
+        <column name="continuum_island_id"/>
       </index>
+    </table>
+    <table name="ContinuumIsland_components" options="ENGINE=InnoDB" kind="container">
+      <column name="object_id" type="BIGINT" null="false"/>
+      <column name="value" type="BIGINT" null="false"/>
+      <foreign-key name="ContinuumIsland_components_object_id_fk" on-delete="CASCADE">
+        <column name="object_id"/>
+        <references table="ContinuumIsland">
+          <column name="continuum_island_id"/>
+        </references>
+      </foreign-key>
+      <index name="object_id_i">
+        <column name="object_id"/>
+      </index>
+      <foreign-key name="ContinuumIsland_components_value_fk" deferrable="DEFERRED">
+        <column name="value"/>
+        <references table="ContinuumComponent">
+          <column name="continuum_component_id"/>
+        </references>
+      </foreign-key>
     </table>
   </model>
 </changelog>
