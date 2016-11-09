@@ -1,0 +1,39 @@
+<changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="sqlite" version="1">
+  <model version="1">
+    <table name="ContinuumIsland" kind="object">
+      <column name="version" type="INTEGER" null="false"/>
+      <column name="id" type="INTEGER" null="false"/>
+      <column name="island_id" type="TEXT" null="false"/>
+      <column name="n_components" type="INTEGER" null="false"/>
+      <column name="ra_deg_cont" type="REAL" null="true"/>
+      <column name="dec_deg_cont" type="REAL" null="true"/>
+      <column name="freq" type="REAL" null="true"/>
+      <column name="maj_axis" type="REAL" null="true"/>
+      <column name="min_axis" type="REAL" null="true"/>
+      <column name="pos_ang" type="REAL" null="true"/>
+      <column name="flux_int" type="REAL" null="true"/>
+      <column name="flux_peak" type="REAL" null="true"/>
+      <column name="x_min" type="INTEGER" null="false"/>
+      <column name="x_max" type="INTEGER" null="false"/>
+      <column name="y_min" type="INTEGER" null="false"/>
+      <column name="y_max" type="INTEGER" null="false"/>
+      <column name="n_pix" type="INTEGER" null="false"/>
+      <column name="x_ave" type="REAL" null="true"/>
+      <column name="y_ave" type="REAL" null="true"/>
+      <column name="x_cen" type="REAL" null="true"/>
+      <column name="y_cen" type="REAL" null="true"/>
+      <column name="x_peak" type="INTEGER" null="false"/>
+      <column name="y_peak" type="INTEGER" null="false"/>
+      <column name="flag_c1" type="INTEGER" null="false"/>
+      <column name="flag_c2" type="INTEGER" null="false"/>
+      <column name="flag_c3" type="INTEGER" null="false"/>
+      <column name="flag_c4" type="INTEGER" null="false"/>
+      <primary-key auto="true">
+        <column name="id"/>
+      </primary-key>
+      <index name="ContinuumIsland_id_i">
+        <column name="id"/>
+      </index>
+    </table>
+  </model>
+</changelog>
