@@ -57,8 +57,20 @@ namespace datamodel {
 struct ContinuumComponent {
     ContinuumComponent() {}
 
+    // @brief Optimistic concurrency lock version
+    // @units none
+    #pragma db version
+    unsigned long version;
+
+    // @brief Primary key unique identifier
+    // @units none
+    #pragma db index
+    #pragma db id auto
+    long continuum_component_id;
+
+    // Include the fields generated from the design spreadsheet
     #include "ContinuumComponent.i"
-    
+
     // Define a To-Many relationship to Polarisation
     #pragma db value_not_null unordered id_column("continuum_component_id") value_column("polarisation_id")
     std::vector<odb::boost::lazy_shared_ptr<Polarisation> > polarisation;

@@ -58,6 +58,18 @@ namespace datamodel {
 struct ContinuumIsland {
     ContinuumIsland() {}
 
+    // @brief Optimistic concurrency lock version
+    // @units none
+    #pragma db version
+    unsigned long version;
+
+    // @brief Primary key unique identifier
+    // @units none
+    #pragma db index
+    #pragma db id auto
+    long continuum_island_id;
+
+    // Include the fields generated from the design spreadsheet
     #include "ContinuumIsland.i"
 
     // Define a To-Many relationship to ContinuumComponent

@@ -2,7 +2,6 @@
   <model version="1">
     <table name="ContinuumComponent" kind="object">
       <column name="version" type="INTEGER" null="false"/>
-      <column name="test" type="TEXT" null="false"/>
       <column name="continuum_component_id" type="INTEGER" null="false"/>
       <column name="sb_id" type="INTEGER" null="false"/>
       <column name="ra_deg_cont" type="REAL" null="true"/>
@@ -35,9 +34,6 @@
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
-      <index name="ContinuumComponent_test_i">
-        <column name="test"/>
-      </index>
       <index name="ContinuumComponent_continuum_component_id_i">
         <column name="continuum_component_id"/>
       </index>

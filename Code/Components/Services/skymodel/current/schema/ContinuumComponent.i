@@ -1,14 +1,3 @@
-    // @brief Optimistic concurrency lock version
-    // @units none
-    #pragma db version
-    unsigned long version;
-
-    // @brief Primary key unique identifier
-    // @units none
-    #pragma db index
-    #pragma db id auto
-    long continuum_component_id;
-
     // @brief Scheduling Block identifier
     // @units none
     #pragma db index

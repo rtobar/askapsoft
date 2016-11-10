@@ -56,6 +56,18 @@ namespace datamodel {
 struct Polarisation {
     Polarisation() {}
 
+    // @brief Optimistic concurrency lock version
+    // @units none
+    #pragma db version
+    unsigned long version;
+
+    // @brief Primary key unique identifier
+    // @units none
+    #pragma db index
+    #pragma db id auto
+    long polarisation_component_id;
+
+    // Include the fields generated from the design spreadsheet
     #include "Polarisation.i"
 };
 

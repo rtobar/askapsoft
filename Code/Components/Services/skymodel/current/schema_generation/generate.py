@@ -13,19 +13,19 @@ import pandas as pd
 
 files = [
     {
-        'input': 'GSM_casda.continuum_component_description_v1.8.xlsx',
+        'input': '~/Dropbox/GSM_casda.continuum_component_description_v1.8.xlsx',
         'output': '../schema/ContinuumComponent.i',
         'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2],
     },
     {
-        'input': 'GSM_casda_polarisation_v0.6.xlsx',
+        'input': '~/Dropbox/GSM_casda_polarisation_v0.6.xlsx',
         'output': '../schema/Polarisation.i',
         'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2,3],
     },
     {
-        'input': 'GSM_casda.continuum_island_description_v0.5.xlsx',
+        'input': '~/Dropbox/GSM_casda.continuum_island_description_v0.5.xlsx',
         'output': '../schema/ContinuumIsland.i',
         'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2,3],

@@ -1,14 +1,3 @@
-    // @brief Optimistic concurrency lock version
-    // @units none
-    #pragma db version
-    unsigned long version;
-
-    // @brief Primary key unique identifier
-    // @units none
-    #pragma db index
-    #pragma db id auto
-    long polarisation_component_id;
-
     // @brief Band-median value for Stokes I spectrum
     // @units mJy/beam
     double flux_I_median;
