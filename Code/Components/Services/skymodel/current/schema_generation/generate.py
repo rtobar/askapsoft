@@ -24,12 +24,6 @@ files = [
         'parse_cols': [1,2,3,5,6,9,10],
         'skiprows': [0,1,2,3],
     },
-    {
-        'input': '~/Dropbox/GSM_casda.continuum_island_description_v0.5.xlsx',
-        'output': '../schema/ContinuumIsland.i',
-        'parse_cols': [1,2,3,5,6,9,10],
-        'skiprows': [0,1,2,3],
-    },
 ]
 
 def load(
