@@ -31,9 +31,16 @@
       <column name="rms_image" type="REAL" null="false"/>
       <column name="flag_c1" type="INTEGER" null="false"/>
       <column name="flag_c2" type="INTEGER" null="false"/>
+      <column name="polarisation_id" type="INTEGER" null="true"/>
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
+      <foreign-key name="polarisation_id_fk" deferrable="DEFERRED">
+        <column name="polarisation_id"/>
+        <references table="Polarisation">
+          <column name="polarisation_component_id"/>
+        </references>
+      </foreign-key>
       <index name="ContinuumComponent_continuum_component_id_i">
         <column name="continuum_component_id"/>
       </index>
@@ -43,25 +50,6 @@
       <index name="ContinuumComponent_sb_id_i">
         <column name="sb_id"/>
       </index>
-    </table>
-    <table name="ContinuumComponent_polarisation" kind="container">
-      <column name="continuum_component_id" type="INTEGER" null="false"/>
-      <column name="polarisation_id" type="INTEGER" null="false"/>
-      <foreign-key name="continuum_component_id_fk" on-delete="CASCADE">
-        <column name="continuum_component_id"/>
-        <references table="ContinuumComponent">
-          <column name="continuum_component_id"/>
-        </references>
-      </foreign-key>
-      <index name="ContinuumComponent_polarisation_continuum_component_id_i">
-        <column name="continuum_component_id"/>
-      </index>
-      <foreign-key name="polarisation_id_fk" deferrable="DEFERRED">
-        <column name="polarisation_id"/>
-        <references table="Polarisation">
-          <column name="polarisation_component_id"/>
-        </references>
-      </foreign-key>
     </table>
   </model>
 </changelog>

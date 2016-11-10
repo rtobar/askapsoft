@@ -32,7 +32,8 @@
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
-#include <odb/boost/lazy-ptr.hxx>
+#include <boost/shared_ptr.hpp>
+//#include <odb/boost/lazy-ptr.hxx>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes
@@ -72,9 +73,9 @@ struct ContinuumComponent {
     // Include the fields generated from the design spreadsheet
     #include "ContinuumComponent.i"
 
-    // Define a To-Many relationship to Polarisation
-    #pragma db value_not_null unordered id_column("continuum_component_id") value_column("polarisation_id")
-    std::vector<odb::boost::lazy_shared_ptr<Polarisation> > polarisation;
+    // Define a nullable one-to-one relationship to Polarisation
+    #pragma db null column("polarisation_component_id")
+    boost::shared_ptr<Polarisation> polarisation;
 };
 
 };
