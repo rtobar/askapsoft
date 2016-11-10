@@ -15,14 +15,14 @@ files = [
     {
         'input': '~/Dropbox/GSM_casda.continuum_component_description_v1.8.xlsx',
         'output': '../schema/ContinuumComponent.i',
-        'parse_cols': [1,2,3,5,6,9,10],
-        'skiprows': [0,1,2],
+        'parse_cols': None,
+        'skiprows': [0],
     },
     {
         'input': '~/Dropbox/GSM_casda_polarisation_v0.6.xlsx',
         'output': '../schema/Polarisation.i',
-        'parse_cols': [1,2,3,5,6,9,10],
-        'skiprows': [0,1,2,3],
+        'parse_cols': None,
+        'skiprows': [0],
     },
 ]
 
@@ -32,9 +32,10 @@ def load(
     parse_cols=None,
     skiprows=None,
     converters={
-            'Index': bool,
-            'include in gsm': bool,
-            'pk': bool,
+            'include_in_gsm': bool,
+            'index': bool,
+            'nullable': bool,
+            'lsm_view': bool,
             }):
     """Load the table data from a CASDA definition spreadsheet"""
     data = pd.read_excel(
@@ -44,7 +45,7 @@ def load(
         parse_cols=parse_cols,
         skiprows=skiprows)
 
-    return data[data['include in gsm'] == True]
+    return data[data.include_in_gsm == True]
 
 type_map = {
     'BIGINT': 'long',
@@ -52,22 +53,23 @@ type_map = {
     'REAL': 'float',
     'DOUBLE': 'double',
     'VARCHAR': 'std::string',
+    'TEXT': 'std::string',
     'BOOLEAN': 'bool',
     'INTEGER': 'int',
+    'INTEGER UNSIGNED': 'unsigned int',
+    'DATETIME': 'boost::posix_time::ptime',
 }
 
 class Field(object):
-    def __init__(self, name='', comment='', dtype='', units='', indexed=False, pk=False):
-        self.name = name
-        self.comment = comment
-        self.dtype = dtype
-        self.units = units
-        self.indexed = indexed
-        self.pk = pk
-
-        self._magic_names = {
-            'version': ['#pragma db version'],
-        }
+    def __init__(self, df_row):
+        self.name = df_row.name
+        self.comment = df_row.description
+        self.dtype = type_map[df_row.datatype]
+        self.units = df_row.units
+        self.indexed = df_row.index
+        self.nullable = df_row.nullable
+        self.lsm_view = df_row.lsm_view
+        self._magic_names = {}
 
     def __repr__(self):
         return self.__str__()
@@ -83,8 +85,10 @@ class Field(object):
         if self.indexed:
             s.append('#pragma db index')
 
-        if self.pk:
-            s.append('#pragma db id auto')
+        if self.nullable:
+            s.append('#pragma db null')
+        else:
+            s.append('#pragma db not_null')
 
         # the field definition
         s.append('{0} {1};'.format(
@@ -92,8 +96,8 @@ class Field(object):
             self.name))
 
         # indentation
-        indent = 4
-        s = [indent * ' ' + line for line in s]
+        # indent = 4
+        # s = [indent * ' ' + line for line in s]
 
         s.append('\n')
 
@@ -108,14 +112,9 @@ class Field(object):
 def get_fields(data_frame):
     "Unpacks a tablespec data frame into a list of field objects"
     fields = []
-    for r in data_frame.itertuples(index=False):
-        field = Field(
-            name=r[0],
-            comment=r[1],
-            dtype=type_map[r[2]],
-            units=r[3],
-            indexed=r[4],
-            pk=r[6])
+    for row in data_frame.itertuples(index=False):
+        # print(row)
+        field = Field(row)
         fields.append(field)
 
     return fields

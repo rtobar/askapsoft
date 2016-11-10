@@ -1,113 +1,142 @@
-    // @brief Scheduling Block identifier
-    // @units none
-    #pragma db index
-    long sb_id;
+// @brief The observation date
+// @units Posix Date-time
+#pragma db index
+#pragma db null
+boost::posix_time::ptime observation_date;
 
-    // @brief J2000 right ascension in decimal degrees
-    // @units deg
-    double ra_deg_cont;
+// @brief Scheduling Block identifier
+// @units none
+#pragma db index
+#pragma db null
+long sb_id;
 
-    // @brief J2000 declination in decimal degrees
-    // @units deg
-    double dec_deg_cont;
+// @brief Component identifier
+// @units none
+#pragma db null
+std::string component_id;
 
-    // @brief Error in Right Ascension 
-    // @units arcsec
-    float ra_err;
+// @brief J2000 right ascension in decimal degrees
+// @units deg
+#pragma db not_null
+double ra_deg_cont;
 
-    // @brief Error in Declination
-    // @units arcsec
-    float dec_err;
+// @brief J2000 declination in decimal degrees
+// @units deg
+#pragma db not_null
+double dec_deg_cont;
 
-    // @brief Frequency 
-    // @units MHz
-    float freq;
+// @brief Error in Right Ascension 
+// @units arcsec
+#pragma db not_null
+float ra_err;
 
-    // @brief Peak flux density 
-    // @units mJy/beam
-    float flux_peak;
+// @brief Error in Declination
+// @units arcsec
+#pragma db not_null
+float dec_err;
 
-    // @brief Error in peak flux density
-    // @units mJy/beam
-    float flux_peak_err;
+// @brief Frequency 
+// @units MHz
+#pragma db not_null
+float freq;
 
-    // @brief Integrated flux density
-    // @units mJy
-    float flux_int;
+// @brief Peak flux density 
+// @units mJy/beam
+#pragma db not_null
+float flux_peak;
 
-    // @brief Error in integrated flux density
-    // @units mJy
-    float flux_int_err;
+// @brief Error in peak flux density
+// @units mJy/beam
+#pragma db not_null
+float flux_peak_err;
 
-    // @brief FWHM major axis before deconvolution
-    // @units arcsec
-    float maj_axis;
+// @brief Integrated flux density
+// @units mJy
+#pragma db not_null
+float flux_int;
 
-    // @brief FWHM minor axis before deconvolution
-    // @units arcsec
-    float min_axis;
+// @brief Error in integrated flux density
+// @units mJy
+#pragma db not_null
+float flux_int_err;
 
-    // @brief Position angle before deconvolution
-    // @units deg
-    float pos_ang;
+// @brief FWHM major axis before deconvolution
+// @units arcsec
+#pragma db not_null
+float maj_axis;
 
-    // @brief Error in major axis before deconvolution
-    // @units arcsec
-    float maj_axis_err;
+// @brief FWHM minor axis before deconvolution
+// @units arcsec
+#pragma db not_null
+float min_axis;
 
-    // @brief Error in minor axis before deconvolution
-    // @units arcsec
-    float min_axis_err;
+// @brief Position angle before deconvolution
+// @units deg
+#pragma db not_null
+float pos_ang;
 
-    // @brief Error in position angle before deconvolution
-    // @units deg
-    float pos_ang_err;
+// @brief Error in major axis before deconvolution
+// @units arcsec
+#pragma db not_null
+float maj_axis_err;
 
-    // @brief FWHM major axis after deconvolution
-    // @units arcsec
-    float maj_axis_deconv;
+// @brief Error in minor axis before deconvolution
+// @units arcsec
+#pragma db not_null
+float min_axis_err;
 
-    // @brief FWHM minor axis after deconvolution
-    // @units arcsec
-    float min_axis_deconv;
+// @brief Error in position angle before deconvolution
+// @units deg
+#pragma db not_null
+float pos_ang_err;
 
-    // @brief Position angle after deconvolution
-    // @units deg
-    float pos_ang_deconv;
+// @brief FWHM major axis after deconvolution
+// @units arcsec
+#pragma db not_null
+float maj_axis_deconv;
 
-    // @brief Chi-squared value of Gaussian fit
-    // @units none
-    float chi_squared_fit;
+// @brief FWHM minor axis after deconvolution
+// @units arcsec
+#pragma db not_null
+float min_axis_deconv;
 
-    // @brief RMS residual of Gaussian fit
-    // @units mJy/beam
-    float rms_fit_Gauss;
+// @brief Position angle after deconvolution
+// @units deg
+#pragma db not_null
+float pos_ang_deconv;
 
-    // @brief Spectral index (First Taylor term)
-    // @units none
-    float spectral_index;
+// @brief Chi-squared value of Gaussian fit
+// @units none
+#pragma db not_null
+float chi_squared_fit;
 
-    // @brief Spectral curvature (Second Taylor term)
-    // @units none
-    float spectral_curvature;
+// @brief RMS residual of Gaussian fit
+// @units mJy/beam
+#pragma db not_null
+float rms_fit_Gauss;
 
-    // @brief rms noise level in image
-    // @units mJy/beam
-    float rms_image;
+// @brief Spectral index (First Taylor term)
+// @units none
+#pragma db not_null
+float spectral_index;
 
-    // @brief Source has siblings
-    // @units none
-    int flag_c1;
+// @brief Spectral curvature (Second Taylor term)
+// @units none
+#pragma db not_null
+float spectral_curvature;
 
-    // @brief Component parameters are initial estimate, not from fit
-    // @units none
-    int flag_c2;
+// @brief rms noise level in image
+// @units mJy/beam
+#pragma db not_null
+float rms_image;
 
-    // @brief Placeholder flag3
-    // @units none
-    int flag_c3;
+// @brief Source has siblings
+// @units none
+#pragma db not_null
+int flag_c1;
 
-    // @brief Placeholder flag4
-    // @units none
-    int flag_c4;
+// @brief Component parameters are initial estimate, not from fit
+// @units none
+#pragma db not_null
+int flag_c2;
 
