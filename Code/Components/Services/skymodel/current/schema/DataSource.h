@@ -1,4 +1,4 @@
-/// @file ContinuumComponent.h
+/// @file DataSource.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,21 +24,16 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
-#define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
+#ifndef ASKAP_CP_SMS_DATASOURCE_H
+#define ASKAP_CP_SMS_DATASOURCE_H
 
 // System includes
 #include <string>
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
-#include <boost/shared_ptr.hpp>
-//#include <odb/boost/lazy-ptr.hxx>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes
-#include "Polarisation.h"
-#include "DataSource.h"
 
 
 namespace askap {
@@ -47,19 +42,22 @@ namespace sms {
 namespace datamodel {
 
 // Datamodel versioning
+// Disabled for now as I don't need it until we get closer to production.
 #pragma db model version(1, 1)
 
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 
-/// @brief Datamodel class for Continuum Components
+/// @brief  Datamodel class for ancillary data source information.
+///         This is primarily intended to identify the source of seed data
+///         that did not come from ASKAP observations.
 
 // Do not edit the version of this file in the `datamodel` directory, as it is
 // a copy of the files in the `schema` directory.
 
 #pragma db object optimistic
-struct ContinuumComponent {
-    ContinuumComponent() {}
+struct DataSource {
+    DataSource() {}
 
     // @brief Optimistic concurrency lock version
     // @units none
@@ -70,18 +68,10 @@ struct ContinuumComponent {
     // @units none
     #pragma db index
     #pragma db id auto
-    long continuum_component_id;
+    long data_source_id;
 
     // Include the fields generated from the design spreadsheet
-    #include "ContinuumComponent.i"
-
-    // Define a nullable one-to-one relationship to Polarisation
-    #pragma db null column("polarisation_component_id")
-    boost::shared_ptr<Polarisation> polarisation;
-
-    // Define a one-to-one relationship to a data source
-    #pragma db not_null column("data_source_id")
-    boost::shared_ptr<Polarisation> data_source;
+    #include "DataSource.i"
 };
 
 };

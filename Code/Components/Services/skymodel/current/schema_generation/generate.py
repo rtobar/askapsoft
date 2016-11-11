@@ -25,8 +25,8 @@ files = [
         'skiprows': [0],
     },
     {
-        'input': '~/Dropbox/GSM_data_sources_description_v1.0.xlsx',
-        'output': '../schema/DataSources.i',
+        'input': '~/Dropbox/GSM_data_source_description_v1.0.xlsx',
+        'output': '../schema/DataSource.i',
         'parse_cols': None,
         'skiprows': [0],
     },

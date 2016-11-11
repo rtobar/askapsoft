@@ -106,9 +106,9 @@ float rms_image;
 
 /// @brief Source has siblings
 #pragma db not_null
-int flag_c1;
+bool flag_c1;
 
 /// @brief Component parameters are initial estimate, not from fit
 #pragma db not_null
-int flag_c2;
+bool flag_c2;
 
