@@ -4,6 +4,7 @@
       <column name="version" type="INTEGER" null="false"/>
       <column name="continuum_component_id" type="INTEGER" null="false"/>
       <column name="observation_date" type="TEXT" null="true"/>
+      <column name="healpix_index" type="INTEGER" null="false"/>
       <column name="sb_id" type="INTEGER" null="true"/>
       <column name="component_id" type="TEXT" null="true"/>
       <column name="ra_deg_cont" type="REAL" null="false"/>
@@ -44,8 +45,8 @@
       </foreign-key>
       <foreign-key name="data_source_id_fk" deferrable="DEFERRED">
         <column name="data_source_id"/>
-        <references table="Polarisation">
-          <column name="polarisation_component_id"/>
+        <references table="DataSource">
+          <column name="data_source_id"/>
         </references>
       </foreign-key>
       <index name="ContinuumComponent_continuum_component_id_i">
@@ -53,6 +54,9 @@
       </index>
       <index name="ContinuumComponent_observation_date_i">
         <column name="observation_date"/>
+      </index>
+      <index name="ContinuumComponent_healpix_index_i">
+        <column name="healpix_index"/>
       </index>
       <index name="ContinuumComponent_sb_id_i">
         <column name="sb_id"/>

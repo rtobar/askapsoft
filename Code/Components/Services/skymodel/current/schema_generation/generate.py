@@ -32,6 +32,18 @@ files = [
     },
 ]
 
+view_files = [
+    {
+        'inputs': [
+            '~/Dropbox/GSM_casda.continuum_component_description_v1.8.xlsx',
+            '~/Dropbox/GSM_casda_polarisation_v0.6.xlsx',
+            ],
+        'output': '../schema/ContinuumComponentLsmView.i',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
+]
+
 def load(
     filename,
     sheetname='Catalogue description',
@@ -78,14 +90,14 @@ type_map = {
 }
 
 class Field(object):
-    def __init__(self, df_row):
+    def __init__(self, df_row, is_view):
         self.name = df_row.name.strip()
         self.comment = df_row.description.strip()
         self.dtype = type_map[df_row.datatype.strip()]
         self.units = df_row.units.strip()
         self.indexed = df_row.index
         self.nullable = df_row.nullable
-        self.lsm_view = df_row.lsm_view
+        self.is_view = is_view
         self._magic_names = {}
 
     def __repr__(self):
@@ -94,18 +106,19 @@ class Field(object):
     def __str__(self):
         s = self._comment()
 
-        # handle any pragmas for magic field names
-        if self.name in self._magic_names:
-            for pragma in self._magic_names[self.name]:
-                s.append(pragma)
+        if not self.is_view:
+            # handle any pragmas for magic field names
+            if self.name in self._magic_names:
+                for pragma in self._magic_names[self.name]:
+                    s.append(pragma)
 
-        if self.indexed:
-            s.append('#pragma db index')
+            if self.indexed:
+                s.append('#pragma db index')
 
-        if self.nullable:
-            s.append('#pragma db null')
-        else:
-            s.append('#pragma db not_null')
+            if self.nullable:
+                s.append('#pragma db null')
+            else:
+                s.append('#pragma db not_null')
 
         # the field definition
         s.append('{0} {1};'.format(
@@ -128,22 +141,38 @@ class Field(object):
             comments.append('@brief {0}'.format(self.comment))
         return ['/// ' + c for c in comments]
 
-def get_fields(data_frame):
+
+def get_fields(data_frame, is_view=False):
     "Unpacks a tablespec data frame into a list of field objects"
     fields = []
     for row in data_frame.itertuples(index=False):
         # print(row)
-        field = Field(row)
+        field = Field(row, is_view)
         fields.append(field)
 
     return fields
 
+
+def write_output(data, filename, is_view=False):
+    with open(filename, 'w') as out:
+        for field in get_fields(data, is_view):
+            out.write(str(field))
+
+
 if __name__ == '__main__':
-    print('Generating ...')
+    print('Generating tables ...')
     for f in files:
-        data = load(f['input'], parse_cols=f['parse_cols'], skiprows=f['skiprows'])
         print('\t' + f['output'])
-        with open(f['output'], 'w') as out:
-            for field in get_fields(data):
-                out.write(str(field))
+        data = load(f['input'], parse_cols=f['parse_cols'], skiprows=f['skiprows'])
+        write_output(data, f['output'])
+
+    print('Generating views ...')
+    for f in view_files:
+        print('\t' + f['output'])
+        # Load all the input data frames that will be combined into the view
+        view_data = [load(i, parse_cols=f['parse_cols'], skiprows=f['skiprows']) for i in f['inputs']]
+        # concatenate the dataframes, and then select just the fields that have the view flag set
+        data = pd.concat(view_data).query('lsm_view == True')
+        write_output(data, f['output'], is_view=True)
+
     print('Done')

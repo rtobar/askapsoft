@@ -1,4 +1,4 @@
-/// @file ContinuumComponent.h
+/// @file ContinuumComponentLsmView.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,8 +24,8 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
-#define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
+#ifndef ASKAP_CP_SMS_CONTINUUMCOMPONENTLSMVIEW_H
+#define ASKAP_CP_SMS_CONTINUUMCOMPONENTLSMVIEW_H
 
 // System includes
 #include <string>
@@ -37,8 +37,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes
+#include "ContinuumComponent.h"
 #include "Polarisation.h"
-#include "DataSource.h"
 
 
 namespace askap {
@@ -52,36 +52,18 @@ namespace datamodel {
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 
-/// @brief Datamodel class for Continuum Components
+/// @brief  View of ContinuumComponent containing the subset of data required by 
+///         local sky model (LSM) queries.
 
 // Do not edit the version of this file in the `datamodel` directory, as it is
 // a copy of the files in the `schema` directory.
 
-#pragma db object optimistic
-struct ContinuumComponent {
-    ContinuumComponent() {}
-
-    // @brief Optimistic concurrency lock version
-    // @units none
-    #pragma db version
-    unsigned long version;
-
-    // @brief Primary key unique identifier
-    // @units none
-    #pragma db index
-    #pragma db id auto
-    long continuum_component_id;
+#pragma db view object(ContinuumComponent) object(Polarisation)
+struct ContinuumComponentLsmView {
+    ContinuumComponentLsmView() {}
 
     // Include the fields generated from the design spreadsheet
-    #include "ContinuumComponent.i"
-
-    // Define a nullable one-to-one relationship to Polarisation
-    #pragma db null column("polarisation_component_id")
-    boost::shared_ptr<Polarisation> polarisation;
-
-    // Define a one-to-one relationship to a data source
-    #pragma db not_null column("data_source_id")
-    boost::shared_ptr<DataSource> data_source;
+    #include "ContinuumComponentLsmView.i"
 };
 
 };
