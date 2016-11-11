@@ -3,12 +3,12 @@
 #pragma db null
 boost::posix_time::ptime observation_date;
 
-/// @brief Scheduling Block identifier (none)
+/// @brief Scheduling Block identifier
 #pragma db index
 #pragma db null
 long sb_id;
 
-/// @brief Component identifier (none)
+/// @brief Component identifier
 #pragma db null
 std::string component_id;
 
@@ -84,7 +84,7 @@ float min_axis_deconv;
 #pragma db not_null
 float pos_ang_deconv;
 
-/// @brief Chi-squared value of Gaussian fit (none)
+/// @brief Chi-squared value of Gaussian fit
 #pragma db not_null
 float chi_squared_fit;
 
@@ -92,11 +92,11 @@ float chi_squared_fit;
 #pragma db not_null
 float rms_fit_Gauss;
 
-/// @brief Spectral index (First Taylor term) (none)
+/// @brief Spectral index (First Taylor term)
 #pragma db not_null
 float spectral_index;
 
-/// @brief Spectral curvature (Second Taylor term) (none)
+/// @brief Spectral curvature (Second Taylor term)
 #pragma db not_null
 float spectral_curvature;
 
@@ -104,11 +104,11 @@ float spectral_curvature;
 #pragma db not_null
 float rms_image;
 
-/// @brief Source has siblings (none)
+/// @brief Source has siblings
 #pragma db not_null
 int flag_c1;
 
-/// @brief Component parameters are initial estimate, not from fit (none)
+/// @brief Component parameters are initial estimate, not from fit
 #pragma db not_null
 int flag_c2;
 

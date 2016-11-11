@@ -24,6 +24,12 @@ files = [
         'parse_cols': None,
         'skiprows': [0],
     },
+    {
+        'input': '~/Dropbox/GSM_data_sources_description_v1.0.xlsx',
+        'output': '../schema/DataSources.i',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
 ]
 
 def load(
@@ -32,6 +38,11 @@ def load(
     parse_cols=None,
     skiprows=None,
     converters={
+            'name': str,
+            'description': str,
+            'datatype': str,
+            'units': str,
+            'notes': str,
             'include_in_gsm': bool,
             'index': bool,
             'nullable': bool,
@@ -44,6 +55,12 @@ def load(
         converters=converters,
         parse_cols=parse_cols,
         skiprows=skiprows)
+
+    # Drop any rows with missing data in the name or datatype columns
+    data.dropna(subset=['name', 'datatype'], inplace=True)
+
+    # fill any remaining missing data with empty strings
+    data.fillna('', inplace=True)
 
     return data[data.include_in_gsm == True]
 
@@ -105,8 +122,10 @@ class Field(object):
 
     def _comment(self):
         comments = []
-        comments.append('@brief {0} ({1})'.format(self.comment, self.units))
-        # comments.append('@details **Units**: {0}'.format(self.units))
+        if self.units:
+            comments.append('@brief {0} ({1})'.format(self.comment, self.units))
+        else:
+            comments.append('@brief {0}'.format(self.comment))
         return ['/// ' + c for c in comments]
 
 def get_fields(data_frame):

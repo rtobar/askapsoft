@@ -30,31 +30,31 @@ double rms_U;
 #pragma db not_null
 double rms_V;
 
-/// @brief First order coefficient for polynomial fit to Stokes I spectrum (none)
+/// @brief First order coefficient for polynomial fit to Stokes I spectrum
 #pragma db not_null
 double co_1;
 
-/// @brief Second order coefficient for polynomial fit to Stokes I spectrum (none)
+/// @brief Second order coefficient for polynomial fit to Stokes I spectrum
 #pragma db not_null
 double co_2;
 
-/// @brief Third order coefficient for polynomial fit to Stokes I spectrum (none)
+/// @brief Third order coefficient for polynomial fit to Stokes I spectrum
 #pragma db not_null
 double co_3;
 
-/// @brief Fourth order coefficient for polynomial fit to Stokes I spectrum (none)
+/// @brief Fourth order coefficient for polynomial fit to Stokes I spectrum
 #pragma db not_null
 double co_4;
 
-/// @brief Fifth order coefficient for polynomial fit to Stokes I spectrum (none)
+/// @brief Fifth order coefficient for polynomial fit to Stokes I spectrum
 #pragma db not_null
 double co_5;
 
-/// @brief Reference wavelength squared (m2)
+/// @brief Reference wavelength squared (m^2)
 #pragma db not_null
 double lambda_ref_sq;
 
-/// @brief Full-width at half maximum of the rotation measure spread function (rad/m2)
+/// @brief Full-width at half maximum of the rotation measure spread function (rad/m^2)
 #pragma db not_null
 double rmsf_fwhm;
 
@@ -82,27 +82,27 @@ double pol_peak_fit_debias;
 #pragma db not_null
 double pol_peak_fit_err;
 
-/// @brief Signal-to-noise ratio of the peak polarisation (none)
+/// @brief Signal-to-noise ratio of the peak polarisation
 #pragma db not_null
 double pol_peak_fit_snr;
 
-/// @brief Uncertainty in pol_peak_fit_snr (none)
+/// @brief Uncertainty in pol_peak_fit_snr
 #pragma db not_null
 double pol_peak_fit_snr_err;
 
-/// @brief Faraday Depth from the channel with the peak of the Faraday Dispersion Function (rad/m2)
+/// @brief Faraday Depth from the channel with the peak of the Faraday Dispersion Function (rad/m^2)
 #pragma db not_null
 double fd_peak;
 
-/// @brief Uncertainty in far_depth_peak (rad/m2)
+/// @brief Uncertainty in far_depth_peak (rad/m^2)
 #pragma db not_null
 double fd_peak_err;
 
-/// @brief Faraday Depth from fit to peak in Faraday Dispersion Function (rad/m2)
+/// @brief Faraday Depth from fit to peak in Faraday Dispersion Function (rad/m^2)
 #pragma db not_null
 double fd_peak_fit;
 
-/// @brief uncertainty in fd_peak_fit (rad/m2)
+/// @brief uncertainty in fd_peak_fit (rad/m^2)
 #pragma db not_null
 double fd_peak_fit_err;
 
@@ -122,35 +122,35 @@ double pol_ang_zero;
 #pragma db not_null
 double pol_ang_zero_err;
 
-/// @brief Fractional polarisation (none)
+/// @brief Fractional polarisation
 #pragma db not_null
 double pol_frac;
 
-/// @brief Uncertainty in fractional polarisation (none)
+/// @brief Uncertainty in fractional polarisation
 #pragma db not_null
 double pol_frac_err;
 
-/// @brief Statistical measure of polarisation complexity (none)
+/// @brief Statistical measure of polarisation complexity
 #pragma db not_null
 double complex_1;
 
-/// @brief Statistical measure of polarisation complexity after removal of a thin-screen model. (none)
+/// @brief Statistical measure of polarisation complexity after removal of a thin-screen model.
 #pragma db not_null
 double complex_2;
 
-/// @brief True if pol_peak_fit is above a threshold value otherwise pol_peak_fit is an upper limit. (none)
+/// @brief True if pol_peak_fit is above a threshold value otherwise pol_peak_fit is an upper limit.
 #pragma db not_null
 bool flag_p1;
 
-/// @brief True if FDF peak is close to edge (none)
+/// @brief True if FDF peak is close to edge
 #pragma db not_null
 bool flag_p2;
 
-/// @brief placeholder flag (none)
+/// @brief placeholder flag
 #pragma db not_null
 bool flag_p3;
 
-/// @brief placeholder flag (none)
+/// @brief placeholder flag
 #pragma db not_null
 bool flag_p4;
 

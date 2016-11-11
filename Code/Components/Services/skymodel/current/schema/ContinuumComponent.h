@@ -52,8 +52,9 @@ namespace datamodel {
 #pragma db value(bool) type("INT")
 
 /// @brief Datamodel class for Continuum Components
-/// Do not edit the version of this file in the `datamodel` directory, as it is
-/// a copy of the files in the `schema` directory.
+
+// Do not edit the version of this file in the `datamodel` directory, as it is
+// a copy of the files in the `schema` directory.
 
 #pragma db object optimistic
 struct ContinuumComponent {
