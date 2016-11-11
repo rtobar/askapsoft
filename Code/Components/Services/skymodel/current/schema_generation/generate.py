@@ -62,10 +62,10 @@ type_map = {
 
 class Field(object):
     def __init__(self, df_row):
-        self.name = df_row.name
-        self.comment = df_row.description
-        self.dtype = type_map[df_row.datatype]
-        self.units = df_row.units
+        self.name = df_row.name.strip()
+        self.comment = df_row.description.strip()
+        self.dtype = type_map[df_row.datatype.strip()]
+        self.units = df_row.units.strip()
         self.indexed = df_row.index
         self.nullable = df_row.nullable
         self.lsm_view = df_row.lsm_view
@@ -104,10 +104,10 @@ class Field(object):
         return '\n'.join(s)
 
     def _comment(self):
-        c = []
-        c.append('// @brief {0}'.format(self.comment))
-        c.append('// @units {0}'.format(self.units))
-        return c
+        comments = []
+        comments.append('@brief {0} ({1})'.format(self.comment, self.units))
+        # comments.append('@details **Units**: {0}'.format(self.units))
+        return ['/// ' + c for c in comments]
 
 def get_fields(data_frame):
     "Unpacks a tablespec data frame into a list of field objects"

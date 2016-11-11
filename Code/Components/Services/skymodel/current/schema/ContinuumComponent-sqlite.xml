@@ -31,12 +31,12 @@
       <column name="rms_image" type="REAL" null="false"/>
       <column name="flag_c1" type="INTEGER" null="false"/>
       <column name="flag_c2" type="INTEGER" null="false"/>
-      <column name="polarisation_id" type="INTEGER" null="true"/>
+      <column name="polarisation_component_id" type="INTEGER" null="true"/>
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
-      <foreign-key name="polarisation_id_fk" deferrable="DEFERRED">
-        <column name="polarisation_id"/>
+      <foreign-key name="polarisation_component_id_fk" deferrable="DEFERRED">
+        <column name="polarisation_component_id"/>
         <references table="Polarisation">
           <column name="polarisation_component_id"/>
         </references>

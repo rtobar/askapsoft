@@ -1,142 +1,114 @@
-// @brief The observation date
-// @units Posix Date-time
+/// @brief The observation date (Posix Date-time)
 #pragma db index
 #pragma db null
 boost::posix_time::ptime observation_date;
 
-// @brief Scheduling Block identifier
-// @units none
+/// @brief Scheduling Block identifier (none)
 #pragma db index
 #pragma db null
 long sb_id;
 
-// @brief Component identifier
-// @units none
+/// @brief Component identifier (none)
 #pragma db null
 std::string component_id;
 
-// @brief J2000 right ascension in decimal degrees
-// @units deg
+/// @brief J2000 right ascension (deg)
 #pragma db not_null
 double ra_deg_cont;
 
-// @brief J2000 declination in decimal degrees
-// @units deg
+/// @brief J2000 declination (deg)
 #pragma db not_null
 double dec_deg_cont;
 
-// @brief Error in Right Ascension 
-// @units arcsec
+/// @brief Error in Right Ascension (arcsec)
 #pragma db not_null
 float ra_err;
 
-// @brief Error in Declination
-// @units arcsec
+/// @brief Error in Declination (arcsec)
 #pragma db not_null
 float dec_err;
 
-// @brief Frequency 
-// @units MHz
+/// @brief Frequency (MHz)
 #pragma db not_null
 float freq;
 
-// @brief Peak flux density 
-// @units mJy/beam
+/// @brief Peak flux density (mJy/beam)
 #pragma db not_null
 float flux_peak;
 
-// @brief Error in peak flux density
-// @units mJy/beam
+/// @brief Error in peak flux density (mJy/beam)
 #pragma db not_null
 float flux_peak_err;
 
-// @brief Integrated flux density
-// @units mJy
+/// @brief Integrated flux density (mJy)
 #pragma db not_null
 float flux_int;
 
-// @brief Error in integrated flux density
-// @units mJy
+/// @brief Error in integrated flux density (mJy)
 #pragma db not_null
 float flux_int_err;
 
-// @brief FWHM major axis before deconvolution
-// @units arcsec
+/// @brief FWHM major axis before deconvolution (arcsec)
 #pragma db not_null
 float maj_axis;
 
-// @brief FWHM minor axis before deconvolution
-// @units arcsec
+/// @brief FWHM minor axis before deconvolution (arcsec)
 #pragma db not_null
 float min_axis;
 
-// @brief Position angle before deconvolution
-// @units deg
+/// @brief Position angle before deconvolution (deg)
 #pragma db not_null
 float pos_ang;
 
-// @brief Error in major axis before deconvolution
-// @units arcsec
+/// @brief Error in major axis before deconvolution (arcsec)
 #pragma db not_null
 float maj_axis_err;
 
-// @brief Error in minor axis before deconvolution
-// @units arcsec
+/// @brief Error in minor axis before deconvolution (arcsec)
 #pragma db not_null
 float min_axis_err;
 
-// @brief Error in position angle before deconvolution
-// @units deg
+/// @brief Error in position angle before deconvolution (deg)
 #pragma db not_null
 float pos_ang_err;
 
-// @brief FWHM major axis after deconvolution
-// @units arcsec
+/// @brief FWHM major axis after deconvolution (arcsec)
 #pragma db not_null
 float maj_axis_deconv;
 
-// @brief FWHM minor axis after deconvolution
-// @units arcsec
+/// @brief FWHM minor axis after deconvolution (arcsec)
 #pragma db not_null
 float min_axis_deconv;
 
-// @brief Position angle after deconvolution
-// @units deg
+/// @brief Position angle after deconvolution (deg)
 #pragma db not_null
 float pos_ang_deconv;
 
-// @brief Chi-squared value of Gaussian fit
-// @units none
+/// @brief Chi-squared value of Gaussian fit (none)
 #pragma db not_null
 float chi_squared_fit;
 
-// @brief RMS residual of Gaussian fit
-// @units mJy/beam
+/// @brief RMS residual of Gaussian fit (mJy/beam)
 #pragma db not_null
 float rms_fit_Gauss;
 
-// @brief Spectral index (First Taylor term)
-// @units none
+/// @brief Spectral index (First Taylor term) (none)
 #pragma db not_null
 float spectral_index;
 
-// @brief Spectral curvature (Second Taylor term)
-// @units none
+/// @brief Spectral curvature (Second Taylor term) (none)
 #pragma db not_null
 float spectral_curvature;
 
-// @brief rms noise level in image
-// @units mJy/beam
+/// @brief rms noise level in image (mJy/beam)
 #pragma db not_null
 float rms_image;
 
-// @brief Source has siblings
-// @units none
+/// @brief Source has siblings (none)
 #pragma db not_null
 int flag_c1;
 
-// @brief Component parameters are initial estimate, not from fit
-// @units none
+/// @brief Component parameters are initial estimate, not from fit (none)
 #pragma db not_null
 int flag_c2;
 
