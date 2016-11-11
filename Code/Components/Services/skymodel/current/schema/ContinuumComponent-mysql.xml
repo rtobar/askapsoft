@@ -33,7 +33,7 @@
       <column name="flag_c1" type="INT" null="false"/>
       <column name="flag_c2" type="INT" null="false"/>
       <column name="polarisation_component_id" type="BIGINT" null="true"/>
-      <column name="data_source_id" type="BIGINT" null="false"/>
+      <column name="data_source_id" type="BIGINT" null="true"/>
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
