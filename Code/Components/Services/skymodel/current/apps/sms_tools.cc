@@ -51,7 +51,6 @@
 
 
 using namespace askap;
-using namespace askap::cp::sms::utility;
 
 ASKAP_LOGGER(logger, ".sms_tools");
 
@@ -66,7 +65,7 @@ class SmsToolsApp : public askap::Application {
             try {
                 // Dispatch to the requested utility function
                 if (parameterExists(CREATE_SCHEMA)) {
-                    createSchema(config());
+                    cp::sms::utility::createSchema(config());
                 }
             } catch (const askap::AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
