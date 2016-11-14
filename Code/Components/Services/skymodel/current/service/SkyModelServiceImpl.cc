@@ -46,6 +46,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent-odb.h"
+#include "Utility.h"
 
 ASKAP_LOGGER(logger, ".SkyModelService");
 

@@ -31,7 +31,7 @@
 #include <string>
 
 // Classes to test
-//#include "your_test_class.h"
+#include "SkyModelService.h"
 
 using std::string;
 using std::vector;

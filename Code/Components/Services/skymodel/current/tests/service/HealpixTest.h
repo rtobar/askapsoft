@@ -1,4 +1,4 @@
-/// @file tstub.cc
+/// @file HealpixTest.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,24 +24,49 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-// ASKAPsoft includes
-#include <AskapTestRunner.h>
+// CPPUnit includes
+#include <cppunit/extensions/HelperMacros.h>
 
-// Test includes
-#include "HealpixTest.h"
-#include "ServiceTest.h"
+// Support classes
+#include <string>
 
-int main(int argc, char *argv[])
-{
-    // Set up the test runner
-    askapdev::testutils::AskapTestRunner runner(argv[0]);
+// Classes to test
+#include "service/Utility.h"
 
-    // Add all the tests
-    runner.addTest(askap::cp::sms::ServiceTest::suite());
-    runner.addTest(askap::cp::sms::HealpixTest::suite());
+using std::string;
+using std::vector;
 
-    // Run
-    const bool wasSucessful = runner.run();
+namespace askap {
+namespace cp {
+namespace sms {
 
-    return wasSucessful ? 0 : 1;
+class HealpixTest : public CppUnit::TestFixture {
+        CPPUNIT_TEST_SUITE(HealpixTest);
+        CPPUNIT_TEST(testCalcHealpixIndex);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp() {
+        };
+
+        void tearDown() {
+        }
+
+        void testCalcHealpixIndex() {
+            double ra = 14.8;
+            double dec = 43.1;
+            long nside = 5;
+
+            long actual = utility::calcHealPixIndex(ra, dec, nside);
+            long expected = 43;  // TODO determine real expected value
+
+            CPPUNIT_ASSERT_EQUAL(expected, actual);
+        }
+
+    private:
+
+};
+
+}
+}
 }

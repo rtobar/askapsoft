@@ -39,11 +39,22 @@ namespace askap {
 namespace cp {
 namespace sms {
 namespace utility {
-  
-/// @brief Create the database schema in an empty database namespace.
+
+/// @brief Create the database schema in an empty database
+/// (schema/namespace depending on terminology).
 ///
 /// @param[in]  parset  the parameter set containing the configuration.
 void createSchema(const LOFAR::ParameterSet& parset);
+
+
+/// @brief Calculate the HEALPix index for a given RA and declination.
+///
+/// @note   I will probably require a vectorisable version of this function
+///         that operates on a vector of input coordinates, but this function
+///         will suffice for the initial unit tests.
+/// @param[in] ra  J2000 right ascension (decimal degrees)
+/// @param[in] dec J2000 declination (decimal degrees)
+long calcHealPixIndex(double ra, double dec, double nside);
 
 };
 };
