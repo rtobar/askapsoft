@@ -180,7 +180,7 @@ DO_STAGE_FOR_CASDA=false
 ####################
 # Input Scheduling Blocks (SBs)
 # Location of the SBs
-DIR_SB=/scratch2/askap/askapops/beta-scheduling-blocks
+DIR_SB=/scratch2/askap/askapops/askap-scheduling-blocks
 # SB with 1934-638 observation
 SB_1934="SET_THIS"
 MS_INPUT_1934=""
@@ -188,10 +188,13 @@ MS_INPUT_1934=""
 SB_SCIENCE="SET_THIS"
 MS_INPUT_SCIENCE=""
 
+# Set to true if the dataset being processed is from BETA observations
+IS_BETA=false
+
 ####################
 # Which beams to use.
 BEAM_MIN=0
-BEAM_MAX=8
+BEAM_MAX=35
 BEAMLIST=""
 
 ####################
@@ -529,7 +532,7 @@ NUM_CPUS_SPECIMG_SCI=2000
 CPUS_PER_CORE_SPEC_IMAGING=20
 # Number of processors for spectral-line mosaicking.
 # Leave blank to fit to number of channels
-NUM_CPUS_SPECTRAL_LINMOS=""
+NUM_CPUS_SPECTRAL_LINMOS=200
 
 # base name for image cubes: if IMAGE_BASE_SPECTRAL=i.blah then we'll
 # get image.i.blah, image.i.blah.restored, psf.i.blah etc
