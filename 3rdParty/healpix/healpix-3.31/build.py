@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 
+import askapdev.rbuild.utils as utils
 from askapdev.rbuild.builders import Autotools as Builder
 
 package_name="Healpix_3.31"
@@ -20,8 +21,8 @@ builder = Builder(
 # osx_icc
 # For new versions, the src/cxx/config directory should be checked for available
 # targets
-# TODO: detect OSX platform and switch target
-target = "generic_gcc"
+platform = utils.get_platform()
+target = "osx" if platform['system'] == 'Darwin' else "generic_gcc"
 os.putenv("HEALPIX_TARGET", target)
 builder.add_option("HEALPIX_TARGET={0}".format(target))
 
