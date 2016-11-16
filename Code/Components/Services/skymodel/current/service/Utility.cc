@@ -38,6 +38,9 @@
 #include <askap/AskapError.h>
 #include <Common/ParameterSet.h>
 #include <boost/scoped_ptr.hpp>
+#include <healpix_base.h>
+#include <healpix_tables.h>
+#include <pointing.h>
 
 // Local includes
 #include "SkyModelServiceImpl.h"
@@ -57,6 +60,24 @@ void createSchema(const LOFAR::ParameterSet& parset)
     bool dropTables = parset.getBool("database.create_schema.droptables", true);
     boost::scoped_ptr<SkyModelServiceImpl> pImpl(SkyModelServiceImpl::create(parset));
     pImpl->createSchema(dropTables);
+}
+
+long calcHealPixIndex(double ra, double dec, double nside)
+{
+    // Note: this initial implementation is not likely to be the most efficient, 
+    // but it does give me enough to sort out the basics.
+    // A more efficient option is likely to be threaded processing of
+    // contiguous arrays of ra and dec coordinates, with the T_Healpix_Base
+    // object being reused if possible, or thread-local if it is not
+    // thread-safe.
+    T_Healpix_Base<long> hp(8, NEST);
+
+    // convert ra/dec to a pointing:
+    // theta = (90 - dec)
+    // phi = ra
+    pointing p(90 - dec, ra); // TODO to radians
+    return hp.ang2pix(p);
+    //return 43;
 }
 
 };
