@@ -1,4 +1,5 @@
-/// @file tstub.cc
+/// @file Spherical.h
+/// @brief Spherical functions outside of the primary data service.
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,26 +25,43 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
+#ifndef ASKAP_CP_SMS_SPHERICAL_H
+#define ASKAP_CP_SMS_SPHERICAL_H
+
 // ASKAPsoft includes
-#include <AskapTestRunner.h>
+#include <boost/noncopyable.hpp>
+#include <Common/ParameterSet.h>
 
-// Test includes
-#include "HealpixTest.h"
-#include "ServiceTest.h"
-#include "UtilityTest.h"
+// Local package includes
 
-int main(int argc, char *argv[])
-{
-    // Set up the test runner
-    askapdev::testutils::AskapTestRunner runner(argv[0]);
 
-    // Add all the tests
-    runner.addTest(askap::cp::sms::ServiceTest::suite());
-    runner.addTest(askap::cp::sms::HealpixTest::suite());
-    runner.addTest(askap::cp::sms::UtilityTest::suite());
+namespace askap {
+namespace cp {
+namespace sms {
 
-    // Run
-    const bool wasSucessful = runner.run();
 
-    return wasSucessful ? 0 : 1;
-}
+class Spherical : private boost::noncopyable {
+    public:
+        /// @brief Constructor.
+        ///
+        /// @param order
+        Spherical(long order);
+
+        /// @brief Calculate the HEALPix index for a given RA and declination.
+        ///
+        /// @note   I will probably require a vectorisable version of this function
+        ///         that operates on a vector of input coordinates, but this function
+        ///         will suffice for the initial unit tests.
+        /// @param[in] ra  J2000 right ascension (decimal degrees)
+        /// @param[in] dec J2000 declination (decimal degrees)
+        long calcHealPixIndex(double ra, double dec) const;
+
+    private:
+        long itsNSide;
+};
+
+};
+};
+};
+
+#endif

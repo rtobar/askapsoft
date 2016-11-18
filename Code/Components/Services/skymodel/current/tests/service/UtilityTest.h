@@ -1,4 +1,4 @@
-/// @file ServiceTest.cc
+/// @file UtilityTest.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -29,9 +29,10 @@
 
 // Support classes
 #include <string>
+#include <boost/math/constants/constants.hpp>
 
 // Classes to test
-#include "service/SkyModelService.h"
+#include "service/Utility.h"
 
 using std::string;
 using std::vector;
@@ -40,9 +41,9 @@ namespace askap {
 namespace cp {
 namespace sms {
 
-class ServiceTest : public CppUnit::TestFixture {
-        CPPUNIT_TEST_SUITE(ServiceTest);
-        CPPUNIT_TEST(testStub);
+class UtilityTest : public CppUnit::TestFixture {
+        CPPUNIT_TEST_SUITE(UtilityTest);
+        CPPUNIT_TEST(testDegreesToRadians_float);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -52,10 +53,19 @@ class ServiceTest : public CppUnit::TestFixture {
         void tearDown() {
         }
 
-        void testStub() {
-            //CPPUNIT_ASSERT_EQUAL(true, false);
+        void testDegreesToRadians_float() {
+            float degrees = 90.0f;
+            float expected = boost::math::float_constants::pi / 2.0f;
+            float actual = utility::degreesToRadians<float>(degrees);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 0.000001);
         }
 
+        void testDegreesToRadians_double() {
+            double degrees = 293.7;
+            double expected = degrees * boost::math::double_constants::pi / 180;
+            double actual = utility::degreesToRadians<double>(degrees);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 0.000001);
+        }
     private:
 
 };

@@ -28,8 +28,11 @@
 #ifndef ASKAP_CP_SMS_UTILITY_H
 #define ASKAP_CP_SMS_UTILITY_H
 
+// System includes
+
 // ASKAPsoft includes
 #include <boost/noncopyable.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <Common/ParameterSet.h>
 
 // Local package includes
@@ -46,15 +49,17 @@ namespace utility {
 /// @param[in]  parset  the parameter set containing the configuration.
 void createSchema(const LOFAR::ParameterSet& parset);
 
-
-/// @brief Calculate the HEALPix index for a given RA and declination.
+/// @brief Conversion from degrees to radians
 ///
-/// @note   I will probably require a vectorisable version of this function
-///         that operates on a vector of input coordinates, but this function
-///         will suffice for the initial unit tests.
-/// @param[in] ra  J2000 right ascension (decimal degrees)
-/// @param[in] dec J2000 declination (decimal degrees)
-long calcHealPixIndex(double ra, double dec, double nside);
+/// @tparam Numeric The numeric type (double, float)
+/// @param degrees The value in degrees to convert
+///
+/// @return The value in radians
+template<class Numeric> inline Numeric degreesToRadians(Numeric degrees) {
+    // This looks weird, but boost defines the degree constant as pi/180
+    return degrees * boost::math::constants::degree<Numeric>();
+}
+
 
 };
 };
