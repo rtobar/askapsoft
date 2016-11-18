@@ -59,8 +59,15 @@ casa::IPosition FitsImageAccess::shape(const std::string &name) const
 casa::Array<float> FitsImageAccess::read(const std::string &name) const
 {
     ASKAPLOG_INFO_STR(logger, "Reading FITS image " << name);
-    casa::PagedImage<float> img(name);
-    return img.get();
+    casa::FITSImage img(name);
+
+    const casa::IPosition shape = img.shape();
+    ASKAPLOG_INFO_STR(logger," - Shape " << shape);
+    casa::IPosition blc(shape.nelements(),0);
+    casa::IPosition trc(shape);
+    return this->read(name,blc,trc);
+
+
 }
 
 /// @brief read part of the image
@@ -72,8 +79,12 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
         const casa::IPosition &trc) const
 {
     ASKAPLOG_INFO_STR(logger, "Reading a slice of the FITS image " << name << " from " << blc << " to " << trc);
-    casa::PagedImage<float> img(name);
-    return img.getSlice(casa::Slicer(blc, trc, casa::Slicer::endIsLast));
+    casa::FITSImage img(name);
+    casa::Array<float> buffer;
+    casa::Slicer slc(blc,trc,casa::Slicer::endIsLast);
+    ASKAPCHECK(img.doGetSlice(buffer,slc), "Cannot read image");
+    return buffer;
+
 }
 
 /// @brief obtain coordinate system info
