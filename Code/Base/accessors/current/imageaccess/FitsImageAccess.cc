@@ -33,6 +33,8 @@
 #include <imageaccess/FitsImageAccess.h>
 
 #include <askap/AskapLogging.h>
+
+#include <casacore/images/Images/FITSImage.h>
 #include <casacore/images/Images/PagedImage.h>
 
 ASKAP_LOGGER(logger, ".fitsImageAccessor");
@@ -47,7 +49,7 @@ using namespace askap::accessors;
 /// @return full shape of the given image
 casa::IPosition FitsImageAccess::shape(const std::string &name) const
 {
-    casa::PagedImage<float> img(name);
+    casa::FITSImage img(name);
     return img.shape();
 }
 
