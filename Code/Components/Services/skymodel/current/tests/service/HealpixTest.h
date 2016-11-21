@@ -53,15 +53,15 @@ class HealpixTest : public CppUnit::TestFixture {
         }
 
         void testCalcHealpixIndex() {
-            //double ra = 14.8;
-            //double dec = 43.1;
-            //long order = 5;
+            double ra = 14.8;
+            double dec = 43.1;
+            long order = 5;
 
-            //Spherical s(order);
-            //long actual = s.calcHealPixIndex(ra, dec);
-            //long expected = 43;  // TODO determine real expected value
+            Spherical s(order);
+            long actual = s.calcHealPixIndex(ra, dec);
+            long expected = 2663;
 
-            //CPPUNIT_ASSERT_EQUAL(expected, actual);
+            CPPUNIT_ASSERT_EQUAL(expected, actual);
         }
 
     private:

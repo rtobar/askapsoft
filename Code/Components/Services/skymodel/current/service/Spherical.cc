@@ -44,6 +44,7 @@
 
 // Local includes
 #include "SkyModelServiceImpl.h"
+#include "Utility.h"
 
 ASKAP_LOGGER(logger, ".Spherical");
 
@@ -68,14 +69,18 @@ long Spherical::calcHealPixIndex(double ra, double dec) const
     // contiguous arrays of ra and dec coordinates, with the T_Healpix_Base
     // object being reused if possible, or thread-local if it is not
     // thread-safe.
-    T_Healpix_Base<long> hp(8, NEST);
+    ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
+    ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
+
+    T_Healpix_Base<long> hp(this->itsNSide, NEST, SET_NSIDE);
 
     // convert ra/dec to a pointing:
     // theta = (90 - dec)
     // phi = ra
-    pointing p(90 - dec, ra); // TODO to radians
+    pointing p(
+            utility::degreesToRadians(90.0 - dec),
+            utility::degreesToRadians(ra));
     return hp.ang2pix(p);
-    //return 43;
 }
 
 };

@@ -29,6 +29,7 @@
 #define ASKAP_CP_SMS_SPHERICAL_H
 
 // ASKAPsoft includes
+#include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
 #include <Common/ParameterSet.h>
 
@@ -57,7 +58,7 @@ class Spherical : private boost::noncopyable {
         long calcHealPixIndex(double ra, double dec) const;
 
     private:
-        long itsNSide;
+        boost::int64_t itsNSide;
 };
 
 };
