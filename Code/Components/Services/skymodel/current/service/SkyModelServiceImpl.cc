@@ -37,15 +37,9 @@
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
 
-// ODB includes
-#include <odb/mysql/database.hxx>
-#include <odb/sqlite/database.hxx>
-#include <odb/schema-catalog.hxx>
-#include <odb/connection.hxx>
-#include <odb/transaction.hxx>
-
 // Local package includes
-#include "datamodel/ContinuumComponent-odb.h"
+//#include "datamodel/ContinuumComponent-odb.h"
+#include "GlobalSkyModel.h"
 #include "Utility.h"
 
 ASKAP_LOGGER(logger, ".SkyModelService");
@@ -57,82 +51,24 @@ using namespace askap::interfaces::skymodelservice;
 
 SkyModelServiceImpl* SkyModelServiceImpl::create(const LOFAR::ParameterSet& parset)
 {
-    SkyModelServiceImpl* pImpl = 0;
-    const string dbType = parset.get("database.backend");
-    //const string tablespace = parset.get("database.tablespace");
-    ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
-    //ASKAPLOG_DEBUG_STR(logger, "database tablespace: " << tablespace);
-
-    if (dbType.compare("sqlite") == 0) {
-        // get parameters
-        const LOFAR::ParameterSet& dbParset = parset.makeSubset("sqlite.");
-        const string dbName = dbParset.get("name");
-
-        ASKAPLOG_INFO_STR(logger, "Instantiating sqlite backend into " << dbName);
-
-        // create the database
-        ::boost::shared_ptr<odb::database> pDb(
-            new sqlite::database(
-                dbName,
-                SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
-
-        // create the implementation
-        pImpl = new SkyModelServiceImpl(pDb);
-        //pImpl = new SkyModelServiceImpl(pDb, tablespace);
-        ASKAPCHECK(pImpl, "SkyModelServiceImpl construction failed");
-    }
-    else if (dbType.compare("mysql") == 0) {
-        // TODO Implement support for MySQL
-        ASKAPTHROW(AskapError, "MySQL support not implemented yet");
-    }
-    else {
-        ASKAPTHROW(AskapError, "Unsupported database backend: " << dbType);
-    }
-
+    ASKAPLOG_DEBUG_STR(logger, "factory");
+    boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(parset));
+    SkyModelServiceImpl* pImpl = new SkyModelServiceImpl(pGsm);
     ASKAPCHECK(pImpl, "SkyModelServiceImpl creation failed");
     return pImpl;
 }
 
 SkyModelServiceImpl::SkyModelServiceImpl(
-    ::boost::shared_ptr<odb::database> database)
-    //const std::string& tablespace)
+    boost::shared_ptr<GlobalSkyModel> gsm)
     :
-    itsDb(database)
-    //itsTablespace(tablespace)
+    itsGsm(gsm)
 {
+    ASKAPLOG_DEBUG_STR(logger, "ctor");
 }
 
 SkyModelServiceImpl::~SkyModelServiceImpl()
 {
     ASKAPLOG_DEBUG_STR(logger, "dtor");
-    // shutdown the database
-}
-
-bool SkyModelServiceImpl::createSchema(bool dropTables)
-{
-    if (itsDb->id () == odb::id_sqlite) {
-        ASKAPLOG_DEBUG_STR(logger, "Creating sqlite db");
-        createSchemaSqlite(dropTables);
-        return true;
-    }
-
-    return false;
-}
-
-void SkyModelServiceImpl::createSchemaSqlite(bool dropTables)
-{
-    // Create the database schema. Due to bugs in SQLite foreign key
-    // support for DDL statements, we need to temporarily disable
-    // foreign keys.
-    connection_ptr c(itsDb->connection());
-
-    c->execute ("PRAGMA foreign_keys=OFF");
-
-    transaction t(c->begin());
-    schema_catalog::create_schema(*itsDb, "", dropTables);
-    t.commit();
-
-    c->execute("PRAGMA foreign_keys=ON");
 }
 
 std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)

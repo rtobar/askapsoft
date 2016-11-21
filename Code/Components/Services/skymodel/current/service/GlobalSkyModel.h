@@ -1,4 +1,4 @@
-/// @file SkyModelServiceImpl.h
+/// @file GlobalSkyModel.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,8 +24,8 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
-#define ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
+#ifndef ASKAP_CP_SMS_GLOBALSKYMODEL_H
+#define ASKAP_CP_SMS_GLOBALSKYMODEL_H
 
 // System includes
 #include <string>
@@ -36,63 +36,55 @@
 #include <Common/ParameterSet.h>
 #include <Ice/Ice.h>
 
-// Ice interfaces
-#include <SkyModelService.h>
+// ODB
+#include <odb/database.hxx>
 
 // Local package includes
-#include "GlobalSkyModel.h"
 
 namespace askap {
 namespace cp {
 namespace sms {
 
-namespace sms_interface = askap::interfaces::skymodelservice;
-
-/// @brief Implementation of the "ISkyModelService" Ice interface.
-class SkyModelServiceImpl : 
-    public sms_interface::ISkyModelService,
+/// @brief Service facade to the Global Sky Model database.
+/// 
+/// Separating this from the Ice interface implementation allows 
+/// a non-Ice command-line application to use the same database access code.
+class GlobalSkyModel : 
     private boost::noncopyable {
     public:
 
-        /// @brief Factory method for constructing the SkyModelService
-        /// implementation.
+        /// @brief Factory method for constructing the GlobalSkyModel implementation.
         ///
-        /// @return The SkyModelServiceImpl instance.
+        /// @return The GlobalSkyModel instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static SkyModelServiceImpl* create(const LOFAR::ParameterSet& parset);
+        static GlobalSkyModel* create(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
-        virtual ~SkyModelServiceImpl();
+        virtual ~GlobalSkyModel();
 
-        virtual std::string getServiceVersion(const Ice::Current&);
+        /// @brief Initialises an empty database with the schema
+        /// @param dropTables Should existing tables be dropped or not.
+        /// @return true if the schema was created; false if the schema already exists
+        bool createSchema(bool dropTables=true);
 
-        virtual sms_interface::ComponentIdSeq coneSearch(
-            double rightAscension,
-            double declination,
-            double searchRadius, 
-            double fluxLimit,
-            const Ice::Current&);
-
-        virtual sms_interface::ComponentSeq getComponents(
-            const sms_interface::ComponentIdSeq& componentIds,
-            const Ice::Current&);
-
-        virtual sms_interface::ComponentIdSeq addComponents(
-            const sms_interface::ComponentSeq& components,
-            const Ice::Current&);
-
-        virtual void removeComponents(
-            const sms_interface::ComponentIdSeq& componentIds,
-            const Ice::Current&);
+        /// @brief Ingests a VO table of Continuum Components into the GSM.
+        /// @param filename The VO table file name.
+        /// @return true on success; otherwise false.
+        bool ingestVoTable(const std::string& filename);
 
     private:
         /// @brief Constructor. 
         /// Private. Use the factory method to create.
-        /// @param gsm The GlobalSkyModel instance.
-        SkyModelServiceImpl(boost::shared_ptr<GlobalSkyModel> gsm);
+        /// @param itsDb The odb::database instance.
+        GlobalSkyModel(boost::shared_ptr<odb::database> database);
 
-        /// @brief The GlobalSkyModel instance
-        boost::shared_ptr<GlobalSkyModel> itsGsm;
+        /// @brief SQLite-specific schema creation method
+        ///
+        /// @param dropTables Should existing tables be dropped or not.
+        void createSchemaSqlite(bool dropTables=true);
+
+        /// @brief The odb database
+        boost::shared_ptr<odb::database> itsDb;
 };
 
 }

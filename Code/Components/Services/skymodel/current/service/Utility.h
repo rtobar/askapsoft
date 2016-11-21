@@ -43,12 +43,6 @@ namespace cp {
 namespace sms {
 namespace utility {
 
-/// @brief Create the database schema in an empty database
-/// (schema/namespace depending on terminology).
-///
-/// @param[in]  parset  the parameter set containing the configuration.
-void createSchema(const LOFAR::ParameterSet& parset);
-
 /// @brief Conversion from degrees to radians
 ///
 /// @tparam Numeric The numeric type (double, float)

@@ -46,15 +46,18 @@
 #include <odb/exception.hxx>
 
 // Local Package includes
+#include "service/GlobalSkyModel.h"
 #include "service/SkyModelService.h"
 #include "service/Utility.h"
 
 
 using namespace askap;
+using namespace askap::cp::sms;
 
 ASKAP_LOGGER(logger, ".sms_tools");
 
 #define CREATE_SCHEMA "create-schema"
+#define INGEST_VO_TABLE "upload-votable"
 
 class SmsToolsApp : public askap::Application {
     public:
@@ -65,9 +68,12 @@ class SmsToolsApp : public askap::Application {
             try {
                 // Dispatch to the requested utility function
                 if (parameterExists(CREATE_SCHEMA)) {
-                    cp::sms::utility::createSchema(config());
+                    return createSchema();
                 }
-            } catch (const askap::AskapError& e) {
+                else if (parameterExists(INGEST_VO_TABLE)) {
+                    return ingestVoTable();
+                }
+            } catch (const AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
                 return 1;
             } catch (const odb::exception& e) {
@@ -82,11 +88,25 @@ class SmsToolsApp : public askap::Application {
 
             return 0;
         }
+
+        int createSchema() {
+            const LOFAR::ParameterSet& parset = config();
+            bool dropTables = parset.getBool("database.create_schema.droptables", true);
+
+            boost::scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+            return pGsm->createSchema(dropTables) ? 0 : 4;
+        }
+
+        int ingestVoTable() {
+            boost::scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+            return pGsm->ingestVoTable(parameter(INGEST_VO_TABLE)) ? 0 : 5;
+        }
 };
 
 int main(int argc, char *argv[])
 {
     SmsToolsApp app;
     app.addParameter(CREATE_SCHEMA, "s", "Initialises an empty database", false);
+    app.addParameter(INGEST_VO_TABLE, "u", "Ingest/upload a VO Table of components to the global sky model", true);
     return app.main(argc, argv);
 }
