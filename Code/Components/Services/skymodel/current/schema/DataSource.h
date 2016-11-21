@@ -32,6 +32,7 @@
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
+#include <boost/cstdint.hpp>
 
 // Local package includes
 
@@ -62,13 +63,13 @@ struct DataSource {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    unsigned long version;
+    boost::uint32_t version;
 
     // @brief Primary key unique identifier
     // @units none
     #pragma db index
     #pragma db id auto
-    long data_source_id;
+    boost::uint32_t data_source_id;
 
     // Include the fields generated from the design spreadsheet
     #include "DataSource.i"

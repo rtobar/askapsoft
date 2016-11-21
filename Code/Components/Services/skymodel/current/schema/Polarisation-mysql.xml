@@ -1,8 +1,8 @@
 <changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
   <model version="1">
     <table name="Polarisation" options="ENGINE=InnoDB" kind="object">
-      <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="polarisation_component_id" type="BIGINT" null="false"/>
+      <column name="version" type="INT UNSIGNED" null="false"/>
+      <column name="polarisation_component_id" type="INT UNSIGNED" null="false"/>
       <column name="flux_I_median" type="DOUBLE" null="false"/>
       <column name="flux_Q_median" type="DOUBLE" null="false"/>
       <column name="flux_U_median" type="DOUBLE" null="false"/>

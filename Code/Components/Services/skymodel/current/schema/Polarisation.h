@@ -32,6 +32,7 @@
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
+#include <boost/cstdint.hpp>
 
 // Local package includes
 
@@ -60,13 +61,13 @@ struct Polarisation {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    unsigned long version;
+    boost::uint32_t version;
 
     // @brief Primary key unique identifier
     // @units none
     #pragma db index
     #pragma db id auto
-    long polarisation_component_id;
+    boost::uint32_t polarisation_component_id;
 
     // Include the fields generated from the design spreadsheet
     #include "Polarisation.i"

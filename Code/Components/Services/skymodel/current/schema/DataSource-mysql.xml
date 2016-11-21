@@ -1,8 +1,8 @@
 <changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
   <model version="1">
     <table name="DataSource" options="ENGINE=InnoDB" kind="object">
-      <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="data_source_id" type="BIGINT" null="false"/>
+      <column name="version" type="INT UNSIGNED" null="false"/>
+      <column name="data_source_id" type="INT UNSIGNED" null="false"/>
       <column name="name" type="TEXT" null="false"/>
       <column name="catalogue_id" type="TEXT" null="true"/>
       <primary-key auto="true">

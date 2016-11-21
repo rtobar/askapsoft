@@ -77,15 +77,15 @@ def load(
     return data[data.include_in_gsm == True]
 
 type_map = {
-    'BIGINT': 'long',
-    'BIGINT UNSIGNED': 'unsigned long',
+    'BIGINT': 'boost::int64_t',
+    'BIGINT UNSIGNED': 'boost::uint64_t',
     'REAL': 'float',
     'DOUBLE': 'double',
     'VARCHAR': 'std::string',
     'TEXT': 'std::string',
     'BOOLEAN': 'bool',
-    'INTEGER': 'int',
-    'INTEGER UNSIGNED': 'unsigned int',
+    'INTEGER': 'boost::int32_t',
+    'INTEGER UNSIGNED': 'boost::uint32_t',
     'DATETIME': 'boost::posix_time::ptime',
 }
 

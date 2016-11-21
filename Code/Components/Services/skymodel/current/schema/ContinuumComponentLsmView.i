@@ -1,5 +1,5 @@
 /// @brief The HEALPix index of this component
-long healpix_index;
+boost::int64_t healpix_index;
 
 /// @brief J2000 right ascension (deg)
 double ra_deg_cont;

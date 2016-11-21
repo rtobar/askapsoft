@@ -6,12 +6,12 @@ boost::posix_time::ptime observation_date;
 /// @brief The HEALPix index of this component
 #pragma db index
 #pragma db not_null
-long healpix_index;
+boost::int64_t healpix_index;
 
 /// @brief Scheduling Block identifier
 #pragma db index
 #pragma db null
-long sb_id;
+boost::int64_t sb_id;
 
 /// @brief Component identifier
 #pragma db null

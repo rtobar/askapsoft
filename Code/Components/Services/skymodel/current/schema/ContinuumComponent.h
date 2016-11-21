@@ -28,10 +28,12 @@
 #define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
 
 // System includes
+//#include <cstdint>
 #include <string>
 
 // ASKAPsoft includes
 #include <odb/core.hxx>
+#include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 //#include <odb/boost/lazy-ptr.hxx>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -64,13 +66,13 @@ struct ContinuumComponent {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    unsigned long version;
+    boost::uint32_t version;
 
     // @brief Primary key unique identifier
     // @units none
     #pragma db index
     #pragma db id auto
-    long continuum_component_id;
+    boost::uint32_t continuum_component_id;
 
     // Include the fields generated from the design spreadsheet
     #include "ContinuumComponent.i"
