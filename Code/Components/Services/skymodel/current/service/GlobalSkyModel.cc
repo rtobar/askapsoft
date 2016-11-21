@@ -36,6 +36,7 @@
 // ASKAPsoft includes
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
+#include <votable/VOTable.h>
 
 // ODB includes
 #include <odb/mysql/database.hxx>
@@ -52,6 +53,7 @@ ASKAP_LOGGER(logger, ".GlobalSkyModel");
 
 using namespace odb;
 using namespace askap::cp::sms;
+using namespace askap::accessors;
 
 
 GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
@@ -133,5 +135,13 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
 }
 
 bool GlobalSkyModel::ingestVoTable(const std::string& filename) {
-    return false;
+    ASKAPLOG_DEBUG_STR(logger, "Reading VO table from " << filename);
+    VOTable votable = VOTable::fromXML(filename);
+    ASKAPLOG_DEBUG_STR(
+        logger,
+        "opened VO table. Desc: " << votable.getDescription() << std::endl <<
+        votable.getResource().size() << " resources" << std::endl <<
+        votable.getInfo().size() << " info entries");
+
+    return true;
 }
