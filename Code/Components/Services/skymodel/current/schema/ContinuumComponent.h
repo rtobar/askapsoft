@@ -66,7 +66,7 @@ struct ContinuumComponent {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    boost::uint32_t version;
+    boost::uint64_t version;
 
     // @brief Primary key unique identifier
     // @units none

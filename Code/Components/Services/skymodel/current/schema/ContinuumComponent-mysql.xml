@@ -1,7 +1,7 @@
 <changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
   <model version="1">
     <table name="ContinuumComponent" options="ENGINE=InnoDB" kind="object">
-      <column name="version" type="INT UNSIGNED" null="false"/>
+      <column name="version" type="BIGINT UNSIGNED" null="false"/>
       <column name="continuum_component_id" type="INT UNSIGNED" null="false"/>
       <column name="observation_date" type="DATETIME" null="true"/>
       <column name="healpix_index" type="BIGINT" null="false"/>
