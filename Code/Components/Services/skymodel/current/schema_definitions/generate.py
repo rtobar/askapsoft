@@ -13,19 +13,19 @@ import pandas as pd
 
 files = [
     {
-        'input': '~/Dropbox/GSM_casda.continuum_component_description_v1.8.xlsx',
+        'input': './GSM_casda.continuum_component_description.xlsx',
         'output': '../schema/ContinuumComponent.i',
         'parse_cols': None,
         'skiprows': [0],
     },
     {
-        'input': '~/Dropbox/GSM_casda_polarisation_v0.6.xlsx',
+        'input': './GSM_casda_polarisation.xlsx',
         'output': '../schema/Polarisation.i',
         'parse_cols': None,
         'skiprows': [0],
     },
     {
-        'input': '~/Dropbox/GSM_data_source_description_v1.0.xlsx',
+        'input': './GSM_data_source_description.xlsx',
         'output': '../schema/DataSource.i',
         'parse_cols': None,
         'skiprows': [0],
@@ -35,8 +35,8 @@ files = [
 view_files = [
     {
         'inputs': [
-            '~/Dropbox/GSM_casda.continuum_component_description_v1.8.xlsx',
-            '~/Dropbox/GSM_casda_polarisation_v0.6.xlsx',
+            './GSM_casda.continuum_component_description.xlsx',
+            './GSM_casda_polarisation.xlsx',
             ],
         'output': '../schema/ContinuumComponentLsmView.i',
         'parse_cols': None,
