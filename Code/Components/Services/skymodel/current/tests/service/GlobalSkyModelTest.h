@@ -30,12 +30,13 @@
 // Support classes
 #include <string>
 #include <boost/filesystem.hpp>
+#include <votable/VOTable.h>
 
 // Classes to test
 #include "service/GlobalSkyModel.h"
 
-using std::string;
-using std::vector;
+using namespace std;
+using namespace askap::accessors;
 
 namespace askap {
 namespace cp {
@@ -43,22 +44,73 @@ namespace sms {
 
 class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
-        CPPUNIT_TEST(testIngestVoTable);
+        CPPUNIT_TEST(testSmallVoTableMetadata);
         CPPUNIT_TEST_SUITE_END();
 
     public:
+        GlobalSkyModelTest() :
+            small_no_pol("./tests/data/votable_small_no_polarisation.xml"),
+            large_no_pol("./tests/data/votable_large_no_polarisation.xml")
+        {
+        }
+
         void setUp() {
         }
 
         void tearDown() {
         }
 
-        void testIngestVoTable() {
-            CPPUNIT_ASSERT(boost::filesystem::exists("./tests/data/votable_small_no_polarisation.xml"));
+        void testSmallVoTableMetadata() {
+            CPPUNIT_ASSERT(boost::filesystem::exists(small_no_pol));
+
+            VOTable vt = VOTable::fromXML(small_no_pol);
+            cout << "\nSmall VOTable Metadata\n" <<
+                "Desc: " << vt.getDescription() << endl <<
+                vt.getResource().size() << " resources\n" <<
+                vt.getInfo().size() << " info entries\n";
+
+            const VOTableResource& r = vt.getResource().front();
+            cout <<   "Resource 0:\n" <<
+                //"ID: " << r.getID() << endl <<
+                "Name: " << r.getName() << endl <<
+                "Type: " << r.getType() << endl <<
+                "Num Info blocks: " << r.getInfo().size() << endl <<
+                //"Num Tables: " << r.getTables().size() << endl <<
+                endl;
+
+            const VOTableTable& t = r.getTables().front();
+            cout << "Table: " << &t;
+
+            //const VOTableTable& t = r.getTables()[0];
+            //cout <<   "Table 0:\n" <<
+                //"ID: " << t.getID() << endl <<
+                //"Name: " << t.getName() << endl <<
+                //"Desc: " << t.getDescription() << endl <<
+                //"Num groups: " << t.getGroups().size() << endl <<
+                //"Num fields: " << t.getFields().size() << endl <<
+                //"Num rows: " << t.getRows().size() << endl;
+
+            //if (r.getInfo().size() > 0) {
+                //for (vector<VOTableInfo>::iterator it = r.getInfo().begin(); it != r.getInfo().end(); ++it) {
+                    //cout << "\t" << it->getID() << " : " << it->getName() << " : " <<
+                        //it->getValue() << " : " << it->getText(); }
+            //} else {
+                //cout << "No info\n";
+            //}
+
+            //if (r.getTables().size() > 0) {
+                //for (vector<VOTableTable>::iterator it = r.getTables().begin(); it != r.getTables().end(); ++it) {
+                    //cout << "\t" << it->getID() << " : " << it->getName() << " : " <<
+                        //it->getValue() << " : " << it->getText(); }
+            //} else {
+                //cout << "No tables\n";
+            //}
         }
 
     private:
 
+        const string small_no_pol;
+        const string large_no_pol;
 };
 
 }
