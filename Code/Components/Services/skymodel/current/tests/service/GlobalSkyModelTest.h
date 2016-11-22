@@ -1,4 +1,4 @@
-/// @file tstub.cc
+/// @file GlobalSkyModelTest.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,28 +24,43 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-// ASKAPsoft includes
-#include <AskapTestRunner.h>
+// CPPUnit includes
+#include <cppunit/extensions/HelperMacros.h>
 
-// Test includes
-#include "HealpixTest.h"
-#include "GlobalSkyModelTest.h"
-#include "ServiceTest.h"
-#include "UtilityTest.h"
+// Support classes
+#include <string>
+#include <boost/filesystem.hpp>
 
-int main(int argc, char *argv[])
-{
-    // Set up the test runner
-    askapdev::testutils::AskapTestRunner runner(argv[0]);
+// Classes to test
+#include "service/GlobalSkyModel.h"
 
-    // Add all the tests
-    runner.addTest(askap::cp::sms::ServiceTest::suite());
-    runner.addTest(askap::cp::sms::HealpixTest::suite());
-    runner.addTest(askap::cp::sms::UtilityTest::suite());
-    runner.addTest(askap::cp::sms::GlobalSkyModelTest::suite());
+using std::string;
+using std::vector;
 
-    // Run
-    const bool wasSucessful = runner.run();
+namespace askap {
+namespace cp {
+namespace sms {
 
-    return wasSucessful ? 0 : 1;
+class GlobalSkyModelTest : public CppUnit::TestFixture {
+        CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
+        CPPUNIT_TEST(testIngestVoTable);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp() {
+        }
+
+        void tearDown() {
+        }
+
+        void testIngestVoTable() {
+            CPPUNIT_ASSERT(boost::filesystem::exists("./tests/data/votable_small_no_polarisation.xml"));
+        }
+
+    private:
+
+};
+
+}
+}
 }
