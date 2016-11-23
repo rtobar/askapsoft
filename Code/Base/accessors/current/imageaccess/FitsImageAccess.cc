@@ -30,7 +30,7 @@
 
 #include <askap_accessors.h>
 
-#include <imageaccess/FitsImageAccess.h>
+
 
 
 #include <askap/AskapLogging.h>
@@ -40,6 +40,9 @@
 #include <casacore/images/Images/ImageFITSConverter.h>
 #include <casacore/images/Images/PagedImage.h>
 #include <casacore/lattices/Lattices/ArrayLattice.h>
+
+#include <imageaccess/FITSImageRW.h>
+#include <imageaccess/FitsImageAccess.h>
 
 ASKAP_LOGGER(logger, ".fitsImageAccessor");
 
@@ -171,8 +174,11 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr)
 {
     ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
-    casa::PagedImage<float> img(name);
-    img.put(arr);
+    casa::String error;
+    error = casa::String("Not yet implemented");
+    ASKAPTHROW(AskapError,error)
+
+
 }
 
 /// @brief write a slice of an image
@@ -184,8 +190,10 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
 {
     ASKAPLOG_INFO_STR(logger, "Writing a slice with the shape " << arr.shape() << " into a FITS image " <<
                       name << " at " << where);
-    casa::PagedImage<float> img(name);
-    img.putSlice(arr, where);
+    casa::String error;
+    error = casa::String("Not yet implemented");
+    ASKAPTHROW(AskapError,error)
+
 }
 
 /// @brief set brightness units of the image
@@ -194,7 +202,7 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
 /// @param[in] units string describing brightness units of the image (e.g. "Jy/beam")
 void FitsImageAccess::setUnits(const std::string &name, const std::string &units)
 {
-    casa::PagedImage<float> img(name);
+    casa::FITSImage img(name);
     img.setUnits(casa::Unit(units));
 }
 
