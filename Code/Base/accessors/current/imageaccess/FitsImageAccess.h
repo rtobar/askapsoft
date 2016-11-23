@@ -38,7 +38,11 @@ namespace askap {
 namespace accessors {
 
 /// @brief Access casa image
-/// @details This class implements IImageAccess interface for FITS image
+/// @details This class implements IImageAccess interface for FITS images
+/// Internally we are dealing with casa images. We only need the FITS format
+/// for efficient output.
+/// It therefore makes sense to heavily inherit from the CASA conversion
+/// classes.
 /// @ingroup imageaccess
 struct FitsImageAccess : public IImageAccess {
 
@@ -114,6 +118,8 @@ struct FitsImageAccess : public IImageAccess {
     /// @param[in] min minor axis in radians
     /// @param[in] pa position angle in radians
     virtual void setBeamInfo(const std::string &name, double maj, double min, double pa);
+
+
 };
 
 

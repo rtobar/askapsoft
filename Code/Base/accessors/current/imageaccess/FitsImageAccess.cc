@@ -32,10 +32,14 @@
 
 #include <imageaccess/FitsImageAccess.h>
 
+
 #include <askap/AskapLogging.h>
 
 #include <casacore/images/Images/FITSImage.h>
+#include <casacore/images/Images/TempImage.h>
+#include <casacore/images/Images/ImageFITSConverter.h>
 #include <casacore/images/Images/PagedImage.h>
+#include <casacore/lattices/Lattices/ArrayLattice.h>
 
 ASKAP_LOGGER(logger, ".fitsImageAccessor");
 
@@ -92,7 +96,7 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
 /// @return coordinate system object
 casa::CoordinateSystem FitsImageAccess::coordSys(const std::string &name) const
 {
-    casa::PagedImage<float> img(name);
+    casa::FITSImage img(name);
     return img.coordinates();
 }
 
@@ -101,7 +105,7 @@ casa::CoordinateSystem FitsImageAccess::coordSys(const std::string &name) const
 /// @return beam info vector
 casa::Vector<casa::Quantum<double> > FitsImageAccess::beamInfo(const std::string &name) const
 {
-    casa::PagedImage<float> img(name);
+    casa::FITSImage img(name);
     casa::ImageInfo ii = img.imageInfo();
     return ii.restoringBeam().toVector();
 }
@@ -109,7 +113,8 @@ casa::Vector<casa::Quantum<double> > FitsImageAccess::beamInfo(const std::string
 // writing methods
 
 /// @brief create a new image
-/// @details A call to this method should preceed any write calls. The actual
+/// @details Unlike the casaaccessor this is only called when there is something
+/// to actually write.
 /// image may be created only upon the first write call. Details depend on the
 /// implementation.
 /// @param[in] name image name
@@ -118,8 +123,46 @@ casa::Vector<casa::Quantum<double> > FitsImageAccess::beamInfo(const std::string
 void FitsImageAccess::create(const std::string &name, const casa::IPosition &shape,
                              const casa::CoordinateSystem &csys)
 {
+
     ASKAPLOG_INFO_STR(logger, "Creating a new FITS image " << name << " with the shape " << shape);
-    casa::PagedImage<float> img(casa::TiledShape(shape), csys, name);
+    casa::String error;
+
+    // make an array
+    // this requires that the whole array fits in memory
+    // which may not in general be the case
+
+    casa::TempImage<casa::Float> img1(casa::TiledShape(shape),csys,0);
+
+    img1.setCoordinateInfo(csys);
+
+    // Now write the fits file.
+    casa::ImageFITSConverter::ImageToFITS (error, img1, name);
+
+
+
+    // // get the coo-sys and check for a quality axis
+    // CoordinateSystem cSys= image.coordinates();
+    // if (cSys.hasQualityAxis()){
+    //     // put the image to the FITSOut
+    //     if (!ImageFITSConverter::QualImgToFITSOut(error, os, image, outfile, memoryInMB,
+    //             preferVelocity, opticalVelocity, BITPIX, minPix, maxPix, degenerateLast,
+    //             verbose, stokesLast, preferWavelength, airWavelength, origin, history)){
+    //         return False;
+    //     }
+    // }
+    // else{
+    //     // put the image to the FITSOut
+    //     if (!ImageFITSConverter::ImageToFITSOut(error, os, image, outfile, memoryInMB,
+    //             preferVelocity, opticalVelocity, BITPIX, minPix, maxPix, degenerateLast,
+    //             verbose, stokesLast, preferWavelength, airWavelength, True, True, origin, history)){
+    //         return False;
+    //     }
+    // }
+    // if (outfile) {
+    //     delete outfile;
+    // }
+    //
+    // casa::PagedImage<float> img(casa::TiledShape(shape), csys, name);
 }
 
 /// @brief write full image

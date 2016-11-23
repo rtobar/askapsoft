@@ -50,66 +50,64 @@ class FitsImageAccessTest : public CppUnit::TestFixture
    CPPUNIT_TEST(testReadWrite);
    CPPUNIT_TEST_SUITE_END();
 public:
-   void setUp() {
-      LOFAR::ParameterSet parset;
-      parset.add("imagetype","fits");
-      itsImageAccessor = imageAccessFactory(parset);
-   }
+    void setUp() {
+        LOFAR::ParameterSet parset;
+        parset.add("imagetype","fits");
+        itsImageAccessor = imageAccessFactory(parset);
+    }
 
-   void testReadWrite() {
+    void testReadWrite() {
+        // Create FITS image
+        const std::string name = "tmp.fitsimage";
+        CPPUNIT_ASSERT(itsImageAccessor);
+        const casa::IPosition shape(2,10,5);
+        casa::Array<float> arr(shape);
+        arr.set(1.);
+        casa::CoordinateSystem coordsys(makeCoords());
+        itsImageAccessor->create(name, shape, coordsys);
+        itsImageAccessor->write(name,arr);
 
-    //   const std::string name = "tmp.testimage";
-    //   CPPUNIT_ASSERT(itsImageAccessor);
-    //   const casa::IPosition shape(2,10,5);
-    //   casa::Array<float> arr(shape);
-    //   arr.set(1.);
-    //   casa::CoordinateSystem coordsys(makeCoords());
-    //
-    //   // create and write a constant into image
-    //   itsImageAccessor->create(name, shape, coordsys);
-    //   itsImageAccessor->write(name,arr);
-    //
-    //   // check shape
-    //   CPPUNIT_ASSERT(itsImageAccessor->shape(name) == shape);
-    //   // read the whole array and check
-    //   casa::Array<float> readBack = itsImageAccessor->read(name);
-    //   CPPUNIT_ASSERT(readBack.shape() == shape);
-    //   for (int x=0; x<shape[0]; ++x) {
-    //        for (int y=0; y<shape[1]; ++y) {
-    //             const casa::IPosition index(2,x,y);
-    //             CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
-    //        }
-    //   }
-    //   // write a slice
-    //   casa::Vector<float> vec(10,2.);
-    //   itsImageAccessor->write(name,vec,casa::IPosition(2,0,3));
-    //   // read a slice
-    //   vec = itsImageAccessor->read(name,casa::IPosition(2,0,1),casa::IPosition(2,9,1));
-    //   CPPUNIT_ASSERT(vec.nelements() == 10);
-    //   for (int x=0; x<10; ++x) {
-    //        CPPUNIT_ASSERT(fabs(vec[x] - arr(casa::IPosition(2,x,1)))<1e-7);
-    //   }
-    //   vec = itsImageAccessor->read(name,casa::IPosition(2,0,3),casa::IPosition(2,9,3));
-    //   CPPUNIT_ASSERT(vec.nelements() == 10);
-    //   for (int x=0; x<10; ++x) {
-    //        CPPUNIT_ASSERT(fabs(vec[x] - arr(casa::IPosition(2,x,3)))>1e-7);
-    //        CPPUNIT_ASSERT(fabs(vec[x] - 2.)<1e-7);
-    //   }
-    //   // read the whole array and check
-    //   readBack = itsImageAccessor->read(name);
-    //   CPPUNIT_ASSERT(readBack.shape() == shape);
-    //   for (int x=0; x<shape[0]; ++x) {
-    //        for (int y=0; y<shape[1]; ++y) {
-    //             const casa::IPosition index(2,x,y);
-    //             CPPUNIT_ASSERT(fabs(readBack(index) - (y == 3 ? 2. : 1.))<1e-7);
-    //        }
-    //   }
-    //   CPPUNIT_ASSERT(itsImageAccessor->coordSys(name).nCoordinates() == 1);      
-    //   CPPUNIT_ASSERT(itsImageAccessor->coordSys(name).type(0) == casa::CoordinateSystem::LINEAR);
-    //
-    //   // auxilliary methods
-    //   itsImageAccessor->setUnits(name,"Jy/pixel");
-    //   itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
+        // check shape
+        CPPUNIT_ASSERT(itsImageAccessor->shape(name) == shape);
+        // read the whole array and check
+        casa::Array<float> readBack = itsImageAccessor->read(name);
+        CPPUNIT_ASSERT(readBack.shape() == shape);
+        for (int x=0; x<shape[0]; ++x) {
+            for (int y=0; y<shape[1]; ++y) {
+                const casa::IPosition index(2,x,y);
+                CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
+            }
+        }
+      // write a slice
+        casa::Vector<float> vec(10,2.);
+        itsImageAccessor->write(name,vec,casa::IPosition(2,0,3));
+        // read a slice
+        vec = itsImageAccessor->read(name,casa::IPosition(2,0,1),casa::IPosition(2,9,1));
+        CPPUNIT_ASSERT(vec.nelements() == 10);
+        for (int x=0; x<10; ++x) {
+           CPPUNIT_ASSERT(fabs(vec[x] - arr(casa::IPosition(2,x,1)))<1e-7);
+        }
+        vec = itsImageAccessor->read(name,casa::IPosition(2,0,3),casa::IPosition(2,9,3));
+        CPPUNIT_ASSERT(vec.nelements() == 10);
+        for (int x=0; x<10; ++x) {
+           CPPUNIT_ASSERT(fabs(vec[x] - arr(casa::IPosition(2,x,3)))>1e-7);
+           CPPUNIT_ASSERT(fabs(vec[x] - 2.)<1e-7);
+        }
+      // read the whole array and check
+        readBack = itsImageAccessor->read(name);
+        CPPUNIT_ASSERT(readBack.shape() == shape);
+        for (int x=0; x<shape[0]; ++x) {
+            for (int y=0; y<shape[1]; ++y) {
+                const casa::IPosition index(2,x,y);
+                CPPUNIT_ASSERT(fabs(readBack(index) - (y == 3 ? 2. : 1.))<1e-7);
+           }
+      }
+      CPPUNIT_ASSERT(itsImageAccessor->coordSys(name).nCoordinates() == 1);
+      CPPUNIT_ASSERT(itsImageAccessor->coordSys(name).type(0) == casa::CoordinateSystem::LINEAR);
+
+      // auxilliary methods
+      itsImageAccessor->setUnits(name,"Jy/pixel");
+      itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
    }
 
 protected:
