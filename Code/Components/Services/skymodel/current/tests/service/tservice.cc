@@ -39,9 +39,9 @@ int main(int argc, char *argv[])
     askapdev::testutils::AskapTestRunner runner(argv[0]);
 
     // Add all the tests
-    runner.addTest(askap::cp::sms::ServiceTest::suite());
-    runner.addTest(askap::cp::sms::HealpixTest::suite());
-    runner.addTest(askap::cp::sms::UtilityTest::suite());
+    //runner.addTest(askap::cp::sms::ServiceTest::suite());
+    //runner.addTest(askap::cp::sms::HealpixTest::suite());
+    //runner.addTest(askap::cp::sms::UtilityTest::suite());
     runner.addTest(askap::cp::sms::GlobalSkyModelTest::suite());
 
     // Run

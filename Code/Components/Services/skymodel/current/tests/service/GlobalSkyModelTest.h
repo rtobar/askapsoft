@@ -49,8 +49,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
     public:
         GlobalSkyModelTest() :
-            small_no_pol("./tests/data/votable_small_no_polarisation.xml"),
-            large_no_pol("./tests/data/votable_large_no_polarisation.xml")
+            small_components("./tests/data/votable_small_components.xml"),
+            large_components("./tests/data/votable_large_components.xml")
         {
         }
 
@@ -61,15 +61,15 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void testSmallVoTableMetadata() {
-            CPPUNIT_ASSERT(boost::filesystem::exists(small_no_pol));
+            CPPUNIT_ASSERT(boost::filesystem::exists(small_components));
 
-            VOTable vt = VOTable::fromXML(small_no_pol);
+            VOTable vt = VOTable::fromXML(small_components);
             cout << "\nSmall VOTable Metadata\n" <<
                 "Desc: " << vt.getDescription() << endl <<
                 vt.getResource().size() << " resources\n" <<
                 vt.getInfo().size() << " info entries\n";
 
-            const VOTableResource& r = vt.getResource().front();
+            const VOTableResource r = vt.getResource()[0];
             cout <<   "Resource 0:\n" <<
                 //"ID: " << r.getID() << endl <<
                 "Name: " << r.getName() << endl <<
@@ -78,39 +78,20 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 //"Num Tables: " << r.getTables().size() << endl <<
                 endl;
 
-            const VOTableTable& t = r.getTables().front();
-            cout << "Table: " << &t;
-
-            //const VOTableTable& t = r.getTables()[0];
-            //cout <<   "Table 0:\n" <<
-                //"ID: " << t.getID() << endl <<
-                //"Name: " << t.getName() << endl <<
-                //"Desc: " << t.getDescription() << endl <<
-                //"Num groups: " << t.getGroups().size() << endl <<
-                //"Num fields: " << t.getFields().size() << endl <<
-                //"Num rows: " << t.getRows().size() << endl;
-
-            //if (r.getInfo().size() > 0) {
-                //for (vector<VOTableInfo>::iterator it = r.getInfo().begin(); it != r.getInfo().end(); ++it) {
-                    //cout << "\t" << it->getID() << " : " << it->getName() << " : " <<
-                        //it->getValue() << " : " << it->getText(); }
-            //} else {
-                //cout << "No info\n";
-            //}
-
-            //if (r.getTables().size() > 0) {
-                //for (vector<VOTableTable>::iterator it = r.getTables().begin(); it != r.getTables().end(); ++it) {
-                    //cout << "\t" << it->getID() << " : " << it->getName() << " : " <<
-                        //it->getValue() << " : " << it->getText(); }
-            //} else {
-                //cout << "No tables\n";
-            //}
+            const VOTableTable t = r.getTables()[0];
+            cout <<   "Table 0:\n" <<
+                "ID: " << t.getID() << endl <<
+                "Name: " << t.getName() << endl <<
+                "Desc: " << t.getDescription() << endl <<
+                "Num groups: " << t.getGroups().size() << endl <<
+                "Num fields: " << t.getFields().size() << endl <<
+                "Num rows: " << t.getRows().size() << endl;
         }
 
     private:
 
-        const string small_no_pol;
-        const string large_no_pol;
+        const string small_components;
+        const string large_components;
 };
 
 }
