@@ -44,7 +44,7 @@ namespace sms {
 
 class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
-        CPPUNIT_TEST(testSmallVoTableMetadata);
+        CPPUNIT_TEST(testSmallComponentTableAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -60,32 +60,38 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         void tearDown() {
         }
 
-        void testSmallVoTableMetadata() {
+        void testSmallComponentTableAssumptions() {
+            // Not really a unit test of the GlobalSkyModel class, rather a
+            // test of my assumptions regarding the test data that will impact
+            // other tests.
             CPPUNIT_ASSERT(boost::filesystem::exists(small_components));
 
             VOTable vt = VOTable::fromXML(small_components);
-            cout << "\nSmall VOTable Metadata\n" <<
-                "Desc: " << vt.getDescription() << endl <<
-                vt.getResource().size() << " resources\n" <<
-                vt.getInfo().size() << " info entries\n";
+            CPPUNIT_ASSERT_EQUAL(vt.getResource().size(), 1ul);
+            //cout << "\nSmall VOTable Metadata\n" <<
+                //"Desc: " << vt.getDescription() << endl <<
+                //vt.getResource().size() << " resources\n" <<
+                //vt.getInfo().size() << " info entries\n";
 
-            const VOTableResource r = vt.getResource()[0];
-            cout <<   "Resource 0:\n" <<
+            //const VOTableResource r = vt.getResource()[0];
+            //cout <<   "Resource 0:\n" <<
                 //"ID: " << r.getID() << endl <<
-                "Name: " << r.getName() << endl <<
-                "Type: " << r.getType() << endl <<
-                "Num Info blocks: " << r.getInfo().size() << endl <<
-                //"Num Tables: " << r.getTables().size() << endl <<
-                endl;
+                //"Name: " << r.getName() << endl <<
+                //"Type: " << r.getType() << endl <<
+                //"Num Info blocks: " << r.getInfo().size() << endl <<
+                //"Num Tables: " << r.getTables().size() << end;
 
-            const VOTableTable t = r.getTables()[0];
-            cout <<   "Table 0:\n" <<
-                "ID: " << t.getID() << endl <<
-                "Name: " << t.getName() << endl <<
-                "Desc: " << t.getDescription() << endl <<
-                "Num groups: " << t.getGroups().size() << endl <<
-                "Num fields: " << t.getFields().size() << endl <<
-                "Num rows: " << t.getRows().size() << endl;
+            const VOTableTable t = vt.getResource()[0].getTables()[0];
+            CPPUNIT_ASSERT_EQUAL(vt.getResource()[0].getTables().size(), 1ul);
+            CPPUNIT_ASSERT_EQUAL(t.getFields().size(), 33ul);
+            CPPUNIT_ASSERT_EQUAL(t.getRows().size(), 10ul);
+            //cout <<   "Table 0:\n" <<
+                //"ID: " << t.getID() << endl <<
+                //"Name: " << t.getName() << endl <<
+                //"Desc: " << t.getDescription() << endl <<
+                //"Num groups: " << t.getGroups().size() << endl <<
+                //"Num fields: " << t.getFields().size() << endl <<
+                //"Num rows: " << t.getRows().size() << endl;
         }
 
     private:
