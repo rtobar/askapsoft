@@ -32,7 +32,16 @@
 
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/ArrayIO.h>
+
 #include <casacore/coordinates/Coordinates/LinearCoordinate.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
+#include <casacore/coordinates/Coordinates/Projection.h>
+
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+
 
 
 #include <boost/shared_ptr.hpp>
@@ -59,11 +68,41 @@ public:
     void testReadWrite() {
         // Create FITS image
         const std::string name = "tmp.fitsimage";
+        unlink(name.c_str());
         CPPUNIT_ASSERT(itsImageAccessor);
-        const casa::IPosition shape(2,10,5);
+        const casa::IPosition shape(3,10,5,5);
         casa::Array<float> arr(shape);
         arr.set(1.);
-        casa::CoordinateSystem coordsys(makeCoords());
+        // Build a coordinate system for the image
+        casa::Matrix<double> xform(2,2);                                    // 1
+        xform = 0.0; xform.diagonal() = 1.0;                          // 2
+        casa::DirectionCoordinate radec(casa::MDirection::J2000,                  // 3
+            casa::Projection(casa::Projection::SIN),        // 4
+            135*casa::C::pi/180.0, 60*casa::C::pi/180.0,    // 5
+            -1*casa::C::pi/180.0, 1*casa::C::pi/180,        // 6
+            xform,                              // 7
+            128.0, 128.0,                       // 8
+            999.0, 999.0);
+
+        casa::Vector<casa::String> units(2); units = "deg";                        //  9
+        radec.setWorldAxisUnits(units);
+
+        // Build a coordinate system for the spectral axis
+        // SpectralCoordinate
+        casa::SpectralCoordinate spectral(casa::MFrequency::TOPO,               // 27
+    				1400 * 1.0E+6,                  // 28
+    				20 * 1.0E+3,                    // 29
+    				0,                              // 30
+    				1420.40575 * 1.0E+6);           // 31
+        units.resize(1);
+        units = "MHz";
+        spectral.setWorldAxisUnits(units);
+
+        casa::CoordinateSystem coordsys;
+        coordsys.addCoordinate(radec);
+        coordsys.addCoordinate(spectral);
+
+
         itsImageAccessor->create(name, shape, coordsys);
         itsImageAccessor->write(name,arr);
 

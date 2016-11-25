@@ -23,10 +23,14 @@
 
 // ASKAPsoft includes
 #include <AskapTestRunner.h>
+#include <askap/AskapLogging.h>
 
 // Test includes
 #include <CasaImageAccessTest.h>
 #include <FitsImageAccessTest.h>
+
+
+ASKAP_LOGGER(logger, "imageaccesstest");
 
 int main(int argc, char *argv[])
 {
