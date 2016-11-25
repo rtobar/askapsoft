@@ -1,4 +1,4 @@
-/// @file GlobalSkyModel.h
+/// @file VoTableComponent.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,8 +24,8 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_GLOBALSKYMODEL_H
-#define ASKAP_CP_SMS_GLOBALSKYMODEL_H
+#ifndef ASKAP_CP_SMS_VOTABLECOMPONENT_H
+#define ASKAP_CP_SMS_VOTABLECOMPONENT_H
 
 // System includes
 #include <string>
@@ -33,10 +33,7 @@
 // ASKAPsoft includes
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <Common/ParameterSet.h>
 
-// ODB
-#include <odb/database.hxx>
 
 // Local package includes
 
@@ -44,46 +41,27 @@ namespace askap {
 namespace cp {
 namespace sms {
 
-/// @brief Service facade to the Global Sky Model database.
-///
-/// Separating this from the Ice interface implementation allows
-/// a non-Ice command-line application to use the same database access code.
-class GlobalSkyModel :
+/// @brief VO table data container for Component data
+class VoTableComponent :
     private boost::noncopyable {
     public:
 
-        /// @brief Factory method for constructing the GlobalSkyModel implementation.
+        /// @brief Factory method for constructing the VoTableComponent implementation.
         ///
-        /// @return The GlobalSkyModel instance.
+        /// @param size The number of components for which space should be preallocated.
+        /// @return The VoTableComponent instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static GlobalSkyModel* create(const LOFAR::ParameterSet& parset);
+        static VoTableComponent* create(long size);
 
         /// @brief Destructor.
-        virtual ~GlobalSkyModel();
-
-        /// @brief Initialises an empty database with the schema
-        /// @param dropTables Should existing tables be dropped or not.
-        /// @return true if the schema was created; false if the schema already exists
-        bool createSchema(bool dropTables=true);
-
-        /// @brief Ingests a VO table of Continuum Components into the GSM.
-        /// @param filename The VO table file name.
-        /// @return true on success; otherwise false.
-        bool ingestVoTable(const std::string& filename);
+        virtual ~VoTableComponent();
 
     private:
         /// @brief Constructor.
         /// Private. Use the factory method to create.
-        /// @param itsDb The odb::database instance.
-        GlobalSkyModel(boost::shared_ptr<odb::database> database);
-
-        /// @brief SQLite-specific schema creation method
         ///
-        /// @param dropTables Should existing tables be dropped or not.
-        void createSchemaSqlite(bool dropTables=true);
-
-        /// @brief The odb database
-        boost::shared_ptr<odb::database> itsDb;
+        /// @param size The number of components for which space should be preallocated.
+        VoTableComponent(long size);
 };
 
 }
