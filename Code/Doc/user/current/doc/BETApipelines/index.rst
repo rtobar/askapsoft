@@ -1,5 +1,5 @@
-BETA Processing Pipelines
-=========================
+ASKAP Processing Pipelines
+==========================
 
 The processing pipelines are scripts that tie together the various
 ASKAPsoft applications and allow them to be run as a coherent whole on
@@ -13,7 +13,7 @@ the ASKAP Central Processor platform.
    introduction.rst
    pipelineUsage.rst
    pipelineDiagnostics.rst
-   BETAcontrol.rst
+   ControlParameters.rst
    DataLocationSelection.rst
    BandpassCalibrator.rst
    ScienceFieldPreparation.rst
