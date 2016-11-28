@@ -1,4 +1,4 @@
-/// @file VoTableData.h
+/// @file VOTableData.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -29,10 +29,11 @@
 
 // System includes
 #include <string>
-
-// ASKAPsoft includes
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+
+// ASKAPsoft includes
+#include <votable/VOTable.h>
 
 
 // Local package includes
@@ -43,27 +44,36 @@ namespace sms {
 
 /// @brief VO table data container, with data stored in structure-of-arrays form
 /// suitable for threaded computations.
-class VoTableData :
+class VOTableData :
     private boost::noncopyable {
     public:
 
-        /// @brief Factory method for constructing the VoTableData implementation.
+        /// @brief Factory method for constructing the VOTableData implementation.
         ///
         /// @param components_file File name of the VO Table catalogue containing the components data
         /// @param polarisation_file File name of the VO Table catalogue containing the polarisation data for the components
-        /// @return The VoTableData instance.
+        /// @return The VOTableData instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static VoTableData* create(
+        static VOTableData* create(
             std::string components_file,
             std::string polarisation_file);
 
         /// @brief Destructor.
-        virtual ~VoTableData();
+        virtual ~VOTableData();
+
+        long getCount() const {
+            // TODO actual count
+            return 10;
+        }
 
     private:
         /// @brief Constructor.
         /// Private. Use the factory method to create.
-        VoTableData();
+        ///
+        /// @param num_components The number of components for which space should be preallocated.
+        VOTableData(long num_components);
+
+        bool add_row(const askap::accessors::VOTableRow& row);
 };
 
 }

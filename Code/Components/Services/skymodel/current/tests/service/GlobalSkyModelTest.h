@@ -34,6 +34,8 @@
 
 // Classes to test
 #include "service/GlobalSkyModel.h"
+#include "service/VOTableData.h"
+#include "service/VoTableComponent.h"
 
 using namespace std;
 using namespace askap::accessors;
@@ -44,6 +46,7 @@ namespace sms {
 
 class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
+        CPPUNIT_TEST(testSmallComponentTableLoad);
         CPPUNIT_TEST(testSmallComponentTableAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
@@ -58,6 +61,14 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void tearDown() {
+        }
+
+        void testSmallComponentTableLoad() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            CPPUNIT_ASSERT(pData);
+            CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
+
+            // TODO: get the first component and assert on the contents
         }
 
         void testSmallComponentTableAssumptions() {

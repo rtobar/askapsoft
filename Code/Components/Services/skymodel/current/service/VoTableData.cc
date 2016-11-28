@@ -1,4 +1,4 @@
-/// @file VoTableData.cc
+/// @file VOTableData.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,39 +25,84 @@
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
 // Include own header file first
-#include "VoTableData.h"
+#include "VOTableData.h"
 
 // Include package level header file
 #include "askap_skymodel.h"
 
 // System includes
 #include <string>
+#include <boost/filesystem.hpp>
 
 // ASKAPsoft includes
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
-#include <votable/VOTable.h>
 
 // Local package includes
 #include "Utility.h"
 
-ASKAP_LOGGER(logger, ".VoTableData");
+ASKAP_LOGGER(logger, ".VOTableData");
 
+using namespace std;
 using namespace askap::cp::sms;
 using namespace askap::accessors;
 
 
-VoTableData* VoTableData::create(
-    std::string components_file, std::string polarisation_file)
+VOTableData* VOTableData::create(
+    string components_file, string polarisation_file)
 {
-    return new VoTableData();
+    // open components file
+    VOTable components = VOTable::fromXML(components_file);
+    ASKAPASSERT(components.getResource().size() == 1ul);
+    ASKAPASSERT(components.getResource()[0].getTables().size() == 1ul);
+    const VOTableTable components_table = components.getResource()[0].getTables()[0];
+    vector<VOTableField> fields = components_table.getFields();
+    vector<VOTableRow> rows = components_table.getRows();
+    const long num_components = rows.size();
+
+    VOTableData* pData = new VOTableData(num_components);
+    ASKAPASSERT(pData);
+
+    // TODO: will it be better to reverse the order of field and row iteration?
+    // Typically there will be ~30 fields and ~1000 rows
+    for (vector<VOTableRow>::iterator rit = rows.begin(); rit != rows.end(); rit++) {
+        for (vector<VOTableField>::iterator fit = fields.begin(); fit != fields.end(); fit++) {
+            const string ucd = fit->getUCD();
+            const string type = fit->getDatatype();
+            const string unit = fit->getUnit();
+
+            //pData->add_row(*rit);
+        }
+    }
+
+    // open polarisation file if it exists
+    if (boost::filesystem::exists(polarisation_file))
+    {
+        // parse polarisation file
+    }
+
+    // Parse fields:
+    //  ucd to field/cell index
+    // Parse rows:
+    //  coerce type
+    //  get ucd from cell index
+    //  add data
+    //      units check
+
+
+    return pData;
 }
 
-VoTableData::VoTableData()
+VOTableData::VOTableData(long num_components)
 {
 }
 
-VoTableData::~VoTableData()
+VOTableData::~VOTableData()
 {
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }
+
+bool VOTableData::add_row(const VOTableRow& row) {
+    return true;
+}
+

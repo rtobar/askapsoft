@@ -49,10 +49,10 @@ using namespace askap::accessors;
 
 VoTableComponent* VoTableComponent::create(long size)
 {
-    return new VoTableComponent();
+    return new VoTableComponent(size);
 }
 
-VoTableComponent::VoTableComponent()
+VoTableComponent::VoTableComponent(long size)
 {
 }
 
