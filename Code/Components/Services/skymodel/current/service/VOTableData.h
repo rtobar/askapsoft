@@ -37,6 +37,7 @@
 
 
 // Local package includes
+#include "datamodel/ContinuumComponent.h"
 
 namespace askap {
 namespace cp {
@@ -73,7 +74,18 @@ class VOTableData :
         /// @param num_components The number of components for which space should be preallocated.
         VOTableData(long num_components);
 
-        bool add_row(const askap::accessors::VOTableRow& row);
+        bool add_component_row_field(
+            long row_index,
+            const std::string& ucd,
+            const std::string& type,
+            const std::string& unit,
+            const std::string& value);
+
+        std::vector<datamodel::ContinuumComponent> itsComponents;
+        std::vector<boost::int64_t> itsHealpixIndicies;
+        std::vector<double> itsRA;
+        std::vector<double> itsDec;
+        long itsNumComponents;
 };
 
 }

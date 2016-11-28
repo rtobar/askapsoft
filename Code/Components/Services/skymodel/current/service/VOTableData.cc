@@ -65,13 +65,23 @@ VOTableData* VOTableData::create(
 
     // TODO: will it be better to reverse the order of field and row iteration?
     // Typically there will be ~30 fields and ~1000 rows
-    for (vector<VOTableRow>::iterator rit = rows.begin(); rit != rows.end(); rit++) {
-        for (vector<VOTableField>::iterator fit = fields.begin(); fit != fields.end(); fit++) {
+    long row_index = 0;
+    vector<VOTableRow>::iterator rit;
+    for (rit = rows.begin(), row_index = 0;
+         rit != rows.end();
+         rit++, row_index++) {
+        const vector<std::string> rowData = rit->getCells();
+        long field_index = 0;
+        vector<VOTableField>::iterator fit;
+        for (fit = fields.begin(), field_index = 0;
+             fit != fields.end();
+             fit++, field_index++) {
             const string ucd = fit->getUCD();
             const string type = fit->getDatatype();
             const string unit = fit->getUnit();
+            const string value = rowData[field_index];
 
-            //pData->add_row(*rit);
+            pData->add_component_row_field(row_index, ucd, type, unit, value);
         }
     }
 
@@ -93,7 +103,12 @@ VOTableData* VOTableData::create(
     return pData;
 }
 
-VOTableData::VOTableData(long num_components)
+VOTableData::VOTableData(long num_components) :
+    itsComponents(num_components),
+    itsHealpixIndicies(num_components),
+    itsRA(num_components),
+    itsDec(num_components),
+    itsNumComponents(num_components)
 {
 }
 
@@ -102,7 +117,19 @@ VOTableData::~VOTableData()
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }
 
-bool VOTableData::add_row(const VOTableRow& row) {
+bool VOTableData::add_component_row_field(
+    long row_index,
+    const string& ucd,
+    const string& type,
+    const string& unit,
+    const string& value) {
+    ASKAPASSERT(row_index >= 0 && row_index < itsNumComponents);
+
+    // map ucd to the appropriate attribute in the component
+    // check that the units are correct
+    // coerce the string to the required type
+    // store the value 
+
     return true;
 }
 
