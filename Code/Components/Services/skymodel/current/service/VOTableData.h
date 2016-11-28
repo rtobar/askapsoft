@@ -31,6 +31,7 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/variant.hpp>
 
 // ASKAPsoft includes
 #include <votable/VOTable.h>
@@ -42,6 +43,8 @@
 namespace askap {
 namespace cp {
 namespace sms {
+
+typedef boost::variant<float, double, std::string> ValueTypes;
 
 /// @brief VO table data container, with data stored in structure-of-arrays form
 /// suitable for threaded computations.
@@ -74,12 +77,18 @@ class VOTableData :
         /// @param num_components The number of components for which space should be preallocated.
         VOTableData(long num_components);
 
+        static ValueTypes coerce_value(
+            const std::string& value,
+            const std::string& type);
+
         bool add_component_row_field(
             long row_index,
             const std::string& ucd,
             const std::string& type,
             const std::string& unit,
             const std::string& value);
+
+        void calc_healpix_indicies();
 
         std::vector<datamodel::ContinuumComponent> itsComponents;
         std::vector<boost::int64_t> itsHealpixIndicies;

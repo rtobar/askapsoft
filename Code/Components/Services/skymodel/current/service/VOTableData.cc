@@ -33,6 +33,7 @@
 // System includes
 #include <string>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 // ASKAPsoft includes
 #include <askap/AskapError.h>
@@ -91,14 +92,7 @@ VOTableData* VOTableData::create(
         // parse polarisation file
     }
 
-    // Parse fields:
-    //  ucd to field/cell index
-    // Parse rows:
-    //  coerce type
-    //  get ucd from cell index
-    //  add data
-    //      units check
-
+    pData->calc_healpix_indicies();
 
     return pData;
 }
@@ -117,6 +111,19 @@ VOTableData::~VOTableData()
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }
 
+ValueTypes VOTableData::coerce_value(
+    const std::string& value,
+    const std::string& type) {
+
+    ValueTypes v;
+    v = 0.0;
+    return v;
+}
+
+void VOTableData::calc_healpix_indicies() {
+    // TODO loop and calculate
+}
+
 bool VOTableData::add_component_row_field(
     long row_index,
     const string& ucd,
@@ -125,11 +132,33 @@ bool VOTableData::add_component_row_field(
     const string& value) {
     ASKAPASSERT(row_index >= 0 && row_index < itsNumComponents);
 
+    bool added = true;
+
     // map ucd to the appropriate attribute in the component
     // check that the units are correct
     // coerce the string to the required type
     // store the value 
 
-    return true;
+    if (boost::iequals(ucd, "pos.eq.ra;meta.main")) {
+        // RA
+        ASKAPASSERT(unit == "deg");
+        ASKAPASSERT(type == "double");
+        double ra = boost::get<double>(coerce_value(value, type));
+        itsComponents[row_index].ra_deg_cont = ra;
+        itsRA[row_index] = ra;
+    }
+    else if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
+        // Declination
+        ASKAPASSERT(unit == "deg");
+        ASKAPASSERT(type == "double");
+        double dec = boost::get<double>(coerce_value(value, type));
+        itsComponents[row_index].dec_deg_cont = dec;
+        itsDec[row_index] = dec;
+    }
+    else {
+        added = false;
+    }
+
+    return added;
 }
 
