@@ -35,5 +35,5 @@ rebuild: clean
 	rbuild $(RBUILD_FLAGS) -R -t install
 
 .PHONY: generate
-generate: clean
+generate: 
 	cd ./schema_definitions && python3 generate.py

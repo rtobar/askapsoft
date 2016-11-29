@@ -34,6 +34,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 // ASKAPsoft includes
 #include <askap/AskapError.h>
@@ -41,6 +42,7 @@
 
 // Local package includes
 #include "Utility.h"
+#include "VOTableParser.h"
 
 ASKAP_LOGGER(logger, ".VOTableData");
 
@@ -68,7 +70,7 @@ VOTableData* VOTableData::create(
 
     // TODO: will it be better to reverse the order of field and row iteration?
     // Typically there will be ~30 fields and ~1000 rows
-    long row_index = 0;
+    size_t row_index = 0;
     vector<VOTableRow>::iterator rit;
     for (rit = rows.begin(), row_index = 0;
          rit != rows.end();
@@ -79,12 +81,16 @@ VOTableData* VOTableData::create(
         for (fit = fields.begin(), field_index = 0;
              fit != fields.end();
              fit++, field_index++) {
-            const string ucd = fit->getUCD();
-            const string type = fit->getDatatype();
-            const string unit = fit->getUnit();
-            const string value = rowData[field_index];
-
-            pData->add_component_row_field(row_index, ucd, type, unit, value);
+            pData->parse_component_row_field(
+                row_index,
+                fit->getUCD(),
+                fit->getName(),
+                fit->getDatatype(),
+                fit->getUnit(),
+                rowData[field_index],
+                pData->itsComponents,
+                pData->itsRA,
+                pData->itsDec);
         }
     }
 
@@ -117,7 +123,19 @@ ValueTypes VOTableData::coerce_value(
     const std::string& type) {
 
     ValueTypes v;
-    v = 0.0;
+    if (boost::iequals(type, "float")) {
+        v = boost::lexical_cast<float>(value);
+    }
+    else if (boost::iequals(type, "double")) {
+        v = boost::lexical_cast<double>(value);
+    }
+    else if (boost::iequals(type, "bool")) {
+        v = boost::lexical_cast<bool>(value);
+    }
+    else if (boost::iequals(type, "char")) {
+        v = value;
+    }
+
     return v;
 }
 
@@ -125,13 +143,20 @@ void VOTableData::calc_healpix_indicies() {
     // TODO loop and calculate
 }
 
-bool VOTableData::add_component_row_field(
-    long row_index,
+bool VOTableData::parse_component_row_field(
+    size_t row_index,
     const string& ucd,
+    const string& name,
     const string& type,
     const string& unit,
-    const string& value) {
-    ASKAPASSERT(row_index >= 0 && row_index < getCount());
+    const string& value,
+    vector<datamodel::ContinuumComponent>& components,
+    vector<double>& ra_buffer,
+    vector<double>& dec_buffer) {
+    ASKAPASSERT(row_index >= 0);
+    ASKAPASSERT(row_index < components.size());
+    ASKAPASSERT(row_index < ra_buffer.size());
+    ASKAPASSERT(row_index < dec_buffer.size());
 
     bool added = true;
 
@@ -145,16 +170,24 @@ bool VOTableData::add_component_row_field(
         ASKAPASSERT(unit == "deg");
         ASKAPASSERT(type == "double");
         double ra = boost::get<double>(coerce_value(value, type));
-        itsComponents[row_index].ra_deg_cont = ra;
-        itsRA[row_index] = ra;
+        components[row_index].ra_deg_cont = ra;
+        ra_buffer[row_index] = ra;
     }
     else if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
         // Declination
         ASKAPASSERT(unit == "deg");
         ASKAPASSERT(type == "double");
         double dec = boost::get<double>(coerce_value(value, type));
-        itsComponents[row_index].dec_deg_cont = dec;
-        itsDec[row_index] = dec;
+        components[row_index].dec_deg_cont = dec;
+        dec_buffer[row_index] = dec;
+    }
+    else if (boost::iequals(ucd, "meta.code")) {
+        // UCD:meta.code is not unique, and so it must be disambiguated based on
+        // the field name
+        if (boost::iequals(name, "has_siblings")) {
+            ASKAPASSERT(type == "int");
+            components[row_index].has_siblings = boost::get<bool>(coerce_value(value, "bool"));
+        }
     }
     else {
         added = false;

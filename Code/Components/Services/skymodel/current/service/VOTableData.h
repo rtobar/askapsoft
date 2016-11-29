@@ -44,7 +44,7 @@ namespace askap {
 namespace cp {
 namespace sms {
 
-typedef boost::variant<float, double, std::string> ValueTypes;
+typedef boost::variant<bool, float, double, std::string> ValueTypes;
 
 /// @brief VO table data container, with data stored in structure-of-arrays form
 /// suitable for threaded computations.
@@ -92,12 +92,16 @@ class VOTableData :
             const std::string& value,
             const std::string& type);
 
-        bool add_component_row_field(
-            long row_index,
+        static bool parse_component_row_field(
+            size_t row_index,
             const std::string& ucd,
+            const std::string& name,
             const std::string& type,
             const std::string& unit,
-            const std::string& value);
+            const std::string& value,
+            std::vector<datamodel::ContinuumComponent>& components,
+            std::vector<double>& ra_buffer,
+            std::vector<double>& dec_buffer);
 
         void calc_healpix_indicies();
 
