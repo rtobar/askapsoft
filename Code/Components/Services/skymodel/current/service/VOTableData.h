@@ -56,11 +56,13 @@ class VOTableData :
         ///
         /// @param components_file File name of the VO Table catalogue containing the components data
         /// @param polarisation_file File name of the VO Table catalogue containing the polarisation data for the components
+        /// @param healpix_order HealPix Order to use for indexation (NSIDE = 2^order)
         /// @return The VOTableData instance.
         /// @throw AskapError   If the implementation cannot be constructed.
         static VOTableData* create(
             std::string components_file,
-            std::string polarisation_file);
+            std::string polarisation_file, 
+            boost::int64_t healpix_order=14);
 
         /// @brief Destructor.
         virtual ~VOTableData();

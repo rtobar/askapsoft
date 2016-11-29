@@ -50,7 +50,9 @@ using namespace askap::accessors;
 
 
 VOTableData* VOTableData::create(
-    string components_file, string polarisation_file)
+    string components_file,
+    string polarisation_file, 
+    boost::int64_t healpix_order)
 {
     // open components file
     VOTable components = VOTable::fromXML(components_file);

@@ -55,13 +55,13 @@ namespace cp {
 namespace sms {
 
 
-Spherical::Spherical(long order)
+Spherical::Spherical(boost::int64_t order)
     :
     itsNSide(2 << order)
 {
 }
 
-long Spherical::calcHealPixIndex(double ra, double dec) const
+boost::int64_t Spherical::calcHealPixIndex(double ra, double dec) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -72,7 +72,7 @@ long Spherical::calcHealPixIndex(double ra, double dec) const
     ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
     ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
 
-    T_Healpix_Base<long> hp(this->itsNSide, NEST, SET_NSIDE);
+    T_Healpix_Base<boost::int64_t> hp(itsNSide, NEST, SET_NSIDE);
 
     // convert ra/dec to a pointing:
     // theta = (90 - dec)

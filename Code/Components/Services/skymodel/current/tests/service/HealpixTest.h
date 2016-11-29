@@ -59,7 +59,7 @@ class HealpixTest : public CppUnit::TestFixture {
 
             Spherical s(order);
             long actual = s.calcHealPixIndex(ra, dec);
-            long expected = 2663;
+            long expected = 2663; 
 
             CPPUNIT_ASSERT_EQUAL(expected, actual);
         }

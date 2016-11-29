@@ -46,7 +46,7 @@ class Spherical : private boost::noncopyable {
         /// @brief Constructor.
         ///
         /// @param order
-        Spherical(long order);
+        Spherical(boost::int64_t order);
 
         /// @brief Calculate the HEALPix index for a given RA and declination.
         ///
@@ -55,7 +55,7 @@ class Spherical : private boost::noncopyable {
         ///         will suffice for the initial unit tests.
         /// @param[in] ra  J2000 right ascension (decimal degrees)
         /// @param[in] dec J2000 declination (decimal degrees)
-        long calcHealPixIndex(double ra, double dec) const;
+        boost::int64_t calcHealPixIndex(double ra, double dec) const;
 
     private:
         boost::int64_t itsNSide;

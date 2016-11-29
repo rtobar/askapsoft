@@ -33,6 +33,7 @@
 #include <votable/VOTable.h>
 
 // Classes to test
+#include "service/Spherical.h"
 #include "service/VOTableData.h"
 #include "service/VOTableComponent.h"
 
@@ -45,10 +46,11 @@ namespace sms {
 
 class VOTableDataTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(VOTableDataTest);
-        //CPPUNIT_TEST(testSmallComponentTableFirstComponentValues);
-        CPPUNIT_TEST(testSmallComponentTableLoadCount);
-        CPPUNIT_TEST(testLargeComponentTableLoadCount);
-        CPPUNIT_TEST(testSmallComponentTableAssumptions);
+        CPPUNIT_TEST(testFirstComponentValues);
+        CPPUNIT_TEST(testFirstComponentHealpixIndex);
+        CPPUNIT_TEST(testLoadCount);
+        CPPUNIT_TEST(testLargeLoadCount);
+        CPPUNIT_TEST(testAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -64,26 +66,57 @@ class VOTableDataTest : public CppUnit::TestFixture {
         void tearDown() {
         }
 
-        void testSmallComponentTableFirstComponentValues() {
+        void testFirstComponentValues() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
             const datamodel::ContinuumComponent& c = pData->getComponents()[0];
             CPPUNIT_ASSERT_DOUBLES_EQUAL(79.176918, c.ra_deg_cont, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-71.819671, c.dec_deg_cont, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.ra_err, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.dec_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1400.5f, c.freq, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(326.530f, c.flux_peak, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.283f, c.flux_peak_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(378.831f, c.flux_int, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.542f, c.flux_int_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(34.53f, c.maj_axis, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(30.62f, c.min_axis, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.03f, c.maj_axis_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.min_axis_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(83.54f, c.pos_ang, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.29f, c.pos_ang_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(12.84f, c.maj_axis_deconv, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10.85f, c.min_axis_deconv, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-15.32f, c.pos_ang_deconv, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(243.077f, c.chi_squared_fit, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1210.092f, c.rms_fit_Gauss, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.24f, c.spectral_index, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.38f, c.spectral_curvature, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.509f, c.rms_image, 0.000001f);
         }
 
-        void testSmallComponentTableLoadCount() {
+        void testFirstComponentHealpixIndex() {
+            const int order = 14;
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", order));
+            const datamodel::ContinuumComponent& c = pData->getComponents()[0];
+
+            // Calculate the expected value
+            Spherical s(order);
+            boost::int64_t expected = s.calcHealPixIndex(c.ra_deg_cont, c.dec_deg_cont);
+
+            CPPUNIT_ASSERT_EQUAL(expected, c.healpix_index);
+        }
+
+        void testLoadCount() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
             CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
         }
 
-        void testLargeComponentTableLoadCount() {
+        void testLargeLoadCount() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, ""));
             CPPUNIT_ASSERT_EQUAL(134l, pData->getCount());
         }
 
-        void testSmallComponentTableAssumptions() {
+        void testAssumptions() {
             // Not really a unit test of the VOTableData class, rather a
             // test of my assumptions regarding the test data that will impact
             // other tests.
