@@ -69,7 +69,7 @@ class VOTableData :
         ///
         /// @return Component count
         inline long getCount() const {
-            return itsNumComponents;
+            return itsComponents.size();
         }
 
         /// @brief Get the vector of ContinuumComponent objects.
@@ -103,7 +103,6 @@ class VOTableData :
         std::vector<boost::int64_t> itsHealpixIndicies;
         std::vector<double> itsRA;
         std::vector<double> itsDec;
-        long itsNumComponents;
 };
 
 }

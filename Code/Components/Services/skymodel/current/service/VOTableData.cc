@@ -101,8 +101,7 @@ VOTableData::VOTableData(long num_components) :
     itsComponents(num_components),
     itsHealpixIndicies(num_components),
     itsRA(num_components),
-    itsDec(num_components),
-    itsNumComponents(num_components)
+    itsDec(num_components)
 {
 }
 
@@ -130,7 +129,7 @@ bool VOTableData::add_component_row_field(
     const string& type,
     const string& unit,
     const string& value) {
-    ASKAPASSERT(row_index >= 0 && row_index < itsNumComponents);
+    ASKAPASSERT(row_index >= 0 && row_index < getCount());
 
     bool added = true;
 
