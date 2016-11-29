@@ -1,4 +1,4 @@
-/// @file VoTableComponent.cc
+/// @file VOTableComponent.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,7 +25,7 @@
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
 // Include own header file first
-#include "VoTableComponent.h"
+#include "VOTableComponent.h"
 
 // Include package level header file
 #include "askap_skymodel.h"
@@ -41,22 +41,22 @@
 // Local package includes
 #include "Utility.h"
 
-ASKAP_LOGGER(logger, ".VoTableComponent");
+ASKAP_LOGGER(logger, ".VOTableComponent");
 
 using namespace askap::cp::sms;
 using namespace askap::accessors;
 
 
-VoTableComponent* VoTableComponent::create(long size)
+VOTableComponent* VOTableComponent::create(long size)
 {
-    return new VoTableComponent(size);
+    return new VOTableComponent(size);
 }
 
-VoTableComponent::VoTableComponent(long size)
+VOTableComponent::VOTableComponent(long size)
 {
 }
 
-VoTableComponent::~VoTableComponent()
+VOTableComponent::~VOTableComponent()
 {
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }

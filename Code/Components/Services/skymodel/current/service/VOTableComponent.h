@@ -1,4 +1,4 @@
-/// @file VoTableComponent.h
+/// @file VOTableComponent.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -42,26 +42,26 @@ namespace cp {
 namespace sms {
 
 /// @brief VO table data container for Component data
-class VoTableComponent :
+class VOTableComponent :
     private boost::noncopyable {
     public:
 
-        /// @brief Factory method for constructing the VoTableComponent implementation.
+        /// @brief Factory method for constructing the VOTableComponent implementation.
         ///
         /// @param size The number of components for which space should be preallocated.
-        /// @return The VoTableComponent instance.
+        /// @return The VOTableComponent instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static VoTableComponent* create(long size);
+        static VOTableComponent* create(long size);
 
         /// @brief Destructor.
-        virtual ~VoTableComponent();
+        virtual ~VOTableComponent();
 
     private:
         /// @brief Constructor.
         /// Private. Use the factory method to create.
         ///
         /// @param size The number of components for which space should be preallocated.
-        VoTableComponent(long size);
+        VOTableComponent(long size);
 };
 
 }

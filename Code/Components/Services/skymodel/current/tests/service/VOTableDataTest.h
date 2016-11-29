@@ -1,4 +1,4 @@
-/// @file GlobalSkyModelTest.h
+/// @file VOTableDataTest.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -29,10 +29,12 @@
 
 // Support classes
 #include <string>
+#include <boost/filesystem.hpp>
 #include <votable/VOTable.h>
 
 // Classes to test
-#include "service/GlobalSkyModel.h"
+#include "service/VOTableData.h"
+#include "service/VOTableComponent.h"
 
 using namespace std;
 using namespace askap::accessors;
@@ -41,12 +43,14 @@ namespace askap {
 namespace cp {
 namespace sms {
 
-class GlobalSkyModelTest : public CppUnit::TestFixture {
-        CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
+class VOTableDataTest : public CppUnit::TestFixture {
+        CPPUNIT_TEST_SUITE(VOTableDataTest);
+        CPPUNIT_TEST(testSmallComponentTableLoad);
+        CPPUNIT_TEST(testSmallComponentTableAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
     public:
-        GlobalSkyModelTest() :
+        VOTableDataTest() :
             small_components("./tests/data/votable_small_components.xml"),
             large_components("./tests/data/votable_large_components.xml")
         {
@@ -58,8 +62,30 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         void tearDown() {
         }
 
-    private:
+        void testSmallComponentTableLoad() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            CPPUNIT_ASSERT(pData);
+            CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
 
+            // TODO: get the first component and assert on the contents
+        }
+
+        void testSmallComponentTableAssumptions() {
+            // Not really a unit test of the VOTableData class, rather a
+            // test of my assumptions regarding the test data that will impact
+            // other tests.
+            CPPUNIT_ASSERT(boost::filesystem::exists(small_components));
+
+            VOTable vt = VOTable::fromXML(small_components);
+            CPPUNIT_ASSERT_EQUAL(vt.getResource().size(), 1ul);
+
+            const VOTableTable t = vt.getResource()[0].getTables()[0];
+            CPPUNIT_ASSERT_EQUAL(vt.getResource()[0].getTables().size(), 1ul);
+            CPPUNIT_ASSERT_EQUAL(t.getFields().size(), 33ul);
+            CPPUNIT_ASSERT_EQUAL(t.getRows().size(), 10ul);
+        }
+
+    private:
         const string small_components;
         const string large_components;
 };

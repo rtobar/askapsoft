@@ -32,6 +32,7 @@
 #include "GlobalSkyModelTest.h"
 #include "ServiceTest.h"
 #include "UtilityTest.h"
+#include "VOTableDataTest.h"
 
 int main(int argc, char *argv[])
 {
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
     askapdev::testutils::AskapTestRunner runner(argv[0]);
 
     // Add all the tests
+    runner.addTest(askap::cp::sms::VOTableDataTest::suite());
     runner.addTest(askap::cp::sms::GlobalSkyModelTest::suite());
     runner.addTest(askap::cp::sms::ServiceTest::suite());
     runner.addTest(askap::cp::sms::HealpixTest::suite());
