@@ -33,3 +33,7 @@ all: install test ftest
 .PHONY: rebuild
 rebuild: clean
 	rbuild $(RBUILD_FLAGS) -R -t install
+
+.PHONY: generate
+generate: clean
+	cd ./schema_definitions && python3 generate.py

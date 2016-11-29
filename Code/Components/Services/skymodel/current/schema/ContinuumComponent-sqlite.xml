@@ -30,8 +30,8 @@
       <column name="spectral_index" type="REAL" null="false"/>
       <column name="spectral_curvature" type="REAL" null="false"/>
       <column name="rms_image" type="REAL" null="false"/>
-      <column name="flag_c1" type="INT" null="false"/>
-      <column name="flag_c2" type="INT" null="false"/>
+      <column name="has_siblings" type="INT" null="false"/>
+      <column name="fit_is_estimate" type="INT" null="false"/>
       <column name="polarisation_component_id" type="INTEGER" null="true"/>
       <column name="data_source_id" type="INTEGER" null="true"/>
       <primary-key auto="true">

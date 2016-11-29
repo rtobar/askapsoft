@@ -92,6 +92,8 @@ class VOTableDataTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.24f, c.spectral_index, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.38f, c.spectral_curvature, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.509f, c.rms_image, 0.000001f);
+            CPPUNIT_ASSERT_EQUAL(true, c.has_siblings);
+            CPPUNIT_ASSERT_EQUAL(false, c.fit_is_estimate);
         }
 
         void testFirstComponentHealpixIndex() {
