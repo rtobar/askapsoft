@@ -45,7 +45,9 @@ namespace sms {
 
 class VOTableDataTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(VOTableDataTest);
-        CPPUNIT_TEST(testSmallComponentTableLoad);
+        //CPPUNIT_TEST(testSmallComponentTableFirstComponentValues);
+        CPPUNIT_TEST(testSmallComponentTableLoadCount);
+        CPPUNIT_TEST(testLargeComponentTableLoadCount);
         CPPUNIT_TEST(testSmallComponentTableAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
@@ -62,12 +64,23 @@ class VOTableDataTest : public CppUnit::TestFixture {
         void tearDown() {
         }
 
-        void testSmallComponentTableLoad() {
+        void testSmallComponentTableFirstComponentValues() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
-            CPPUNIT_ASSERT(pData);
-            CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
+            const datamodel::ContinuumComponent& c = pData->getComponents()[0];
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(79.176918, c.ra_deg_cont, 0.000001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-71.819671, c.dec_deg_cont, 0.000001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.ra_err, 0.000001f);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.dec_err, 0.000001f);
+        }
 
-            // TODO: get the first component and assert on the contents
+        void testSmallComponentTableLoadCount() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
+        }
+
+        void testLargeComponentTableLoadCount() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, ""));
+            CPPUNIT_ASSERT_EQUAL(134l, pData->getCount());
         }
 
         void testSmallComponentTableAssumptions() {

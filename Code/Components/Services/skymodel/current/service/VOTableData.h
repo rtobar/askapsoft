@@ -65,9 +65,18 @@ class VOTableData :
         /// @brief Destructor.
         virtual ~VOTableData();
 
-        long getCount() const {
-            // TODO actual count
-            return 10;
+        /// @brief Get the number of components
+        ///
+        /// @return Component count
+        inline long getCount() const {
+            return itsNumComponents;
+        }
+
+        /// @brief Get the vector of ContinuumComponent objects.
+        ///
+        /// @return Const reference to the vector of ContinuumComponent objects.
+        inline const std::vector<datamodel::ContinuumComponent>& getComponents() const {
+            return itsComponents;
         }
 
     private:

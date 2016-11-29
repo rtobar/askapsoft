@@ -137,7 +137,7 @@ bool VOTableData::add_component_row_field(
     // map ucd to the appropriate attribute in the component
     // check that the units are correct
     // coerce the string to the required type
-    // store the value 
+    // store the value
 
     if (boost::iequals(ucd, "pos.eq.ra;meta.main")) {
         // RA
