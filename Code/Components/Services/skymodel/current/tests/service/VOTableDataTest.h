@@ -31,6 +31,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 #include <votable/VOTable.h>
+#include <askap/AskapError.h>
 
 // Classes to test
 #include "service/HealPixTools.h"
@@ -50,13 +51,15 @@ class VOTableDataTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testHealpixIndexation);
         CPPUNIT_TEST(testLoadCount);
         CPPUNIT_TEST(testLargeLoadCount);
+        CPPUNIT_TEST(testInvalidFreqUnits);
         CPPUNIT_TEST(testAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
     public:
         VOTableDataTest() :
             small_components("./tests/data/votable_small_components.xml"),
-            large_components("./tests/data/votable_large_components.xml")
+            large_components("./tests/data/votable_large_components.xml"),
+            invalid_freq_units("./tests/data/votable_error_freq_units.xml")
         {
         }
 
@@ -121,6 +124,12 @@ class VOTableDataTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(134l, pData->getCount());
         }
 
+        void testInvalidFreqUnits() {
+            CPPUNIT_ASSERT_THROW(
+                boost::shared_ptr<VOTableData> pData(VOTableData::create(invalid_freq_units, "")),
+                askap::AssertError);
+        }
+
         void testAssumptions() {
             // Not really a unit test of the VOTableData class, rather a
             // test of my assumptions regarding the test data that will impact
@@ -139,6 +148,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
     private:
         const string small_components;
         const string large_components;
+        const string invalid_freq_units;
 };
 
 }
