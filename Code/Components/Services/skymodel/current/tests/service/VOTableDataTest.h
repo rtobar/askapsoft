@@ -125,9 +125,15 @@ class VOTableDataTest : public CppUnit::TestFixture {
         }
 
         void testInvalidFreqUnits() {
-            CPPUNIT_ASSERT_THROW(
-                boost::shared_ptr<VOTableData> pData(VOTableData::create(invalid_freq_units, "")),
-                askap::AssertError);
+            bool passed = false;
+            try {
+                VOTableData::create(invalid_freq_units, "");
+            }
+            catch (const askap::AssertError& ex) {
+                CPPUNIT_ASSERT(string(ex.what()).find("unit == \"MHz\"") != string::npos);
+                passed = true;
+            }
+            CPPUNIT_ASSERT(passed);
         }
 
         void testAssumptions() {

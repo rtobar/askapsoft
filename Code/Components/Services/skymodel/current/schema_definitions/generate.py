@@ -277,6 +277,7 @@ NO_UCD_FIELD_PARSE_PATTERN = '''
 
 def write_votable_parser():
     "Writes the VOTable to data model class parsing code"
+    print('\t../service/VOTableParser.h')
     with open('../service/VOTableParser.h', 'w') as out:
         out.write(HEADER_PREAMBLE)
 
