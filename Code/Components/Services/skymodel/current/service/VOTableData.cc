@@ -81,7 +81,7 @@ VOTableData* VOTableData::create(
         for (fit = fields.begin(), field_index = 0;
              fit != fields.end();
              fit++, field_index++) {
-            pData->parse_component_row_field(
+            parseComponentRowField(
                 row_index,
                 fit->getUCD(),
                 fit->getName(),
@@ -118,31 +118,11 @@ VOTableData::~VOTableData()
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }
 
-ValueTypes VOTableData::coerce_value(
-    const std::string& value,
-    const std::string& type) {
-
-    ValueTypes v;
-    if (boost::iequals(type, "float")) {
-        v = boost::lexical_cast<float>(value);
-    }
-    else if (boost::iequals(type, "double")) {
-        v = boost::lexical_cast<double>(value);
-    }
-    else if (boost::iequals(type, "bool")) {
-        v = boost::lexical_cast<bool>(value);
-    }
-    else if (boost::iequals(type, "char")) {
-        v = value;
-    }
-
-    return v;
-}
-
 void VOTableData::calc_healpix_indicies() {
     // TODO loop and calculate
 }
 
+/*
 bool VOTableData::parse_component_row_field(
     size_t row_index,
     const string& ucd,
@@ -195,4 +175,5 @@ bool VOTableData::parse_component_row_field(
 
     return added;
 }
+*/
 
