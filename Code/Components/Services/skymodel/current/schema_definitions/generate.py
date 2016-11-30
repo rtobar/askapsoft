@@ -265,7 +265,7 @@ UCD_FIELD_PARSE_PATTERN = '''
         ASKAPASSERT($unitCheckExpression);
         ASKAPASSERT(type == "$votype");
         components[row_index].$fieldname = boost::lexical_cast<$cpptype>(value);
-    }'''
+'''
 
 NO_UCD_FIELD_PARSE_PATTERN = '''
     if (boost::iequals(name, "$fieldname")) {
@@ -316,6 +316,18 @@ def write_votable_parser():
                 if count:
                     out.write('\n    else ')
                 out.write(statement)
+
+                # special case for RA and declination
+                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
+                    out.write(
+                        Template('        ra_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
+                    out.write(
+                        Template('        dec_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+
+                out.write('    }')
                 count += 1
             elif field.ucd == 'meta.code':
                 statement = Template(NO_UCD_FIELD_PARSE_PATTERN).substitute(
