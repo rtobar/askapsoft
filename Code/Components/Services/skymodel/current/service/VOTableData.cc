@@ -41,6 +41,7 @@
 #include <askap/AskapLogging.h>
 
 // Local package includes
+#include "HealPixTools.h"
 #include "Utility.h"
 #include "VOTableParser.h"
 
@@ -100,7 +101,7 @@ VOTableData* VOTableData::create(
         // parse polarisation file
     }
 
-    pData->calc_healpix_indicies();
+    pData->calcHealpixIndicies(healpix_order);
 
     return pData;
 }
@@ -118,62 +119,12 @@ VOTableData::~VOTableData()
     ASKAPLOG_DEBUG_STR(logger, "dtor");
 }
 
-void VOTableData::calc_healpix_indicies() {
-    // TODO loop and calculate
+void VOTableData::calcHealpixIndicies(boost::int64_t healpix_order) {
+    HealPixTools hp(healpix_order);
+    #pragma omp parallel for
+    for (size_t i = 0; i < itsComponents.size(); ++i) {
+        itsComponents[i].healpix_index = hp.calcHealPixIndex(
+            itsRA[i],
+            itsDec[i]);
+    }
 }
-
-/*
-bool VOTableData::parse_component_row_field(
-    size_t row_index,
-    const string& ucd,
-    const string& name,
-    const string& type,
-    const string& unit,
-    const string& value,
-    vector<datamodel::ContinuumComponent>& components,
-    vector<double>& ra_buffer,
-    vector<double>& dec_buffer) {
-    ASKAPASSERT(row_index >= 0);
-    ASKAPASSERT(row_index < components.size());
-    ASKAPASSERT(row_index < ra_buffer.size());
-    ASKAPASSERT(row_index < dec_buffer.size());
-
-    bool added = true;
-
-    // map ucd to the appropriate attribute in the component
-    // check that the units are correct
-    // coerce the string to the required type
-    // store the value
-
-    if (boost::iequals(ucd, "pos.eq.ra;meta.main")) {
-        // RA
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "double");
-        double ra = boost::get<double>(coerce_value(value, type));
-        components[row_index].ra_deg_cont = ra;
-        ra_buffer[row_index] = ra;
-    }
-    else if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
-        // Declination
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "double");
-        double dec = boost::get<double>(coerce_value(value, type));
-        components[row_index].dec_deg_cont = dec;
-        dec_buffer[row_index] = dec;
-    }
-    else if (boost::iequals(ucd, "meta.code")) {
-        // UCD:meta.code is not unique, and so it must be disambiguated based on
-        // the field name
-        if (boost::iequals(name, "has_siblings")) {
-            ASKAPASSERT(type == "int");
-            components[row_index].has_siblings = boost::get<bool>(coerce_value(value, "bool"));
-        }
-    }
-    else {
-        added = false;
-    }
-
-    return added;
-}
-*/
-

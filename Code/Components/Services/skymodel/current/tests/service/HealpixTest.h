@@ -31,7 +31,7 @@
 #include <string>
 
 // Classes to test
-#include "service/Spherical.h"
+#include "service/HealPixTools.h"
 
 using std::string;
 using std::vector;
@@ -57,8 +57,8 @@ class HealpixTest : public CppUnit::TestFixture {
             double dec = 43.1;
             long order = 5;
 
-            Spherical s(order);
-            long actual = s.calcHealPixIndex(ra, dec);
+            HealPixTools hp(order);
+            long actual = hp.calcHealPixIndex(ra, dec);
             long expected = 2663; 
 
             CPPUNIT_ASSERT_EQUAL(expected, actual);

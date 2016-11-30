@@ -33,7 +33,7 @@
 #include <votable/VOTable.h>
 
 // Classes to test
-#include "service/Spherical.h"
+#include "service/HealPixTools.h"
 #include "service/VOTableData.h"
 #include "service/VOTableComponent.h"
 
@@ -47,7 +47,7 @@ namespace sms {
 class VOTableDataTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(VOTableDataTest);
         CPPUNIT_TEST(testFirstComponentValues);
-        CPPUNIT_TEST(testFirstComponentHealpixIndex);
+        CPPUNIT_TEST(testHealpixIndexation);
         CPPUNIT_TEST(testLoadCount);
         CPPUNIT_TEST(testLargeLoadCount);
         CPPUNIT_TEST(testAssumptions);
@@ -92,20 +92,23 @@ class VOTableDataTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.24f, c.spectral_index, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-1.38f, c.spectral_curvature, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.509f, c.rms_image, 0.000001f);
+            CPPUNIT_ASSERT_EQUAL(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"), c.component_id);
             CPPUNIT_ASSERT_EQUAL(true, c.has_siblings);
             CPPUNIT_ASSERT_EQUAL(false, c.fit_is_estimate);
         }
 
-        void testFirstComponentHealpixIndex() {
+        void testHealpixIndexation() {
             const int order = 14;
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", order));
-            const datamodel::ContinuumComponent& c = pData->getComponents()[0];
+            HealPixTools hp(order);
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, "", order));
+            const VOTableData::ComponentList& components = pData->getComponents();
 
-            // Calculate the expected value
-            Spherical s(order);
-            boost::int64_t expected = s.calcHealPixIndex(c.ra_deg_cont, c.dec_deg_cont);
-
-            CPPUNIT_ASSERT_EQUAL(expected, c.healpix_index);
+            for (VOTableData::ComponentList::const_iterator it = components.begin();
+                 it != components.end();
+                 it++) {
+                boost::int64_t expected = hp.calcHealPixIndex(it->ra_deg_cont, it->dec_deg_cont);
+                CPPUNIT_ASSERT_EQUAL(expected, it->healpix_index);
+            }
         }
 
         void testLoadCount() {

@@ -1,4 +1,4 @@
-/// @file Spherical.cc
+/// @file HealPixTools.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,7 +25,7 @@
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
 // Include own header file first
-#include "Spherical.h"
+#include "HealPixTools.h"
 
 // Include package level header file
 #include "askap_skymodel.h"
@@ -38,7 +38,6 @@
 #include <askap/AskapError.h>
 #include <Common/ParameterSet.h>
 #include <boost/scoped_ptr.hpp>
-#include <healpix_base.h>
 #include <healpix_tables.h>
 #include <pointing.h>
 
@@ -46,7 +45,7 @@
 #include "SkyModelServiceImpl.h"
 #include "Utility.h"
 
-ASKAP_LOGGER(logger, ".Spherical");
+ASKAP_LOGGER(logger, ".HealPixTools");
 
 using namespace askap::cp::sms;
 
@@ -55,13 +54,14 @@ namespace cp {
 namespace sms {
 
 
-Spherical::Spherical(boost::int64_t order)
+HealPixTools::HealPixTools(boost::int64_t order)
     :
+    itsHealPixBase(2 << order, NEST, SET_NSIDE),
     itsNSide(2 << order)
 {
 }
 
-boost::int64_t Spherical::calcHealPixIndex(double ra, double dec) const
+boost::int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -72,15 +72,13 @@ boost::int64_t Spherical::calcHealPixIndex(double ra, double dec) const
     ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
     ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
 
-    T_Healpix_Base<boost::int64_t> hp(itsNSide, NEST, SET_NSIDE);
-
     // convert ra/dec to a pointing:
     // theta = (90 - dec)
     // phi = ra
     pointing p(
             utility::degreesToRadians(90.0 - dec),
             utility::degreesToRadians(ra));
-    return hp.ang2pix(p);
+    return itsHealPixBase.ang2pix(p);
 }
 
 };

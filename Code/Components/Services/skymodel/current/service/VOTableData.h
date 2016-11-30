@@ -49,6 +49,7 @@ namespace sms {
 class VOTableData :
     private boost::noncopyable {
     public:
+        typedef std::vector<datamodel::ContinuumComponent> ComponentList;
 
         /// @brief Factory method for constructing the VOTableData implementation.
         ///
@@ -75,7 +76,7 @@ class VOTableData :
         /// @brief Get the vector of ContinuumComponent objects.
         ///
         /// @return Const reference to the vector of ContinuumComponent objects.
-        inline const std::vector<datamodel::ContinuumComponent>& getComponents() const {
+        inline const ComponentList& getComponents() const {
             return itsComponents;
         }
 
@@ -86,9 +87,9 @@ class VOTableData :
         /// @param num_components The number of components for which space should be preallocated.
         VOTableData(long num_components);
 
-        void calc_healpix_indicies();
+        void calcHealpixIndicies(boost::int64_t healpix_order);
 
-        std::vector<datamodel::ContinuumComponent> itsComponents;
+        ComponentList itsComponents;
         std::vector<boost::int64_t> itsHealpixIndicies;
         std::vector<double> itsRA;
         std::vector<double> itsDec;

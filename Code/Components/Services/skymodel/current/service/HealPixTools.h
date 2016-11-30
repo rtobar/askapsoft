@@ -1,5 +1,5 @@
-/// @file Spherical.h
-/// @brief Spherical functions outside of the primary data service.
+/// @file HealPixTools.h
+/// @brief HEALPix utility functions
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,13 +25,14 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_SPHERICAL_H
-#define ASKAP_CP_SMS_SPHERICAL_H
+#ifndef ASKAP_CP_SMS_HEALPIXTOOLS_H
+#define ASKAP_CP_SMS_HEALPIXTOOLS_H
 
 // ASKAPsoft includes
 #include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
 #include <Common/ParameterSet.h>
+#include <healpix_base.h>
 
 // Local package includes
 
@@ -41,12 +42,12 @@ namespace cp {
 namespace sms {
 
 
-class Spherical : private boost::noncopyable {
+class HealPixTools : private boost::noncopyable {
     public:
         /// @brief Constructor.
         ///
         /// @param order
-        Spherical(boost::int64_t order);
+        HealPixTools(boost::int64_t order);
 
         /// @brief Calculate the HEALPix index for a given RA and declination.
         ///
@@ -58,6 +59,7 @@ class Spherical : private boost::noncopyable {
         boost::int64_t calcHealPixIndex(double ra, double dec) const;
 
     private:
+        T_Healpix_Base<boost::int64_t> itsHealPixBase;
         boost::int64_t itsNSide;
 };
 
