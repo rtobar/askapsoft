@@ -42,6 +42,7 @@ namespace cp {
 namespace sms {
 
 class UtilityTest : public CppUnit::TestFixture {
+
         CPPUNIT_TEST_SUITE(UtilityTest);
         CPPUNIT_TEST(testDegreesToRadians_float);
         CPPUNIT_TEST_SUITE_END();

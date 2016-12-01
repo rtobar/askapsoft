@@ -41,6 +41,7 @@ namespace cp {
 namespace sms {
 
 class HealpixTest : public CppUnit::TestFixture {
+
         CPPUNIT_TEST_SUITE(HealpixTest);
         CPPUNIT_TEST(testCalcHealpixIndex);
         CPPUNIT_TEST_SUITE_END();

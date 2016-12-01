@@ -61,170 +61,168 @@ void parseComponentRowField(
     std::vector<double>& ra_buffer,
     std::vector<double>& dec_buffer) {
 
-    // TODO: Asserts here are unacceptable in the production code.
-    // They need to be replaced with more robust error handling and log messages.
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
     ASKAPASSERT(row_index < ra_buffer.size());
     ASKAPASSERT(row_index < dec_buffer.size());
 
     if (boost::iequals(ucd, "meta.id;meta.main")) {
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "char");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "char"));
         components[row_index].component_id = boost::lexical_cast<std::string>(value);
     }
     else 
     if (boost::iequals(ucd, "pos.eq.ra;meta.main")) {
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "double");
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].ra_deg_cont = boost::lexical_cast<double>(value);
         ra_buffer[row_index] = components[row_index].ra_deg_cont;
     }
     else 
     if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "double");
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].dec_deg_cont = boost::lexical_cast<double>(value);
         dec_buffer[row_index] = components[row_index].dec_deg_cont;
     }
     else 
     if (boost::iequals(ucd, "stat.error;pos.eq.ra")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].ra_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;pos.eq.dec")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].dec_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "em.freq")) {
-        ASKAPASSERT(unit == "MHz");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "MHz"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].freq = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phot.flux.density;stat.max;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "mJy/beam");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].flux_peak = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;phot.flux.density;stat.max;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "mJy/beam");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].flux_peak_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phot.flux.density;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "mJy");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].flux_int = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;phot.flux.density;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "mJy");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].flux_int_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize.smajAxis;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].maj_axis = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize.sminAxis;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].min_axis = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize;pos.posAng;em.radio;stat.fit")) {
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].pos_ang = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;phys.angSize.smajAxis;em.radio")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].maj_axis_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;phys.angSize.sminAxis;em.radio")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].min_axis_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.error;phys.angSize;pos.posAng;em.radio")) {
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].pos_ang_err = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize.smajAxis;em.radio;askap:meta.deconvolved")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].maj_axis_deconv = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize.sminAxis;em.radio;askap:meta.deconvolved")) {
-        ASKAPASSERT(unit == "arcsec");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "arcsec"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].min_axis_deconv = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "phys.angSize;pos.posAng;em.radio;askap:meta.deconvolved")) {
-        ASKAPASSERT(unit == "deg");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].pos_ang_deconv = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.fit.chi2")) {
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].chi_squared_fit = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.stdev;stat.fit")) {
-        ASKAPASSERT(unit == "mJy/beam");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].rms_fit_Gauss = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "spect.index;em.radio")) {
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].spectral_index = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "askap:spect.curvature;em.radio")) {
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].spectral_curvature = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "stat.stdev;phot.flux.density")) {
-        ASKAPASSERT(unit == "mJy/beam");
-        ASKAPASSERT(type == "float");
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].rms_image = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(name, "has_siblings")) {
         // Some fields do not have a unique UCD. They are matched by name.
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "int");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "int"));
         components[row_index].has_siblings = boost::lexical_cast<bool>(value);
     }
     else 
     if (boost::iequals(name, "fit_is_estimate")) {
         // Some fields do not have a unique UCD. They are matched by name.
-        ASKAPASSERT(unit == "" || unit == "--");
-        ASKAPASSERT(type == "int");
+        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(boost::iequals(type, "int"));
         components[row_index].fit_is_estimate = boost::lexical_cast<bool>(value);
     }
 }

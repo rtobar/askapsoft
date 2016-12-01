@@ -3,7 +3,7 @@
 import pandas as pd
 from string import Template
 
-# This notebook generates ODB schema code for direct inclusion into the ASKAP Sky Model Service code.
+# This script generates ODB schema code for direct inclusion into the ASKAP Sky Model Service code.
 
 # Define the Outputs
 # Each schema file defines a dictionary with the following keys:
@@ -252,8 +252,6 @@ void parseComponentRowField(
     std::vector<double>& ra_buffer,
     std::vector<double>& dec_buffer) {
 
-    // TODO: Asserts here are unacceptable in the production code.
-    // They need to be replaced with more robust error handling and log messages.
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
     ASKAPASSERT(row_index < ra_buffer.size());
@@ -263,7 +261,7 @@ void parseComponentRowField(
 UCD_FIELD_PARSE_PATTERN = '''
     if (boost::iequals(ucd, "$ucd")) {
         ASKAPASSERT($unitCheckExpression);
-        ASKAPASSERT(type == "$votype");
+        ASKAPASSERT(boost::iequals(type, "$votype"));
         components[row_index].$fieldname = boost::lexical_cast<$cpptype>(value);
 '''
 
@@ -271,7 +269,7 @@ NO_UCD_FIELD_PARSE_PATTERN = '''
     if (boost::iequals(name, "$fieldname")) {
         // Some fields do not have a unique UCD. They are matched by name.
         ASKAPASSERT($unitCheckExpression);
-        ASKAPASSERT(type == "$votype");
+        ASKAPASSERT(boost::iequals(type, "$votype"));
         components[row_index].$fieldname = boost::lexical_cast<$cpptype>(value);
     }'''
 
@@ -303,9 +301,9 @@ def write_votable_parser():
         count = 0
         for field in fields:
             if field.units:
-                unitCheck = 'unit == "{0}"'.format(field.units)
+                unitCheck = 'boost::iequals(unit, "{0}")'.format(field.units)
             else:
-                unitCheck = 'unit == "{0}" || unit == "--"'.format(field.units)
+                unitCheck = 'unit.empty() || unit == "--"'
 
             if field.ucd not in ucd_skip_list:
                 statement = Template(UCD_FIELD_PARSE_PATTERN).substitute(

@@ -42,6 +42,7 @@ namespace cp {
 namespace sms {
 
 class GlobalSkyModelTest : public CppUnit::TestFixture {
+
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
         CPPUNIT_TEST_SUITE_END();
 

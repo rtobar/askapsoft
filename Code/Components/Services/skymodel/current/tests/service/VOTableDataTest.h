@@ -46,12 +46,14 @@ namespace cp {
 namespace sms {
 
 class VOTableDataTest : public CppUnit::TestFixture {
+
         CPPUNIT_TEST_SUITE(VOTableDataTest);
         CPPUNIT_TEST(testFirstComponentValues);
         CPPUNIT_TEST(testHealpixIndexation);
         CPPUNIT_TEST(testLoadCount);
         CPPUNIT_TEST(testLargeLoadCount);
         CPPUNIT_TEST(testInvalidFreqUnits);
+        CPPUNIT_TEST(testMixedCaseUnitsAndTypes);
         CPPUNIT_TEST(testAssumptions);
         CPPUNIT_TEST_SUITE_END();
 
@@ -59,7 +61,8 @@ class VOTableDataTest : public CppUnit::TestFixture {
         VOTableDataTest() :
             small_components("./tests/data/votable_small_components.xml"),
             large_components("./tests/data/votable_large_components.xml"),
-            invalid_freq_units("./tests/data/votable_error_freq_units.xml")
+            invalid_freq_units("./tests/data/votable_error_freq_units.xml"),
+            mixed_case_units_type("./tests/data/votable_mixed_case_units_type.xml")
         {
         }
 
@@ -130,10 +133,22 @@ class VOTableDataTest : public CppUnit::TestFixture {
                 VOTableData::create(invalid_freq_units, "");
             }
             catch (const askap::AssertError& ex) {
-                CPPUNIT_ASSERT(string(ex.what()).find("unit == \"MHz\"") != string::npos);
+                // This is a nasty test based on whitebox knowledge of the unit
+                // assert. Uggh!
+                CPPUNIT_ASSERT(string(ex.what()).find("unit, \"MHz\"") != string::npos);
                 passed = true;
             }
             CPPUNIT_ASSERT(passed);
+        }
+
+        void testMixedCaseUnitsAndTypes() {
+            // The test file has a mix of upper, lower, and mixed case in the
+            // datatype and unit fields. It is sufficient for the load to
+            // execute without raising an exception, and with the expected
+            // component count.
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(mixed_case_units_type, ""));
+            CPPUNIT_ASSERT(pData.get());
+            CPPUNIT_ASSERT_EQUAL(1l, pData->getCount());
         }
 
         void testAssumptions() {
@@ -155,6 +170,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
         const string small_components;
         const string large_components;
         const string invalid_freq_units;
+        const string mixed_case_units_type;
 };
 
 }

@@ -41,6 +41,7 @@ namespace cp {
 namespace sms {
 
 class ServiceTest : public CppUnit::TestFixture {
+
         CPPUNIT_TEST_SUITE(ServiceTest);
         CPPUNIT_TEST(testStub);
         CPPUNIT_TEST_SUITE_END();
