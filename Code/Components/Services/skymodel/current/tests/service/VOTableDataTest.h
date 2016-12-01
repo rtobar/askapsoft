@@ -36,7 +36,6 @@
 // Classes to test
 #include "service/HealPixTools.h"
 #include "service/VOTableData.h"
-#include "service/VOTableComponent.h"
 
 using namespace std;
 using namespace askap::accessors;

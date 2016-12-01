@@ -40,6 +40,7 @@
 #include <odb/database.hxx>
 
 // Local package includes
+#include "datamodel/ContinuumComponent.h"
 
 namespace askap {
 namespace cp {
@@ -52,6 +53,8 @@ namespace sms {
 class GlobalSkyModel :
     private boost::noncopyable {
     public:
+
+        typedef std::vector<datamodel::ContinuumComponent> ComponentList;
 
         /// @brief Factory method for constructing the GlobalSkyModel implementation.
         ///
@@ -69,9 +72,10 @@ class GlobalSkyModel :
         bool createSchema(bool dropTables=true);
 
         /// @brief Ingests a VO table of Continuum Components into the GSM.
-        /// @param filename The VO table file name.
+        /// @param componentsCatalog The VO table file name for the continuum components.
+        /// @param polarisationCatalog The VO table file name for the polarisation data.
         /// @return true on success; otherwise false.
-        bool ingestVOTable(const std::string& filename);
+        bool ingestVOTable(const std::string& componentsCatalog, const std::string& polarisationCatalog);
 
         /// @brief Get the HEALPix NSIDE value.
         ///
@@ -86,6 +90,11 @@ class GlobalSkyModel :
         inline boost::int64_t getHealpixOrder() const {
             return 14l;
         }
+
+        /// @brief Get a component by ID. Probably only useful in testing.
+        ///
+        /// @return The component, or null if not found.
+        datamodel::ContinuumComponent* getComponentByID(long id) const;
 
     private:
         /// @brief Constructor.

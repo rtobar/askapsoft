@@ -48,6 +48,7 @@
 // Local package includes
 #include "datamodel/ContinuumComponent-odb.h"
 #include "Utility.h"
+#include "VOTableData.h"
 
 ASKAP_LOGGER(logger, ".GlobalSkyModel");
 
@@ -134,7 +135,21 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
     c->execute("PRAGMA foreign_keys=ON");
 }
 
-bool GlobalSkyModel::ingestVOTable(const std::string& filename) {
+bool GlobalSkyModel::ingestVOTable(const std::string& componentsCatalog, const std::string& polarisationCatalog) 
+{
+    boost::shared_ptr<VOTableData> pCatalog(VOTableData::create(
+        componentsCatalog, polarisationCatalog));
+
+    if (pCatalog.get()) {
+        // get data
+        // persist to database
+        return true;
+    }
 
     return false;
+}
+
+datamodel::ContinuumComponent* GlobalSkyModel::getComponentByID(long id) const 
+{
+    return 0;
 }

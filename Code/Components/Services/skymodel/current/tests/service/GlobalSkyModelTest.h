@@ -34,6 +34,7 @@
 #include <votable/VOTable.h>
 
 // Classes to test
+#include "datamodel/ContinuumComponent.h"
 #include "service/GlobalSkyModel.h"
 
 using namespace std;
@@ -50,7 +51,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testCreateFromParsetFile);
         CPPUNIT_TEST(testNside);
         CPPUNIT_TEST(testHealpixOrder);
-        CPPUNIT_TEST(testComponentPersistenceToEmptyDatabase);
+        CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
+        CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -59,7 +61,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset(true),
             parsetFile("./tests/data/sms_parset.cfg"),
             small_components("./tests/data/votable_small_components.xml"),
-            large_components("./tests/data/votable_large_components.xml")
+            large_components("./tests/data/votable_large_components.xml"),
+            invalid_components("./tests/data/votable_error_freq_units.xml")
         {
         }
 
@@ -75,8 +78,12 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void testParsetAssumptions() {
-            CPPUNIT_ASSERT_EQUAL(string("sqlite"), parset.get("database.backend").get());
-            CPPUNIT_ASSERT_EQUAL(string("sms.dbtmp"), parset.get("sqlite.name").get());
+            CPPUNIT_ASSERT_EQUAL(
+                string("sqlite"),
+                parset.get("database.backend").get());
+            CPPUNIT_ASSERT_EQUAL(
+                string("./tests/service/gsm_unit_tests.sqlite"),
+                parset.get("sqlite.name").get());
         }
 
         void testCreateFromParsetFile() {
@@ -91,16 +98,24 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
         }
 
-        void testComponentPersistenceToEmptyDatabase() {
-            CPPUNIT_ASSERT(gsm->ingestVOTable(small_components));
+        void testIngestVOTableToEmptyDatabase() {
+            CPPUNIT_ASSERT(gsm->ingestVOTable(small_components, ""));
+
+            boost::shared_ptr<datamodel::ContinuumComponent> component(
+                gsm->getComponentByID(1));
+            CPPUNIT_ASSERT(component.get());
         }
 
+        void testIngestVOTableFailsForBadCatalog() {
+            CPPUNIT_ASSERT(!gsm->ingestVOTable(invalid_components, ""));
+        }
     private:
         boost::shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;
         const string parsetFile;
         const string small_components;
         const string large_components;
+        const string invalid_components;
 };
 
 }
