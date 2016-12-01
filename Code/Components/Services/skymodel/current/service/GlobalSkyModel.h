@@ -31,6 +31,7 @@
 #include <string>
 
 // ASKAPsoft includes
+#include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <Common/ParameterSet.h>
@@ -54,6 +55,7 @@ class GlobalSkyModel :
 
         /// @brief Factory method for constructing the GlobalSkyModel implementation.
         ///
+        /// @param parset The parameter set
         /// @return The GlobalSkyModel instance.
         /// @throw AskapError   If the implementation cannot be constructed.
         static GlobalSkyModel* create(const LOFAR::ParameterSet& parset);
@@ -70,6 +72,20 @@ class GlobalSkyModel :
         /// @param filename The VO table file name.
         /// @return true on success; otherwise false.
         bool ingestVoTable(const std::string& filename);
+
+        /// @brief Get the HEALPix NSIDE value.
+        ///
+        /// @return NSIDE
+        inline boost::int64_t getHealpixNside() const {
+            return 2l << getHealpixOrder();
+        }
+
+        /// @brief Get the HEALPix Order value
+        ///
+        /// @return Order
+        inline boost::int64_t getHealpixOrder() const {
+            return 14l;
+        }
 
     private:
         /// @brief Constructor.

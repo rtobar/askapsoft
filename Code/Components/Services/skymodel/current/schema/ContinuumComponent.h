@@ -28,7 +28,6 @@
 #define ASKAP_CP_SMS_CONTINUUMCOMPONENT_H
 
 // System includes
-//#include <cstdint>
 #include <string>
 
 // ASKAPsoft includes

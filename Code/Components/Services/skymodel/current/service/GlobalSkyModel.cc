@@ -75,6 +75,7 @@ GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
             new sqlite::database(
                 dbName,
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
+        ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
 
         // create the implementation
         pImpl = new GlobalSkyModel(pDb);
@@ -92,8 +93,7 @@ GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
     return pImpl;
 }
 
-GlobalSkyModel::GlobalSkyModel(
-    ::boost::shared_ptr<odb::database> database)
+GlobalSkyModel::GlobalSkyModel(boost::shared_ptr<odb::database> database)
     :
     itsDb(database)
 {

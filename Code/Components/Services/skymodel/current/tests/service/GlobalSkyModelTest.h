@@ -29,6 +29,8 @@
 
 // Support classes
 #include <string>
+#include <boost/filesystem.hpp>
+#include <Common/ParameterSet.h>
 #include <votable/VOTable.h>
 
 // Classes to test
@@ -44,23 +46,53 @@ namespace sms {
 class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
+        CPPUNIT_TEST(testParsetAssumptions);
+        CPPUNIT_TEST(testCreateFromParsetFile);
+        CPPUNIT_TEST(testNside);
+        CPPUNIT_TEST(testHealpixOrder);
         CPPUNIT_TEST_SUITE_END();
 
     public:
         GlobalSkyModelTest() :
+            gsm(),
+            parset(true),
+            parsetFile("./tests/data/sms_parset.cfg"),
             small_components("./tests/data/votable_small_components.xml"),
             large_components("./tests/data/votable_large_components.xml")
         {
         }
 
         void setUp() {
+            parset.clear();
+            parset.adoptFile(parsetFile);
+            gsm.reset(GlobalSkyModel::create(parset));
         }
 
         void tearDown() {
+            parset.clear();
+        }
+
+        void testParsetAssumptions() {
+            CPPUNIT_ASSERT_EQUAL(string("sqlite"), parset.get("database.backend").get());
+            CPPUNIT_ASSERT_EQUAL(string("sms.dbtmp"), parset.get("sqlite.name").get());
+        }
+
+        void testCreateFromParsetFile() {
+            CPPUNIT_ASSERT(gsm.get());
+        }
+
+        void testNside() {
+            CPPUNIT_ASSERT_EQUAL(2l << 14, gsm->getHealpixNside());
+        }
+
+        void testHealpixOrder() {
+            CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
         }
 
     private:
-
+        boost::shared_ptr<GlobalSkyModel> gsm;
+        LOFAR::ParameterSet parset;
+        const string parsetFile;
         const string small_components;
         const string large_components;
 };
