@@ -50,6 +50,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testCreateFromParsetFile);
         CPPUNIT_TEST(testNside);
         CPPUNIT_TEST(testHealpixOrder);
+        CPPUNIT_TEST(testComponentPersistenceToEmptyDatabase);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -66,6 +67,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.clear();
             parset.adoptFile(parsetFile);
             gsm.reset(GlobalSkyModel::create(parset));
+            gsm->createSchema();
         }
 
         void tearDown() {
@@ -87,6 +89,10 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testHealpixOrder() {
             CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
+        }
+
+        void testComponentPersistenceToEmptyDatabase() {
+            CPPUNIT_ASSERT(gsm->ingestVOTable(small_components));
         }
 
     private:

@@ -71,7 +71,7 @@ class GlobalSkyModel :
         /// @brief Ingests a VO table of Continuum Components into the GSM.
         /// @param filename The VO table file name.
         /// @return true on success; otherwise false.
-        bool ingestVoTable(const std::string& filename);
+        bool ingestVOTable(const std::string& filename);
 
         /// @brief Get the HEALPix NSIDE value.
         ///

@@ -134,14 +134,7 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
     c->execute("PRAGMA foreign_keys=ON");
 }
 
-bool GlobalSkyModel::ingestVoTable(const std::string& filename) {
-    ASKAPLOG_DEBUG_STR(logger, "Reading VO table from " << filename);
-    VOTable votable = VOTable::fromXML(filename);
-    ASKAPLOG_DEBUG_STR(
-        logger,
-        "opened VO table. Desc: " << votable.getDescription() << std::endl <<
-        votable.getResource().size() << " resources" << std::endl <<
-        votable.getInfo().size() << " info entries");
+bool GlobalSkyModel::ingestVOTable(const std::string& filename) {
 
-    return true;
+    return false;
 }
