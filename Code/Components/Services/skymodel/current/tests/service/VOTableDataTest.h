@@ -52,6 +52,8 @@ class VOTableDataTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testHealpixIndexation);
         CPPUNIT_TEST(testLoadCount);
         CPPUNIT_TEST(testLargeLoadCount);
+        CPPUNIT_TEST(testNoPolarisation);
+        CPPUNIT_TEST(testNoDataSource);
         CPPUNIT_TEST(testInvalidFreqUnits);
         CPPUNIT_TEST(testMixedCaseUnitsAndTypes);
         CPPUNIT_TEST(testAssumptions);
@@ -125,6 +127,16 @@ class VOTableDataTest : public CppUnit::TestFixture {
         void testLargeLoadCount() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, ""));
             CPPUNIT_ASSERT_EQUAL(134l, pData->getCount());
+        }
+
+        void testNoPolarisation() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            CPPUNIT_ASSERT(!pData->getComponents()[0].polarisation.get());
+        }
+
+        void testNoDataSource() {
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            CPPUNIT_ASSERT(!pData->getComponents()[0].data_source.get());
         }
 
         void testInvalidFreqUnits() {
