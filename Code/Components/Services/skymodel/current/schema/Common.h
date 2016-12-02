@@ -1,4 +1,4 @@
-/// @file Polarisation.h
+/// @file Common.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -24,8 +24,12 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_POLARISATION_H
-#define ASKAP_CP_SMS_POLARISATION_H
+// Do not edit the version of this file in the `datamodel` directory, as it is
+// a copy of the files in the `schema` directory.
+
+
+#ifndef ASKAP_CP_SMS_COMMON_H
+#define ASKAP_CP_SMS_COMMON_H
 
 // System includes
 #include <string>
@@ -33,45 +37,21 @@
 // ASKAPsoft includes
 #include <odb/core.hxx>
 #include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
+//#include <odb/boost/lazy-ptr.hxx>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-// Local package includes
-#include "Common.h"
 
 namespace askap {
 namespace cp {
 namespace sms {
 namespace datamodel {
 
-// Datamodel versioning
-// Disabled for now as I don't need it until we get closer to production.
-#pragma db model version(1, 1)
-
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 
-/// @brief Datamodel class for continuum component polarisation data.
-
-// Do not edit the version of this file in the `datamodel` directory, as it is
-// a copy of the files in the `schema` directory.
-
-#pragma db object optimistic
-struct Polarisation {
-    Polarisation() {}
-
-    // @brief Optimistic concurrency lock version
-    // @units none
-    #pragma db version
-    version_type version;
-
-    // @brief Primary key unique identifier
-    // @units none
-    #pragma db index
-    #pragma db id auto
-    id_type polarisation_component_id;
-
-    // Include the fields generated from the design spreadsheet
-    #include "Polarisation.i"
-};
+typedef boost::uint32_t id_type;
+typedef boost::uint64_t version_type;
 
 };
 };

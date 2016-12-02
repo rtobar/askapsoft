@@ -38,6 +38,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes
+#include "Common.h"
 #include "Polarisation.h"
 #include "DataSource.h"
 
@@ -49,9 +50,6 @@ namespace datamodel {
 
 // Datamodel versioning
 #pragma db model version(1, 1)
-
-// Map C++ bool to an INT NOT NULL database type
-#pragma db value(bool) type("INT")
 
 /// @brief Datamodel class for Continuum Components
 
@@ -65,13 +63,13 @@ struct ContinuumComponent {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    boost::uint64_t version;
+    version_type version;
 
     // @brief Primary key unique identifier
     // @units none
     #pragma db index
     #pragma db id auto
-    boost::uint32_t continuum_component_id;
+    id_type continuum_component_id;
 
     // Include the fields generated from the design spreadsheet
     #include "ContinuumComponent.i"

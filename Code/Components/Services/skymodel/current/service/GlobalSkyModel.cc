@@ -54,6 +54,7 @@ ASKAP_LOGGER(logger, ".GlobalSkyModel");
 
 using namespace odb;
 using namespace askap::cp::sms;
+using namespace askap::cp::sms::datamodel;
 using namespace askap::accessors;
 
 
@@ -135,21 +136,50 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
     c->execute("PRAGMA foreign_keys=ON");
 }
 
-bool GlobalSkyModel::ingestVOTable(const std::string& componentsCatalog, const std::string& polarisationCatalog) 
+std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+    const std::string& componentsCatalog,
+    const std::string& polarisationCatalog)
 {
+    ASKAPLOG_INFO_STR(logger,
+        "Starting VO Table ingest. Component catalog: '" << componentsCatalog <<
+        "' polarisationCatalog: '" << polarisationCatalog << "'");
+
     boost::shared_ptr<VOTableData> pCatalog(VOTableData::create(
         componentsCatalog, polarisationCatalog));
 
+    std::vector<datamodel::id_type> ids;
+
     if (pCatalog.get()) {
-        // get data
-        // persist to database
-        return true;
+        VOTableData::ComponentList& components = pCatalog->getComponents();
+
+        ASKAPLOG_DEBUG_STR(logger, "starting transaction");
+        transaction t(itsDb->begin());
+
+        // bulk persist is only supported for SQLServer and Oracle.
+        // So we have to fall back to a manual loop persisting one component at
+        // a time...
+        for (VOTableData::ComponentList::iterator it = components.begin();
+             it != components.end();
+             it++) {
+            ids.push_back(itsDb->persist(*it));
+        }
+
+        t.commit();
+        ASKAPLOG_DEBUG_STR(logger,
+            "transaction committed. Ingested " << ids.size() <<
+            " components");
     }
 
-    return false;
+    return ids;
 }
 
-datamodel::ContinuumComponent* GlobalSkyModel::getComponentByID(long id) const 
+boost::shared_ptr<ContinuumComponent> GlobalSkyModel::getComponentByID(datamodel::id_type id) const
 {
-    return 0;
+    ASKAPLOG_INFO_STR(logger, "getComponentByID: id = " << id);
+
+    transaction t(itsDb->begin());
+    boost::shared_ptr<ContinuumComponent> component(itsDb->find<ContinuumComponent>(id));
+    t.commit();
+
+    return component;
 }

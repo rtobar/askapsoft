@@ -99,7 +99,8 @@ class SmsToolsApp : public askap::Application {
 
         int ingestVoTable() {
             boost::scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
-            return pGsm->ingestVOTable(parameter(INGEST_VO_TABLE), "") ? 0 : 5;
+            pGsm->ingestVOTable(parameter(INGEST_VO_TABLE), "");
+            return 0;
         }
 };
 

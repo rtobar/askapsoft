@@ -36,6 +36,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes
+#include "Common.h"
 #include "ContinuumComponent.h"
 #include "Polarisation.h"
 

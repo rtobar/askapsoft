@@ -35,7 +35,7 @@
 #include <boost/cstdint.hpp>
 
 // Local package includes
-
+#include "Common.h"
 
 namespace askap {
 namespace cp {
@@ -63,13 +63,13 @@ struct DataSource {
     // @brief Optimistic concurrency lock version
     // @units none
     #pragma db version
-    boost::uint64_t version;
+    version_type version;
 
     // @brief Primary key unique identifier
     // @units none
     #pragma db index
     #pragma db id auto
-    boost::uint32_t data_source_id;
+    id_type data_source_id;
 
     // Include the fields generated from the design spreadsheet
     #include "DataSource.i"

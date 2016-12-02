@@ -29,6 +29,7 @@
 
 // Support classes
 #include <string>
+#include <askap/AskapError.h>
 #include <boost/filesystem.hpp>
 #include <Common/ParameterSet.h>
 #include <votable/VOTable.h>
@@ -69,12 +70,15 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         void setUp() {
             parset.clear();
             parset.adoptFile(parsetFile);
-            gsm.reset(GlobalSkyModel::create(parset));
-            gsm->createSchema();
         }
 
         void tearDown() {
             parset.clear();
+        }
+
+        void initEmptyDatabase() {
+            gsm.reset(GlobalSkyModel::create(parset));
+            gsm->createSchema();
         }
 
         void testParsetAssumptions() {
@@ -82,32 +86,46 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 string("sqlite"),
                 parset.get("database.backend").get());
             CPPUNIT_ASSERT_EQUAL(
-                string("./tests/service/gsm_unit_tests.sqlite"),
+                string("./tests/service/gsm_unit_tests.dbtmp"),
                 parset.get("sqlite.name").get());
         }
 
         void testCreateFromParsetFile() {
+            initEmptyDatabase();
             CPPUNIT_ASSERT(gsm.get());
         }
 
         void testNside() {
+            initEmptyDatabase();
             CPPUNIT_ASSERT_EQUAL(2l << 14, gsm->getHealpixNside());
         }
 
         void testHealpixOrder() {
+            initEmptyDatabase();
             CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
         }
 
         void testIngestVOTableToEmptyDatabase() {
-            CPPUNIT_ASSERT(gsm->ingestVOTable(small_components, ""));
+            parset.replace("sqlite.name", "./tests/service/ingested.dbtmp");
+            initEmptyDatabase();
+            // perform the ingest
+            std::vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
+            CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
+            // test that some expected components can be found
             boost::shared_ptr<datamodel::ContinuumComponent> component(
-                gsm->getComponentByID(1));
+                gsm->getComponentByID(ids[0]));
             CPPUNIT_ASSERT(component.get());
+            CPPUNIT_ASSERT_EQUAL(
+                string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"),
+                component->component_id);
         }
 
         void testIngestVOTableFailsForBadCatalog() {
-            CPPUNIT_ASSERT(!gsm->ingestVOTable(invalid_components, ""));
+            initEmptyDatabase();
+            CPPUNIT_ASSERT_THROW(
+                gsm->ingestVOTable(invalid_components, ""),
+                askap::AskapError);
         }
     private:
         boost::shared_ptr<GlobalSkyModel> gsm;

@@ -74,8 +74,11 @@ class GlobalSkyModel :
         /// @brief Ingests a VO table of Continuum Components into the GSM.
         /// @param componentsCatalog The VO table file name for the continuum components.
         /// @param polarisationCatalog The VO table file name for the polarisation data.
-        /// @return true on success; otherwise false.
-        bool ingestVOTable(const std::string& componentsCatalog, const std::string& polarisationCatalog);
+        /// @throw AskapError Thrown if there are errors.
+        /// @return Vector of new object IDs.
+        std::vector<datamodel::id_type> ingestVOTable(
+            const std::string& componentsCatalog,
+            const std::string& polarisationCatalog);
 
         /// @brief Get the HEALPix NSIDE value.
         ///
@@ -91,10 +94,10 @@ class GlobalSkyModel :
             return 14l;
         }
 
-        /// @brief Get a component by ID. Probably only useful in testing.
+        /// @brief Get a component by ID.
         ///
         /// @return The component, or null if not found.
-        datamodel::ContinuumComponent* getComponentByID(long id) const;
+        boost::shared_ptr<datamodel::ContinuumComponent> getComponentByID(datamodel::id_type id) const;
 
     private:
         /// @brief Constructor.

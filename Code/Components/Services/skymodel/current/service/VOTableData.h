@@ -76,6 +76,13 @@ class VOTableData :
 
         /// @brief Get the vector of ContinuumComponent objects.
         ///
+        /// @return reference to the vector of ContinuumComponent objects.
+        inline ComponentList& getComponents() {
+            return itsComponents;
+        }
+
+        /// @brief Get the vector of ContinuumComponent objects.
+        ///
         /// @return Const reference to the vector of ContinuumComponent objects.
         inline const ComponentList& getComponents() const {
             return itsComponents;
