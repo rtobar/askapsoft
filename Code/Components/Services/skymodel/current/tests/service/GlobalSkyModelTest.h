@@ -52,6 +52,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testCreateFromParsetFile);
         CPPUNIT_TEST(testNside);
         CPPUNIT_TEST(testHealpixOrder);
+        CPPUNIT_TEST(testGetMissingComponentById);
         CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
         CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
         CPPUNIT_TEST_SUITE_END();
@@ -103,6 +104,13 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         void testHealpixOrder() {
             initEmptyDatabase();
             CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
+        }
+
+        void testGetMissingComponentById() {
+            initEmptyDatabase();
+            boost::shared_ptr<datamodel::ContinuumComponent> component(
+                gsm->getComponentByID(9));
+            CPPUNIT_ASSERT(!component.get());
         }
 
         void testIngestVOTableToEmptyDatabase() {
