@@ -1,18 +1,11 @@
 #!/bin/bash -l
 #
-# Front-end script to run BETA processing.
-# This handles the bandpass calibration from individual-beam
-#  observations of 1934-638, and applies them to a "science"
-#  observation, that is then averaged and imaged, optionally with 
-#  self-calibration in the case of continuum imaging. 
-# Many of the parameters are governed by the environment variables
-#  defined in scripts/defaultConfig.sh. The user needs to define the 
-#  scheduling block numbers of the datasets to be used, or to provide
-#  the filenames of specific measurement sets.
-# The scripts that this front-end makes use of are kept in the 
-#  askapsoft/ subdirectory of the ACES subversion repository.
+# Keeping an executable called processBETA, but with a warning that
+# we've moved on to processASKAP.
+#  For now, we will run processASKAP from here, but this won't always
+#  be the case.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -37,69 +30,24 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-USAGE="processBETA.sh -c <config file>"
-
 if [ "${PIPELINEDIR}" == "" ]; then
     
     echo "ERROR - the environment variable PIPELINEDIR has not been set. Cannot find the scripts!"
 
 else 
 
-    if [ "`lfs getstripe -c .`" == "" ]; then
-        echo "WARNING: You don't appear to be running this on a Lustre filesystem - lfs does not work."
-        exit 1
-    fi
+    echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    echo "@ You are running the script processBETA.sh @"
+    echo "@                                           @"
+    echo "@ BETA is no longer with us, and it is time @"
+    echo "@  to move on.                              @"
+    echo "@ Our telescope is ASKAP, and so the script @"
+    echo "@  you want is processASKAP.sh              @"
+    echo "@ It will now be run with your config file, @"
+    echo "@  but please update your workflow!         @"
+    echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    echo " "
     
-    . ${PIPELINEDIR}/initialise.sh
-
-    if [ $# == 0 ]; then
-        echo "No config file provided!"
-	echo "Usage: $USAGE"
-    else
-	
-	userConfig=""
-	while getopts ':c:h' opt
-	do
-	    case $opt in
-		c) userConfig=$OPTARG;;
-                h) echo "Usage: $USAGE"
-                   exit 0;;
-		\?) echo "ERROR: Invalid option: $USAGE"
-		    exit 1;;
-	    esac
-	done
-
-	. ${PIPELINEDIR}/utils.sh	
-        reportVersion | tee -a $JOBLIST
-
-	if [ "$userConfig" != "" ]; then
-            if [ -e ${userConfig} ]; then
-	        echo "Getting extra config from file $userConfig"
-	        . ${userConfig}
-                archiveConfig $userConfig
-            else
-                echo "ERROR: Configuration file $userConfig not found"
-                exit 1
-            fi
-	fi
-
-        . ${PIPELINEDIR}/prepareMetadata.sh
-        PROCESS_DEFAULTS_HAS_RUN=false
-	. ${PIPELINEDIR}/processDefaults.sh
-	
-	lfs setstripe -c ${LUSTRE_STRIPING} .
-        
-	. ${PIPELINEDIR}/run1934cal.sh
-	    
-        . ${PIPELINEDIR}/scienceCalIm.sh
-	    
-        . ${PIPELINEDIR}/gatherStats.sh
-        
-        . ${PIPELINEDIR}/archive.sh
-	
-	. ${PIPELINEDIR}/finalise.sh
-
-    fi
+    ${PIPELINEDIR}/processASKAP.sh $*
 
 fi
-

@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "boost/shared_ptr.hpp"
 // ASKAPsoft includes
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
@@ -84,6 +85,8 @@ ContinuumWorker::ContinuumWorker(LOFAR::ParameterSet& parset,
                                        CubeComms& comms)
     : itsParset(parset), itsComms(comms)
 {
+    itsAdvisor = boost::shared_ptr<synthesis::AdviseDI> (new synthesis::AdviseDI(itsComms,itsParset));
+    itsAdvisor->prepare();
     itsGridder_p = VisGridderFactory::make(itsParset);
     // lets properly size the storage
     const int nchanpercore = itsParset.getInt32("nchanpercore", 1);
@@ -140,6 +143,8 @@ void ContinuumWorker::run(void)
     while (1) {
 
         ContinuumWorkUnit wu;
+
+
         ASKAPLOG_DEBUG_STR(logger,"Worker is waiting for work allocation");
         wu.receiveUnitFrom(itsMaster,itsComms);
         if (wu.get_payloadType() == ContinuumWorkUnit::DONE) {
@@ -162,7 +167,9 @@ void ContinuumWorker::run(void)
                               << ", frequency " << wu.get_channelFrequency()/1.e6 << " MHz"
                               << ", width " << wu.get_channelWidth()/1e3 << " kHz");
             try {
+                ASKAPLOG_INFO_STR(logger,"Parset Reports (before): " << (itsParset.getStringVector("dataset", true)));
                 processWorkUnit(wu);
+                ASKAPLOG_INFO_STR(logger,"Parset Reports (after): " << (itsParset.getStringVector("dataset", true)));
             }
             catch (AskapError& e) {
                 ASKAPLOG_WARN_STR(logger, "Failure processing workUnit");
@@ -185,21 +192,56 @@ void ContinuumWorker::run(void)
     ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
 
     const bool localSolver = itsParset.getBool("solverpercore",false);
+    int nchanpercore = itsParset.getInt("nchanpercore",1);
 
-    ASKAPLOG_INFO_STR(logger,"Getting basic advice");
-    synthesis::AdviseDI advice(itsComms,itsParset);
+
+
+
 
     if (localSolver) {
-        ASKAPLOG_INFO_STR(logger,"In local solver mode - reprocessing allocations (running prepare())");
-        advice.prepare();
-        advice.updateComms();
-        this->baseFrequency = advice.getBaseFrequencyAllocation(itsComms.rank()-1);
+        ASKAPLOG_INFO_STR(logger,"In local solver mode - reprocessing allocations)");
+        itsAdvisor->updateComms();
+        int myMinClient = itsComms.rank();
+        int myMaxClient = itsComms.rank();
+
+        if (itsComms.isWriter()) {
+            ASKAPLOG_INFO_STR(logger,"Getting client list for cube generation");
+            std::list<int> myClients = itsComms.getClients();
+            myClients.push_back(itsComms.rank());
+            myClients.sort();
+            myClients.unique();
+
+            ASKAPLOG_INFO_STR(logger,"Client list " << myClients);
+            if (myClients.size() > 0) {
+                std::list<int>::iterator iter = std::min_element(myClients.begin(), myClients.end());
+
+                myMinClient = *iter;
+                iter = std::max_element(myClients.begin(), myClients.end());
+                myMaxClient = *iter;
+
+            }
+            // these are in ranks
+            // If a client is missing entirely from the list - the cube will be missing
+            // channels - but they will be correctly labelled
+            this->baseCubeGlobalChannel = (myMinClient - 1)*nchanpercore;
+            this->baseCubeFrequency = itsAdvisor->getBaseFrequencyAllocation((myMinClient - 1));
+            // e.g
+            // bottom client rank is 4 - top client is 7
+            // we have 4 chanpercore
+            // 6*4 - 3*4
+            // 3*4 = 12
+            // (6 - 3 + 1) * 4
+            this->nchanCube = (myMaxClient - myMinClient + 1)*nchanpercore;
+            ASKAPLOG_INFO_STR(logger,"Number of channels in cube is: " << this->nchanCube );
+            ASKAPLOG_INFO_STR(logger,"Base global channel of cube is " << this->baseCubeGlobalChannel);
+        }
+        this->baseFrequency = itsAdvisor->getBaseFrequencyAllocation(itsComms.rank()-1);
     }
     ASKAPLOG_INFO_STR(logger,"Adding missing parameters");
-    
-    advice.addMissingParameters();
 
-    if (workUnits.size()>=1) {
+    itsAdvisor->addMissingParameters();
+
+    if (workUnits.size()>=1 || itsComms.isWriter()) {
 
         try {
             processChannels();
@@ -226,6 +268,7 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
     // This also needs to set the frequencies and directions for all the images
     ASKAPLOG_DEBUG_STR(logger,"In processWorkUnit");
     LOFAR::ParameterSet unitParset = itsParset;
+    ASKAPLOG_INFO_STR(logger,"Parset Reports: (In process workunit)" << (itsParset.getStringVector("dataset", true)));
 
     char ChannelPar[64];
 
@@ -295,24 +338,19 @@ void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 
         sprintf(ChannelPar,"[1,1]");
     }
-    unitParset.replace("dataset",wu.get_dataset());
+
     unitParset.replace("Channels",ChannelPar);
 
-
     ASKAPLOG_INFO_STR(logger,"Getting advice on missing parameters");
-    synthesis::AdviseDI diadvise(itsComms,unitParset);
 
-    /// this is running prepare and it should not have to.
-    /// currently everyone is calulating the allocations superflously why has
-    /// this complication developed clean it up ?
-    diadvise.prepare();
-    diadvise.addMissingParameters();
-    ASKAPLOG_INFO_STR(logger,"advice received");
+    itsAdvisor->addMissingParameters(unitParset);
+
     ASKAPLOG_INFO_STR(logger,"Storing workUnit");
     workUnits.push_back(wu);
     ASKAPLOG_INFO_STR(logger,"Storing parset");
-    itsParsets.push_back(diadvise.getParset());
+    itsParsets.push_back(unitParset);
     ASKAPLOG_INFO_STR(logger,"Finished processWorkUnit");
+    ASKAPLOG_INFO_STR(logger,"Parset Reports (leaving processWorkUnit): " << (itsParset.getStringVector("dataset", true)));
 
 }
 
@@ -323,7 +361,7 @@ ContinuumWorker::processSnapshot(LOFAR::ParameterSet& unitParset)
 }
 void ContinuumWorker::buildSpectralCube() {
 
-    ASKAPLOG_DEBUG_STR(logger,"Processing multiple channels local solver mode");
+    ASKAPLOG_INFO_STR(logger,"Processing multiple channels local solver mode");
     /// This is the spectral cube builder
     /// it marshalls the following tasks:
     /// 1. building a spectral cube image
@@ -344,45 +382,45 @@ void ContinuumWorker::buildSpectralCube() {
     int nWorkers = itsComms.nProcs() -1;
     int nGroups = itsComms.nGroups();
     int nchantotal = nWorkers * nchanpercore / nGroups;
-    int nchanperwriter = nchantotal/nwriters;
-    int nworkersperwriter = nWorkers/nwriters;
 
-    Quantity f0(this->baseFrequency,"Hz");
-    /// The width of a channel. THis does <NOT> take account of the variable width
-    /// of BArycentric channels
-    Quantity freqinc(workUnits[0].get_channelWidth(),"Hz");
-    /// nchanperwriter is an estimate - some channels, especially at the edges may not exist
-    /// these will remain blank in the output cube
-
-    ASKAPLOG_INFO_STR(logger,"Configuring Spectral Cube");
-    ASKAPLOG_INFO_STR(logger,"nchan: " << nchanperwriter << " base f0: " << f0.getValue("MHz")
-    << " width: " << freqinc.getValue("MHz") <<" (" << workUnits[0].get_channelWidth() << ")");
-
-    std::string root = "image";
-
-    std::string img_name = root + std::string(".wr.") \
-    + utility::toString(itsComms.rank());
-
-    root = "psf";
-    std::string psf_name = root + std::string(".wr.") \
-    + utility::toString(itsComms.rank());
-
-    root = "residual";
-
-    std::string residual_name = root + std::string(".wr.") \
-    + utility::toString(itsComms.rank());
-
-    root = "weights";
-
-    std::string weights_name = root + std::string(".wr.") \
-    + utility::toString(itsComms.rank());
 
     if (itsComms.isWriter()) {
 
-        itsImageCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc,img_name));
-        itsPSFCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, psf_name));
-        itsResidualCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, residual_name));
-        itsWeightsCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, weights_name));
+        Quantity f0(this->baseCubeFrequency,"Hz");
+    /// The width of a channel. THis does <NOT> take account of the variable width
+    /// of BArycentric channels
+        Quantity freqinc(workUnits[0].get_channelWidth(),"Hz");
+
+
+
+        std::string root = "image";
+
+        std::string img_name = root + std::string(".wr.") \
+        + utility::toString(itsComms.rank());
+
+        root = "psf";
+        std::string psf_name = root + std::string(".wr.") \
+        + utility::toString(itsComms.rank());
+
+        root = "residual";
+
+        std::string residual_name = root + std::string(".wr.") \
+        + utility::toString(itsComms.rank());
+
+        root = "weights";
+
+        std::string weights_name = root + std::string(".wr.") \
+        + utility::toString(itsComms.rank());
+
+
+        ASKAPLOG_INFO_STR(logger,"Configuring Spectral Cube");
+        ASKAPLOG_INFO_STR(logger,"nchan: " << this->nchanCube << " base f0: " << f0.getValue("MHz")
+        << " width: " << freqinc.getValue("MHz") <<" (" << workUnits[0].get_channelWidth() << ")");
+
+        itsImageCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc,img_name));
+        itsPSFCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc, psf_name));
+        itsResidualCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc, residual_name));
+        itsWeightsCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc, weights_name));
 
 
         if (itsParset.getBool("restore", false)) {
@@ -394,9 +432,9 @@ void ContinuumWorker::buildSpectralCube() {
             + utility::toString(itsComms.rank());
             // Only create these if we are restoring, as that is when they get made
             if (itsDoingPreconditioning) {
-                itsPSFimageCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, psf_image_name));
+                itsPSFimageCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc, psf_image_name));
             }
-            itsRestoredCube.reset(new CubeBuilder(itsParsets[0], nchanperwriter, f0, freqinc, restored_image_name));
+            itsRestoredCube.reset(new CubeBuilder(itsParsets[0], this->nchanCube, f0, freqinc, restored_image_name));
         }
     }
     /// What are the plans for the deconvolution?
@@ -435,7 +473,7 @@ void ContinuumWorker::buildSpectralCube() {
                 break;
             }
 
-            ASKAPLOG_INFO_STR(logger, "Starting to process workunit " << workUnitCount);
+            ASKAPLOG_INFO_STR(logger, "Starting to process workunit " << workUnitCount << " of " << workUnits.size());
 
             int initialChannelWorkUnit = workUnitCount+1;
 
@@ -508,13 +546,14 @@ void ContinuumWorker::buildSpectralCube() {
 
                     tempWorkUnitCount++;
                 }
+                workUnitCount = tempWorkUnitCount; // this is to remember what finished on.
                 /// now we have a "full" set of NE we can SolveNE to update the model
                 try {
                     rootImager.solveNE();
                 }
                 catch (const askap::AskapError& e) {
                     ASKAPLOG_WARN_STR(logger,"Askap error in solver");
-                    workUnitCount = tempWorkUnitCount; // this is to remember what was failed on.
+
                     throw;
                 }
 
@@ -537,7 +576,7 @@ void ContinuumWorker::buildSpectralCube() {
                 }
                 if (majorCycleNumber+1 > nCycles) {
                     ASKAPLOG_INFO_STR(logger,"Reached maximum majorcycle count");
-                    workUnitCount = tempWorkUnitCount; // this is to remember what was processed.
+
                 }
                 else {
 
@@ -572,23 +611,21 @@ void ContinuumWorker::buildSpectralCube() {
             if (itsComms.isWriter()) {
 
                 ASKAPLOG_INFO_STR(logger,"I have (including my own) " << itsComms.getOutstanding() << " units to write");
-                int cubeChannel = workUnits[workUnitCount-1].get_globalChannel()-baseChannel;
-                ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
-                ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+                ASKAPLOG_INFO_STR(logger,"I have " << itsComms.getClients().size() << " clients with work");
+                int cubeChannel = workUnits[workUnitCount-1].get_globalChannel()-this->baseCubeGlobalChannel;
+                ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << this->nchanCube);
+                ASKAPCHECK( (cubeChannel >= 0 || cubeChannel < this->nchanCube), "cubeChannel outside range of cube slice");
                 handleImageParams(rootImager.params(),cubeChannel);
                 ASKAPLOG_INFO_STR(logger,"Written channel " << cubeChannel);
 
                 itsComms.removeChannelFromWriter(itsComms.rank());
+                itsComms.removeChannelFromWorker(itsComms.rank());
+
                 /// write everyone elses
 
-                /// how many should be write out
-                /// there are some number of workers per writer but not all
-                /// may have a channel due to the barycentreing. THere is no
-                /// simple way to calculate this - so if I just wait for nWorkersperWriter
-                /// it should be relatively efficient.
+                /// one per client ... I dont care what order they come in at
 
-                ///
-                int targetOutstanding = itsComms.getOutstanding() - (nworkersperwriter - 1);
+                int targetOutstanding = itsComms.getOutstanding() - itsComms.getClients().size();
                 if (targetOutstanding < 0){
                     targetOutstanding = 0;
                 }
@@ -596,19 +633,23 @@ void ContinuumWorker::buildSpectralCube() {
                 ASKAPLOG_INFO_STR(logger,"iteration count is " << itsComms.getOutstanding());
 
                 while (itsComms.getOutstanding()>targetOutstanding){
+                    if (itsComms.getOutstanding() <=  (workUnits.size()-workUnitCount)) {
+                        ASKAPLOG_INFO_STR(logger,"local remaining count is " << (workUnits.size()-workUnitCount)) ;
 
-                    ASKAPLOG_INFO_STR(logger,"iteration count is " << itsComms.getOutstanding());
+                        break;
+                    }
+
 
                     ContinuumWorkRequest result;
                     int id;
                     /// this is a blocking receive
                     result.receiveRequest(id,itsComms);
                     ASKAPLOG_INFO_STR(logger,"Received a request to write from rank " << id);
-                    int cubeChannel = result.get_globalChannel()-baseChannel;
+                    int cubeChannel = result.get_globalChannel()-this->baseCubeGlobalChannel;
 
                     try {
-                        ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
-                        ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+                        ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << this->nchanCube);
+                        ASKAPCHECK( (cubeChannel >= 0 || cubeChannel < this->nchanCube), "cubeChannel outside range of cube slice");
 
                         handleImageParams(result.get_params(),cubeChannel);
 
@@ -683,12 +724,12 @@ void ContinuumWorker::buildSpectralCube() {
             int id;
             result.receiveRequest(id,itsComms);
             ASKAPLOG_INFO_STR(logger,"Received a request to write from rank " << id);
-            int cubeChannel = result.get_globalChannel()-baseChannel;
+            int cubeChannel = result.get_globalChannel()-this->baseCubeGlobalChannel;
             try {
 
 
-                ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << nchanperwriter);
-                ASKAPCHECK( cubeChannel < nchanperwriter, "cubeChannel outside range of cube slice");
+                ASKAPLOG_INFO_STR(logger,"Attempting to write channel " << cubeChannel << " of " << this->nchanCube);
+                ASKAPCHECK((cubeChannel >= 0 || cubeChannel < this->nchanCube), "cubeChannel outside range of cube slice");
                 handleImageParams(result.get_params(),cubeChannel);
                 ASKAPLOG_INFO_STR(logger,"Written the slice from rank" << id);
 
@@ -847,8 +888,20 @@ void ContinuumWorker::processChannels()
 {
 
 
+    ASKAPLOG_INFO_STR(logger,"Processing Channel Allocation");
+
+
+
 
     LOFAR::ParameterSet& unitParset = itsParsets[0];
+
+    const bool localSolver = unitParset.getBool("solverpercore",false);
+
+    if (localSolver) {
+        this->buildSpectralCube();
+        return;
+    }
+
     int localChannel;
     int globalChannel;
 
@@ -873,12 +926,7 @@ void ContinuumWorker::processChannels()
     ASKAPLOG_DEBUG_STR(logger, "Tolerance on the directions is "
                       << uvwMachineCacheTolerance / casa::C::pi * 180. * 3600. << " arcsec");
 
-    const bool localSolver = unitParset.getBool("solverpercore",false);
 
-    if (localSolver) {
-        this->buildSpectralCube();
-        return;
-    }
     ASKAPLOG_INFO_STR(logger,"Processing multiple channels central solver mode");
     TableDataSource ds0(ms, TableDataSource::DEFAULT, colName);
 

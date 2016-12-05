@@ -32,6 +32,7 @@
 #define ASKAP_CP_IMAGER_CUBECOMMS_H
 
 #include <map>
+#include <list>
 ///ASKAP includes ...
 #include <askapparallel/AskapParallel.h>
 #include "messages/IMessage.h"
@@ -58,6 +59,10 @@ namespace cp {
             /// @details This adds a rank to a vector of ranks
             /// each is the rank of a writer
             void addWriter(unsigned int writer_rank);
+            /// @brief adds a worker to the list by rank
+            /// @details This adds a rank to a vector of ranks
+            /// each is the rank of a writer
+            void addWorker(unsigned int writer_rank);
 
             /// @brief initialises the writer list
             /// @details By evenly dividing the writing across
@@ -66,14 +71,21 @@ namespace cp {
             void initWriters(int nwriters, int nchanpercore);
             /// @brief increments a counter (one for each rank)
             /// @details Takes the rank of the writer
-            void addChannelToWriter(unsigned int writer_rank);
+            void addChannelToWriter(unsigned int writer_rank, unsigned int worker);
+            void addClientToWriter(unsigned int writer_rank, unsigned int client_rank);
 
             void removeChannelFromWriter(unsigned int writer_rank);
 
+            void addChannelToWorker(unsigned int worker_rank);
+            void removeChannelFromWorker(unsigned int worker_rank);
+
             int getOutstanding();
+            std::list<int> getClients();
+
+
 
             int anyWork();
-            
+
 
             size_t buildCommIndex();
             /// @brief its communicator for its fellow workers
@@ -85,8 +97,21 @@ namespace cp {
         private:
             // Add a byte offset to the  specified pointer, returning the result
             void* addByteOffset(const void *ptr, size_t offset) const;
+
+            // MAP for each writer and the number of work allocations (channels)
+            // it has to write
             std::map<int,int> writerMap;
-        int writerCount;
+            // MAP for each client with the number of good channels it intends to
+            // write
+
+            std::map<int,int > workerMap;
+
+            std::map<int,std::list<int> > clientMap;
+
+            int addChannelToMap(std::map<int,int>& theMap, unsigned int theRank);
+            int removeChannelFromMap(std::map<int,int>& theMap, unsigned int theRank);
+
+            int writerCount;
             size_t itsComrades;
     };
 }

@@ -30,6 +30,7 @@
 
 #include <limits>
 #include <map>
+#include <list>
 /// out own header first
 
 
@@ -89,9 +90,12 @@ void CubeComms::initWriters(int nwriters, int nchanpercore) {
         nWorkersPerWriter = 1;
     }
 
-
+    int mywriter = 1;
     for (int wrk = 0; wrk < nWorkersPerGroup; wrk=wrk+nWorkersPerWriter) {
-        int mywriter = floor(wrk/nWorkersPerWriter)*nWorkersPerWriter + 1;
+        if (nwriters > 1) {
+            mywriter = floor(wrk/nWorkersPerWriter)*nWorkersPerWriter + 1;
+        }
+
         std::pair<std::map<int,int>::iterator,bool> ret;
         ret = writerMap.insert(std::pair<int,int> (mywriter,writerCount) );
         if (ret.second==false) {
@@ -121,52 +125,132 @@ void CubeComms::addWriter(unsigned int writerRank) {
     ret = writerMap.insert(std::pair<int,int> (writerRank,0) );
 
     if (ret.second==false) {
-        ASKAPLOG_DEBUG_STR(logger, "element " << writerRank << " already existed");
+        ASKAPLOG_WARN_STR(logger, "element " << writerRank << " already existed");
     }
     else {
         writerCount++;
     }
 
-}
-void CubeComms::addChannelToWriter(unsigned int writerRank) {
 
-    std::map<int,int>::iterator it;
-    it = writerMap.find(writerRank);
-    if (it != writerMap.end()) {
-        int oldcount = it->second;
-        int newcount = oldcount+1;
-        writerMap.erase (it);
-        std::pair<std::map<int,int>::iterator,bool> ret;
-        ret = writerMap.insert(std::pair<int,int> (writerRank,newcount) );
-        ASKAPLOG_INFO_STR(logger,"added a channel to writer " << writerRank  \
-        << " old count was " << oldcount << " current count is " << newcount);
+    // ret2 = clientMap.insert(std::pair<int,std::map<int,int> > (writerRank,clientlist) );
+    // if (ret2.second==false) {
+    //     ASKAPLOG_WARN_STR(logger, "element " << writerRank << " already existed");
+    // }
+
+}
+void CubeComms::addWorker(unsigned int workerRank) {
+
+    std::pair<std::map<int,int>::iterator,bool> ret;
+    ret = workerMap.insert(std::pair<int,int> (workerRank,0) );
+
+    if (ret.second==false) {
+        ASKAPLOG_WARN_STR(logger, "worker " << workerRank << " already existed");
+    }
+    else {
+        ASKAPLOG_INFO_STR(logger, " added worker rank " << " to workerMap");
+    }
+
+}
+void CubeComms::addChannelToWorker(unsigned int workerRank) {
+
+    int rtn = addChannelToMap(workerMap, workerRank);
+    if (rtn < 1) {
+        ASKAPLOG_WARN_STR(logger,"Adding channel to non-existent worker");
 
     }
     else {
+        ASKAPLOG_INFO_STR(logger,"Added channel to worker rank " << workerRank );
+    }
+
+}
+void CubeComms::removeChannelFromWorker(unsigned int workerRank) {
+
+    int rtn = removeChannelFromMap(workerMap, workerRank);
+
+    if (rtn < 0) {
+        ASKAPLOG_WARN_STR(logger,"Removing channel from non-existent writer");
+    }
+    else {
+        ASKAPLOG_INFO_STR(logger,"Removed channel from writer rank" << workerRank);
+    }
+
+}
+void CubeComms::addChannelToWriter(unsigned int writerRank, unsigned int workerRank) {
+
+    int rtn = addChannelToMap(writerMap, writerRank);
+    if (rtn < 1) {
         ASKAPLOG_WARN_STR(logger,"Adding channel to non-existent writer");
 
     }
+    else {
+        ASKAPLOG_INFO_STR(logger,"Added channel to writer rank " << writerRank );
+    }
+
+    ASKAPLOG_INFO_STR(logger,"Adding " << writerRank << " to clientMap");
+
+    this->clientMap[writerRank];
+    ASKAPLOG_INFO_STR(logger,"Pushing back " << workerRank);
+    this->clientMap[writerRank].push_back(workerRank);
+    ASKAPLOG_INFO_STR(logger,"clientMap " << clientMap);
+    this->clientMap[writerRank].sort();
+    ASKAPLOG_INFO_STR(logger,"Sorted clientMap " << clientMap);
+    this->clientMap[writerRank].unique();
+    ASKAPLOG_INFO_STR(logger,"Uniquified clientMap " << clientMap);
+
+
 
 }
 void CubeComms::removeChannelFromWriter(unsigned int writerRank) {
 
-    std::map<int,int>::iterator it;
-    it = writerMap.find(writerRank);
-    if (it != writerMap.end()) {
-        int oldcount = it->second;
-        int newcount = oldcount-1;
-        writerMap.erase (it);
-        std::pair<std::map<int,int>::iterator,bool> ret;
-        ret = writerMap.insert(std::pair<int,int> (writerRank,newcount) );
+    int rtn = removeChannelFromMap(writerMap, writerRank);
+
+    if (rtn < 0) {
+        ASKAPLOG_WARN_STR(logger,"Removing channel from non-existent writer");
     }
     else {
-        ASKAPLOG_WARN_STR(logger,"Removing channel from non-existent writer");
+        ASKAPLOG_INFO_STR(logger,"Removed channel from writer rank" << writerRank);
+    }
+
+}
+int CubeComms::removeChannelFromMap(std::map<int,int>& theMap, unsigned int theRank) {
+
+    std::map<int,int>::iterator it;
+    it = theMap.find(theRank);
+    if (it != theMap.end()) {
+        int oldcount = it->second;
+        int newcount = oldcount-1;
+        theMap.erase (it);
+        std::pair<std::map<int,int>::iterator,bool> ret;
+        ret = theMap.insert(std::pair<int,int> (theRank,newcount) );
+        return newcount;
+    }
+    else {
+        return -1;
 
     }
 
 }
+int CubeComms::addChannelToMap(std::map<int,int>& theMap, unsigned int theRank ) {
 
+    std::map<int,int>::iterator it;
+    it = theMap.find(theRank);
+    if (it != theMap.end()) {
+        int oldcount = it->second;
+        int newcount = oldcount+1;
+        theMap.erase (it);
+        std::pair<std::map<int,int>::iterator,bool> ret;
+        ret = theMap.insert(std::pair<int,int> (theRank,newcount) );
+        ASKAPLOG_INFO_STR(logger,"added a channel to rank " << theRank  \
+        << " old count was " << oldcount << " current count is " << newcount);
+        return newcount;
 
+    }
+    else {
+        return -1;
+
+    }
+
+}
 /// Dont like putting this here - would rather make the MPIComms version public
 void* CubeComms::addByteOffset(const void *ptr, size_t offset) const
 {
@@ -177,4 +261,19 @@ void* CubeComms::addByteOffset(const void *ptr, size_t offset) const
 }
 int CubeComms::getOutstanding() {
     return writerMap[rank()];
+}
+std::list<int> CubeComms::getClients() {
+    // return list of clients with at least one piece of work outstanding
+    std::list<int> clients_with_work;
+    std::list<int>::iterator it;
+    it = clientMap[rank()].begin();
+
+    while (it != clientMap[rank()].end()) {
+        if (workerMap[*it] > 0) {
+            if (*it != rank())
+                clients_with_work.push_back(*it);
+        }
+        it++;
+    }
+    return clients_with_work;
 }

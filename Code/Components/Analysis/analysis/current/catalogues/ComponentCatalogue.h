@@ -70,6 +70,9 @@ class ComponentCatalogue {
         /// a front-end to the writeVOT() and writeASCII() functions)
         virtual void write();
 
+    /// Return a reference to the vector list of components
+    std::vector<CasdaComponent> &components();
+
     protected:
         /// Define the vector list of Components using the input list
         /// of RadioSource objects and the parset. One component is

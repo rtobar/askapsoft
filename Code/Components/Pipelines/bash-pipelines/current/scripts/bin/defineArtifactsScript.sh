@@ -4,7 +4,7 @@
 # for archiving. This local script is needed as we need to know which
 # images are present when we actually execute various jobs (such as
 # the thumbnail creation & the casdaupload), rather than when we run
-# processBETA.
+# processASKAP.
 #
 # @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
@@ -106,7 +106,8 @@ casdaOtherDimImageTypes=()
 
 # Variables defined from configuration file
 NOW="${NOW}"
-nterms="${NUM_TAYLOR_TERMS}"
+NUM_TAYLOR_TERMS="${NUM_TAYLOR_TERMS}"
+maxterm=\`echo \$NUM_TAYLOR_TERMS | awk '{print 2*\$1-1}'\`
 list_of_images="${IMAGE_LIST}"
 doBeams="${ARCHIVE_BEAM_IMAGES}"
 doSelfcalLoops="${ARCHIVE_SELFCAL_LOOP_MOSAICS}"
@@ -123,9 +124,6 @@ ADD_FITS_SUFFIX=\${ADD_FITS_SUFFIX}
 if [ "\${ADD_FITS_SUFFIX}" == "true" ] || [ "\${ADD_FITS_SUFFIX}" == "" ]; then
     fitsSuffix=".fits"
 fi
-
-nterms=${NUM_TAYLOR_TERMS}
-maxterm=\`echo \$nterms | awk '{print 2*\$1-1}'\`
 
 NUM_LOOPS=0
 DO_SELFCAL=$DO_SELFCAL

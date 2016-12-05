@@ -57,8 +57,8 @@ FITSImageRW::FITSImageRW(const FITSImageRW& other)
 {
     ASKAPLOG_INFO_STR(FITSlogger,"Entering Copy FITSImageRW Constructor");
 }
-bool FITSImageRW::create(const casa::String& name) {
-    ASKAPLOG_INFO_STR(FITSlogger,"Creating barebones FITS image");
+bool FITSImageRW::write(const casa::Array<float> &arr) {
+    ASKAPLOG_INFO_STR(FITSlogger,"Writing array to FITS image");
     return false;
 }
 FITSImageRW::~FITSImageRW()

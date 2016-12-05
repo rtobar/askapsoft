@@ -32,7 +32,7 @@
 #include <string>
 
 // ASKAPsoft includes
-
+#include "boost/shared_ptr.hpp"
 #include <Common/ParameterSet.h>
 #include <fitting/INormalEquations.h>
 #include <fitting/Params.h>
@@ -40,7 +40,7 @@
 #include <gridding/IVisGridder.h>
 
 // Local includes
-
+#include "distributedimager/AdviseDI.h"
 #include "distributedimager/MSSplitter.h"
 #include "distributedimager/CalcCore.h"
 #include "messages/ContinuumWorkUnit.h"
@@ -61,6 +61,9 @@ class ContinuumWorker
 
 
     private:
+
+        // My Advisor
+        boost::shared_ptr<synthesis::AdviseDI> itsAdvisor;
          // The work units
         vector<ContinuumWorkUnit> workUnits;
 
@@ -111,10 +114,16 @@ class ContinuumWorker
 
         // the basechannel number assigned to this worker
         unsigned int baseChannel;
-        
+
         // the baseFrequency associated with this channel
         double baseFrequency;
-        
+        // the baseFrequency associated with the cube if being built
+        double baseCubeFrequency;
+        // the global channel associated with this part of the cube
+        int baseCubeGlobalChannel;
+        // the number of channels in this cube (if writer)
+        int nchanCube;
+
         boost::scoped_ptr<CubeBuilder> itsImageCube;
         boost::scoped_ptr<CubeBuilder> itsPSFCube;
         boost::scoped_ptr<CubeBuilder> itsResidualCube;

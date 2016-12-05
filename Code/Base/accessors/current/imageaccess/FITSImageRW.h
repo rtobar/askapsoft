@@ -46,6 +46,7 @@ namespace accessors {
 
 class FITSImageRW: public casa::FITSImage {
 
+public:
     // Construct a FITSImage from the disk FITS file name  and extension and apply mask.
 
     explicit FITSImageRW(const casa::String& name, casa::uInt whichRep=0, casa::uInt whichHDU=0);
@@ -59,8 +60,8 @@ class FITSImageRW: public casa::FITSImage {
     // Destructor does nothing
     virtual ~FITSImageRW();
 
-    // create an empty fits image of shape
-    bool create(const casa::String& name);
+    // write into a FITS image
+    bool write(const casa::Array<float>& );
 
 
 
