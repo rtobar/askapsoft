@@ -23,6 +23,7 @@
 
 // ASKAPsoft includes
 #include <AskapTestRunner.h>
+#include <askap_accessors.h>
 #include <askap/AskapLogging.h>
 
 // Test includes
@@ -30,7 +31,10 @@
 #include <FitsImageAccessTest.h>
 
 
+
 ASKAP_LOGGER(logger, "imageaccesstest");
+
+using namespace askap;
 
 int main(int argc, char *argv[])
 {

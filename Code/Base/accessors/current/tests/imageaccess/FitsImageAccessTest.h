@@ -67,10 +67,10 @@ public:
 
     void testReadWrite() {
         // Create FITS image
-        const std::string name = "tmp.fitsimage";
+        const std::string name = "tmpfitsimage.fits";
         unlink(name.c_str());
         CPPUNIT_ASSERT(itsImageAccessor);
-        const casa::IPosition shape(3,10,5,5);
+        const casa::IPosition shape(3,10,10,5);
         casa::Array<float> arr(shape);
         arr.set(1.);
         // Build a coordinate system for the image
@@ -81,7 +81,7 @@ public:
             135*casa::C::pi/180.0, 60*casa::C::pi/180.0,    // 5
             -1*casa::C::pi/180.0, 1*casa::C::pi/180,        // 6
             xform,                              // 7
-            128.0, 128.0,                       // 8
+            5.0, 5.0,                       // 8
             999.0, 999.0);
 
         casa::Vector<casa::String> units(2); units = "deg";                        //  9
@@ -104,6 +104,7 @@ public:
 
 
         itsImageAccessor->create(name, shape, coordsys);
+
         itsImageAccessor->write(name,arr);
 
         // check shape
@@ -113,8 +114,10 @@ public:
         CPPUNIT_ASSERT(readBack.shape() == shape);
         for (int x=0; x<shape[0]; ++x) {
             for (int y=0; y<shape[1]; ++y) {
-                const casa::IPosition index(2,x,y);
-                CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
+                for (int z = 0; z < shape[2]; ++z) {
+                    const casa::IPosition index(2,x,y,z);
+                    CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
+                }
             }
         }
       // write a slice
