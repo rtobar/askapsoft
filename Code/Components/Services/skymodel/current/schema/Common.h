@@ -32,14 +32,9 @@
 #define ASKAP_CP_SMS_COMMON_H
 
 // System includes
-#include <string>
 
 // ASKAPsoft includes
-#include <odb/core.hxx>
 #include <boost/cstdint.hpp>
-#include <boost/shared_ptr.hpp>
-//#include <odb/boost/lazy-ptr.hxx>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 
 namespace askap {
@@ -50,8 +45,8 @@ namespace datamodel {
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 
-typedef boost::uint32_t id_type;
-typedef boost::uint64_t version_type;
+typedef boost::int64_t id_type;
+typedef boost::int64_t version_type;
 
 };
 };

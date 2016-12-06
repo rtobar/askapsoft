@@ -13,6 +13,7 @@ from string import Template
 # * **skiprows**: zero-based row indicies that should be skipped in the spreadsheet
 
 CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
+POLARISATION_SPEC = './GSM_casda_polarisation.xlsx'
 
 files = [
     {
@@ -22,7 +23,7 @@ files = [
         'skiprows': [0],
     },
     {
-        'input': './GSM_casda_polarisation.xlsx',
+        'input': POLARISATION_SPEC,
         'output': '../schema/Polarisation.i',
         'parse_cols': None,
         'skiprows': [0],
@@ -39,13 +40,48 @@ view_files = [
     {
         'inputs': [
             CONTINUUM_COMPONENT_SPEC,
-            './GSM_casda_polarisation.xlsx',
+            POLARISATION_SPEC,
             ],
         'output': '../schema/ContinuumComponentLsmView.i',
         'parse_cols': None,
         'skiprows': [0],
     },
 ]
+
+# configuration for Slice file generation
+slice_files = [
+    {
+        'input': CONTINUUM_COMPONENT_SPEC,
+        'output': '../schema/ContinuumComponent.ice',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
+]
+
+# The mapping from database types to C++ types
+type_map = {
+    'BIGINT': 'boost::int64_t',
+    'REAL': 'float',
+    'DOUBLE': 'double',
+    'VARCHAR': 'std::string',
+    'TEXT': 'std::string',
+    'BOOLEAN': 'bool',
+    'INTEGER': 'boost::int32_t',
+    'DATETIME': 'boost::posix_time::ptime',
+}
+
+# The mapping from database types to Slice types
+slice_type_map = {
+    'BIGINT': 'long',
+    'REAL': 'float',
+    'DOUBLE': 'double',
+    'VARCHAR': 'string',
+    'TEXT': 'string',
+    'BOOLEAN': 'bool',
+    'INTEGER': 'int',
+    'DATETIME': 'string',  # will need to convert to a canonical string representation
+}
+
 
 def load(
     filename,
@@ -79,19 +115,6 @@ def load(
     data.fillna('', inplace=True)
 
     return data[data.include_in_gsm == True]
-
-type_map = {
-    'BIGINT': 'boost::int64_t',
-    'BIGINT UNSIGNED': 'boost::uint64_t',
-    'REAL': 'float',
-    'DOUBLE': 'double',
-    'VARCHAR': 'std::string',
-    'TEXT': 'std::string',
-    'BOOLEAN': 'bool',
-    'INTEGER': 'boost::int32_t',
-    'INTEGER UNSIGNED': 'boost::uint32_t',
-    'DATETIME': 'boost::posix_time::ptime',
-}
 
 class Field(object):
     "Represents a database field"

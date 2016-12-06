@@ -1,8 +1,8 @@
 <changelog xmlns="http://www.codesynthesis.com/xmlns/odb/changelog" database="mysql" version="1">
   <model version="1">
     <table name="ContinuumComponent" options="ENGINE=InnoDB" kind="object">
-      <column name="version" type="BIGINT UNSIGNED" null="false"/>
-      <column name="continuum_component_id" type="INT UNSIGNED" null="false"/>
+      <column name="version" type="BIGINT" null="false"/>
+      <column name="continuum_component_id" type="BIGINT" null="false"/>
       <column name="observation_date" type="DATETIME" null="true"/>
       <column name="healpix_index" type="BIGINT" null="false"/>
       <column name="sb_id" type="BIGINT" null="true"/>
@@ -32,8 +32,8 @@
       <column name="rms_image" type="FLOAT" null="false"/>
       <column name="has_siblings" type="INT" null="false"/>
       <column name="fit_is_estimate" type="INT" null="false"/>
-      <column name="polarisation_component_id" type="INT UNSIGNED" null="true"/>
-      <column name="data_source_id" type="INT UNSIGNED" null="true"/>
+      <column name="polarisation_component_id" type="BIGINT" null="true"/>
+      <column name="data_source_id" type="BIGINT" null="true"/>
       <primary-key auto="true">
         <column name="continuum_component_id"/>
       </primary-key>
