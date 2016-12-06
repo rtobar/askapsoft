@@ -87,7 +87,7 @@ sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
-maxterm=\`echo \$nterms | awk '{print 2*\$1-1}'\`
+maxterm=\`echo \${NUM_TAYLOR_TERMS} | awk '{print 2*\$1-1}'\`
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 FIELD=${FIELD}
 
@@ -159,7 +159,7 @@ EOFINNER
                 NPPN=1
                 aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
                 err=\$?
-                for im in `echo \${beamList} | sed -e 's/,/ /g'`; do
+                for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
                     rejuvenate \${im}
                 done
                 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
@@ -201,7 +201,8 @@ if [ ${DO_SOURCE_FINDING} == true ]; then
         BEAM="all"
         setImageProperties cont
         if [ $LOOP -gt 0 ]; then
-            imageName="$imageName.SelfCalLoop${LOOP}"
+            imageName="${imageName}.SelfCalLoop${LOOP}"
+            weightsImage="${weightsImage}.SelfCalLoop${LOOP}"
         fi            
 
         . ${PIPELINEDIR}/sourcefinding.sh
