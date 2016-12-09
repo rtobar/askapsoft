@@ -138,7 +138,9 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
 
 std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
     const std::string& componentsCatalog,
-    const std::string& polarisationCatalog)
+    const std::string& polarisationCatalog,
+    boost::int64_t sb_id,
+    boost::posix_time::ptime obs_date)
 {
     ASKAPLOG_INFO_STR(logger,
         "Starting VO Table ingest. Component catalog: '" << componentsCatalog <<
@@ -161,6 +163,8 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
         for (VOTableData::ComponentList::iterator it = components.begin();
              it != components.end();
              it++) {
+            it->sb_id = sb_id;
+            it->observation_date = obs_date;
             ids.push_back(itsDb->persist(*it));
         }
 

@@ -32,6 +32,7 @@
 
 // ASKAPsoft includes
 #include <boost/cstdint.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <Common/ParameterSet.h>
@@ -74,11 +75,15 @@ class GlobalSkyModel :
         /// @brief Ingests a VO table of Continuum Components into the GSM.
         /// @param componentsCatalog The VO table file name for the continuum components.
         /// @param polarisationCatalog The VO table file name for the polarisation data.
+        /// @param sb_id The scheduling block ID to store with the ingested table.
+        /// @param obs_date The observation date in UTC.
         /// @throw AskapError Thrown if there are errors.
         /// @return Vector of new object IDs.
         std::vector<datamodel::id_type> ingestVOTable(
             const std::string& componentsCatalog,
-            const std::string& polarisationCatalog);
+            const std::string& polarisationCatalog,
+            boost::int64_t sb_id=0,
+            boost::posix_time::ptime obs_date=boost::date_time::not_a_date_time);
 
         /// @brief Get the HEALPix NSIDE value.
         ///

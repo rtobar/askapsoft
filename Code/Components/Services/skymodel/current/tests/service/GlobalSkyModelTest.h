@@ -30,7 +30,9 @@
 // Support classes
 #include <string>
 #include <askap/AskapError.h>
+#include <boost/cstdint.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <Common/ParameterSet.h>
 #include <votable/VOTable.h>
 
@@ -40,6 +42,8 @@
 
 using namespace std;
 using namespace askap::accessors;
+using namespace boost;
+using namespace boost::posix_time;
 
 namespace askap {
 namespace cp {
@@ -55,6 +59,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testGetMissingComponentById);
         CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
         CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
+        CPPUNIT_TEST(testMetadata);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -108,7 +113,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testGetMissingComponentById() {
             initEmptyDatabase();
-            boost::shared_ptr<datamodel::ContinuumComponent> component(
+            shared_ptr<datamodel::ContinuumComponent> component(
                 gsm->getComponentByID(9));
             CPPUNIT_ASSERT(!component.get());
         }
@@ -117,16 +122,44 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/ingested.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            std::vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
             CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
             // test that some expected components can be found
-            boost::shared_ptr<datamodel::ContinuumComponent> component(
+            shared_ptr<datamodel::ContinuumComponent> component(
                 gsm->getComponentByID(ids[0]));
             CPPUNIT_ASSERT(component.get());
             CPPUNIT_ASSERT_EQUAL(
                 string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"),
                 component->component_id);
+        }
+
+        void testMetadata() {
+            parset.replace("sqlite.name", "./tests/service/metadata.dbtmp");
+            initEmptyDatabase();
+
+            int64_t expected_sb_id = 71414;
+            ptime expected_obs_date = second_clock::universal_time();
+
+            // perform the ingest
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+                    small_components,
+                    "",
+                    expected_sb_id,
+                    expected_obs_date);
+
+            // Test that every component has the schedblock ID set
+            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+                it != ids.end();
+                it++) {
+                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+
+                CPPUNIT_ASSERT_EQUAL(expected_sb_id, component->sb_id);
+
+                // CPPUNIT_ASSERT_EQUAL chokes on the ptime values even though
+                // they define operator==.
+                CPPUNIT_ASSERT(expected_obs_date == component->observation_date);
+            }
         }
 
         void testIngestVOTableFailsForBadCatalog() {
@@ -136,7 +169,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 askap::AskapError);
         }
     private:
-        boost::shared_ptr<GlobalSkyModel> gsm;
+        shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;
         const string parsetFile;
         const string small_components;
