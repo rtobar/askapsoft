@@ -73,12 +73,14 @@ boost::shared_ptr<VOTableData> VOTableData::create(
     // Typically there will be ~30 fields and ~1000 rows
     size_t row_index = 0;
     vector<VOTableRow>::iterator rit;
+    // for each component row ...
     for (rit = rows.begin(), row_index = 0;
          rit != rows.end();
          rit++, row_index++) {
         const vector<std::string> rowData = rit->getCells();
         long field_index = 0;
         vector<VOTableField>::iterator fit;
+        // for each field in the current row ...
         for (fit = fields.begin(), field_index = 0;
              fit != fields.end();
              fit++, field_index++) {
@@ -105,28 +107,32 @@ boost::shared_ptr<VOTableData> VOTableData::create(
         const VOTableTable polarisation_table = polarisation.getResource()[0].getTables()[0];
         vector<VOTableField> polfields = polarisation_table.getFields();
         vector<VOTableRow> polrows = polarisation_table.getRows();
-        ASKAPASSERT(polrows.size() >= num_components);
-
-        size_t row_index = 0;
         vector<VOTableRow>::iterator rit;
-        for (rit = polrows.begin(), row_index = 0;
-             rit != polrows.end();
-             rit++, row_index++) {
+        // for each polarisation row ...
+        for (rit = polrows.begin(); rit != polrows.end(); rit++) {
             const vector<std::string> rowData = rit->getCells();
             long field_index = 0;
             vector<VOTableField>::iterator fit;
+
+            // create a new polarisation object
+            boost::shared_ptr<datamodel::Polarisation> pPol(
+                new datamodel::Polarisation());
+
+            // parse each field in the current row ...
             for (fit = polfields.begin(), field_index = 0;
                 fit != polfields.end();
                 fit++, field_index++) {
                 parsePolarisationRowField(
-                    row_index,
                     fit->getUCD(),
                     fit->getName(),
                     fit->getDatatype(),
                     fit->getUnit(),
                     rowData[field_index],
-                    data->itsComponents);
+                    pPol);
             }
+            
+            // Now we have a complete polarisation object. Time to find the
+            // matching component
         }
     }
 

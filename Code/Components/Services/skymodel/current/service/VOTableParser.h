@@ -67,7 +67,7 @@ void parseComponentRowField(
     ASKAPASSERT(row_index < dec_buffer.size());
 
     if (boost::iequals(ucd, "meta.id;meta.main")) {
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "char"));
         components[row_index].component_id = boost::lexical_cast<std::string>(value);
     }
@@ -183,7 +183,7 @@ void parseComponentRowField(
     }
     else 
     if (boost::iequals(ucd, "stat.fit.chi2")) {
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].chi_squared_fit = boost::lexical_cast<float>(value);
     }
@@ -195,13 +195,13 @@ void parseComponentRowField(
     }
     else 
     if (boost::iequals(ucd, "spect.index;em.radio")) {
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].spectral_index = boost::lexical_cast<float>(value);
     }
     else 
     if (boost::iequals(ucd, "askap:spect.curvature;em.radio")) {
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "float"));
         components[row_index].spectral_curvature = boost::lexical_cast<float>(value);
     }
@@ -214,14 +214,14 @@ void parseComponentRowField(
     else 
     if (boost::iequals(name, "has_siblings")) {
         // Some fields do not have a unique UCD. They are matched by name.
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "int"));
         components[row_index].has_siblings = boost::lexical_cast<bool>(value);
     }
     else 
     if (boost::iequals(name, "fit_is_estimate")) {
         // Some fields do not have a unique UCD. They are matched by name.
-        ASKAPASSERT(unit.empty() || unit == "--");
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
         ASKAPASSERT(boost::iequals(type, "int"));
         components[row_index].fit_is_estimate = boost::lexical_cast<bool>(value);
     }
@@ -229,17 +229,258 @@ void parseComponentRowField(
 
 
 void parsePolarisationRowField(
-    size_t row_index,
     const std::string& ucd,
     const std::string& name,
     const std::string& type,
     const std::string& unit,
     const std::string& value,
-    std::vector<datamodel::ContinuumComponent>& components) {
+    boost::shared_ptr<datamodel::Polarisation> pPol) {
 
-    ASKAPASSERT(row_index >= 0);
-    ASKAPASSERT(row_index < components.size());
+    ASKAPASSERT(pPol.get());
 
+    if (boost::iequals(ucd, "meta.id;meta.main")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "char"));
+        pPol->component_id = boost::lexical_cast<std::string>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;em.radio")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->flux_I_median = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;em.radio;askap:phys.polarization.stokes.Q")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->flux_Q_median = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;em.radio;askap:phys.polarization.stokes.U")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->flux_U_median = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;em.radio;askap:phys.polarization.stokes.V")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->flux_V_median = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.stdev;phot.flux.density")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->rms_I = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.stdev;phot.flux.density;askap:phys.polarization.stokes.Q")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->rms_Q = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.stdev;phot.flux.density;askap:phys.polarization.stokes.U")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->rms_U = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.stdev;phot.flux.density;askap:phys.polarization.stokes.V")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->rms_V = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.fit.param;spect.continuum")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->co_1 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.fit.param;spect.continuum")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->co_2 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.fit.param;spect.continuum")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->co_3 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.fit.param;spect.continuum")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->co_4 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.fit.param;spect.continuum")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->co_5 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "askap:em.wl.squared")) {
+        ASKAPASSERT(boost::iequals(unit, "m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->lambda_ref_sq = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phys.polarization.rotMeasure;askap:phys.polarization.rmsfWidth")) {
+        ASKAPASSERT(boost::iequals(unit, "rad/m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->rmsf_fwhm = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;phys.polarization.rotMeasure;stat.max")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;phys.polarization.rotMeasure;stat.max;askap:meta.corrected")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_debias = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;phot.flux.density;phys.polarization.rotMeasure;stat.max")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_fit = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit;askap:meta.corrected")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_fit_debias = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit")) {
+        ASKAPASSERT(boost::iequals(unit, "mJy/beam"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_fit_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.snr;phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_fit_snr = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;stat.snr;phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_peak_fit_snr_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phys.polarization.rotMeasure")) {
+        ASKAPASSERT(boost::iequals(unit, "rad/m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->fd_peak = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;phys.polarization.rotMeasure")) {
+        ASKAPASSERT(boost::iequals(unit, "rad/m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->fd_peak_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phys.polarization.rotMeasure;stat.fit")) {
+        ASKAPASSERT(boost::iequals(unit, "rad/m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->fd_peak_fit = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;phys.polarization.rotMeasure;stat.fit")) {
+        ASKAPASSERT(boost::iequals(unit, "rad/m^2"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->fd_peak_fit_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "askap:phys.polarization.angle")) {
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_ang_ref = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;askap:phys.polarization.angle")) {
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_ang_ref_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "askap:phys.polarization.angle;askap:meta.corrected")) {
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_ang_zero = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;askap:phys.polarization.angle;askap:meta.corrected")) {
+        ASKAPASSERT(boost::iequals(unit, "deg"));
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_ang_zero_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "phys.polarization")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_frac = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.error;phys.polarization")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->pol_frac_err = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.value;phys.polarization")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->complex_1 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(ucd, "stat.value;phys.polarization")) {
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "double"));
+        pPol->complex_2 = boost::lexical_cast<double>(value);
+    }
+    else 
+    if (boost::iequals(name, "flag_p1")) {
+        // Some fields do not have a unique UCD. They are matched by name.
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "int"));
+        pPol->flag_p1 = boost::lexical_cast<bool>(value);
+    }
+    else 
+    if (boost::iequals(name, "flag_p2")) {
+        // Some fields do not have a unique UCD. They are matched by name.
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "int"));
+        pPol->flag_p2 = boost::lexical_cast<bool>(value);
+    }
+    else 
+    if (boost::iequals(name, "flag_p3")) {
+        // Some fields do not have a unique UCD. They are matched by name.
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "int"));
+        pPol->flag_p3 = boost::lexical_cast<bool>(value);
+    }
+    else 
+    if (boost::iequals(name, "flag_p4")) {
+        // Some fields do not have a unique UCD. They are matched by name.
+        ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
+        ASKAPASSERT(boost::iequals(type, "int"));
+        pPol->flag_p4 = boost::lexical_cast<bool>(value);
+    }
 }
 
 }

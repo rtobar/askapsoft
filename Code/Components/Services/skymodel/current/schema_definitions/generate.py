@@ -265,16 +265,14 @@ HEADER_POSTAMBLE = '''
 
 PARSE_POLARISATION_ROW_FIELD_START = '''
 void parsePolarisationRowField(
-    size_t row_index,
     const std::string& ucd,
     const std::string& name,
     const std::string& type,
     const std::string& unit,
     const std::string& value,
-    std::vector<datamodel::ContinuumComponent>& components) {
+    boost::shared_ptr<datamodel::Polarisation> pPol) {
 
-    ASKAPASSERT(row_index >= 0);
-    ASKAPASSERT(row_index < components.size());
+    ASKAPASSERT(pPol.get());
 '''
 
 PARSE_COMPONENT_ROW_FIELD_START = '''
@@ -295,20 +293,85 @@ void parseComponentRowField(
     ASKAPASSERT(row_index < dec_buffer.size());
 '''
 
-UCD_FIELD_PARSE_PATTERN = '''
+COMPONENT_UCD_FIELD_PARSE_PATTERN = '''
     if (boost::iequals(ucd, "$ucd")) {
         ASKAPASSERT($unitCheckExpression);
         ASKAPASSERT(boost::iequals(type, "$votype"));
         components[row_index].$fieldname = boost::lexical_cast<$cpptype>(value);
 '''
 
-NO_UCD_FIELD_PARSE_PATTERN = '''
+COMPONENT_NO_UCD_FIELD_PARSE_PATTERN = '''
     if (boost::iequals(name, "$fieldname")) {
         // Some fields do not have a unique UCD. They are matched by name.
         ASKAPASSERT($unitCheckExpression);
         ASKAPASSERT(boost::iequals(type, "$votype"));
         components[row_index].$fieldname = boost::lexical_cast<$cpptype>(value);
     }'''
+
+POLARISATION_UCD_FIELD_PARSE_PATTERN = '''
+    if (boost::iequals(ucd, "$ucd")) {
+        ASKAPASSERT($unitCheckExpression);
+        ASKAPASSERT(boost::iequals(type, "$votype"));
+        pPol->$fieldname = boost::lexical_cast<$cpptype>(value);
+'''
+
+POLARISATION_NO_UCD_FIELD_PARSE_PATTERN = '''
+    if (boost::iequals(name, "$fieldname")) {
+        // Some fields do not have a unique UCD. They are matched by name.
+        ASKAPASSERT($unitCheckExpression);
+        ASKAPASSERT(boost::iequals(type, "$votype"));
+        pPol->$fieldname = boost::lexical_cast<$cpptype>(value);
+    }'''
+
+def write_field_parsing_code(
+    out,
+    fields,
+    db_to_votable_type_map,
+    ucd_skip_list,
+    ucd_field_template,
+    no_ucd_field_template,
+    special_case_ra_dec=False):
+    count = 0
+    for field in fields:
+        if field.units:
+            unitCheck = 'boost::iequals(unit, "{0}")'.format(field.units)
+        else:
+            unitCheck = 'unit.empty() || unit == "--" || unit == "none"'
+
+        if field.ucd not in ucd_skip_list:
+            statement = Template(ucd_field_template).substitute(
+                    ucd=field.ucd,
+                    unitCheckExpression=unitCheck,
+                    votype=db_to_votable_type_map[field.raw_type],
+                    fieldname=field.name,
+                    cpptype=field.dtype)
+            if count:
+                out.write('\n    else ')
+            out.write(statement)
+
+            # special case for RA and declination
+            if special_case_ra_dec:
+                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
+                    out.write(
+                        Template('        ra_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
+                    out.write(
+                        Template('        dec_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+
+            out.write('    }')
+            count += 1
+        elif field.ucd == 'meta.code':
+            statement = Template(no_ucd_field_template).substitute(
+                    unitCheckExpression=unitCheck,
+                    votype=db_to_votable_type_map[field.raw_type],
+                    fieldname=field.name,
+                    cpptype=field.dtype)
+            if count:
+                out.write('\n    else ')
+            out.write(statement)
+            count += 1
 
 def write_votable_parser():
     "Writes the VOTable to data model class parsing code"
@@ -331,55 +394,27 @@ def write_votable_parser():
             'DATETIME': 'char',
         }
 
-        ucd_skip_list = ['', 'meta.code']
-
         out.write(PARSE_COMPONENT_ROW_FIELD_START)
-        fields = get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0]))
-        count = 0
-        for field in fields:
-            if field.units:
-                unitCheck = 'boost::iequals(unit, "{0}")'.format(field.units)
-            else:
-                unitCheck = 'unit.empty() || unit == "--"'
-
-            if field.ucd not in ucd_skip_list:
-                statement = Template(UCD_FIELD_PARSE_PATTERN).substitute(
-                        ucd=field.ucd,
-                        unitCheckExpression=unitCheck,
-                        votype=db_to_votable_type_map[field.raw_type],
-                        fieldname=field.name,
-                        cpptype=field.dtype)
-                if count:
-                    out.write('\n    else ')
-                out.write(statement)
-
-                # special case for RA and declination
-                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
-                    out.write(
-                        Template('        ra_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
-                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
-                    out.write(
-                        Template('        dec_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
-
-                out.write('    }')
-                count += 1
-            elif field.ucd == 'meta.code':
-                statement = Template(NO_UCD_FIELD_PARSE_PATTERN).substitute(
-                        unitCheckExpression=unitCheck,
-                        votype=db_to_votable_type_map[field.raw_type],
-                        fieldname=field.name,
-                        cpptype=field.dtype)
-                if count:
-                    out.write('\n    else ')
-                out.write(statement)
-                count += 1
-
+        write_field_parsing_code(
+            out,
+            get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0])),
+            db_to_votable_type_map,
+            ['', 'meta.code'],
+            COMPONENT_UCD_FIELD_PARSE_PATTERN,
+            COMPONENT_NO_UCD_FIELD_PARSE_PATTERN,
+            special_case_ra_dec=True)
         out.write('\n}\n\n')
 
         # Write the polarisation parser function
         out.write(PARSE_POLARISATION_ROW_FIELD_START)
+        write_field_parsing_code(
+            out,
+            get_fields(load(POLARISATION_SPEC, skiprows=[0])),
+            db_to_votable_type_map,
+            ['', 'meta.code'],
+            POLARISATION_UCD_FIELD_PARSE_PATTERN,
+            POLARISATION_NO_UCD_FIELD_PARSE_PATTERN,
+            special_case_ra_dec=False)
         out.write('\n}')
 
         out.write(HEADER_POSTAMBLE)

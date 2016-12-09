@@ -52,7 +52,6 @@ class VOTableData :
     private boost::noncopyable {
     public:
         typedef std::vector<datamodel::ContinuumComponent> ComponentList;
-        //typedef std::vector<datamodel::Polarisation> PolarisationList;
 
         /// @brief Factory method for constructing the VOTableData implementation.
         ///
