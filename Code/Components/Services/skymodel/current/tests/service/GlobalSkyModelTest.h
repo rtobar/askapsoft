@@ -134,6 +134,25 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 component->component_id);
         }
 
+        void testMetadataDefaults() {
+            parset.replace("sqlite.name", "./tests/service/metadata_defaults.dbtmp");
+            initEmptyDatabase();
+
+            // perform the ingest
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
+
+            int64_t expected_sb_id = 0;
+            ptime expected_obs_date(date_time::not_a_date_time);
+
+            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+                it != ids.end();
+                it++) {
+                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+                CPPUNIT_ASSERT_EQUAL(expected_sb_id, component->sb_id);
+                CPPUNIT_ASSERT(expected_obs_date == component->observation_date);
+            }
+        }
+
         void testMetadata() {
             parset.replace("sqlite.name", "./tests/service/metadata.dbtmp");
             initEmptyDatabase();
@@ -148,7 +167,6 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                     expected_sb_id,
                     expected_obs_date);
 
-            // Test that every component has the schedblock ID set
             for (vector<datamodel::id_type>::const_iterator it = ids.begin();
                 it != ids.end();
                 it++) {
