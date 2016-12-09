@@ -227,6 +227,21 @@ void parseComponentRowField(
     }
 }
 
+
+void parsePolarisationRowField(
+    size_t row_index,
+    const std::string& ucd,
+    const std::string& name,
+    const std::string& type,
+    const std::string& unit,
+    const std::string& value,
+    std::vector<datamodel::ContinuumComponent>& components) {
+
+    ASKAPASSERT(row_index >= 0);
+    ASKAPASSERT(row_index < components.size());
+
+}
+
 }
 }
 }

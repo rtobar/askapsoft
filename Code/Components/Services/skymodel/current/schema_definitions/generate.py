@@ -263,6 +263,20 @@ HEADER_POSTAMBLE = '''
 #endif
 '''
 
+PARSE_POLARISATION_ROW_FIELD_START = '''
+void parsePolarisationRowField(
+    size_t row_index,
+    const std::string& ucd,
+    const std::string& name,
+    const std::string& type,
+    const std::string& unit,
+    const std::string& value,
+    std::vector<datamodel::ContinuumComponent>& components) {
+
+    ASKAPASSERT(row_index >= 0);
+    ASKAPASSERT(row_index < components.size());
+'''
+
 PARSE_COMPONENT_ROW_FIELD_START = '''
 void parseComponentRowField(
     size_t row_index,
@@ -362,6 +376,10 @@ def write_votable_parser():
                 out.write(statement)
                 count += 1
 
+        out.write('\n}\n\n')
+
+        # Write the polarisation parser function
+        out.write(PARSE_POLARISATION_ROW_FIELD_START)
         out.write('\n}')
 
         out.write(HEADER_POSTAMBLE)

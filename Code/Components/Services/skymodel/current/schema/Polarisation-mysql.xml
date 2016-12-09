@@ -3,6 +3,7 @@
     <table name="Polarisation" options="ENGINE=InnoDB" kind="object">
       <column name="version" type="BIGINT" null="false"/>
       <column name="polarisation_component_id" type="BIGINT" null="false"/>
+      <column name="component_id" type="TEXT" null="false"/>
       <column name="flux_I_median" type="DOUBLE" null="false"/>
       <column name="flux_Q_median" type="DOUBLE" null="false"/>
       <column name="flux_U_median" type="DOUBLE" null="false"/>

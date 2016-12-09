@@ -1,3 +1,8 @@
+/// @brief Component identifier
+/// UCD: meta.id;meta.main
+#pragma db not_null
+std::string component_id;
+
 /// @brief Band-median value for Stokes I spectrum (mJy/beam)
 /// UCD: phot.flux.density;em.radio
 #pragma db not_null

@@ -40,6 +40,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
+#include "datamodel/Polarisation.h"
 
 namespace askap {
 namespace cp {
@@ -51,6 +52,7 @@ class VOTableData :
     private boost::noncopyable {
     public:
         typedef std::vector<datamodel::ContinuumComponent> ComponentList;
+        //typedef std::vector<datamodel::Polarisation> PolarisationList;
 
         /// @brief Factory method for constructing the VOTableData implementation.
         ///
@@ -59,7 +61,7 @@ class VOTableData :
         /// @param healpix_order HealPix Order to use for indexation (NSIDE = 2^order)
         /// @return The VOTableData instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static VOTableData* create(
+        static boost::shared_ptr<VOTableData> create(
             std::string components_file,
             std::string polarisation_file, 
             boost::int64_t healpix_order=14);
@@ -93,7 +95,7 @@ class VOTableData :
         /// Private. Use the factory method to create.
         ///
         /// @param num_components The number of components for which space should be preallocated.
-        VOTableData(long num_components);
+        VOTableData(unsigned long num_components);
 
         void calcHealpixIndicies(boost::int64_t healpix_order);
 

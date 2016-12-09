@@ -52,9 +52,9 @@ using namespace askap::cp::sms;
 using namespace askap::accessors;
 
 
-VOTableData* VOTableData::create(
+boost::shared_ptr<VOTableData> VOTableData::create(
     string components_file,
-    string polarisation_file, 
+    string polarisation_file,
     boost::int64_t healpix_order)
 {
     // open components file
@@ -64,10 +64,10 @@ VOTableData* VOTableData::create(
     const VOTableTable components_table = components.getResource()[0].getTables()[0];
     vector<VOTableField> fields = components_table.getFields();
     vector<VOTableRow> rows = components_table.getRows();
-    const long num_components = rows.size();
+    const unsigned long num_components = rows.size();
 
-    VOTableData* pData = new VOTableData(num_components);
-    ASKAPASSERT(pData);
+    boost::shared_ptr<VOTableData> data(new VOTableData(num_components));
+    ASKAPASSERT(data.get());
 
     // TODO: will it be better to reverse the order of field and row iteration?
     // Typically there will be ~30 fields and ~1000 rows
@@ -89,24 +89,53 @@ VOTableData* VOTableData::create(
                 fit->getDatatype(),
                 fit->getUnit(),
                 rowData[field_index],
-                pData->itsComponents,
-                pData->itsRA,
-                pData->itsDec);
+                data->itsComponents,
+                data->itsRA,
+                data->itsDec);
         }
     }
 
-    // open polarisation file if it exists
+    // load polarisation file if it exists
     if (boost::filesystem::exists(polarisation_file))
     {
         // parse polarisation file
+        VOTable polarisation = VOTable::fromXML(polarisation_file);
+        ASKAPASSERT(polarisation.getResource().size() == 1ul);
+        ASKAPASSERT(polarisation.getResource()[0].getTables().size() == 1ul);
+        const VOTableTable polarisation_table = polarisation.getResource()[0].getTables()[0];
+        vector<VOTableField> polfields = polarisation_table.getFields();
+        vector<VOTableRow> polrows = polarisation_table.getRows();
+        ASKAPASSERT(polrows.size() >= num_components);
+
+        size_t row_index = 0;
+        vector<VOTableRow>::iterator rit;
+        for (rit = polrows.begin(), row_index = 0;
+             rit != polrows.end();
+             rit++, row_index++) {
+            const vector<std::string> rowData = rit->getCells();
+            long field_index = 0;
+            vector<VOTableField>::iterator fit;
+            for (fit = polfields.begin(), field_index = 0;
+                fit != polfields.end();
+                fit++, field_index++) {
+                parsePolarisationRowField(
+                    row_index,
+                    fit->getUCD(),
+                    fit->getName(),
+                    fit->getDatatype(),
+                    fit->getUnit(),
+                    rowData[field_index],
+                    data->itsComponents);
+            }
+        }
     }
 
-    pData->calcHealpixIndicies(healpix_order);
+    data->calcHealpixIndicies(healpix_order);
 
-    return pData;
+    return data;
 }
 
-VOTableData::VOTableData(long num_components) :
+VOTableData::VOTableData(unsigned long num_components) :
     itsComponents(num_components),
     itsHealpixIndicies(num_components),
     itsRA(num_components),

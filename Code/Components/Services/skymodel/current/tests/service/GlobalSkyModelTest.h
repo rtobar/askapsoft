@@ -59,6 +59,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testGetMissingComponentById);
         CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
         CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
+        CPPUNIT_TEST(testIngestPolarisation);
         CPPUNIT_TEST(testMetadata);
         CPPUNIT_TEST(testMetadataDefaults);
         CPPUNIT_TEST_SUITE_END();
@@ -70,7 +71,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parsetFile("./tests/data/sms_parset.cfg"),
             small_components("./tests/data/votable_small_components.xml"),
             large_components("./tests/data/votable_large_components.xml"),
-            invalid_components("./tests/data/votable_error_freq_units.xml")
+            invalid_components("./tests/data/votable_error_freq_units.xml"),
+            small_polarisation("./tests/data/votable_small_polarisation.xml")
         {
         }
 
@@ -135,6 +137,28 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 component->component_id);
         }
 
+        void testIngestPolarisation() {
+            parset.replace("sqlite.name", "./tests/service/polarisation.dbtmp");
+            initEmptyDatabase();
+            // perform the ingest
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+                    small_components, small_polarisation);
+            CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
+
+            // each component should have a corresponding polarisation object
+            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+                it != ids.end();
+                it++) {
+                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+
+                // Check that we have a polarisation object
+                CPPUNIT_ASSERT(component->polarisation.get());
+
+                // Check that we have the correct polarisation object
+                CPPUNIT_ASSERT_EQUAL(component->component_id, component->polarisation->component_id);
+            }
+        }
+
         void testMetadataDefaults() {
             parset.replace("sqlite.name", "./tests/service/metadata_defaults.dbtmp");
             initEmptyDatabase();
@@ -194,6 +218,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         const string small_components;
         const string large_components;
         const string invalid_components;
+        const string small_polarisation;
 };
 
 }
