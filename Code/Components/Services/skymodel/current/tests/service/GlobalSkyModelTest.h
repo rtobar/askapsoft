@@ -60,6 +60,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
         CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
         CPPUNIT_TEST(testMetadata);
+        CPPUNIT_TEST(testMetadataDefaults);
         CPPUNIT_TEST_SUITE_END();
 
     public:
