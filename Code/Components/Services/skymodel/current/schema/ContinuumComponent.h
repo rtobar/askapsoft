@@ -78,7 +78,7 @@ struct ContinuumComponent {
     #pragma db null column("polarisation_component_id")
     boost::shared_ptr<Polarisation> polarisation;
 
-    // Define a one-to-one relationship to a data source
+    // Define the to-one relationship to a data source
     #pragma db null column("data_source_id")
     boost::shared_ptr<DataSource> data_source;
 };

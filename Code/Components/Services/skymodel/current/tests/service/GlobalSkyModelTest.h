@@ -142,7 +142,10 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             initEmptyDatabase();
             // perform the ingest
             vector<datamodel::id_type> ids = gsm->ingestVOTable(
-                    small_components, small_polarisation);
+                    small_components,
+                    small_polarisation,
+                    1337,
+                    second_clock::universal_time());
             CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
             // each component should have a corresponding polarisation object

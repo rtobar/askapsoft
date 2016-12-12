@@ -146,6 +146,8 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
         "Starting VO Table ingest. Component catalog: '" << componentsCatalog <<
         "' polarisationCatalog: '" << polarisationCatalog << "'");
 
+    // TODO: create and persist the DataSource object for non-ASKAP catalogs...
+    
     boost::shared_ptr<VOTableData> pCatalog(VOTableData::create(
         componentsCatalog, polarisationCatalog));
 
@@ -165,6 +167,11 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
              it++) {
             it->sb_id = sb_id;
             it->observation_date = obs_date;
+
+            // If this component has polarisation data, then persist it
+            if (it->polarisation.get())
+                itsDb->persist(it->polarisation);
+
             ids.push_back(itsDb->persist(*it));
         }
 

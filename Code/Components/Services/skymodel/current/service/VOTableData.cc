@@ -32,6 +32,7 @@
 
 // System includes
 #include <string>
+#include <map>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -69,6 +70,8 @@ boost::shared_ptr<VOTableData> VOTableData::create(
     boost::shared_ptr<VOTableData> data(new VOTableData(num_components));
     ASKAPASSERT(data.get());
 
+    map<string, size_t> componentsById;
+
     // TODO: will it be better to reverse the order of field and row iteration?
     // Typically there will be ~30 fields and ~1000 rows
     size_t row_index = 0;
@@ -95,6 +98,10 @@ boost::shared_ptr<VOTableData> VOTableData::create(
                 data->itsRA,
                 data->itsDec);
         }
+
+        componentsById.insert(pair<string, size_t>(
+            data->itsComponents[row_index].component_id,
+            row_index));
     }
 
     // load polarisation file if it exists
@@ -130,9 +137,9 @@ boost::shared_ptr<VOTableData> VOTableData::create(
                     rowData[field_index],
                     pPol);
             }
-            
-            // Now we have a complete polarisation object. Time to find the
-            // matching component
+
+            // Now we have a complete polarisation object. Set it into the matching component
+            data->itsComponents[componentsById[pPol->component_id]].polarisation = pPol;
         }
     }
 
