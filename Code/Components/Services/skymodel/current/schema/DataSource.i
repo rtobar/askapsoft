@@ -1,10 +1,10 @@
 /// @brief Human-readable name for the data source
-/// UCD: 
+/// UCD:
 #pragma db not_null
 std::string name;
 
 /// @brief Catalogue unique identifier
-/// UCD: 
+/// UCD:
 #pragma db null
 std::string catalogue_id;
 

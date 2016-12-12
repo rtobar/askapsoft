@@ -125,7 +125,11 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/ingested.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+                    small_components,
+                    "",
+                    10,
+                    second_clock::universal_time());
             CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
             // test that some expected components can be found
@@ -166,8 +170,14 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/metadata_defaults.dbtmp");
             initEmptyDatabase();
 
+            shared_ptr<datamodel::DataSource> expectedDataSource(new datamodel::DataSource());
+            //TODO: set some values and test them after the retrieval
+
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(small_components, "");
+            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+                    small_components,
+                    "",
+                    expectedDataSource);
 
             int64_t expected_sb_id = 0;
             ptime expected_obs_date(date_time::not_a_date_time);
@@ -211,9 +221,14 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         void testIngestVOTableFailsForBadCatalog() {
             initEmptyDatabase();
             CPPUNIT_ASSERT_THROW(
-                gsm->ingestVOTable(invalid_components, ""),
+                gsm->ingestVOTable(
+                    invalid_components,
+                    "",
+                    14,
+                    date_time::not_a_date_time),
                 askap::AskapError);
         }
+
     private:
         shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;

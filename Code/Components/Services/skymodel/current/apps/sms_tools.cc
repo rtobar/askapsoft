@@ -34,6 +34,7 @@
 #include <sstream>
 
 // Boost includes
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 // ASKAPsoft includes
 #include <askap/Application.h>
@@ -51,13 +52,17 @@
 #include "service/Utility.h"
 
 
+using namespace boost;
 using namespace askap;
 using namespace askap::cp::sms;
 
 ASKAP_LOGGER(logger, ".sms_tools");
 
 #define CREATE_SCHEMA "create-schema"
-#define INGEST_VO_TABLE "upload-votable"
+#define INGEST_COMPONENTS "ingest-components"
+#define INGEST_POLARISATION "ingest-polarisation"
+#define SB_ID "sbid"
+#define OBS_DATE "observation-date"
 
 class SmsToolsApp : public askap::Application {
     public:
@@ -70,7 +75,7 @@ class SmsToolsApp : public askap::Application {
                 if (parameterExists(CREATE_SCHEMA)) {
                     return createSchema();
                 }
-                else if (parameterExists(INGEST_VO_TABLE)) {
+                else if (parameterExists(INGEST_COMPONENTS)) {
                     return ingestVoTable();
                 }
             } catch (const AskapError& e) {
@@ -93,13 +98,25 @@ class SmsToolsApp : public askap::Application {
             const LOFAR::ParameterSet& parset = config();
             bool dropTables = parset.getBool("database.create_schema.droptables", true);
 
-            boost::scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+            scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
             return pGsm->createSchema(dropTables) ? 0 : 4;
         }
 
         int ingestVoTable() {
-            boost::scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
-            pGsm->ingestVOTable(parameter(INGEST_VO_TABLE), "");
+            ASKAPASSERT(parameterExists(INGEST_COMPONENTS));
+            ASKAPASSERT(parameterExists(SB_ID));
+            ASKAPASSERT(parameterExists(OBS_DATE));
+
+            string components = parameter(INGEST_COMPONENTS);
+            string polarisation = parameterExists(INGEST_POLARISATION) ? parameter(INGEST_POLARISATION) : "";
+            int64_t sbid = lexical_cast<int64_t>(parameter(SB_ID));
+            posix_time::ptime obsDate = date_time::parse_delimited_time<posix_time::ptime>(parameter(OBS_DATE), 'T');
+            scoped_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+            pGsm->ingestVOTable(
+                components,
+                polarisation,
+                sbid,
+                obsDate);
             return 0;
         }
 };
@@ -108,6 +125,9 @@ int main(int argc, char *argv[])
 {
     SmsToolsApp app;
     app.addParameter(CREATE_SCHEMA, "s", "Initialises an empty database", false);
-    app.addParameter(INGEST_VO_TABLE, "u", "Ingest/upload a VO Table of components to the global sky model", true);
+    app.addParameter(INGEST_COMPONENTS, "", "Ingest/upload a VO Table of components to the global sky model", true);
+    app.addParameter(INGEST_POLARISATION, "", "Optional polarisation data catalog", true);
+    app.addParameter(SB_ID, "", "Scheduling block ID for ingested catalog", true);
+    app.addParameter(OBS_DATE, "", "Observation date for ingested catalog, in form YYYY-MM-DDTHH:MM:SS", true);
     return app.main(argc, argv);
 }

@@ -53,6 +53,7 @@
 ASKAP_LOGGER(logger, ".GlobalSkyModel");
 
 using namespace odb;
+using namespace boost;
 using namespace askap::cp::sms;
 using namespace askap::cp::sms::datamodel;
 using namespace askap::accessors;
@@ -139,16 +140,43 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
 std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
     const std::string& componentsCatalog,
     const std::string& polarisationCatalog,
-    boost::int64_t sb_id,
-    boost::posix_time::ptime obs_date)
+    int64_t sb_id,
+    posix_time::ptime obs_date)
+{
+    return ingestVOTable(
+            componentsCatalog,
+            polarisationCatalog,
+            shared_ptr<datamodel::DataSource>(),
+            sb_id,
+            obs_date);
+}
+
+std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+    const std::string& componentsCatalog,
+    const std::string& polarisationCatalog,
+    shared_ptr<datamodel::DataSource> dataSource)
+{
+    ASKAPASSERT(dataSource.get());
+    return ingestVOTable(
+            componentsCatalog,
+            polarisationCatalog,
+            dataSource,
+            0,
+            date_time::not_a_date_time);
+}
+
+std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+    const std::string& componentsCatalog,
+    const std::string& polarisationCatalog,
+    shared_ptr<datamodel::DataSource> dataSource,
+    int64_t sb_id,
+    posix_time::ptime obs_date)
 {
     ASKAPLOG_INFO_STR(logger,
         "Starting VO Table ingest. Component catalog: '" << componentsCatalog <<
         "' polarisationCatalog: '" << polarisationCatalog << "'");
 
-    // TODO: create and persist the DataSource object for non-ASKAP catalogs...
-    
-    boost::shared_ptr<VOTableData> pCatalog(VOTableData::create(
+    shared_ptr<VOTableData> pCatalog(VOTableData::create(
         componentsCatalog, polarisationCatalog));
 
     std::vector<datamodel::id_type> ids;
@@ -159,6 +187,10 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
         ASKAPLOG_DEBUG_STR(logger, "starting transaction");
         transaction t(itsDb->begin());
 
+        // If we have a data source object, persist it
+        if (dataSource.get())
+            itsDb->persist(dataSource);
+
         // bulk persist is only supported for SQLServer and Oracle.
         // So we have to fall back to a manual loop persisting one component at
         // a time...
@@ -167,6 +199,7 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
              it++) {
             it->sb_id = sb_id;
             it->observation_date = obs_date;
+            it->data_source = dataSource;
 
             // If this component has polarisation data, then persist it
             if (it->polarisation.get())
