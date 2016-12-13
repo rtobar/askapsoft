@@ -61,7 +61,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
         CPPUNIT_TEST(testIngestPolarisation);
         CPPUNIT_TEST(testMetadata);
-        CPPUNIT_TEST(testMetadataDefaults);
+        CPPUNIT_TEST(testNonAskapDataIngest);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -166,28 +166,34 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             }
         }
 
-        void testMetadataDefaults() {
-            parset.replace("sqlite.name", "./tests/service/metadata_defaults.dbtmp");
+        void testNonAskapDataIngest() {
+            parset.replace("sqlite.name", "./tests/service/data_source.dbtmp");
             initEmptyDatabase();
 
+            // Non-ASKAP data sources need metadata that is assumed for ASKAP sources.
             shared_ptr<datamodel::DataSource> expectedDataSource(new datamodel::DataSource());
-            //TODO: set some values and test them after the retrieval
+            expectedDataSource->name = "Robby Dobby the Bear";
+            expectedDataSource->catalogue_id = "RDTB";
 
             // perform the ingest
             vector<datamodel::id_type> ids = gsm->ingestVOTable(
                     small_components,
-                    "",
+                    small_polarisation,
                     expectedDataSource);
-
-            int64_t expected_sb_id = 0;
-            ptime expected_obs_date(date_time::not_a_date_time);
 
             for (vector<datamodel::id_type>::const_iterator it = ids.begin();
                 it != ids.end();
                 it++) {
                 shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
-                CPPUNIT_ASSERT_EQUAL(expected_sb_id, component->sb_id);
-                CPPUNIT_ASSERT(expected_obs_date == component->observation_date);
+                // should have reference to the data source metadata
+                CPPUNIT_ASSERT(component->data_source.get());
+                // should not have a scheduling block ID
+                CPPUNIT_ASSERT(0, component->sb_id);
+                // Don't have an observation date for now, but this might change.
+                CPPUNIT_ASSERT(component->observation_date == date_time::not_a_date_time),
+
+                CPPUNIT_ASSERT_EQUAL(expectedDataSource->name, component->data_source->name);
+                CPPUNIT_ASSERT_EQUAL(expectedDataSource->catalogue_id, component->data_source->catalogue_id);
             }
         }
 
