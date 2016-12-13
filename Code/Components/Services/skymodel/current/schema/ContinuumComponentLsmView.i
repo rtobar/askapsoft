@@ -4,11 +4,11 @@ boost::int64_t healpix_index;
 
 /// @brief J2000 right ascension (deg)
 /// UCD: pos.eq.ra;meta.main
-double ra_deg_cont;
+double ra;
 
 /// @brief J2000 declination (deg)
 /// UCD: pos.eq.dec;meta.main
-double dec_deg_cont;
+double dec;
 
 /// @brief Error in Right Ascension (arcsec)
 /// UCD: stat.error;pos.eq.ra

@@ -75,15 +75,15 @@ void parseComponentRowField(
     if (boost::iequals(ucd, "pos.eq.ra;meta.main")) {
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
-        components[row_index].ra_deg_cont = boost::lexical_cast<double>(value);
-        ra_buffer[row_index] = components[row_index].ra_deg_cont;
+        components[row_index].ra = boost::lexical_cast<double>(value);
+        ra_buffer[row_index] = components[row_index].ra;
     }
     else 
     if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
-        components[row_index].dec_deg_cont = boost::lexical_cast<double>(value);
-        dec_buffer[row_index] = components[row_index].dec_deg_cont;
+        components[row_index].dec = boost::lexical_cast<double>(value);
+        dec_buffer[row_index] = components[row_index].dec;
     }
     else 
     if (boost::iequals(ucd, "stat.error;pos.eq.ra")) {

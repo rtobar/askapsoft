@@ -24,12 +24,12 @@ std::string component_id;
 /// @brief J2000 right ascension (deg)
 /// UCD: pos.eq.ra;meta.main
 #pragma db not_null
-double ra_deg_cont;
+double ra;
 
 /// @brief J2000 declination (deg)
 /// UCD: pos.eq.dec;meta.main
 #pragma db not_null
-double dec_deg_cont;
+double dec;
 
 /// @brief Error in Right Ascension (arcsec)
 /// UCD: stat.error;pos.eq.ra

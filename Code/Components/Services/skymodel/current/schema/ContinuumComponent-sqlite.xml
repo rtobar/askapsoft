@@ -7,8 +7,8 @@
       <column name="healpix_index" type="INTEGER" null="false"/>
       <column name="sb_id" type="INTEGER" null="true"/>
       <column name="component_id" type="TEXT" null="true"/>
-      <column name="ra_deg_cont" type="REAL" null="false"/>
-      <column name="dec_deg_cont" type="REAL" null="false"/>
+      <column name="ra" type="REAL" null="false"/>
+      <column name="dec" type="REAL" null="false"/>
       <column name="ra_err" type="REAL" null="false"/>
       <column name="dec_err" type="REAL" null="false"/>
       <column name="freq" type="REAL" null="false"/>

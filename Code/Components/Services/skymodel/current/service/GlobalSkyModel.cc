@@ -227,3 +227,15 @@ boost::shared_ptr<ContinuumComponent> GlobalSkyModel::getComponentByID(datamodel
 
     return component;
 }
+
+vector<datamodel::id_type> GlobalSkyModel::coneSearch(
+    double ra,
+    double dec,
+    double radius)
+{
+    std::vector<datamodel::id_type> ids;
+    // sanity check inputs
+    // map cone to HEALPix indicies
+    // query DB
+    return ids;
+}

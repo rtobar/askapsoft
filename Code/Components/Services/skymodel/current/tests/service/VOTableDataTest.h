@@ -76,8 +76,8 @@ class VOTableDataTest : public CppUnit::TestFixture {
         void testFirstComponentValues() {
             boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
             const datamodel::ContinuumComponent& c = pData->getComponents()[0];
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(79.176918, c.ra_deg_cont, 0.000001);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(-71.819671, c.dec_deg_cont, 0.000001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(79.176918, c.ra, 0.000001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-71.819671, c.dec, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.ra_err, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01f, c.dec_err, 0.000001f);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1400.5f, c.freq, 0.000001f);
@@ -113,7 +113,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
             for (VOTableData::ComponentList::const_iterator it = components.begin();
                  it != components.end();
                  it++) {
-                boost::int64_t expected = hp.calcHealPixIndex(it->ra_deg_cont, it->dec_deg_cont);
+                boost::int64_t expected = hp.calcHealPixIndex(it->ra, it->dec);
                 CPPUNIT_ASSERT_EQUAL(expected, it->healpix_index);
             }
         }

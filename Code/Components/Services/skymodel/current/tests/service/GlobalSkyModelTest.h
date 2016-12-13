@@ -65,6 +65,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testIngestPolarisation);
         CPPUNIT_TEST(testMetadata);
         CPPUNIT_TEST(testNonAskapDataIngest);
+        CPPUNIT_TEST(testSimpleConeSearch);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -75,7 +76,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             small_components("./tests/data/votable_small_components.xml"),
             large_components("./tests/data/votable_large_components.xml"),
             invalid_components("./tests/data/votable_error_freq_units.xml"),
-            small_polarisation("./tests/data/votable_small_polarisation.xml")
+            small_polarisation("./tests/data/votable_small_polarisation.xml"),
+            simple_cone_search("./tests/data/votable_simple_cone_search.xml")
         {
         }
 
@@ -238,6 +240,33 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 askap::AskapError);
         }
 
+        void testSimpleConeSearch() {
+            // Setup
+            initEmptyDatabase();
+
+            vector<id_type> ids = gsm->ingestVOTable(
+                    simple_cone_search,
+                    small_polarisation,
+                    42,
+                    second_clock::universal_time());
+
+            // The VO table has been created so that only the first component
+            // should match the search
+            id_type expectedResult = ids[0];
+
+            double ra = 70.176918;
+            double dec = -61.819671;
+            double radius = 3.0;
+
+            vector<id_type> results = gsm->coneSearch(ra, dec, radius);
+
+            CPPUNIT_ASSERT_EQUAL(size_t(1), results.size());
+            CPPUNIT_ASSERT_EQUAL(expectedResult, results[0]);
+            shared_ptr<ContinuumComponent> component(gsm->getComponentByID(expectedResult));
+            CPPUNIT_ASSERT_EQUAL(ra, component->ra);
+            CPPUNIT_ASSERT_EQUAL(dec, component->dec);
+        }
+
     private:
         shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;
@@ -246,6 +275,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         const string large_components;
         const string invalid_components;
         const string small_polarisation;
+        const string simple_cone_search;
 };
 
 }
