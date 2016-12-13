@@ -28,6 +28,8 @@
 #ifndef ASKAP_CP_SMS_HEALPIXTOOLS_H
 #define ASKAP_CP_SMS_HEALPIXTOOLS_H
 
+#include <vector>
+
 // ASKAPsoft includes
 #include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
@@ -57,6 +59,17 @@ class HealPixTools : private boost::noncopyable {
         /// @param[in] ra  J2000 right ascension (decimal degrees)
         /// @param[in] dec J2000 declination (decimal degrees)
         boost::int64_t calcHealPixIndex(double ra, double dec) const;
+
+        /// @brief Returns the set of all pixels which overlap with the disk
+        /// defined by a centre (ra, dec) and radius.
+        ///
+        /// @param ra Right ascension in decimal degrees of the disk centre.
+        /// @param dec Declination in decimal degrees of the disk centre.
+        /// @param radius Radius in degrees of the disk.
+        /// @param fact The overlapping test will be done at the resolution fact*nside. Must be a power of 2.
+        ///
+        /// @return The vector of pixel indicies matching the query.
+        std::vector<boost::int64_t> queryDisk(double ra, double dec, double radius, int fact=4) const;
 
     private:
         T_Healpix_Base<boost::int64_t> itsHealPixBase;

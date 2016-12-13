@@ -47,6 +47,8 @@
 
 ASKAP_LOGGER(logger, ".HealPixTools");
 
+using namespace std;
+using namespace boost;
 using namespace askap::cp::sms;
 
 namespace askap {
@@ -54,14 +56,14 @@ namespace cp {
 namespace sms {
 
 
-HealPixTools::HealPixTools(boost::int64_t order)
+HealPixTools::HealPixTools(int64_t order)
     :
     itsHealPixBase(2 << order, NEST, SET_NSIDE),
     itsNSide(2 << order)
 {
 }
 
-boost::int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
+int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -79,6 +81,12 @@ boost::int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
             utility::degreesToRadians(90.0 - dec),
             utility::degreesToRadians(ra));
     return itsHealPixBase.ang2pix(p);
+}
+
+vector<int64_t> queryDisk(double ra, double dec, double radius, int fact) const
+{
+    // TODO: implement
+    return vector<int64_t>();
 }
 
 };
