@@ -83,7 +83,7 @@ int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
     return itsHealPixBase.ang2pix(p);
 }
 
-vector<int64_t> queryDisk(double ra, double dec, double radius, int fact) const
+vector<int64_t> HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
 {
     // TODO: implement
     return vector<int64_t>();
