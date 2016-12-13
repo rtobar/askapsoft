@@ -74,7 +74,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
         }
 
         void testFirstComponentValues() {
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", 14));
             const datamodel::ContinuumComponent& c = pData->getComponents()[0];
             CPPUNIT_ASSERT_DOUBLES_EQUAL(79.176918, c.ra, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-71.819671, c.dec, 0.000001);
@@ -119,29 +119,29 @@ class VOTableDataTest : public CppUnit::TestFixture {
         }
 
         void testLoadCount() {
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", 12));
             CPPUNIT_ASSERT_EQUAL(10l, pData->getCount());
         }
 
         void testLargeLoadCount() {
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, "", 16));
             CPPUNIT_ASSERT_EQUAL(134l, pData->getCount());
         }
 
         void testNoPolarisation() {
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", 10));
             CPPUNIT_ASSERT(!pData->getComponents()[0].polarisation.get());
         }
 
         void testNoDataSource() {
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(small_components, "", 9));
             CPPUNIT_ASSERT(!pData->getComponents()[0].data_source.get());
         }
 
         void testInvalidFreqUnits() {
             bool passed = false;
             try {
-                VOTableData::create(invalid_freq_units, "");
+                VOTableData::create(invalid_freq_units, "", 11);
             }
             catch (const askap::AssertError& ex) {
                 // This is a nasty test based on whitebox knowledge of the unit
@@ -157,7 +157,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
             // datatype and unit fields. It is sufficient for the load to
             // execute without raising an exception, and with the expected
             // component count.
-            boost::shared_ptr<VOTableData> pData(VOTableData::create(mixed_case_units_type, ""));
+            boost::shared_ptr<VOTableData> pData(VOTableData::create(mixed_case_units_type, "", 13));
             CPPUNIT_ASSERT(pData.get());
             CPPUNIT_ASSERT_EQUAL(1l, pData->getCount());
         }

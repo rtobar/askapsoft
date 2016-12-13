@@ -63,7 +63,7 @@ class VOTableData :
         static boost::shared_ptr<VOTableData> create(
             std::string components_file,
             std::string polarisation_file, 
-            boost::int64_t healpix_order=14);
+            boost::int64_t healpix_order);
 
         /// @brief Destructor.
         virtual ~VOTableData();

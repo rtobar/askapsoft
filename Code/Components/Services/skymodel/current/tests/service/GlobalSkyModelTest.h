@@ -111,12 +111,12 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testNside() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(2l << 14, gsm->getHealpixNside());
+            CPPUNIT_ASSERT_EQUAL(2l << 15, gsm->getHealpixNside());
         }
 
         void testHealpixOrder() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(14l, gsm->getHealpixOrder());
+            CPPUNIT_ASSERT_EQUAL(15l, gsm->getHealpixOrder());
         }
 
         void testGetMissingComponentById() {
@@ -222,9 +222,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
 
                 CPPUNIT_ASSERT_EQUAL(expected_sb_id, component->sb_id);
-
-                // CPPUNIT_ASSERT_EQUAL chokes on the ptime values even though
-                // they define operator==.
+                // CPPUNIT_ASSERT_EQUAL chokes on the ptime values
                 CPPUNIT_ASSERT(expected_obs_date == component->observation_date);
             }
         }

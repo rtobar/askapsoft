@@ -110,7 +110,7 @@ class GlobalSkyModel :
         ///
         /// @return Order
         inline boost::int64_t getHealpixOrder() const {
-            return 14l;
+            return 15l;
         }
 
         /// @brief Get a component by ID.

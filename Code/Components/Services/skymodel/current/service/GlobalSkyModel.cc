@@ -176,8 +176,11 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
         "Starting VO Table ingest. Component catalog: '" << componentsCatalog <<
         "' polarisationCatalog: '" << polarisationCatalog << "'");
 
-    shared_ptr<VOTableData> pCatalog(VOTableData::create(
-        componentsCatalog, polarisationCatalog));
+    shared_ptr<VOTableData> pCatalog(
+        VOTableData::create(
+            componentsCatalog,
+            polarisationCatalog,
+            getHealpixOrder()));
 
     std::vector<datamodel::id_type> ids;
 
