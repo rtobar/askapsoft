@@ -48,6 +48,8 @@ namespace datamodel {
 typedef boost::int64_t id_type;
 typedef boost::int64_t version_type;
 
+const boost::int64_t NO_SB_ID = -1;
+
 };
 };
 };

@@ -34,7 +34,6 @@
 #include <odb/core.hxx>
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
-//#include <odb/boost/lazy-ptr.hxx>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 // Local package includes

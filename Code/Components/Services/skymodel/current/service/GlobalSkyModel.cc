@@ -161,7 +161,7 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
             componentsCatalog,
             polarisationCatalog,
             dataSource,
-            0,
+            NO_SB_ID,
             date_time::not_a_date_time);
 }
 

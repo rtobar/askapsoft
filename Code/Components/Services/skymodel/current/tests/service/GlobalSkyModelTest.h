@@ -37,6 +37,7 @@
 #include <votable/VOTable.h>
 
 // Classes to test
+#include "datamodel/Common.h"
 #include "datamodel/ContinuumComponent.h"
 #include "service/GlobalSkyModel.h"
 
@@ -48,6 +49,8 @@ using namespace boost::posix_time;
 namespace askap {
 namespace cp {
 namespace sms {
+
+using namespace datamodel;
 
 class GlobalSkyModelTest : public CppUnit::TestFixture {
 
@@ -116,7 +119,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testGetMissingComponentById() {
             initEmptyDatabase();
-            shared_ptr<datamodel::ContinuumComponent> component(
+            shared_ptr<ContinuumComponent> component(
                 gsm->getComponentByID(9));
             CPPUNIT_ASSERT(!component.get());
         }
@@ -125,7 +128,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/ingested.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+            vector<id_type> ids = gsm->ingestVOTable(
                     small_components,
                     "",
                     10,
@@ -133,7 +136,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
             // test that some expected components can be found
-            shared_ptr<datamodel::ContinuumComponent> component(
+            shared_ptr<ContinuumComponent> component(
                 gsm->getComponentByID(ids[0]));
             CPPUNIT_ASSERT(component.get());
             CPPUNIT_ASSERT_EQUAL(
@@ -145,7 +148,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/polarisation.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+            vector<id_type> ids = gsm->ingestVOTable(
                     small_components,
                     small_polarisation,
                     1337,
@@ -153,10 +156,10 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
 
             // each component should have a corresponding polarisation object
-            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+            for (vector<id_type>::const_iterator it = ids.begin();
                 it != ids.end();
                 it++) {
-                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+                shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
 
                 // Check that we have a polarisation object
                 CPPUNIT_ASSERT(component->polarisation.get());
@@ -171,24 +174,24 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             initEmptyDatabase();
 
             // Non-ASKAP data sources need metadata that is assumed for ASKAP sources.
-            shared_ptr<datamodel::DataSource> expectedDataSource(new datamodel::DataSource());
+            shared_ptr<DataSource> expectedDataSource(new DataSource());
             expectedDataSource->name = "Robby Dobby the Bear";
             expectedDataSource->catalogue_id = "RDTB";
 
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+            vector<id_type> ids = gsm->ingestVOTable(
                     small_components,
                     small_polarisation,
                     expectedDataSource);
 
-            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+            for (vector<id_type>::const_iterator it = ids.begin();
                 it != ids.end();
                 it++) {
-                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+                shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
                 // should have reference to the data source metadata
                 CPPUNIT_ASSERT(component->data_source.get());
                 // should not have a scheduling block ID
-                CPPUNIT_ASSERT(0, component->sb_id);
+                CPPUNIT_ASSERT_EQUAL(datamodel::NO_SB_ID, component->sb_id);
                 // Don't have an observation date for now, but this might change.
                 CPPUNIT_ASSERT(component->observation_date == date_time::not_a_date_time),
 
@@ -205,16 +208,16 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             ptime expected_obs_date = second_clock::universal_time();
 
             // perform the ingest
-            vector<datamodel::id_type> ids = gsm->ingestVOTable(
+            vector<id_type> ids = gsm->ingestVOTable(
                     small_components,
                     "",
                     expected_sb_id,
                     expected_obs_date);
 
-            for (vector<datamodel::id_type>::const_iterator it = ids.begin();
+            for (vector<id_type>::const_iterator it = ids.begin();
                 it != ids.end();
                 it++) {
-                shared_ptr<datamodel::ContinuumComponent> component(gsm->getComponentByID(*it));
+                shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
 
                 CPPUNIT_ASSERT_EQUAL(expected_sb_id, component->sb_id);
 
