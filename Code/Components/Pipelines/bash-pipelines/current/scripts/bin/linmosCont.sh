@@ -208,5 +208,6 @@ if [ ${DO_SOURCE_FINDING} == true ]; then
         . ${PIPELINEDIR}/sourcefinding.sh
 
     done
+    unset LOOP
     
 fi
