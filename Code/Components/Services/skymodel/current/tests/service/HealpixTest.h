@@ -44,6 +44,7 @@ class HealpixTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(HealpixTest);
         CPPUNIT_TEST(testCalcHealpixIndex);
+        CPPUNIT_TEST(testQueryDisk);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -63,6 +64,15 @@ class HealpixTest : public CppUnit::TestFixture {
             long expected = 2663; 
 
             CPPUNIT_ASSERT_EQUAL(expected, actual);
+        }
+
+        void testCalcHealpixIndex() {
+            double ra = 14.8;
+            double dec = 43.1;
+            double radius = 0.4;
+            int fact = 4;
+
+            //vector<int64_t> HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
         }
 
     private:
