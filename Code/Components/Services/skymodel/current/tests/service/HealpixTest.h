@@ -29,6 +29,7 @@
 
 // Support classes
 #include <string>
+#include <boost/math/constants/constants.hpp>
 
 // Classes to test
 #include "service/HealPixTools.h"
@@ -45,6 +46,7 @@ class HealpixTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(HealpixTest);
         CPPUNIT_TEST(testCalcHealpixIndex);
         CPPUNIT_TEST(testQueryDisk);
+        CPPUNIT_TEST(testJ2000ToPointing_valid_values);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -74,6 +76,18 @@ class HealpixTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(33942689l, (*actual)[2]);
             CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[3]);
             CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[4]);
+        }
+
+        void testJ2000ToPointing_valid_values() {
+            double ra = 10.0;
+            double dec = 89.0; 
+            const double pi_180 = boost::math::double_constants::pi / 180.0;
+            pointing expected(
+                (90.0 - dec) * pi_180,
+                ra * pi_180);
+            pointing actual = HealPixTools(10).J2000ToPointing(ra, dec);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.theta, actual.theta, 0.000001);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.phi, actual.phi, 0.000001);
         }
 
     private:
