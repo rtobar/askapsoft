@@ -57,20 +57,16 @@ class HealpixTest : public CppUnit::TestFixture {
         }
 
         void testCalcHealpixIndex() {
-            double ra = 14.8;
-            double dec = 43.1;
-            long order = 5;
-
-            HealPixTools hp(order);
-            long actual = hp.calcHealPixIndex(ra, dec);
-            long expected = 2663;
-
+            HealPixTools hp(5);
+            HealPixTools::Index actual = hp.calcHealPixIndex(14.8, 43.1);
+            HealPixTools::Index expected = 2663;
             CPPUNIT_ASSERT_EQUAL(expected, actual);
         }
 
         void testQueryDisk() {
             HealPixTools hp(10);
             HealPixTools::IndexListPtr actual = hp.queryDisk(71.8, -63.1, 1.0/60.0, 4);
+            CPPUNIT_ASSERT_EQUAL(size_t(5), actual->size());
             CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
             CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
             CPPUNIT_ASSERT_EQUAL(33942689l, (*actual)[2]);
@@ -80,12 +76,10 @@ class HealpixTest : public CppUnit::TestFixture {
 
         void testJ2000ToPointing_valid_values() {
             double ra = 10.0;
-            double dec = 89.0; 
+            double dec = 89.0;
             const double pi_180 = boost::math::double_constants::pi / 180.0;
-            pointing expected(
-                (90.0 - dec) * pi_180,
-                ra * pi_180);
-            pointing actual = HealPixTools(10).J2000ToPointing(ra, dec);
+            pointing expected((90.0 - dec) * pi_180, ra * pi_180);
+            pointing actual = HealPixTools::J2000ToPointing(ra, dec);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.theta, actual.theta, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.phi, actual.phi, 0.000001);
         }

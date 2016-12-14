@@ -83,7 +83,7 @@ class HealPixTools : private boost::noncopyable {
         /// @param dec J2000 declination in decimal degrees.
         ///
         /// @return The pointing.
-        inline pointing J2000ToPointing(double ra, double dec) const {
+        inline static pointing J2000ToPointing(double ra, double dec) {
             ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
             ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
             return pointing(
