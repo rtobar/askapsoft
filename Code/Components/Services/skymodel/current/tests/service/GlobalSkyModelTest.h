@@ -91,7 +91,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void initEmptyDatabase() {
-            gsm.reset(GlobalSkyModel::create(parset));
+            gsm = GlobalSkyModel::create(parset);
             gsm->createSchema();
         }
 
@@ -121,8 +121,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testGetMissingComponentById() {
             initEmptyDatabase();
-            shared_ptr<ContinuumComponent> component(
-                gsm->getComponentByID(9));
+            GlobalSkyModel::ComponentPtr component = gsm->getComponentByID(9);
             CPPUNIT_ASSERT(!component.get());
         }
 
@@ -130,16 +129,16 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/ingested.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            vector<id_type> ids = gsm->ingestVOTable(
+            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
                     small_components,
                     "",
                     10,
                     second_clock::universal_time());
-            CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
+            CPPUNIT_ASSERT_EQUAL(size_t(10), ids->size());
 
             // test that some expected components can be found
             shared_ptr<ContinuumComponent> component(
-                gsm->getComponentByID(ids[0]));
+                gsm->getComponentByID((*ids)[0]));
             CPPUNIT_ASSERT(component.get());
             CPPUNIT_ASSERT_EQUAL(
                 string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"),
@@ -150,16 +149,16 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             parset.replace("sqlite.name", "./tests/service/polarisation.dbtmp");
             initEmptyDatabase();
             // perform the ingest
-            vector<id_type> ids = gsm->ingestVOTable(
+            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
                     small_components,
                     small_polarisation,
                     1337,
                     second_clock::universal_time());
-            CPPUNIT_ASSERT_EQUAL(size_t(10), ids.size());
+            CPPUNIT_ASSERT_EQUAL(size_t(10), ids->size());
 
             // each component should have a corresponding polarisation object
-            for (vector<id_type>::const_iterator it = ids.begin();
-                it != ids.end();
+            for (GlobalSkyModel::IdList::const_iterator it = ids->begin();
+                it != ids->end();
                 it++) {
                 shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
 
@@ -181,13 +180,13 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             expectedDataSource->catalogue_id = "RDTB";
 
             // perform the ingest
-            vector<id_type> ids = gsm->ingestVOTable(
+            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
                     small_components,
                     small_polarisation,
                     expectedDataSource);
 
-            for (vector<id_type>::const_iterator it = ids.begin();
-                it != ids.end();
+            for (GlobalSkyModel::IdList::const_iterator it = ids->begin();
+                it != ids->end();
                 it++) {
                 shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
                 // should have reference to the data source metadata
@@ -210,14 +209,14 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             ptime expected_obs_date = second_clock::universal_time();
 
             // perform the ingest
-            vector<id_type> ids = gsm->ingestVOTable(
+            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
                     small_components,
                     "",
                     expected_sb_id,
                     expected_obs_date);
 
-            for (vector<id_type>::const_iterator it = ids.begin();
-                it != ids.end();
+            for (GlobalSkyModel::IdList::const_iterator it = ids->begin();
+                it != ids->end();
                 it++) {
                 shared_ptr<ContinuumComponent> component(gsm->getComponentByID(*it));
 
@@ -239,10 +238,9 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void testSimpleConeSearch() {
-            // Setup
             initEmptyDatabase();
 
-            vector<id_type> ids = gsm->ingestVOTable(
+            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
                     simple_cone_search,
                     small_polarisation,
                     42,
@@ -250,23 +248,24 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
             // The VO table has been created so that only the first component
             // should match the search
-            id_type expectedResult = ids[0];
+            id_type expectedId = (*ids)[0];
+            GlobalSkyModel::ComponentPtr expectedComponent(gsm->getComponentByID(expectedId));
 
+            // Do the search
             double ra = 70.176918;
             double dec = -61.819671;
             double radius = 3.0;
+            GlobalSkyModel::IdListPtr results = gsm->coneSearch(ra, dec, radius);
 
-            vector<id_type> results = gsm->coneSearch(ra, dec, radius);
-
-            CPPUNIT_ASSERT_EQUAL(size_t(1), results.size());
-            CPPUNIT_ASSERT_EQUAL(expectedResult, results[0]);
-            shared_ptr<ContinuumComponent> component(gsm->getComponentByID(expectedResult));
-            CPPUNIT_ASSERT_EQUAL(ra, component->ra);
-            CPPUNIT_ASSERT_EQUAL(dec, component->dec);
+            // test it ...
+            CPPUNIT_ASSERT_EQUAL(size_t(1), results->size());
+            CPPUNIT_ASSERT_EQUAL(expectedId, (*results)[0]);
+            CPPUNIT_ASSERT_EQUAL(ra, expectedComponent->ra);
+            CPPUNIT_ASSERT_EQUAL(dec, expectedComponent->dec);
         }
 
     private:
-        shared_ptr<GlobalSkyModel> gsm;
+        GlobalSkyModel::GsmPtr gsm;
         LOFAR::ParameterSet parset;
         const string parsetFile;
         const string small_components;

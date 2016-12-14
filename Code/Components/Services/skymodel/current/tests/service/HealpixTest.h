@@ -61,16 +61,16 @@ class HealpixTest : public CppUnit::TestFixture {
 
             HealPixTools hp(order);
             long actual = hp.calcHealPixIndex(ra, dec);
-            long expected = 2663; 
+            long expected = 2663;
 
             CPPUNIT_ASSERT_EQUAL(expected, actual);
         }
 
-        void testCalcHealpixIndex() {
-            double ra = 14.8;
-            double dec = 43.1;
-            double radius = 0.4;
-            int fact = 4;
+        void testQueryDisk() {
+            //double ra = 14.8;
+            //double dec = 43.1;
+            //double radius = 0.4;
+            //int fact = 4;
 
             //vector<int64_t> HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
         }

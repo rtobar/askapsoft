@@ -57,13 +57,18 @@ class GlobalSkyModel :
     public:
 
         typedef std::vector<datamodel::ContinuumComponent> ComponentList;
+        typedef std::vector<datamodel::id_type> IdList;
+        typedef boost::shared_ptr<IdList> IdListPtr;
+        typedef boost::shared_ptr<ComponentList> ComponentListPtr;
+        typedef boost::shared_ptr<GlobalSkyModel> GsmPtr;
+        typedef boost::shared_ptr<datamodel::ContinuumComponent> ComponentPtr;
 
         /// @brief Factory method for constructing the GlobalSkyModel implementation.
         ///
         /// @param parset The parameter set
         /// @return The GlobalSkyModel instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static GlobalSkyModel* create(const LOFAR::ParameterSet& parset);
+        static GsmPtr create(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
         virtual ~GlobalSkyModel();
@@ -80,7 +85,7 @@ class GlobalSkyModel :
         /// @param obs_date The observation date in UTC.
         /// @throw AskapError Thrown if there are errors.
         /// @return Vector of new object IDs.
-        std::vector<datamodel::id_type> ingestVOTable(
+        IdListPtr ingestVOTable(
             const std::string& componentsCatalog,
             const std::string& polarisationCatalog,
             boost::int64_t sb_id,
@@ -94,7 +99,7 @@ class GlobalSkyModel :
         ///         catalog source metadata.
         /// @throw AskapError Thrown if there are errors.
         /// @return Vector of new object IDs.
-        std::vector<datamodel::id_type> ingestVOTable(
+        IdListPtr ingestVOTable(
             const std::string& componentsCatalog,
             const std::string& polarisationCatalog,
             boost::shared_ptr<datamodel::DataSource> dataSource);
@@ -116,7 +121,7 @@ class GlobalSkyModel :
         /// @brief Get a component by ID.
         ///
         /// @return The component, or null if not found.
-        boost::shared_ptr<datamodel::ContinuumComponent> getComponentByID(datamodel::id_type id) const;
+        ComponentPtr getComponentByID(datamodel::id_type id) const;
 
         /// Cone search method.
         ///
@@ -133,7 +138,7 @@ class GlobalSkyModel :
         /// @param dec the declination of the centre of the search area (Units: decimal degrees).
         /// @param radius the search radius (Units: decimal degrees).
         /// @return a sequence of component identifiers.
-        std::vector<datamodel::id_type> coneSearch(
+        IdListPtr coneSearch(
             double ra,
             double dec,
             double radius);
@@ -157,7 +162,7 @@ class GlobalSkyModel :
         /// @param obs_date The observation date in UTC.
         /// @throw AskapError Thrown if there are errors.
         /// @return Vector of new object IDs.
-        std::vector<datamodel::id_type> ingestVOTable(
+        IdListPtr ingestVOTable(
             const std::string& componentsCatalog,
             const std::string& polarisationCatalog,
             boost::shared_ptr<datamodel::DataSource> dataSource,

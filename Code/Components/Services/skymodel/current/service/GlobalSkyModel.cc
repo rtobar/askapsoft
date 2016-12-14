@@ -59,9 +59,9 @@ using namespace askap::cp::sms::datamodel;
 using namespace askap::accessors;
 
 
-GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
+GlobalSkyModel::GsmPtr GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
 {
-    GlobalSkyModel* pImpl = 0;
+    GsmPtr pImpl;
     const string dbType = parset.get("database.backend");
     ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
 
@@ -74,15 +74,15 @@ GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
 
         // TODO Parset flag for db creation control
         // create the database
-        ::boost::shared_ptr<odb::database> pDb(
+        shared_ptr<odb::database> pDb(
             new sqlite::database(
                 dbName,
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE));
         ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
 
         // create the implementation
-        pImpl = new GlobalSkyModel(pDb);
-        ASKAPCHECK(pImpl, "GlobalSkyModel construction failed");
+        pImpl.reset(new GlobalSkyModel(pDb));
+        ASKAPCHECK(pImpl.get(), "GlobalSkyModel construction failed");
     }
     else if (dbType.compare("mysql") == 0) {
         // TODO Implement support for MySQL
@@ -92,7 +92,7 @@ GlobalSkyModel* GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
         ASKAPTHROW(AskapError, "Unsupported database backend: " << dbType);
     }
 
-    ASKAPCHECK(pImpl, "GlobalSkyModel creation failed");
+    ASKAPCHECK(pImpl.get(), "GlobalSkyModel creation failed");
     return pImpl;
 }
 
@@ -137,7 +137,7 @@ void GlobalSkyModel::createSchemaSqlite(bool dropTables)
     c->execute("PRAGMA foreign_keys=ON");
 }
 
-std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+GlobalSkyModel::IdListPtr GlobalSkyModel::ingestVOTable(
     const std::string& componentsCatalog,
     const std::string& polarisationCatalog,
     int64_t sb_id,
@@ -151,7 +151,7 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
             obs_date);
 }
 
-std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+GlobalSkyModel::IdListPtr GlobalSkyModel::ingestVOTable(
     const std::string& componentsCatalog,
     const std::string& polarisationCatalog,
     shared_ptr<datamodel::DataSource> dataSource)
@@ -165,7 +165,7 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
             date_time::not_a_date_time);
 }
 
-std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
+GlobalSkyModel::IdListPtr GlobalSkyModel::ingestVOTable(
     const std::string& componentsCatalog,
     const std::string& polarisationCatalog,
     shared_ptr<datamodel::DataSource> dataSource,
@@ -182,7 +182,7 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
             polarisationCatalog,
             getHealpixOrder()));
 
-    std::vector<datamodel::id_type> ids;
+    IdListPtr results(new std::vector<datamodel::id_type>());
 
     if (pCatalog.get()) {
         VOTableData::ComponentList& components = pCatalog->getComponents();
@@ -208,19 +208,19 @@ std::vector<datamodel::id_type> GlobalSkyModel::ingestVOTable(
             if (it->polarisation.get())
                 itsDb->persist(it->polarisation);
 
-            ids.push_back(itsDb->persist(*it));
+            results->push_back(itsDb->persist(*it));
         }
 
         t.commit();
         ASKAPLOG_DEBUG_STR(logger,
-            "transaction committed. Ingested " << ids.size() <<
+            "transaction committed. Ingested " << results->size() <<
             " components");
     }
 
-    return ids;
+    return results;
 }
 
-boost::shared_ptr<ContinuumComponent> GlobalSkyModel::getComponentByID(datamodel::id_type id) const
+GlobalSkyModel::ComponentPtr GlobalSkyModel::getComponentByID(datamodel::id_type id) const
 {
     ASKAPLOG_INFO_STR(logger, "getComponentByID: id = " << id);
 
@@ -231,14 +231,14 @@ boost::shared_ptr<ContinuumComponent> GlobalSkyModel::getComponentByID(datamodel
     return component;
 }
 
-vector<datamodel::id_type> GlobalSkyModel::coneSearch(
+GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     double ra,
     double dec,
     double radius)
 {
-    std::vector<datamodel::id_type> ids;
+    IdListPtr results(new std::vector<datamodel::id_type>());
     // sanity check inputs
     // map cone to HEALPix indicies
     // query DB
-    return ids;
+    return results;
 }
