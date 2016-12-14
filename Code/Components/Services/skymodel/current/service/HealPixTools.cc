@@ -35,15 +35,13 @@
 
 // ASKAPsoft includes
 #include <askap/AskapLogging.h>
-#include <askap/AskapError.h>
 #include <Common/ParameterSet.h>
 #include <boost/scoped_ptr.hpp>
 #include <healpix_tables.h>
-#include <pointing.h>
+#include <rangeset.h>
 
 // Local includes
-#include "SkyModelServiceImpl.h"
-#include "Utility.h"
+//#include "SkyModelServiceImpl.h"
 
 ASKAP_LOGGER(logger, ".HealPixTools");
 
@@ -71,22 +69,20 @@ HealPixTools::Index HealPixTools::calcHealPixIndex(double ra, double dec) const
     // contiguous arrays of ra and dec coordinates, with the T_Healpix_Base
     // object being reused if possible, or thread-local if it is not
     // thread-safe.
-    ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
-    ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
-
-    // convert ra/dec to a pointing:
-    // theta = (90 - dec)
-    // phi = ra
-    pointing p(
-            utility::degreesToRadians(90.0 - dec),
-            utility::degreesToRadians(ra));
-    return itsHealPixBase.ang2pix(p);
+    return itsHealPixBase.ang2pix(J2000ToPointing(ra, dec));
 }
 
 HealPixTools::IndexListPtr HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
 {
-    // TODO: implement
-    return IndexListPtr();
+    rangeset<Index> pixels;
+    pointing direction = J2000ToPointing(ra, dec);
+    itsHealPixBase.query_disc_inclusive(
+        direction,
+        utility::degreesToRadians(radius),
+        pixels,
+        fact);
+
+    return IndexListPtr(new IndexList(pixels.toVector()));
 }
 
 };

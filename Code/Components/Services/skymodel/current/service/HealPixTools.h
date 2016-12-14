@@ -30,13 +30,16 @@
 
 #include <vector>
 
-// ASKAPsoft includes
+// ASKAPsoft and 3rdParty includes
+#include <askap/AskapError.h>
 #include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
 #include <Common/ParameterSet.h>
 #include <healpix_base.h>
+#include <pointing.h>
 
 // Local package includes
+#include "Utility.h"
 
 
 namespace askap {
@@ -73,6 +76,22 @@ class HealPixTools : private boost::noncopyable {
         ///
         /// @return The vector of pixel indicies matching the query.
         IndexListPtr queryDisk(double ra, double dec, double radius, int fact=4) const;
+
+        /// @brief Converts Right-ascension and Declination to a HEALPix pointing.
+        ///
+        /// @param ra J2000 Right-ascension in decimal degrees.
+        /// @param dec J2000 declination in decimal degrees.
+        ///
+        /// @return The pointing.
+        inline pointing J2000ToPointing(double ra, double dec) const {
+            ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
+            ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
+            return pointing(
+                    // theta = (90 - dec)
+                    utility::degreesToRadians(90.0 - dec),
+                    // phi = ra
+                    utility::degreesToRadians(ra));
+        }
 
     private:
         T_Healpix_Base<Index> itsHealPixBase;

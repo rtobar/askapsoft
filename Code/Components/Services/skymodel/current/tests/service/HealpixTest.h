@@ -67,12 +67,13 @@ class HealpixTest : public CppUnit::TestFixture {
         }
 
         void testQueryDisk() {
-            //double ra = 14.8;
-            //double dec = 43.1;
-            //double radius = 0.4;
-            //int fact = 4;
-
-            //vector<int64_t> HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
+            HealPixTools hp(10);
+            HealPixTools::IndexListPtr actual = hp.queryDisk(71.8, -63.1, 1.0/60.0, 4);
+            CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
+            CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
+            CPPUNIT_ASSERT_EQUAL(33942689l, (*actual)[2]);
+            CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[3]);
+            CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[4]);
         }
 
     private:
