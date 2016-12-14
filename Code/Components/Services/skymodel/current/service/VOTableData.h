@@ -37,10 +37,10 @@
 // ASKAPsoft includes
 #include <votable/VOTable.h>
 
-
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
 #include "datamodel/Polarisation.h"
+#include "HealPixTools.h"
 
 namespace askap {
 namespace cp {
@@ -99,7 +99,7 @@ class VOTableData :
         void calcHealpixIndicies(boost::int64_t healpix_order);
 
         ComponentList itsComponents;
-        std::vector<boost::int64_t> itsHealpixIndicies;
+        std::vector<HealPixTools::Index> itsHealpixIndicies;
         std::vector<double> itsRA;
         std::vector<double> itsDec;
 };

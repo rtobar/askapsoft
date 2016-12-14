@@ -56,14 +56,14 @@ namespace cp {
 namespace sms {
 
 
-HealPixTools::HealPixTools(int64_t order)
+HealPixTools::HealPixTools(Index order)
     :
     itsHealPixBase(2 << order, NEST, SET_NSIDE),
     itsNSide(2 << order)
 {
 }
 
-int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
+HealPixTools::Index HealPixTools::calcHealPixIndex(double ra, double dec) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -83,10 +83,10 @@ int64_t HealPixTools::calcHealPixIndex(double ra, double dec) const
     return itsHealPixBase.ang2pix(p);
 }
 
-vector<int64_t> HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
+HealPixTools::IndexListPtr HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
 {
     // TODO: implement
-    return vector<int64_t>();
+    return IndexListPtr();
 }
 
 };

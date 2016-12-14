@@ -46,10 +46,13 @@ namespace sms {
 
 class HealPixTools : private boost::noncopyable {
     public:
+        typedef boost::int64_t Index;
+        typedef std::vector<Index> IndexList;
+        typedef boost::shared_ptr<IndexList> IndexListPtr;
         /// @brief Constructor.
         ///
-        /// @param order
-        HealPixTools(boost::int64_t order);
+        /// @param order The HEALPix order.
+        HealPixTools(Index order);
 
         /// @brief Calculate the HEALPix index for a given RA and declination.
         ///
@@ -58,7 +61,7 @@ class HealPixTools : private boost::noncopyable {
         ///         will suffice for the initial unit tests.
         /// @param[in] ra  J2000 right ascension (decimal degrees)
         /// @param[in] dec J2000 declination (decimal degrees)
-        boost::int64_t calcHealPixIndex(double ra, double dec) const;
+        Index calcHealPixIndex(double ra, double dec) const;
 
         /// @brief Returns the set of all pixels which overlap with the disk
         /// defined by a centre (ra, dec) and radius.
@@ -69,11 +72,11 @@ class HealPixTools : private boost::noncopyable {
         /// @param fact The overlapping test will be done at the resolution fact*nside. Must be a power of 2.
         ///
         /// @return The vector of pixel indicies matching the query.
-        std::vector<boost::int64_t> queryDisk(double ra, double dec, double radius, int fact=4) const;
+        IndexListPtr queryDisk(double ra, double dec, double radius, int fact=4) const;
 
     private:
-        T_Healpix_Base<boost::int64_t> itsHealPixBase;
-        boost::int64_t itsNSide;
+        T_Healpix_Base<Index> itsHealPixBase;
+        Index itsNSide;
 };
 
 };

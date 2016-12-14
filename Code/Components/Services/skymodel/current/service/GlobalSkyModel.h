@@ -60,7 +60,6 @@ class GlobalSkyModel :
         typedef std::vector<datamodel::id_type> IdList;
         typedef boost::shared_ptr<IdList> IdListPtr;
         typedef boost::shared_ptr<ComponentList> ComponentListPtr;
-        typedef boost::shared_ptr<GlobalSkyModel> GsmPtr;
         typedef boost::shared_ptr<datamodel::ContinuumComponent> ComponentPtr;
 
         /// @brief Factory method for constructing the GlobalSkyModel implementation.
@@ -68,7 +67,7 @@ class GlobalSkyModel :
         /// @param parset The parameter set
         /// @return The GlobalSkyModel instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static GsmPtr create(const LOFAR::ParameterSet& parset);
+        static boost::shared_ptr<GlobalSkyModel> create(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
         virtual ~GlobalSkyModel();

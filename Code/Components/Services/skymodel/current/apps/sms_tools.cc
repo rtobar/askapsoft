@@ -98,7 +98,7 @@ class SmsToolsApp : public askap::Application {
             const LOFAR::ParameterSet& parset = config();
             bool dropTables = parset.getBool("database.create_schema.droptables", true);
 
-            GlobalSkyModel::GsmPtr pGsm(GlobalSkyModel::create(config()));
+            boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
             return pGsm->createSchema(dropTables) ? 0 : 4;
         }
 
@@ -111,7 +111,7 @@ class SmsToolsApp : public askap::Application {
             string polarisation = parameterExists(INGEST_POLARISATION) ? parameter(INGEST_POLARISATION) : "";
             int64_t sbid = lexical_cast<int64_t>(parameter(SB_ID));
             posix_time::ptime obsDate = date_time::parse_delimited_time<posix_time::ptime>(parameter(OBS_DATE), 'T');
-            GlobalSkyModel::GsmPtr pGsm(GlobalSkyModel::create(config()));
+            boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
             pGsm->ingestVOTable(
                 components,
                 polarisation,

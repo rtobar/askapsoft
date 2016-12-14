@@ -265,7 +265,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
     private:
-        GlobalSkyModel::GsmPtr gsm;
+        boost::shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;
         const string parsetFile;
         const string small_components;

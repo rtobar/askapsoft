@@ -59,9 +59,9 @@ using namespace askap::cp::sms::datamodel;
 using namespace askap::accessors;
 
 
-GlobalSkyModel::GsmPtr GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
+shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& parset)
 {
-    GsmPtr pImpl;
+    shared_ptr<GlobalSkyModel> pImpl;
     const string dbType = parset.get("database.backend");
     ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
 
