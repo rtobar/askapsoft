@@ -15,8 +15,8 @@
 ///
 /// This program is distributed in the hope that it will be useful,
 /// but WITHOUT ANY WARRANTY; without even the implied warranty of
-/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-/// GNU General Public License for more details.
+/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+/// See the GNU General Public License for more details.
 ///
 /// You should have received a copy of the GNU General Public License
 /// along with this program; if not, write to the Free Software
@@ -65,13 +65,12 @@ class HealpixTest : public CppUnit::TestFixture {
 
         void testQueryDisk() {
             HealPixTools hp(10);
-            HealPixTools::IndexListPtr actual = hp.queryDisk(71.8, -63.1, 1.0/60.0, 4);
-            CPPUNIT_ASSERT_EQUAL(size_t(5), actual->size());
+            HealPixTools::IndexListPtr actual = hp.queryDisk(71.8, -63.1, 1.0/60.0, 8);
+            CPPUNIT_ASSERT_EQUAL(size_t(4), actual->size());
             CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
             CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
-            CPPUNIT_ASSERT_EQUAL(33942689l, (*actual)[2]);
-            CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[3]);
-            CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[4]);
+            CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[2]);
+            CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[3]);
         }
 
         void testJ2000ToPointing_valid_values() {

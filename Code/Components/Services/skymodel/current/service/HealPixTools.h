@@ -72,10 +72,11 @@ class HealPixTools : private boost::noncopyable {
         /// @param ra Right ascension in decimal degrees of the disk centre.
         /// @param dec Declination in decimal degrees of the disk centre.
         /// @param radius Radius in degrees of the disk.
-        /// @param fact The overlapping test will be done at the resolution fact*nside. Must be a power of 2.
+        /// @param fact Oversampling factor. The overlapping test will be done 
+        ///         at the resolution fact*nside. Must be a power of 2.
         ///
         /// @return The vector of pixel indicies matching the query.
-        IndexListPtr queryDisk(double ra, double dec, double radius, int fact=4) const;
+        IndexListPtr queryDisk(double ra, double dec, double radius, int fact=8) const;
 
         /// @brief Converts Right-ascension and Declination to a HEALPix pointing.
         ///
