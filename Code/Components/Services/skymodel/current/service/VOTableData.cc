@@ -42,7 +42,7 @@
 #include <askap/AskapLogging.h>
 
 // Local package includes
-#include "HealPixTools.h"
+#include "HealPixFacade.h"
 #include "Utility.h"
 #include "VOTableParser.h"
 
@@ -162,7 +162,7 @@ VOTableData::~VOTableData()
 }
 
 void VOTableData::calcHealpixIndicies(boost::int64_t healpix_order) {
-    HealPixTools hp(healpix_order);
+    HealPixFacade hp(healpix_order);
     #pragma omp parallel for
     for (size_t i = 0; i < itsComponents.size(); ++i) {
         itsComponents[i].healpix_index = hp.calcHealPixIndex(

@@ -1,4 +1,4 @@
-/// @file HealPixTools.cc
+/// @file HealPixFacade.cc
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -25,7 +25,7 @@
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
 // Include own header file first
-#include "HealPixTools.h"
+#include "HealPixFacade.h"
 
 // Include package level header file
 #include "askap_skymodel.h"
@@ -43,7 +43,7 @@
 // Local includes
 //#include "SkyModelServiceImpl.h"
 
-ASKAP_LOGGER(logger, ".HealPixTools");
+ASKAP_LOGGER(logger, ".HealPixFacade");
 
 using namespace std;
 using namespace boost;
@@ -54,14 +54,14 @@ namespace cp {
 namespace sms {
 
 
-HealPixTools::HealPixTools(Index order)
+HealPixFacade::HealPixFacade(Index order)
     :
     itsHealPixBase(2 << order, NEST, SET_NSIDE),
     itsNSide(2 << order)
 {
 }
 
-HealPixTools::Index HealPixTools::calcHealPixIndex(double ra, double dec) const
+HealPixFacade::Index HealPixFacade::calcHealPixIndex(double ra, double dec) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -72,7 +72,7 @@ HealPixTools::Index HealPixTools::calcHealPixIndex(double ra, double dec) const
     return itsHealPixBase.ang2pix(J2000ToPointing(ra, dec));
 }
 
-HealPixTools::IndexListPtr HealPixTools::queryDisk(double ra, double dec, double radius, int fact) const
+HealPixFacade::IndexListPtr HealPixFacade::queryDisk(double ra, double dec, double radius, int fact) const
 {
     rangeset<Index> pixels;
     pointing direction = J2000ToPointing(ra, dec);

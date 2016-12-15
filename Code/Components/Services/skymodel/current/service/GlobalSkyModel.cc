@@ -244,7 +244,7 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     IdListPtr results(new IdList());
 
     // map search cone to HEALPix indicies
-    HealPixTools::IndexListPtr pixels = itsHealPix.queryDisk(ra, dec, radius);
+    HealPixFacade::IndexListPtr pixels = itsHealPix.queryDisk(ra, dec, radius);
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << pixels->size() << " HEALPix pixels intersected");
 
     if (pixels->size() > 0) {

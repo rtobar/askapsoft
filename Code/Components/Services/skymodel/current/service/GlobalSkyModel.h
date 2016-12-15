@@ -43,7 +43,7 @@
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
 #include "datamodel/DataSource.h"
-#include "HealPixTools.h"
+#include "HealPixFacade.h"
 
 namespace askap {
 namespace cp {
@@ -173,7 +173,7 @@ class GlobalSkyModel :
         boost::shared_ptr<odb::database> itsDb;
 
         /// @brief The HEALPix facade
-        HealPixTools itsHealPix;
+        HealPixFacade itsHealPix;
 };
 
 }

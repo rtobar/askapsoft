@@ -1,4 +1,4 @@
-/// @file HealPixTools.h
+/// @file HealPixFacade.h
 /// @brief HEALPix utility functions
 ///
 /// @copyright (c) 2016 CSIRO
@@ -25,8 +25,8 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_HEALPIXTOOLS_H
-#define ASKAP_CP_SMS_HEALPIXTOOLS_H
+#ifndef ASKAP_CP_SMS_HEALPIXFACADE_H
+#define ASKAP_CP_SMS_HEALPIXFACADE_H
 
 #include <vector>
 
@@ -47,7 +47,7 @@ namespace cp {
 namespace sms {
 
 
-class HealPixTools : private boost::noncopyable {
+class HealPixFacade : private boost::noncopyable {
     public:
         typedef boost::int64_t Index;
         typedef std::vector<Index> IndexList;
@@ -55,7 +55,7 @@ class HealPixTools : private boost::noncopyable {
         /// @brief Constructor.
         ///
         /// @param order The HEALPix order.
-        HealPixTools(Index order);
+        HealPixFacade(Index order);
 
         /// @brief Calculate the HEALPix index for a given RA and declination.
         ///

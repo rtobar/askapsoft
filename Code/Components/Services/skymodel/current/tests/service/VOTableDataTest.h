@@ -34,7 +34,7 @@
 #include <askap/AskapError.h>
 
 // Classes to test
-#include "service/HealPixTools.h"
+#include "service/HealPixFacade.h"
 #include "service/VOTableData.h"
 
 using namespace std;
@@ -106,7 +106,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
 
         void testHealpixIndexation() {
             const int order = 14;
-            HealPixTools hp(order);
+            HealPixFacade hp(order);
             boost::shared_ptr<VOTableData> pData(VOTableData::create(large_components, "", order));
             const VOTableData::ComponentList& components = pData->getComponents();
 
