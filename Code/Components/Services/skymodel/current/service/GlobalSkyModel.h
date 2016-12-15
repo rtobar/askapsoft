@@ -43,6 +43,7 @@
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
 #include "datamodel/DataSource.h"
+#include "HealPixTools.h"
 
 namespace askap {
 namespace cp {
@@ -114,7 +115,7 @@ class GlobalSkyModel :
         ///
         /// @return Order
         inline boost::int64_t getHealpixOrder() const {
-            return 15l;
+            return 13l;
         }
 
         /// @brief Get a component by ID.
@@ -170,6 +171,9 @@ class GlobalSkyModel :
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;
+
+        /// @brief The HEALPix facade
+        HealPixTools itsHealPix;
 };
 
 }

@@ -98,7 +98,8 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
 
 GlobalSkyModel::GlobalSkyModel(boost::shared_ptr<odb::database> database)
     :
-    itsDb(database)
+    itsDb(database),
+    itsHealPix(getHealpixOrder())
 {
 }
 
@@ -212,9 +213,7 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::ingestVOTable(
         }
 
         t.commit();
-        ASKAPLOG_DEBUG_STR(logger,
-            "transaction committed. Ingested " << results->size() <<
-            " components");
+        ASKAPLOG_DEBUG_STR(logger, "transaction committed. Ingested " << results->size() << " components");
     }
 
     return results;
@@ -236,9 +235,22 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     double dec,
     double radius)
 {
-    IdListPtr results(new std::vector<datamodel::id_type>());
-    // sanity check inputs
-    // map cone to HEALPix indicies
-    // query DB
+    ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius);
+    ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
+    ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
+    ASKAPASSERT(radius > 0);
+
+    // We need somewhere to store the results
+    IdListPtr results(new IdList());
+
+    // map search cone to HEALPix indicies
+    HealPixTools::IndexListPtr pixels = itsHealPix.queryDisk(ra, dec, radius);
+    ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << pixels->size() << " HEALPix pixels intersected");
+
+    if (pixels->size() > 0) {
+        // Build the database query
+    }
+
+    ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << results->size() << " results");
     return results;
 }
