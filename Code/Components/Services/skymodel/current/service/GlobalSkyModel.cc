@@ -53,6 +53,7 @@
 ASKAP_LOGGER(logger, ".GlobalSkyModel");
 
 using namespace odb;
+using namespace std;
 using namespace boost;
 using namespace askap::cp::sms;
 using namespace askap::cp::sms::datamodel;
@@ -236,9 +237,13 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     double radius)
 {
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius);
+    cout << "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius << endl;
     ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
     ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
     ASKAPASSERT(radius > 0);
+
+    typedef odb::query<ContinuumComponent> Query;
+    typedef odb::result<ContinuumComponent> Result;
 
     // We need somewhere to store the results
     IdListPtr results(new IdList());
@@ -246,9 +251,19 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     // map search cone to HEALPix indicies
     HealPixFacade::IndexListPtr pixels = itsHealPix.queryDisk(ra, dec, radius);
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << pixels->size() << " HEALPix pixels intersected");
+    cout << "coneSearch: " << pixels->size() << " HEALPix pixels intersected" << endl;
 
     if (pixels->size() > 0) {
-        // Build the database query
+        transaction t(itsDb->begin());
+
+        Result r = itsDb->query<ContinuumComponent>(
+                    Query::healpix_index.in_range(pixels->begin(), pixels->end()));
+
+        // iterate the query result and store the component ID
+        for (Result::iterator i = r.begin(); i != r.end(); ++i)
+            results->push_back(i->continuum_component_id);
+
+        t.commit();
     }
 
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << results->size() << " results");

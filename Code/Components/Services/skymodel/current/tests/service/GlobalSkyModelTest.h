@@ -111,12 +111,12 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testNside() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(2l << 15, gsm->getHealpixNside());
+            CPPUNIT_ASSERT_EQUAL(2l << 10, gsm->getHealpixNside());
         }
 
         void testHealpixOrder() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(15l, gsm->getHealpixOrder());
+            CPPUNIT_ASSERT_EQUAL(10l, gsm->getHealpixOrder());
         }
 
         void testGetMissingComponentById() {
@@ -254,7 +254,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             // Do the search
             double ra = 70.176918;
             double dec = -61.819671;
-            double radius = 3.0;
+            double radius = 1.0;
             GlobalSkyModel::IdListPtr results = gsm->coneSearch(ra, dec, radius);
 
             // test it ...

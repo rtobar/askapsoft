@@ -42,6 +42,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
+#include "datamodel/ContinuumComponent-odb.h"
 #include "datamodel/DataSource.h"
 #include "HealPixFacade.h"
 
@@ -115,7 +116,7 @@ class GlobalSkyModel :
         ///
         /// @return Order
         inline boost::int64_t getHealpixOrder() const {
-            return 13l;
+            return 10l;
         }
 
         /// @brief Get a component by ID.
