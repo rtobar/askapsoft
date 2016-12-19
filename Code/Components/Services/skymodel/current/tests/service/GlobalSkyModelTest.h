@@ -257,13 +257,11 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             double dec = -61.819671;
             //double radius = 1.75 * boost::math::constants::root_two<double>();  // ~ 30 sq degrees? 
             double radius = 1.75;
-            GlobalSkyModel::IdListPtr results = gsm->coneSearch(ra, dec, radius);
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(ra, dec, radius);
 
             // test it ...
             CPPUNIT_ASSERT_EQUAL(size_t(1), results->size());
-            CPPUNIT_ASSERT_EQUAL(expectedId, (*results)[0]);
-            CPPUNIT_ASSERT_EQUAL(ra, expectedComponent->ra);
-            CPPUNIT_ASSERT_EQUAL(dec, expectedComponent->dec);
+            CPPUNIT_ASSERT_EQUAL(expectedId, results->begin()->continuum_component_id);
         }
 
     private:

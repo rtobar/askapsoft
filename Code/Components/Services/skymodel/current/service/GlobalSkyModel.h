@@ -119,6 +119,13 @@ class GlobalSkyModel :
             return 9l;
         }
 
+        /// @brief The upper limit on the number of HEALPix pixels that can be specified in a single search.
+        ///
+        /// @return The maximum number of pixels
+        inline size_t MaxSearchPixels() const {
+            return size_t(50000);
+        }
+
         /// @brief Get a component by ID.
         ///
         /// @return The component, or null if not found.
@@ -126,25 +133,20 @@ class GlobalSkyModel :
 
         /// Cone search method.
         ///
-        /// The cone search does not directly return a sequence of components, which
-        /// could potentially be very large. Instead a sequence of component ids is
-        /// returned. This allows the caller to then call getComponents() for a subset
-        /// of the full component list if it is too large. The idea here is to allow
-        /// the client access perhaps to be hidden behind an iterator which allows
-        /// the client to deal with one a smaller (more manageable) subset of the
-        /// result set at a time.
-        ///
         /// Coordinate frame is J2000.
         /// @param ra the right ascension of the centre of the search area (Units: decimal degrees).
         /// @param dec the declination of the centre of the search area (Units: decimal degrees).
         /// @param radius the search radius (Units: decimal degrees).
-        /// @return a sequence of component identifiers.
-        IdListPtr coneSearch(
+        /// @return a sequence of components.
+        ComponentListPtr coneSearch(
             double ra,
             double dec,
             double radius);
 
     private:
+        typedef odb::query<datamodel::ContinuumComponent> Query;
+        typedef odb::result<datamodel::ContinuumComponent> Result;
+
         /// @brief Constructor.
         /// Private. Use the factory method to create.
         /// @param itsDb The odb::database instance.
@@ -169,6 +171,13 @@ class GlobalSkyModel :
             boost::shared_ptr<datamodel::DataSource> dataSource,
             boost::int64_t sb_id,
             boost::posix_time::ptime obs_date=boost::date_time::not_a_date_time);
+
+        /// @brief Low-level component search against a set of HEALPix pixels.
+        ///
+        /// @param pixels The set of pixels to query against
+        ///
+        /// @return 
+        ComponentListPtr queryComponentsByPixel(HealPixFacade::IndexListPtr pixels);
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;

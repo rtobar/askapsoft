@@ -231,7 +231,7 @@ GlobalSkyModel::ComponentPtr GlobalSkyModel::getComponentByID(datamodel::id_type
     return component;
 }
 
-GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
     double ra,
     double dec,
     double radius)
@@ -242,16 +242,18 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
     ASKAPASSERT(radius > 0);
 
-    typedef odb::query<ContinuumComponent> Query;
-    typedef odb::result<ContinuumComponent> Result;
+    return queryComponentsByPixel(itsHealPix.queryDisk(ra, dec, radius));
+}
+
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(HealPixFacade::IndexListPtr pixels)
+{
+    ASKAPASSERT(pixels.get());
+    ASKAPASSERT(pixels->size() <= MaxSearchPixels());
+    ASKAPLOG_DEBUG_STR(logger, "healpixQuery against : " << pixels->size() << " pixels");
+    cout << "healpixQuery against : " << pixels->size() << " pixels" << endl;
 
     // We need somewhere to store the results
-    IdListPtr results(new IdList());
-
-    // map search cone to HEALPix indicies
-    HealPixFacade::IndexListPtr pixels = itsHealPix.queryDisk(ra, dec, radius);
-    ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << pixels->size() << " HEALPix pixels intersected");
-    cout << "coneSearch: " << pixels->size() << " HEALPix pixels intersected" << endl;
+    ComponentListPtr results(new ComponentList());
 
     if (pixels->size() > 0) {
         transaction t(itsDb->begin());
@@ -261,7 +263,7 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
 
         // iterate the query result and store the component ID
         for (Result::iterator i = r.begin(); i != r.end(); ++i)
-            results->push_back(i->continuum_component_id);
+            results->push_back(*i);
 
         t.commit();
     }
@@ -269,3 +271,5 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::coneSearch(
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << results->size() << " results");
     return results;
 }
+
+
