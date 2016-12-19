@@ -33,6 +33,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <Common/ParameterSet.h>
 #include <votable/VOTable.h>
 
@@ -111,12 +112,12 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testNside() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(2l << 10, gsm->getHealpixNside());
+            CPPUNIT_ASSERT_EQUAL(2l << 9, gsm->getHealpixNside());
         }
 
         void testHealpixOrder() {
             initEmptyDatabase();
-            CPPUNIT_ASSERT_EQUAL(10l, gsm->getHealpixOrder());
+            CPPUNIT_ASSERT_EQUAL(9l, gsm->getHealpixOrder());
         }
 
         void testGetMissingComponentById() {
@@ -254,7 +255,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             // Do the search
             double ra = 70.176918;
             double dec = -61.819671;
-            double radius = 1.0;
+            //double radius = 1.75 * boost::math::constants::root_two<double>();  // ~ 30 sq degrees? 
+            double radius = 1.75;
             GlobalSkyModel::IdListPtr results = gsm->coneSearch(ra, dec, radius);
 
             // test it ...
