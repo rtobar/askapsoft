@@ -46,6 +46,7 @@ class HealpixTest : public CppUnit::TestFixture {
         CPPUNIT_TEST_SUITE(HealpixTest);
         CPPUNIT_TEST(testCalcHealpixIndex);
         CPPUNIT_TEST(testQueryDisk);
+        CPPUNIT_TEST(testQueryRect);
         CPPUNIT_TEST(testJ2000ToPointing_valid_values);
         CPPUNIT_TEST_SUITE_END();
 
@@ -71,6 +72,41 @@ class HealpixTest : public CppUnit::TestFixture {
             CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
             CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[2]);
             CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[3]);
+        }
+
+        void testQueryRect() {
+            HealPixFacade hp(10);
+            // create a rect of ~30 sq degrees (5 * 6)
+            HealPixFacade::IndexListPtr actual = hp.queryRect(
+                70.9, -63.1,  // top-left
+                75.9, -69.1,  // bottom-right
+                8);           // oversampling factor
+                
+            CPPUNIT_ASSERT_EQUAL(size_t(4), actual->size());
+            //CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
+            //CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
+            //CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[2]);
+            //CPPUNIT_ASSERT_EQUAL(33942693l, (*actual)[3]);
+        }
+
+        void testQueryRect_range_error_swapped_dec() {
+            HealPixFacade hp(10);
+            CPPUNIT_ASSERT_THROW(
+                hp.queryRect(
+                    70.9, -69.1,  // top-left
+                    75.9, -63.1,  // bottom-right
+                    8),           // oversampling factor
+                askap::AskapError);
+        }
+
+        void testQueryRect_range_error_swapped_ra() {
+            HealPixFacade hp(10);
+            CPPUNIT_ASSERT_THROW(
+                hp.queryRect(
+                    75.9, -63.1,  // top-left
+                    70.9, -69.1,  // bottom-right
+                    8),           // oversampling factor
+                askap::AskapError);
         }
 
         void testJ2000ToPointing_valid_values() {

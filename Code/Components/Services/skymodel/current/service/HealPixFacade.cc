@@ -85,6 +85,11 @@ HealPixFacade::IndexListPtr HealPixFacade::queryDisk(double ra, double dec, doub
     return IndexListPtr(new IndexList(pixels.toVector()));
 }
 
+HealPixFacade::IndexListPtr HealPixFacade::queryRect(double ra_tl, double dec_tl, double ra_br, double dec_br, int fact) const
+{
+    return IndexListPtr();
+}
+
 };
 };
 };

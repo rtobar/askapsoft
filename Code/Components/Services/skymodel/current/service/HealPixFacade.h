@@ -78,6 +78,19 @@ class HealPixFacade : private boost::noncopyable {
         /// @return The vector of pixel indicies matching the query.
         IndexListPtr queryDisk(double ra, double dec, double radius, int fact=8) const;
 
+        /// @brief Returns the set of all pixels which overlap with the rectangle
+        /// defined by a top-left (ra, dec) and bottom-right (ra, dec) point pair.
+        ///
+        /// @param ra_tl J200 Right ascension in decimal degrees of the top-left point.
+        /// @param dec_tl J200 Declination in decimal degrees of the top-left point.
+        /// @param ra_br J200 Right ascension in decimal degrees of the bottom-right point.
+        /// @param dec_br J200 Declination in decimal degrees of the bottom-right point.
+        /// @param fact Oversampling factor. The overlapping test will be done 
+        ///         at the resolution fact*nside. Must be a power of 2.
+        ///
+        /// @return The vector of pixel indicies matching the query.
+        IndexListPtr queryRect(double ra_tl, double dec_tl, double ra_br, double dec_br, int fact=8) const;
+
         /// @brief Converts Right-ascension and Declination to a HEALPix pointing.
         ///
         /// @param ra J2000 Right-ascension in decimal degrees.
