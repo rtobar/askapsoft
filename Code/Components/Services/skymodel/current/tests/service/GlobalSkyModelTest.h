@@ -69,6 +69,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testNonAskapDataIngest);
         CPPUNIT_TEST(testSimpleConeSearch);
         CPPUNIT_TEST(testConeSearch_frequency_criteria);
+        CPPUNIT_TEST(testConeSearch_flux_int);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -249,6 +250,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 results->begin()->component_id);
         }
 
+        /// @brief Simple functor for testing query results against expected component ID strings.
         class ComponentIdMatch
         {
         public:
@@ -274,11 +276,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 GlobalSkyModel::ComponentQuery::freq >= 1230.0 &&
                 GlobalSkyModel::ComponentQuery::freq <= 1250.0);
 
-            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(
-                76.0,
-                -71.0,
-                1.5,
-                query);
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(76.0, -71.0, 1.5, query);
 
             CPPUNIT_ASSERT_EQUAL(size_t(3), results->size());
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
@@ -287,6 +285,24 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"))));
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_5a"))));
+        }
+
+        void testConeSearch_flux_int() {
+            initSearch();
+
+            // create a component query for frequencies in the range [1230..1250]
+            GlobalSkyModel::ComponentQuery query(
+                GlobalSkyModel::ComponentQuery::flux_int >= 80.0);
+
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(76.0, -71.0, 1.5, query);
+
+            CPPUNIT_ASSERT_EQUAL(size_t(3), results->size());
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_2a"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_3a"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));
         }
 
     private:
