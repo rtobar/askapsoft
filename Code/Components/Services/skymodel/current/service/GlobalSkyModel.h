@@ -63,6 +63,7 @@ class GlobalSkyModel :
         typedef boost::shared_ptr<IdList> IdListPtr;
         typedef boost::shared_ptr<ComponentList> ComponentListPtr;
         typedef boost::shared_ptr<datamodel::ContinuumComponent> ComponentPtr;
+        typedef odb::query<datamodel::ContinuumComponent> ComponentQuery;
 
         /// @brief Factory method for constructing the GlobalSkyModel implementation.
         ///
@@ -143,8 +144,21 @@ class GlobalSkyModel :
             double dec,
             double radius);
 
+        /// Cone search method with additional criteria
+        ///
+        /// Coordinate frame is J2000.
+        /// @param ra the right ascension of the centre of the search area (Units: decimal degrees).
+        /// @param dec the declination of the centre of the search area (Units: decimal degrees).
+        /// @param radius the search radius (Units: decimal degrees).
+        /// @param query the additional component query.
+        /// @return a sequence of components.
+        ComponentListPtr coneSearch(
+            double ra,
+            double dec,
+            double radius,
+            ComponentQuery query);
+
     private:
-        typedef odb::query<datamodel::ContinuumComponent> Query;
         typedef odb::result<datamodel::ContinuumComponent> Result;
 
         /// @brief Constructor.
@@ -175,9 +189,12 @@ class GlobalSkyModel :
         /// @brief Low-level component search against a set of HEALPix pixels.
         ///
         /// @param pixels The set of pixels to query against
+        /// @param query The additional component query.
         ///
         /// @return 
-        ComponentListPtr queryComponentsByPixel(HealPixFacade::IndexListPtr pixels);
+        ComponentListPtr queryComponentsByPixel(
+            HealPixFacade::IndexListPtr pixels, 
+            ComponentQuery query);
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;

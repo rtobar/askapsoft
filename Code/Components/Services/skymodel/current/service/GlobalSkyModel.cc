@@ -236,21 +236,33 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
     double dec,
     double radius)
 {
+    return coneSearch(ra, dec, radius, ComponentQuery());
+}
+
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
+    double ra,
+    double dec,
+    double radius,
+    ComponentQuery query)
+{
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius);
-    cout << "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius << endl;
+    //cout << "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius << endl;
     ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
     ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
     ASKAPASSERT(radius > 0);
-
-    return queryComponentsByPixel(itsHealPix.queryDisk(ra, dec, radius));
+    return queryComponentsByPixel(
+            itsHealPix.queryDisk(ra, dec, radius),
+            query);
 }
 
-GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(HealPixFacade::IndexListPtr pixels)
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
+    HealPixFacade::IndexListPtr pixels,
+    ComponentQuery query)
 {
     ASKAPASSERT(pixels.get());
     ASKAPASSERT(pixels->size() <= MaxSearchPixels());
     ASKAPLOG_DEBUG_STR(logger, "healpixQuery against : " << pixels->size() << " pixels");
-    cout << "healpixQuery against : " << pixels->size() << " pixels" << endl;
+    //cout << "healpixQuery against : " << pixels->size() << " pixels" << endl;
 
     // We need somewhere to store the results
     ComponentListPtr results(new ComponentList());
@@ -259,7 +271,8 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(HealPixF
         transaction t(itsDb->begin());
 
         Result r = itsDb->query<ContinuumComponent>(
-                    Query::healpix_index.in_range(pixels->begin(), pixels->end()));
+                ComponentQuery::healpix_index.in_range(pixels->begin(), pixels->end())
+                && query);
 
         // iterate the query result and store the component ID
         for (Result::iterator i = r.begin(); i != r.end(); ++i)

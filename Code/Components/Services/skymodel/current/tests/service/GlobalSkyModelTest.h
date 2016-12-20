@@ -40,6 +40,7 @@
 // Classes to test
 #include "datamodel/Common.h"
 #include "datamodel/ContinuumComponent.h"
+//#include "datamodel/ContinuumComponent-odb.h"
 #include "service/GlobalSkyModel.h"
 
 using namespace std;
@@ -67,6 +68,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testMetadata);
         CPPUNIT_TEST(testNonAskapDataIngest);
         CPPUNIT_TEST(testSimpleConeSearch);
+        CPPUNIT_TEST(testConeSearch_frequency_criteria);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -239,32 +241,64 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void testSimpleConeSearch() {
-            initEmptyDatabase();
-
-            GlobalSkyModel::IdListPtr ids = gsm->ingestVOTable(
-                    simple_cone_search,
-                    small_polarisation,
-                    42,
-                    second_clock::universal_time());
-
-            // The VO table has been created so that only the first component
-            // should match the search
-            id_type expectedId = (*ids)[0];
-            GlobalSkyModel::ComponentPtr expectedComponent(gsm->getComponentByID(expectedId));
-
-            // Do the search
-            double ra = 70.176918;
-            double dec = -61.819671;
-            //double radius = 1.75 * boost::math::constants::root_two<double>();  // ~ 30 sq degrees? 
-            double radius = 1.75;
-            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(ra, dec, radius);
-
-            // test it ...
+            initSearch();
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(70.2, -61.8, 1.0);
             CPPUNIT_ASSERT_EQUAL(size_t(1), results->size());
-            CPPUNIT_ASSERT_EQUAL(expectedId, results->begin()->continuum_component_id);
+            CPPUNIT_ASSERT_EQUAL(
+                string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"),
+                results->begin()->component_id);
+        }
+
+        class ComponentIdMatch
+        {
+        public:
+            ComponentIdMatch(string targetComponentId) :
+                itsTarget(targetComponentId)
+            {
+            }
+
+            bool operator()(datamodel::ContinuumComponent& that)
+            {
+                return itsTarget == that.component_id;
+            }
+        private:
+            std::string itsTarget;
+
+        };
+
+        void testConeSearch_frequency_criteria() {
+            initSearch();
+
+            // create a component query for frequencies in the range [1230..1250]
+            GlobalSkyModel::ComponentQuery query(
+                GlobalSkyModel::ComponentQuery::freq >= 1230.0 &&
+                GlobalSkyModel::ComponentQuery::freq <= 1250.0);
+
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(
+                76.0,
+                -71.0,
+                1.5,
+                query);
+
+            CPPUNIT_ASSERT_EQUAL(size_t(3), results->size());
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4b"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_5a"))));
         }
 
     private:
+        GlobalSkyModel::IdListPtr initSearch() {
+            initEmptyDatabase();
+            return gsm->ingestVOTable(
+                simple_cone_search,
+                small_polarisation,
+                42,
+                second_clock::universal_time());
+        }
+
         boost::shared_ptr<GlobalSkyModel> gsm;
         LOFAR::ParameterSet parset;
         const string parsetFile;
