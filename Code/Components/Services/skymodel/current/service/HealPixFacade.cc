@@ -34,6 +34,7 @@
 #include <string>
 
 // ASKAPsoft includes
+#include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
 #include <Common/ParameterSet.h>
 #include <boost/scoped_ptr.hpp>
@@ -85,9 +86,30 @@ HealPixFacade::IndexListPtr HealPixFacade::queryDisk(double ra, double dec, doub
     return IndexListPtr(new IndexList(pixels.toVector()));
 }
 
-HealPixFacade::IndexListPtr HealPixFacade::queryRect(double ra_tl, double dec_tl, double ra_br, double dec_br, int fact) const
+HealPixFacade::IndexListPtr HealPixFacade::queryRect(
+    double ra_left,
+    double dec_top,
+    double ra_right,
+    double dec_bottom,
+    int fact) const
 {
-    return IndexListPtr();
+    // sanity checks
+    ASKAPASSERT(ra_left < ra_right);
+    ASKAPASSERT(dec_bottom < dec_top);
+
+    // munge the inputs into a polygon, moving clockwise from the top-left
+    std::vector<pointing> vertex;
+    vertex.push_back(J2000ToPointing(ra_left, dec_top));
+    vertex.push_back(J2000ToPointing(ra_right, dec_top));
+    vertex.push_back(J2000ToPointing(ra_right, dec_bottom));
+    vertex.push_back(J2000ToPointing(ra_left, dec_bottom));
+    
+    // intersect with HEALPix
+    rangeset<Index> pixels;
+    itsHealPixBase.query_polygon_inclusive(vertex, pixels, fact);
+
+    // return pixels as an IndexList
+    return IndexListPtr(new IndexList(pixels.toVector()));
 }
 
 };
