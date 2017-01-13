@@ -140,9 +140,9 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 
     casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
 
-    
+
     // Now write the fits file.
-    casa::ImageFITSConverter::ImageToFITS (error, img1, name);
+    casa::ImageFITSConverter::ImageToFITS (error, image, name);
 
 }
 

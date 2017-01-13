@@ -35,6 +35,7 @@
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Utilities/DataType.h>
 #include <casacore/fits/FITS/FITSDateUtil.h>
+#include <casacore/fits/FITS/FITSHistoryUtil.h>
 #include <casacore/casa/Quanta/MVTime.h>
 #include <imageaccess/FITSImageRW.h>
 
@@ -404,7 +405,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
         casa::Bool aipsppFormat;
         casa::uInt firstLine = 0;
         while (1) {
-            firstLine = casa::FITSHistoryUtil::toHISTORY(historyChunk, aipsppFormat,
+            firstLine = casa::FITSHistoryUtil::toHISTORY(historyChunk, aipsppFormat,\
                 nstrings, firstLine, logger);
                 if (nstrings == 0) {
                     break;
@@ -412,14 +413,14 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
                 casa::String groupType;
                 if (aipsppFormat) groupType = "LOGTABLE";
                 casa::FITSHistoryUtil::addHistoryGroup(kw, historyChunk, nstrings, groupType);
-            }
         }
     }
+
     //
     // END
     //
     kw.end();
-
+    return true;
 
 }
 bool FITSImageRW::write(const casa::Array<float> &arr) {
