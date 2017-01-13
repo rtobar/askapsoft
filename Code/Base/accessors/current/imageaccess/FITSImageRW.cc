@@ -35,6 +35,7 @@
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Utilities/DataType.h>
 #include <casacore/fits/FITS/FITSDateUtil.h>
+#include <casacore/casa/Quanta/MVTime.h>
 #include <imageaccess/FITSImageRW.h>
 
 ASKAP_LOGGER(FITSlogger, ".FITSImageRW");
