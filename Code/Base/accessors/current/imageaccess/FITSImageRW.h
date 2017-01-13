@@ -44,7 +44,7 @@ namespace accessors {
 /// I will implement what ASKAP needs here
 /// @ingroup imageaccess
 
-class FITSImageRW: public casa::FITSImage {
+class FITSImageRW: public casa::FITSImage, public casa::ImageFITSConverter {
 
 public:
     // Construct a FITSImage from the disk FITS file name  and extension and apply mask.
@@ -62,6 +62,26 @@ public:
 
     // write into a FITS image
     bool write(const casa::Array<float>& );
+private:
+    // build a FITS file with a header and coordinate system matching
+    // This function heavily adapted from the casacore ImagetoFITS converters
+    bool create(const std::string &name, const casa::IPosition &shape,\
+        const casa::CoordinateSystem &csys,\
+        uint memoryInMB = 64,\
+        bool preferVelocity = true,\
+        bool opticalVelocity = true,\
+        int BITPIX=-32,\
+        float minPix = 1.0,\
+        float maxPix = -1.0,\
+        bool degenerateLast=false,\
+        bool verbose=true,\
+        bool stokesLast=false,\
+        bool preferWavelength=false,\
+        bool airWavelength=false,\
+        bool primHead=true,\
+        bool allowAppend=false,\
+        bool history=true);
+
 
 
 

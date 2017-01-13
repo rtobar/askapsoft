@@ -66,10 +66,12 @@ casa::IPosition FitsImageAccess::shape(const std::string &name) const
 casa::Array<float> FitsImageAccess::read(const std::string &name) const
 {
     ASKAPLOG_INFO_STR(logger, "Reading FITS image " << name);
+
     casa::FITSImage img(name);
 
     const casa::IPosition shape = img.shape();
     ASKAPLOG_INFO_STR(logger," - Shape " << shape);
+
     casa::IPosition blc(shape.nelements(),0);
     casa::IPosition trc(shape);
     return this->read(name,blc,trc);
@@ -86,10 +88,12 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
         const casa::IPosition &trc) const
 {
     ASKAPLOG_INFO_STR(logger, "Reading a slice of the FITS image " << name << " from " << blc << " to " << trc);
+
     casa::FITSImage img(name);
     casa::Array<float> buffer;
-    casa::Slicer slc(blc,trc,casa::Slicer::endIsLast);
-    ASKAPCHECK(img.doGetSlice(buffer,slc), "Cannot read image");
+    casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
+    std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
+    ASKAPCHECK(img.doGetSlice(buffer,slc) == casa::False, "Cannot read image");
     return buffer;
 
 }
@@ -134,36 +138,12 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
     // this requires that the whole array fits in memory
     // which may not in general be the case
 
-    casa::TempImage<casa::Float> img1(casa::TiledShape(shape),csys,0);
+    casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
 
+    
     // Now write the fits file.
     casa::ImageFITSConverter::ImageToFITS (error, img1, name);
 
-
-
-    // // get the coo-sys and check for a quality axis
-    // CoordinateSystem cSys= image.coordinates();
-    // if (cSys.hasQualityAxis()){
-    //     // put the image to the FITSOut
-    //     if (!ImageFITSConverter::QualImgToFITSOut(error, os, image, outfile, memoryInMB,
-    //             preferVelocity, opticalVelocity, BITPIX, minPix, maxPix, degenerateLast,
-    //             verbose, stokesLast, preferWavelength, airWavelength, origin, history)){
-    //         return False;
-    //     }
-    // }
-    // else{
-    //     // put the image to the FITSOut
-    //     if (!ImageFITSConverter::ImageToFITSOut(error, os, image, outfile, memoryInMB,
-    //             preferVelocity, opticalVelocity, BITPIX, minPix, maxPix, degenerateLast,
-    //             verbose, stokesLast, preferWavelength, airWavelength, True, True, origin, history)){
-    //         return False;
-    //     }
-    // }
-    // if (outfile) {
-    //     delete outfile;
-    // }
-    //
-    // casa::PagedImage<float> img(casa::TiledShape(shape), csys, name);
 }
 
 /// @brief write full image
@@ -177,6 +157,7 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
     FITSImageRW img(name);
 
     casa::TempImage<casa::Float> img1(casa::TiledShape(img.shape()),img.coordinates(),0);
+    img1.put(arr);
 
     unlink(name.c_str());
 

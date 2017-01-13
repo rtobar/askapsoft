@@ -32,7 +32,10 @@
 #ifndef ASKAP_ACCESSORS_FITS_IMAGE_ACCESS_H
 #define ASKAP_ACCESSORS_FITS_IMAGE_ACCESS_H
 
+#include <boost/shared_ptr.hpp>
+
 #include <imageaccess/IImageAccess.h>
+#include <imageaccess/FITSImageRW.h>
 
 namespace askap {
 namespace accessors {
@@ -46,6 +49,7 @@ namespace accessors {
 /// @ingroup imageaccess
 struct FitsImageAccess : public IImageAccess {
 
+public:
     //////////////////
     // Reading methods
     //////////////////
@@ -119,7 +123,20 @@ struct FitsImageAccess : public IImageAccess {
     /// @param[in] pa position angle in radians
     virtual void setBeamInfo(const std::string &name, double maj, double min, double pa);
 
+private:
 
+
+    boost::shared_ptr<FITSImageRW> itsFITSImage;
+/*
+    bool buildFITSImageRW(
+    	casa::String &error, const casa::ImageInterface<casa::Float>& image,
+        casa::FitsOutput *output, uint memoryInMB, bool preferVelocity,
+    	bool opticalVelocity, int BITPIX, float minPix, float maxPix,
+    	bool degenerateLast, bool verbose, bool stokesLast,
+    	bool preferWavelength, bool airWavelength, bool primHead,
+    	bool allowAppend, string& origin, bool history
+    );
+*/
 };
 
 
