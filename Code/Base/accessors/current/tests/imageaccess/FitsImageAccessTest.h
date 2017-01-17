@@ -74,7 +74,7 @@ public:
         const std::string name = "tmpfitsimage.fits";
         unlink(name.c_str());
         CPPUNIT_ASSERT(itsImageAccessor);
-        const casa::IPosition shape(3,10,10,5);
+        const casa::IPosition shape(3,100,100,5);
         casa::Array<float> arr(shape);
         arr.set(1.);
         // Build a coordinate system for the image

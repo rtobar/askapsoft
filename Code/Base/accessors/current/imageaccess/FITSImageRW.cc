@@ -73,105 +73,20 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 
     ASKAPLOG_INFO_STR(FITSlogger,"Creating R/W FITSImage");
     casa::String error;
-    casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
-    //
-    // Get coordinates and test that axis removal has been
-    // mercifully absent
-    //
-    casa::CoordinateSystem cSys= image.coordinates();
-    if (cSys.nWorldAxes() != cSys.nPixelAxes()) {
-        error = "FITS requires that the number of world and pixel axes be"
-        " identical.";
-        ASKAPTHROW(AskapError,error);
-
-    }
-    //
-    // Make degenerate axes last if requested
-    // and make Stokes the very last if requested
-    //
-
-    casa::IPosition newShape = shape;
     const casa::uInt ndim = shape.nelements();
-    casa::IPosition cursorOrder(ndim); // to be used later in the actual data copying
-    for (casa::uInt i=0; i<ndim; i++) {
-        cursorOrder(i) = i;
-    }
-    casa::Bool needNonOptimalCursor = casa::False; // the default value for the case no axis reordering is necessary
-    if(stokesLast || degenerateLast){
-        casa::Vector<casa::Int> order(ndim);
-        casa::Vector<casa::String> cNames = cSys.worldAxisNames();
-        casa::uInt nStokes = 0; // number of stokes axes
-        if(stokesLast){
-            for (casa::uInt i=0; i<ndim; i++) { // loop over axes
-                order(i) = i;
-                newShape(i) = shape(i);
-            }
-            for (casa::uInt i=0; i<ndim; i++) { // loop over axes
-                if (cNames(i) == "Stokes") { // swap to back
-                    nStokes++;
-                    order(ndim-nStokes) = i;
-                    newShape(ndim-nStokes) = shape(i);
-                    order(i) = ndim-nStokes;
-                    newShape(i) = shape(ndim-nStokes);
-                }
-            }
-        }
-        if(nStokes>0){ // apply the stokes reordering
-            cSys.transpose(order,order);
-        }
-        if (degenerateLast) {
-            // make sure the stokes axes stay where they are now
-            for (casa::uInt i=ndim-nStokes; i<ndim; i++) {
-                order(i) = i;
-            }
-            casa::uInt j = 0;
-            for (casa::uInt i=0; i<ndim-nStokes; i++) { // loop over axes
-                if (shape(i)>1) { // axis is not degenerate
-                    order(j) = i; // put it in front, keeping order
-                    newShape(j) = shape(i);
-                    j++;
-                }
-            }
-            for (casa::uInt i=0; i<ndim-nStokes; i++) { // loop over axes again
-                if (shape(i)==1) { // axis is degenerate
-                    order(j) = i;
-                    newShape(j) = shape(i);
-                    j++;
-                }
-            }
-            cSys.transpose(order,order); // apply the degenerate reordering
-        }
-        for (casa::uInt i=0; i<ndim; i++) {
-            cursorOrder(i) = order(i);
-            if(order(i)!=(casa::Int)i){
-                needNonOptimalCursor=casa::True;
-            }
-        }
-
-    }
-    //
-    casa::Bool applyMask = casa::False;
-    casa::Array<casa::Bool>* pMask = 0;
-    if (image.isMasked()) {
-        applyMask = casa::True;
-        pMask = new casa::Array<casa::Bool>(casa::IPosition(0,0));
-    }
     // //
     // // Find scale factors
     // //
     casa::Record header;
     casa::Double bscale, bzero;
-    casa::Bool hasBlanks = casa::True;
+
     if (BITPIX == -32) {
 
         bscale = 1.0;
         bzero = 0.0;
         header.define("bitpix", BITPIX);
         header.setComment("bitpix", "Floating point (32 bit)");
-        //
-        // We don't yet know if the image has blanks or not, so assume it does.
-        //
-        hasBlanks = casa::True;
+
     }
 
     else {
@@ -184,16 +99,16 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     // mask.  For 16bit, we may know that there are in fact no blanks
     // in the image, so we can dispense with looking at the mask again.
 
-    if (applyMask && !hasBlanks) applyMask = casa::False;
+
     //
     casa::Vector<casa::Int> naxis(ndim);
     casa::uInt i;
     for (i=0; i < ndim; i++) {
-        naxis(i) = newShape(i);
+        naxis(i) = shape(i);
     }
     header.define("naxis", naxis);
     if (allowAppend)
-    header.define("extend", casa::True);
+        header.define("extend", casa::True);
     if (!primHead){
         header.define("PCOUNT", 0);
         header.define("GCOUNT", 1);
@@ -203,19 +118,15 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     header.define("bzero", bzero);
 
 
-    // //
-    casa::ImageInfo ii = image.imageInfo();
-    if (!ii.toFITS (error, header)) {
-        return false;
-    }
-
     header.define("COMMENT1", ""); // inserts spaces
     // I should FITS-ize the units
 
-    header.define("BUNIT", image.units().getName().chars());
+    header.define("BUNIT", "UNKNOWN");
     header.setComment("BUNIT", "Brightness (pixel) unit");
     //
-    casa::IPosition shapeCopy = newShape;
+    casa::IPosition shapeCopy = shape;
+    casa::CoordinateSystem cSys = csys;
+
     casa::Record saveHeader(header);
     casa::Bool ok = cSys.toFITSHeader(header, shapeCopy, casa::True, 'c', casa::True, // use WCS
     preferVelocity, opticalVelocity,
@@ -238,7 +149,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
         // Recover old header before it got mangled by toFITSHeader
 
         header = saveHeader;
-        casa::IPosition shapeCopy = newShape;
+        casa::IPosition shapeCopy = shape;
         casa::Bool ok = linCS.toFITSHeader(header, shapeCopy, casa::True, 'c', casa::False); // don't use WCS
         if (!ok) {
             ASKAPLOG_WARN_STR(FITSlogger,"Fallback linear coordinate system fails also.");
@@ -256,120 +167,10 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
         header.define("NAXIS", naxis);
     }
 
-    // Add in the fields from miscInfo that we can
-
-    const casa::uInt nmisc = image.miscInfo().nfields();
-    for (i=0; i<nmisc; i++) {
-        casa::String tmp0 = image.miscInfo().name(i);
-        casa::String miscname(tmp0.at(0,8));
-        if (tmp0.length() > 8) {
-            ASKAPLOG_INFO_STR(FITSlogger, "Truncating miscinfo field " << tmp0 \
-            << " to " << miscname);
-        }
-        //
-        if (miscname != "end" && miscname != "END") {
-            if (header.isDefined(miscname)) {
-                // These warnings just cause confusion.  They are usually
-                // from the alt* keywords which FITSSpectralUtil writes.
-                // They may also have been preserved in miscInfo when an
-                // image came from FITS and hence the conflict.
-
-                /*
-                os << LogIO::WARN << "FITS keyword " << miscname
-                << " is already defined so dropping it" << LogIO::POST;
-                */
-            } else {
-                casa::DataType misctype = image.miscInfo().dataType(i);
-                switch(misctype) {
-                    case casa::TpBool:
-                    header.define(miscname, image.miscInfo().asBool(i));
-                    break;
-                    case casa::TpChar:
-
-                    case casa::TpUChar:
-
-                    case casa::TpShort:
-
-                    case casa::TpUShort:
-
-                    case casa::TpInt:
-
-                    case casa::TpUInt:
-                    header.define(miscname, image.miscInfo().asInt(i));
-                    break;
-                    case casa::TpFloat:
-                    header.define(miscname, image.miscInfo().asfloat(i));
-                    break;
-                    case casa::TpDouble:
-                    header.define(miscname, image.miscInfo().asdouble(i));
-                    break;
-                    case casa::TpComplex:
-                    header.define(miscname, image.miscInfo().asComplex(i));
-                    break;
-                    case casa::TpDComplex:
-                    header.define(miscname, image.miscInfo().asDComplex(i));
-                    break;
-                    case casa::TpString:
-                    if (miscname.contains("date") && miscname != "date") {
-                        // Try to canonicalize dates (i.e. solve Y2K)
-                        casa::String outdate;
-                        // We only need to convert the date, the timesys we'll just
-                        // copy through
-                        if (casa::FITSDateUtil::convertDateString(outdate,\
-                            image.miscInfo().asString(i))) {
-                                // Conversion worked - change the header
-                                header.define(miscname, outdate);
-                        } else {
-                                // conversion failed - just copy the existing date
-                                header.define(miscname, image.miscInfo().asString(i));
-                        }
-                    } else {
-                            // Just copy non-date strings through
-                            header.define(miscname, image.miscInfo().asString(i));
-                    }
-
-                    break;
-                    // These should be the cases that we actually see. I don't think
-                    // asArray* converts types.
-
-                    case casa::TpArrayBool:
-                    header.define(miscname, image.miscInfo().asArrayBool(i));
-                    break;
-                    case casa::TpArrayChar:
-                    case casa::TpArrayUShort:
-                    case casa::TpArrayInt:
-                    case casa::TpArrayUInt:
-                    case casa::TpArrayInt64:
-                    header.define(miscname, image.miscInfo().toArrayInt(i));
-                    break;
-                    case casa::TpArrayFloat:
-                    header.define(miscname, image.miscInfo().asArrayfloat(i));
-                    break;
-                    case casa::TpArrayDouble:
-                    header.define(miscname, image.miscInfo().asArraydouble(i));
-                    break;
-                    case casa::TpArrayString:
-                    header.define(miscname, image.miscInfo().asArrayString(i));
-                    break;
-                    default:
-                    {
-                        ASKAPLOG_INFO_STR(FITSlogger, "Not writing miscInfo field '"  \
-                        << miscname << "' - cannot handle type ");
-                    }
-                }
-            }
-
-        }
-        if (header.isDefined(miscname)) {
-            header.setComment(miscname, image.miscInfo().comment(i));
-        }
-    }
-
-
-
     //
     // DATE
     //
+
     casa::String date, timesys;
     casa::Time nowtime;
     casa::MVTime now(nowtime);
@@ -399,27 +200,6 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
         return false;
     }
 
-    if(history){
-        //
-        // HISTORY
-        //
-        const casa::LoggerHolder& logger = image.logger();
-        //
-        vector<casa::String> historyChunk;
-        casa::uInt nstrings;
-        casa::Bool aipsppFormat;
-        casa::uInt firstLine = 0;
-        while (1) {
-            firstLine = casa::FITSHistoryUtil::toHISTORY(historyChunk, aipsppFormat,\
-                nstrings, firstLine, logger);
-                if (nstrings == 0) {
-                    break;
-                }
-                casa::String groupType;
-                if (aipsppFormat) groupType = "LOGTABLE";
-                casa::FITSHistoryUtil::addHistoryGroup(kw, historyChunk, nstrings, groupType);
-        }
-    }
 
     //
     // END
