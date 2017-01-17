@@ -64,11 +64,15 @@ for FIELD in ${FIELD_LIST}; do
         cd ${FIELD}
         OUTPUT="${ORIGINAL_OUTPUT}/${FIELD}"
 
-        # Get the linmos offsets when we have a common image centre for
-        # all beams - store in $LINMOS_BEAM_OFFSETS
-        getBeamOffsets
+        if [ $NEED_BEAM_CENTRES == true ]; then
+            # Get the linmos offsets when we have a common image centre for
+            # all beams - store in $LINMOS_BEAM_OFFSETS
+            getBeamOffsets
+        fi
 
         FLAG_IMAGING_DEP=""
+        DEP_CONTCUBE=""
+        DEP_SPECIMG=""
         
         for BEAM in ${BEAMS_TO_USE}; do
 
@@ -131,7 +135,6 @@ for FIELD in ${FIELD_LIST}; do
             . ${PIPELINEDIR}/applyCalContinuumScience.sh
 
             if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
-                TTERM=0
                 imageCode=restored
                 setImageProperties cont
                 . ${PIPELINEDIR}/sourcefinding.sh

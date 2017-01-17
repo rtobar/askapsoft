@@ -2,7 +2,7 @@
 #
 # Launches a job to create a catalogue of sources in the continuum image.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -32,7 +32,16 @@ if [ $DO_SOURCE_FINDING == true ]; then
     # get the text that does the FITS conversion - put in $fitsConvertText
     convertToFITStext
 
-    setJob science_selavy selavy
+    # This adds L1, L2, etc to the job name when LOOP is defined and
+    # >0 (we are running the sourcefinding on the selfcal loop mosaics)
+    description=selavy
+    if [ "$LOOP" != "" ]; then
+       if [ $LOOP -gt 0 ]; then
+           description=selavyL${LOOP}
+       fi
+    fi
+    
+    setJob science_selavy_${imageName} $description
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -57,12 +66,10 @@ cd $OUTPUT
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
-seldir=selavy_${imageBase}
+seldir=selavy_${imageName}
 mkdir -p \$seldir
 
 cd \${seldir}
-ln -s ${logs} .
-ln -s ${parsets} .
 
 HAVE_IMAGES=true
 BEAM=$BEAM
@@ -71,17 +78,17 @@ NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 # List of images to convert to FITS in the Selavy job
 imlist=""
 
-image=${OUTPUT}/{imageName}
+image=${OUTPUT}/${imageName}
 weights=${OUTPUT}/${weightsImage}
 imlist="\${imlist} \${image}"
 if [ \$NUM_TAYLOR_TERMS -gt 1 ]; then
-    t1im=`echo $image | sed -e 's/taylor\.0/taylor\.1/g'`
-    if [ -e ${OUTPUT}/\${t1im} ]; then
-        imlist="\${imlist} ${OUTPUT}/\${t1im}"
+    t1im=\`echo \$image | sed -e 's/taylor\.0/taylor\.1/g'\`
+    if [ -e \${t1im} ]; then
+        imlist="\${imlist} \${t1im}"
     fi
-    t2im=`echo $image | sed -e 's/taylor\.0/taylor\.2/g'`
-    if [ -e ${OUTPUT}/\${t2im} ]; then
-        imlist="\${imlist} ${OUTPUT}/\${t2im}"
+    t2im=\`echo \$image | sed -e 's/taylor\.0/taylor\.2/g'\`
+    if [ -e \${t2im} ]; then
+        imlist="\${imlist} \${t2im}"
     fi
 fi
 
@@ -93,6 +100,7 @@ else
     weightpars="#"
 fi
 
+echo "Converting to FITS the following images: \${imlist}"
 for im in \${imlist}; do 
     casaim="../\${im##*/}"
     fitsim="../\${im##*/}.fits"
@@ -118,16 +126,18 @@ Selavy.SBid = ${SB_SCIENCE}
 Selavy.nsubx = ${SELAVY_NSUBX}
 Selavy.nsuby = ${SELAVY_NSUBY}
 #
+Selavy.resultsFile = selavy-${imageName}.txt
+#
 Selavy.snrCut = ${SELAVY_SNR_CUT}
 Selavy.flagGrowth = ${SELAVY_FLAG_GROWTH}
 Selavy.growthCut = ${SELAVY_GROWTH_CUT}
 #
 Selavy.VariableThreshold = ${SELAVY_VARIABLE_THRESHOLD}
 Selavy.VariableThreshold.boxSize = ${SELAVY_BOX_SIZE}
-Selavy.VariableThreshold.ThresholdImageName=detThresh.img
-Selavy.VariableThreshold.NoiseImageName=noiseMap.img
-Selavy.VariableThreshold.AverageImageName=meanMap.img
-Selavy.VariableThreshold.SNRimageName=snrMap.img
+Selavy.VariableThreshold.ThresholdImageName=detThresh.${imageName}.img
+Selavy.VariableThreshold.NoiseImageName=noiseMap.${imageName}.img
+Selavy.VariableThreshold.AverageImageName=meanMap.${imageName}.img
+Selavy.VariableThreshold.SNRimageName=snrMap.${imageName}.img
 \${weightpars}
 #
 Selavy.Fitter.doFit = true
@@ -177,9 +187,9 @@ EOFOUTER
     
     if [ $SUBMIT_JOBS == true ]; then
 	ID_SOURCEFINDING_SCI=`sbatch ${DEP} $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_SOURCEFINDING_SCI} "Run the source-finder on the science observation with flags \"$DEP\""
+	recordJob ${ID_SOURCEFINDING_SCI} "Run the source-finder on the science image ${imageName} with flags \"$DEP\""
     else
-	echo "Would run the source-finder on the science observation with slurm file $sbatchfile"
+	echo "Would run the source-finder on the science image ${imageName} with slurm file $sbatchfile"
     fi
 
     echo " "

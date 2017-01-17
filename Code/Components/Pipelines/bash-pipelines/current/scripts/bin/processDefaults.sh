@@ -86,8 +86,10 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
     ####################
     # ASKAPsoft module usage
 
+    # Make use of the ASKAP module directory right now
     moduleDir="/group/askap/modulefiles"
     module use $moduleDir
+    
     if [ "${ASKAP_ROOT}" == "" ]; then
         # Has the user asked for a specific askapsoft module?
         if [ "$ASKAPSOFT_VERSION" != "" ]; then
@@ -101,7 +103,8 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
             fi
         fi
         # load the modules correctly
-        if [ "`module list -t 2>&1 | grep askapsoft`" == "" ]; then
+        currentASKAPsoftVersion="`module list -t 2>&1 | grep askapsoft`"
+        if [ "${currentASKAPsoftVersion}" == "" ]; then
             # askapsoft is not loaded by the .bashrc - need to specify for
             # slurm jobfiles. Use the requested one if necessary.
             if [ "${ASKAPSOFT_VERSION}" == "" ]; then
@@ -117,7 +120,7 @@ module load askapdata
 module load askapsoft${ASKAPSOFT_VERSION}"
             module load askapsoft${ASKAPSOFT_VERSION}
         else
-            # askapsoft is already available.
+            # askapsoft is currently available in the user's module list
             #  If a specific version has been requested, swap to that
             #  Otherwise, do nothing
             if [ "${ASKAPSOFT_VERSION}" != "" ]; then
@@ -130,8 +133,10 @@ module swap askapsoft askapsoft${ASKAPSOFT_VERSION}"
             else
                 askapsoftModuleCommands="# Using user-defined askapsoft module
 module use $moduleDir
-module load askapdata"
-                echo "Will use the askapsoft module defined by your environment (`module list -t 2>&1 | grep askapsoft`)"
+module load askapdata
+module unload askapsoft
+module load ${currentASKAPsoftVersion}"
+                echo "Will use the askapsoft module defined by your environment (${currentASKAPsoftVersion})"
             fi
         fi
 
@@ -145,6 +150,8 @@ module load askappipeline/${askappipelineVersion}"
 
     else
         askapsoftModuleCommands="# Using ASKAPsoft code tree directly, so no need to load modules"
+        echo "Using ASKAPsoft code direct from your code tree at ASKAP_ROOT=$ASKAP_ROOT"
+        echo "ASKAPsoft modules will *not* be loaded in the slurm files."
     fi
 
     ####################
@@ -239,22 +246,37 @@ module load askappipeline/${askappipelineVersion}"
     # Configure the list of beams to be processed
     # Lists each beam in ${BEAMS_TO_USE}
 
-    #    if [ "${BEAMLIST}" == "" ]; then
-    # just use BEAM_MIN & BEAM_MAX
     BEAMS_TO_USE=""
-    for((b=${BEAM_MIN};b<=${BEAM_MAX};b++)); do
-        thisbeam=`echo $b | awk '{printf "%02d",$1}'`
-        BEAMS_TO_USE="${BEAMS_TO_USE} $thisbeam"
-    done
-    ### NOTE - CAN'T USE THIS DUE TO THE WAY CBPCALIBRATOR DEALS WITH BEAMS!
-    #    else
-    #        # re-print out the provided beam list with 0-leading integers
-    #        BEAMS_TO_USE=""
-    #        for b in $BEAMLIST; do
-    #            thisbeam=`echo $b | awk '{printf "%02d",$1}'`
-    #            BEAMS_TO_USE="${BEAMS_TO_USE} $thisbeam"
-    #        done
-    #    fi
+    if [ "${BEAMLIST}" == "" ]; then
+        # just use BEAM_MIN & BEAM_MAX
+        for((b=${BEAM_MIN};b<=${BEAM_MAX};b++)); do
+            thisbeam=`echo $b | awk '{printf "%02d",$1}'`
+            BEAMS_TO_USE="${BEAMS_TO_USE} $thisbeam"
+        done
+    else
+        # re-print out the provided beam list with 0-leading integers
+        beamAwkFile=$tmp/beamParsing.awk
+        cat > $beamAwkFile <<EOF
+BEGIN{
+  str=""
+}
+{
+  n=split(\$1,a,","); 
+  for(i=1;i<=n;i++){ 
+    n2=split(a[i],a2,"-"); 
+    for(b=a2[1];b<=a2[n2];b++){
+      str=sprintf("%s %02d",str,b);
+    } 
+  } 
+}
+END{
+  print str
+}
+EOF
+        BEAMS_TO_USE=`echo $BEAMLIST | awk -f $beamAwkFile`
+    fi
+
+    echo "Using the following beams for the science data: $BEAMS_TO_USE"
 
     # Check the number of beams, and the maximum beam number (need the
     # latter for calibration tasks)
@@ -314,14 +336,6 @@ module load askappipeline/${askappipelineVersion}"
             CPUS_PER_CORE_CONT_IMAGING=${NUM_CPUS_CONTIMG_SCI}
         fi
 
-        ##     if [ $IMAGE_AT_BEAM_CENTRES == true ]; then
-        ##         # when imaging at beam centres, we *must* use the Cmodel
-        ##         # approach
-        ##         if [ ${SELFCAL_METHOD} != "Cmodel" ]; then
-        ##             echo "WARNING - When imaging at beam centres, must use SELFCAL_METHOD=Cmodel"
-        ##         fi
-        ##         SELFCAL_METHOD="Cmodel"
-        ##     else
         # Method used for self-calibration - needs to be either Cmodel or Components
         if [ ${SELFCAL_METHOD} != "Cmodel" ] &&
                [ ${SELFCAL_METHOD} != "Components" ]; then
@@ -368,9 +382,27 @@ module load askappipeline/${askappipelineVersion}"
         # Parameters required for spectral-line imaging
         ####
 
-        if [ "${CHAN_RANGE_SL_SCIENCE}" == "" ]; then
+        # Channel range to be used for spectral-line imaging
+        # If user has requested a different channel range, and the
+        # DO_COPY_SL flag is set, then we define a new spectral-line
+        # range of channels 
+        if [ "${CHAN_RANGE_SL_SCIENCE}" == "" ] || [ $DO_COPY_SL != true ]; then
+            # If this range hasn't been set, or we aren't doing the
+            # copy, then use the full channel range 
             CHAN_RANGE_SL_SCIENCE="1-$NUM_CHAN_SCIENCE"
         fi
+        # Check that we haven't requested invalid channels
+        minSLchan=`echo $CHAN_RANGE_SL_SCIENCE | awk -F'-' '{print $1}'`
+        maxSLchan=`echo $CHAN_RANGE_SL_SCIENCE | awk -F'-' '{print $2}'`
+        if [ $minSLchan -lt 0 ] || [ $minSLchan -gt $NUM_CHAN_SCIENCE ] ||
+               [ $maxSLchan -lt 0 ] || [ $maxSLchan -gt $NUM_CHAN_SCIENCE ] ||
+               [ $minSLchan -gt $maxSLchan ]; then
+            echo "ERROR - Invalid selection of CHAN_RANGE_SL_SCIENCE=$CHAN_RANGE_SL_SCIENCE, for total number of channels = $NUM_CHAN_SCIENCE"
+            echo "   Exiting."
+            exit 1
+        fi
+        # Define the number of channels used in the spectral-line imaging
+        NUM_CHAN_SCIENCE_SL=`echo $CHAN_RANGE_SL_SCIENCE | awk -F'-' '{print $2-$1+1}'`
 
         # Method used for continuum subtraction
         if [ ${CONTSUB_METHOD} != "Cmodel" ] &&
@@ -389,22 +421,25 @@ module load askappipeline/${askappipelineVersion}"
             echo "WARNING - the parameter RESTORING_BEAM_LOG is deprecated, and is constructed from the image name instead."
         fi
 
-        # Set the number of cores for the spectral-line mosaicking. Either
-        # set to the number of channels, or use that given in the config file
-        if [ "${NUM_CPUS_SPECTRAL_LINMOS}" == "" ]; then
-            # User has not specified
-            NUM_CPUS_SPECTRAL_LINMOS=$NUM_CHAN_SCIENCE
-        elif [ $NUM_CPUS_SPECTRAL_LINMOS -gt $NUM_CPUS_SPECIMG_SCI ]; then
-            echo "NOTE - Reducing NUM_CPUS_SPECTRAL_LINMOS to $NUM_CPUS_SPECIMG_SCI to match the number of cores used for imaging"
-            NUM_CPUS_SPECTRAL_LINMOS=$NUM_CPUS_SPECIMG_SCI
-        fi
-
         ####################
-        ##    # Define the beam arrangements for linmos
-        ##    . ${PIPELINEDIR}/beamArrangements.sh
-
+        # Mosaicking parameters
+        
         # Fix the direction string for linmos - don't need the J2000 bit
         linmosFeedCentre=`echo $DIRECTION_SCI | awk -F',' '{printf "%s,%s]",$1,$2}'`
+
+        # Total number of channels should be exact multiple of
+        # channels-per-core, else the final process will take care of
+        # the rest and may run out of memory
+        # If it isn't, give a warning and push on
+        chanPerCoreLinmosOK=`echo $NUM_CHAN_SCIENCE_SL $NCHAN_PER_CORE_SPECTRAL_LINMOS | awk '{if (($1 % $2)==0) print "yes"; else print "no"}'`
+        if [ "${chanPerCoreLinmosOK}" == "no" ] && [ $DO_MOSAIC == true ]; then
+            echo "Warning! Number of spectral-line channels (${NUM_CHAN_SCIENCE_SL}) is not an exact multiple of NCHAN_PER_CORE_SPECTRAL_LINMOS (${NCHAN_PER_CORE_SPECTRAL_LINMOS})."
+            echo "         Pushing on, but there is the risk of memory problems with the spectral linmos task."
+        fi
+        # Determine the number of cores needed for spectral-line mosaicking
+        if [ "$NUM_CPUS_SPECTRAL_LINMOS" == "" ]; then
+            NUM_CPUS_SPECTRAL_LINMOS=`echo $NUM_CHAN_SCIENCE_SL $NCHAN_PER_CORE_SPECTRAL_LINMOS | awk '{print $1/$2}'`
+        fi
 
         ####################
         # Source-finding - number of cores:

@@ -557,8 +557,12 @@ NUM_CPUS_SPECIMG_SCI=2000
 # Number of processors per node for the spectral-line imaging
 CPUS_PER_CORE_SPEC_IMAGING=20
 # Number of processors for spectral-line mosaicking.
-# Leave blank to fit to number of channels
-NUM_CPUS_SPECTRAL_LINMOS=200
+# Leave blank to scale according to number of channels per core
+NUM_CPUS_SPECTRAL_LINMOS=""
+# Number of channels handled by each core in the spectral-line
+# mosaicking. Will determine total number of cores based on number of
+# channels to be mosaicked.
+NCHAN_PER_CORE_SPECTRAL_LINMOS=8
 
 # base name for image cubes: if IMAGE_BASE_SPECTRAL=i.blah then we'll
 # get image.i.blah, image.i.blah.restored, psf.i.blah etc
@@ -623,11 +627,19 @@ SPECTRAL_IMSUB_CHAN_SAMPLING=1
 
 
 ##############################
-# Linear Mosaicking
+# Linear Mosaicking & beam locations
 #
-# Beam arrangement, used in linmos. If one of "diamond",
-# "octagon",... then the positions are filled automatically.
-# The name of the beam footprint. This needs to be recognised by footprint.py - see beamArrangements.sh
+# Reference footprint rotation angle. This is used only when the
+# scheduling block parset does not contain the parameter 
+# common.target.src%d.footprint.rotation
+#    If not given, same effect as setting to zero.
+FOOTPRINT_PA_REFERENCE=""
+#
+# Beam arrangement, used in linmos. These specifications are only used
+# in the IS_BETA case, or if the footprint listed in the schedblock is
+# not understood by the footprint service. In this case, we use the
+# ACES tool footprint.py, and the name needs to be recognised by
+# footprint.py. See findBeamCentres.sh for details.
 BEAM_FOOTPRINT_NAME="diamond"
 # The position angle of the beam footprint
 BEAM_FOOTPRINT_PA=0

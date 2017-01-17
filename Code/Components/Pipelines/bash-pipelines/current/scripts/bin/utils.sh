@@ -165,7 +165,8 @@ function getTile()
 #          mosaic over all fields/tiles)
 #  * BEAM
 #  * pol (lower case polarisation i/q/u/v etc)
-#  * TTERM (Taylor term: 0,1,2,...)
+#  * TTERM (Taylor term: 0,1,2,...) Can be blank ("" ie. unset), which
+#     defaults to zero
 #  * NUM_TAYLOR_TERMS (number of taylor terms being solved for. 1=no MFS)
 #  * IMAGE_BASE_CONT,IMAGE_BASE_CONTCUBE,IMAGE_BASE_SPECTRAL
 # Available upon return:
@@ -182,6 +183,13 @@ function setImageProperties()
 
     imSuffix=""
     setImageBase $type
+
+    needToUnsetTTerm=false
+    if [ "$TTERM" == "" ]; then
+        TTERM=0
+        needToUnsetTTerm=true
+    fi
+    
     if [ $type == "cont" ]; then
         typebase="cont"
         labelbase="continuum image"
@@ -249,6 +257,10 @@ function setImageProperties()
         echo "WARNING - unknown image code ${imageCode}"
     fi
 
+    if [ $needToUnsetTTerm == true ]; then
+        unset TTERM
+    fi
+    
 }
 
 
@@ -461,6 +473,11 @@ Cimager.ncycles                                 = ${CLEAN_NUM_MAJORCYCLES_ARRAY[
 function dataSelectionSelfcalLoop()
 {
     dataSelectionParams=""
+    needToUnsetLoop=false
+    if [ "$LOOP" == "" ]; then
+        LOOP=0
+        needToUnsetLoop=true
+    fi
     if [ $1 == "Cimager" ]; then
         if [ ${CIMAGER_MINUV_ARRAY[$LOOP]} -gt 0 ]; then
             dataSelectionParams="Cimager.MinUV   = ${CIMAGER_MINUV_ARRAY[$LOOP]}"
@@ -472,7 +489,9 @@ function dataSelectionSelfcalLoop()
     else
         dataSelectionParams="# no data selection parameter returned"
     fi
-
+    if [ $needToUnsetLoop == true ]; then
+        unset LOOP
+    fi
 }
 
 #############################
@@ -490,8 +509,7 @@ function convertToFITStext()
     # Check whether imageToFITS is defined in askapsoft module being
     # used
     if [ "`which imageToFITS 2> ${tmp}/whchim2fts`" == "" ]; then
-        # Not found - use casa to do conversion
-
+        # Not found - use casa to do conversion        
         fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
 if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
     # The FITS version of this image doesn't exist
@@ -500,9 +518,9 @@ if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
     log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
     ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
     if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
-        ASKAPSOFT_VERSION_USED=`module list -t 2>&1 | grep askapsoft`
+        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
     else
-        ASKAPSOFT_VERSION_USED=`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'`
+        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
     fi
 
     cat > \$script << EOFSCRIPT
@@ -543,10 +561,11 @@ if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
 
     parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
     log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
+    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
     if [ \"${ASKAPSOFT_VERSION}\" == \"\" ]; then
-        ASKAPSOFT_VERSION_USED=`module list -t 2>&1 | grep askapsoft`
+        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
     else
-        ASKAPSOFT_VERSION_USED=`echo ${ASKAPSOFT_VERSION} | sed -e 's|/||g'`
+        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
     fi
 
     cat > \$parset << EOFINNER
@@ -689,13 +708,13 @@ function getBeamCentre()
 
 function writeStats()
 {
-    # usage: writeStats ID DESC RESULT NCORES REAL USER SYS VM RSS format
+    # usage: writeStats ID DESC RESULT NCORES REAL USER SYS VM RSS STARTTIME format
     #   where format is either txt or csv. Anything else defaults to txt
-    format=${10}
-    if [ $# -ge 9 ] && [ "$format" == "csv" ]; then
-	echo $@ | awk '{printf "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9}'
+    format=${11}
+    if [ $# -ge 10 ] && [ "$format" == "csv" ]; then
+	echo $@ | awk '{printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     else
-	echo $@ | awk '{printf "%10s%10s%40s%9s%10s%10s%10s%10s%10s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9}'
+	echo $@ | awk '{printf "%10s%10s%40s%9s%10s%10s%10s%10s%10s%25s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     fi
 }
 
@@ -708,7 +727,7 @@ function writeStatsHeader()
     else
 	format="txt"
     fi
-    writeStats "JobID" "nCores" "Description" "Result" "Real" "User" "System" "PeakVM" "PeakRSS" $format
+    writeStats "JobID" "nCores" "Description" "Result" "Real" "User" "System" "PeakVM" "PeakRSS" "StartTime" $format
 }
 
 function extractStats()
@@ -753,12 +772,12 @@ function extractStats()
 	fi
 
 	writeStatsHeader $format > $output
-	if [ `grep "(1, " $1 | wc -l` -gt 0 ]; then
-	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_master"     $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_MASTER  $PEAK_RSS_MASTER  $format >> $output
-	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_workerPeak" $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_WORKERS $PEAK_RSS_WORKERS $format >> $output
-	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_workerAve"  $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $AVE_VM_WORKERS  $AVE_RSS_WORKERS  $format >> $output
+	if [ `grep "(1, " $STATS_LOGFILE | wc -l` -gt 0 ]; then
+	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_master"     $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_MASTER  $PEAK_RSS_MASTER  $START_TIME_JOB $format >> $output
+	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_workerPeak" $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_WORKERS $PEAK_RSS_WORKERS $START_TIME_JOB $format >> $output
+	    writeStats $STATS_ID $NUM_CORES "${STATS_DESC}_workerAve"  $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $AVE_VM_WORKERS  $AVE_RSS_WORKERS  $START_TIME_JOB $format >> $output
 	else                                                                      
-	    writeStats $STATS_ID $NUM_CORES $STATS_DESC                $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_MASTER  $PEAK_RSS_MASTER  $format >> $output
+	    writeStats $STATS_ID $NUM_CORES $STATS_DESC                $RESULT_TXT $TIME_JOB_REAL $TIME_JOB_USER $TIME_JOB_SYS $PEAK_VM_MASTER  $PEAK_RSS_MASTER  $START_TIME_JOB $format >> $output
 	fi
 
     done
@@ -768,34 +787,41 @@ function extractStats()
 function parseLog()
 {
 
+    logfile=$1
+    
     TIME_JOB_REAL="---"
     TIME_JOB_SYS="---"
     TIME_JOB_USER="---"
     PEAK_VM_MASTER="---"
     PEAK_RSS_MASTER="---"
+    START_TIME_JOB="---"
 
-    if [ ${NUM_CORES} -ge 2 ] && [ `grep "(1, " $1 | wc -l` -gt 0 ]; then
+    if [ ${NUM_CORES} -ge 2 ] && [ `grep "(1, " $logfile | wc -l` -gt 0 ]; then
         # if here, job was a distributed job
-        if [ `grep "(0, " $1 | grep "Total times" | wc -l` -gt 0 ]; then
-            TIME_JOB_REAL=`grep "(0, " $1 | grep "Total times" | tail -1 | awk '{print $16}'`
-            TIME_JOB_SYS=`grep "(0, " $1  | grep "Total times" | tail -1 | awk '{print $14}'`
+        # Get the master node's first log message, and extract the time stamp
+        START_TIME_JOB=`grep "(0, " $logfile | head -1 | awk '{printf "%sT%s",$5,$6}' | sed -e 's/^\[//g' | sed -e 's/\]$//g'`
+        if [ `grep "(0, " $logfile | grep "Total times" | wc -l` -gt 0 ]; then
+            TIME_JOB_REAL=`grep "(0, " $logfile | grep "Total times" | tail -1 | awk '{print $16}'`
+            TIME_JOB_SYS=`grep "(0, " $logfile  | grep "Total times" | tail -1 | awk '{print $14}'`
             TIME_JOB_USER=`grep "(0, " $1 | grep "Total times" | tail -1 | awk '{print $12}'`
         fi
-        if [ `grep "(0, " $1 | grep "PeakVM" | wc -l` -gt 0 ]; then
-            PEAK_VM_MASTER=`grep "(0, " $1 | grep "PeakVM" | tail -1 | awk '{print $12}'`
-            PEAK_RSS_MASTER=`grep "(0, " $1 | grep "PeakVM" | tail -1 | awk '{print $15}'`
+        if [ `grep "(0, " $logfile | grep "PeakVM" | wc -l` -gt 0 ]; then
+            PEAK_VM_MASTER=`grep "(0, " $logfile | grep "PeakVM" | tail -1 | awk '{print $12}'`
+            PEAK_RSS_MASTER=`grep "(0, " $logfile | grep "PeakVM" | tail -1 | awk '{print $15}'`
         fi
-	findWorkerStats $1
+	findWorkerStats $logfile
     else
         # if here, it was a serial job
-        if [ `grep "Total times" $1 | wc -l` -gt 0 ]; then
-            TIME_JOB_REAL=`grep "Total times" $1 | tail -1 | awk '{print $16}'`
-            TIME_JOB_SYS=`grep "Total times" $1 | tail -1 | awk '{print $14}'`
-            TIME_JOB_USER=`grep "Total times" $1 | tail -1 | awk '{print $12}'`
+        # Can log with either (-1 or (0 as the rank, so instead get the first INFO line & extract time stamp
+        START_TIME_JOB=`grep "INFO" $logfile | head -1 | awk '{printf "%sT%s",$5,$6}' | sed -e 's/^\[//g' | sed -e 's/\]$//g'`
+        if [ `grep "Total times" $logfile | wc -l` -gt 0 ]; then
+            TIME_JOB_REAL=`grep "Total times" $logfile | tail -1 | awk '{print $16}'`
+            TIME_JOB_SYS=`grep "Total times" $logfile | tail -1 | awk '{print $14}'`
+            TIME_JOB_USER=`grep "Total times" $logfile | tail -1 | awk '{print $12}'`
         fi
-        if [ `grep "PeakVM" $1 | wc -l` -gt 0 ]; then
-            PEAK_VM_MASTER=`grep "PeakVM" $1 | tail -1 | awk '{print $12}'`
-            PEAK_RSS_MASTER=`grep "PeakVM" $1 | tail -1 | awk '{print $15}'`
+        if [ `grep "PeakVM" $logfile | wc -l` -gt 0 ]; then
+            PEAK_VM_MASTER=`grep "PeakVM" $logfile | tail -1 | awk '{print $12}'`
+            PEAK_RSS_MASTER=`grep "PeakVM" $logfile | tail -1 | awk '{print $15}'`
         fi
     fi
 
