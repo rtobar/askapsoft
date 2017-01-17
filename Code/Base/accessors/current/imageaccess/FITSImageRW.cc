@@ -34,8 +34,11 @@
 #include <casacore/images/Images/FITSImage.h>
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Utilities/DataType.h>
+#include <casacore/fits/FITS/fitsio.h>
 #include <casacore/fits/FITS/FITSDateUtil.h>
 #include <casacore/fits/FITS/FITSHistoryUtil.h>
+#include <casacore/fits/FITS/FITSReader.h>
+
 #include <casacore/casa/Quanta/MVTime.h>
 #include <imageaccess/FITSImageRW.h>
 
@@ -67,6 +70,8 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 	bool preferWavelength, bool airWavelength, bool primHead,\
 	bool allowAppend, bool history) {
 
+
+    ASKAPLOG_INFO_STR(FITSlogger,"Creating R/W FITSImage");
     casa::String error;
     casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
     //
@@ -379,7 +384,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     // // ORIGIN
     // //
 
-    header.define("ORIGIN", "ASKAPSoft-" + getAskapPackageVersion_accessors());
+    header.define("ORIGIN", "ASKAPSoft");
 
 
     // // Set up the FITS header
@@ -420,6 +425,30 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     // END
     //
     kw.end();
+    casa::PrimaryArray<float>* fits32 = 0;
+
+    casa::FitsOutput *outfile = new casa::FitsOutput(name.c_str(),casa::FITS::Disk);
+    if (outfile->err())
+        ASKAPLOG_WARN_STR(FITSlogger, "Error creating FITS file for output\n");
+
+
+    fits32 = new casa::PrimaryArray<float>(kw);
+
+    if (fits32==0 || fits32->err()) {
+        ASKAPLOG_WARN_STR(FITSlogger, "Error creating Primary HDU from keywords");
+        return false;
+    }
+    if (fits32->write_hdr(*outfile)) {
+        ASKAPLOG_INFO_STR(FITSlogger,"Error writing FITS header");
+        delete outfile;
+        return false;
+    }
+    ASKAPLOG_INFO_STR(FITSlogger,"Written header");
+
+
+    std::cout << *fits32 << std::endl;
+    delete(fits32);
+    delete(outfile);
     return true;
 
 }

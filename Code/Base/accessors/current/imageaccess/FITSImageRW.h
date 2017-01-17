@@ -62,10 +62,14 @@ public:
 
     // write into a FITS image
     bool write(const casa::Array<float>& );
-private:
+
     // build a FITS file with a header and coordinate system matching
     // This function heavily adapted from the casacore ImagetoFITS converters
-    bool create(const std::string &name, const casa::IPosition &shape,\
+    // made this static so it can be called without an instance.
+    // All of the FITSimage parent calss constructors require the existance of
+    // the file on disk. Which will not always be the case
+    
+    static bool create(const std::string &name, const casa::IPosition &shape,\
         const casa::CoordinateSystem &csys,\
         uint memoryInMB = 64,\
         bool preferVelocity = true,\

@@ -134,15 +134,21 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
     ASKAPLOG_INFO_STR(logger, "Creating a new FITS image " << name << " with the shape " << shape);
     casa::String error;
 
+    if (!FITSImageRW::create(name,shape,csys)) {
+        casa::String error;
+        error = casa::String("Failed to create FITSFile");
+        ASKAPTHROW(AskapError,error);
+    }
+
     // make an array
     // this requires that the whole array fits in memory
     // which may not in general be the case
 
-    casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
+    // casa::TempImage<casa::Float> image(casa::TiledShape(shape),csys,0);
 
 
     // Now write the fits file.
-    casa::ImageFITSConverter::ImageToFITS (error, image, name);
+    // casa::ImageFITSConverter::ImageToFITS (error, image, name);
 
 }
 
@@ -151,18 +157,18 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 /// @param[in] arr array with pixels
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr)
 {
-    ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
-    casa::String error;
-
-    FITSImageRW img(name);
-
-    casa::TempImage<casa::Float> img1(casa::TiledShape(img.shape()),img.coordinates(),0);
-    img1.put(arr);
-
-    unlink(name.c_str());
-
-    // Now write the fits file.
-    casa::ImageFITSConverter::ImageToFITS (error, img1, name);
+    // ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
+    // casa::String error;
+    //
+    // FITSImageRW img(name);
+    //
+    // casa::TempImage<casa::Float> img1(casa::TiledShape(img.shape()),img.coordinates(),0);
+    // img1.put(arr);
+    //
+    // unlink(name.c_str());
+    //
+    // // Now write the fits file.
+    // casa::ImageFITSConverter::ImageToFITS (error, img1, name);
 
 
     // error = casa::String("Not yet implemented");
