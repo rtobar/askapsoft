@@ -157,22 +157,12 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 /// @param[in] arr array with pixels
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr)
 {
-    // ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
-    // casa::String error;
+    ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
+    casa::String error;
     //
-    // FITSImageRW img(name);
+    FITSImageRW img(name);
     //
-    // casa::TempImage<casa::Float> img1(casa::TiledShape(img.shape()),img.coordinates(),0);
-    // img1.put(arr);
-    //
-    // unlink(name.c_str());
-    //
-    // // Now write the fits file.
-    // casa::ImageFITSConverter::ImageToFITS (error, img1, name);
-
-
-    // error = casa::String("Not yet implemented");
-    // ASKAPTHROW(AskapError,error)
+    img.write(arr);
 
 
 }

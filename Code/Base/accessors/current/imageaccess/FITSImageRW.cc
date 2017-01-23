@@ -47,10 +47,22 @@ ASKAP_LOGGER(FITSlogger, ".FITSImageRW");
 using namespace askap;
 using namespace askap::accessors;
 
+casa::FitsKeywordList askap::accessors::theKeywordList;
+bool askap::accessors::created;
+
 FITSImageRW::FITSImageRW(const casa::String& name, casa::uInt whichRep, casa::uInt whichHDU)
 : FITSImage(name, whichRep, whichHDU)
 {
     ASKAPLOG_INFO_STR(FITSlogger,"Instantiating FITSImageRW");
+    extern bool created;
+    extern casa::FitsKeywordList theKeywordList;
+    if (created == true)
+        itsPrimaryArray.reset(new casa::PrimaryArray<float>(theKeywordList));
+
+
+
+
+
 }
 FITSImageRW::FITSImageRW(const casa::String& name, const casa::MaskSpecifier& mask, casa::uInt whichRep, casa::uInt whichHDU)
 : FITSImage(name, mask, whichRep, whichHDU)
@@ -70,8 +82,12 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 	bool preferWavelength, bool airWavelength, bool primHead,\
 	bool allowAppend, bool history) {
 
+    extern casa::FitsKeywordList theKeywordList;
+    extern bool created;
 
     ASKAPLOG_INFO_STR(FITSlogger,"Creating R/W FITSImage");
+
+
     casa::String error;
     const casa::uInt ndim = shape.nelements();
     // //
@@ -189,12 +205,13 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 
 
     // // Set up the FITS header
-    casa::FitsKeywordList kw;
-    kw = casa::FITSKeywordUtil::makeKeywordList(primHead, casa::True);
+    extern casa::FitsKeywordList theKeywordList;
+
+    theKeywordList = casa::FITSKeywordUtil::makeKeywordList(primHead, casa::True);
 
     //kw.mk(FITS::EXTEND, True, "Tables may follow");
     // add the general keywords for WCS and so on
-    ok = casa::FITSKeywordUtil::addKeywords(kw, header);
+    ok = casa::FITSKeywordUtil::addKeywords(theKeywordList, header);
     if (! ok) {
         error = "Error creating initial FITS header";
         return false;
@@ -204,7 +221,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     //
     // END
     //
-    kw.end();
+    theKeywordList.end();
     casa::PrimaryArray<float>* fits32 = 0;
 
     casa::FitsOutput *outfile = new casa::FitsOutput(name.c_str(),casa::FITS::Disk);
@@ -212,7 +229,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
         ASKAPLOG_WARN_STR(FITSlogger, "Error creating FITS file for output\n");
 
 
-    fits32 = new casa::PrimaryArray<float>(kw);
+    fits32 = new casa::PrimaryArray<float>(theKeywordList);
 
     if (fits32==0 || fits32->err()) {
         ASKAPLOG_WARN_STR(FITSlogger, "Error creating Primary HDU from keywords");
@@ -229,11 +246,20 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     std::cout << *fits32 << std::endl;
     delete(fits32);
     delete(outfile);
+
+    created = true;
     return true;
 
 }
 bool FITSImageRW::write(const casa::Array<float> &arr) {
     ASKAPLOG_INFO_STR(FITSlogger,"Writing array to FITS image");
+
+    casa::FitsOutput *fout = new casa::FitsOutput(this->name.c_str(),casa::FITS::Disk);
+    casa::Bool deleteIt;
+    itsPrimaryArray->store(arr.getStorage(deleteIt));
+    itsPrimaryArray->write(*fout);
+    delete(fout);
+
     return false;
 }
 FITSImageRW::~FITSImageRW()

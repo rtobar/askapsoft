@@ -109,7 +109,7 @@ public:
 
         itsImageAccessor->create(name, shape, coordsys);
 
-        //itsImageAccessor->write(name,arr);
+        itsImageAccessor->write(name,arr);
 
         // // check shape
         // CPPUNIT_ASSERT(itsImageAccessor->shape(name) == shape);

@@ -34,6 +34,9 @@
 #include <casacore/images/Images/FITSImage.h>
 #include <casacore/casa/BasicSL/String.h>
 #include <casacore/casa/Utilities/DataType.h>
+#include <casacore/fits/FITS/fitsio.h>
+
+#include "boost/scoped_ptr.hpp"
 
 namespace askap {
 namespace accessors {
@@ -43,6 +46,9 @@ namespace accessors {
 /// difficulties in writing general FITS access routines for writing.
 /// I will implement what ASKAP needs here
 /// @ingroup imageaccess
+
+extern casa::FitsKeywordList theKeywordList;
+extern bool created;
 
 class FITSImageRW: public casa::FITSImage, public casa::ImageFITSConverter {
 
@@ -68,7 +74,7 @@ public:
     // made this static so it can be called without an instance.
     // All of the FITSimage parent calss constructors require the existance of
     // the file on disk. Which will not always be the case
-    
+
     static bool create(const std::string &name, const casa::IPosition &shape,\
         const casa::CoordinateSystem &csys,\
         uint memoryInMB = 64,\
@@ -86,7 +92,16 @@ public:
         bool allowAppend=false,\
         bool history=true);
 
+        /// keyword list from the primary array
+        /// the same for all instances filled by create
+        casa::FitsKeywordList theKeywordList;
 
+    private:
+        /// The name of the output file
+        std::string name;
+
+        /// pointer to the primary array
+        boost::scoped_ptr<casa::PrimaryArray<float> > itsPrimaryArray;
 
 
 };
