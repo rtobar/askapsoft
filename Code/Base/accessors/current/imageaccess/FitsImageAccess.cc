@@ -92,7 +92,7 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
     casa::FITSImage img(name);
     casa::Array<float> buffer;
     casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
-    std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
+    // std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
     ASKAPCHECK(img.doGetSlice(buffer,slc) == casa::False, "Cannot read image");
     return buffer;
 
@@ -200,8 +200,7 @@ void FitsImageAccess::setUnits(const std::string &name, const std::string &units
 /// @param[in] pa position angle in radians
 void FitsImageAccess::setBeamInfo(const std::string &name, double maj, double min, double pa)
 {
-    casa::PagedImage<float> img(name);
-    casa::ImageInfo ii = img.imageInfo();
-    ii.setRestoringBeam(casa::Quantity(maj, "rad"), casa::Quantity(min, "rad"), casa::Quantity(pa, "rad"));
-    img.setImageInfo(ii);
+
+    itsFITSImage->setRestoringBeam(maj, min, pa);
+
 }

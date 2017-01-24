@@ -157,7 +157,7 @@ public:
       //
     //   // auxilliary methods
         itsImageAccessor->setUnits(name,"Jy/pixel");
-        // itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
+        itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
    }
 
 protected:

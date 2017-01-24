@@ -395,6 +395,35 @@ void FITSImageRW::setUnits(const std::string &units) {
         printerror( status );
 
 }
+void FITSImageRW::setRestoringBeam(double maj, double min, double pa) {
+    ASKAPLOG_INFO_STR(FITSlogger,"Setting Beam info");
+    ASKAPLOG_INFO_STR(FITSlogger,"Updating brightness units");
+    fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
+    int status = 0;
+    double radtodeg = 360./(2*M_PI);
+    if ( fits_open_file(&fptr, this->name.c_str(), READWRITE, &status) )
+        printerror( status );
+
+    double value = radtodeg*maj;
+    if ( fits_update_key(fptr, TDOUBLE, "BMAJ", &value,
+        "Restoring beam major axis", &status) )
+        printerror( status );
+    value = radtodeg*min;
+    if ( fits_update_key(fptr, TDOUBLE, "BMIN", &value,
+        "Restoring beam minor axis", &status) )
+        printerror( status );
+    value = radtodeg*pa;
+    if ( fits_update_key(fptr, TDOUBLE, "BPA", &value,
+            "Restoring beam position angle", &status) )
+            printerror( status );
+    if ( fits_update_key(fptr, TSTRING, "BTYPE", (void *) "Intensity",
+            " ", &status) )
+            printerror( status );
+
+    if ( fits_close_file(fptr, &status) )
+        printerror( status );
+
+}
 FITSImageRW::~FITSImageRW()
 {
 }

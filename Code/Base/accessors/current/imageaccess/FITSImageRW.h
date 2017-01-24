@@ -80,6 +80,7 @@ public:
 
     void print_hdr();
     void setUnits(const std::string &units);
+    void setRestoringBeam(double,double,double);
     // write into a FITS image
     bool write(const casa::Array<float>& );
     bool write(const casa::Array<float> &arr,const casa::IPosition &where);
