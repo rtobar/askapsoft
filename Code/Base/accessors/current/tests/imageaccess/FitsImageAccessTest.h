@@ -158,6 +158,9 @@ public:
     //   // auxilliary methods
         itsImageAccessor->setUnits(name,"Jy/pixel");
         itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
+
+        casa::Vector<casa::Quantum<double> > beamInfo = itsImageAccessor->beamInfo(name);
+        
    }
 
 protected:

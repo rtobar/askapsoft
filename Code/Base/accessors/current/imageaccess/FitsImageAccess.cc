@@ -198,6 +198,9 @@ void FitsImageAccess::setUnits(const std::string &name, const std::string &units
 /// @param[in] maj major axis in radians
 /// @param[in] min minor axis in radians
 /// @param[in] pa position angle in radians
+/// The values are stored in a FITS header - note the FITS standard requires degrees
+/// so these arguments are converted.
+
 void FitsImageAccess::setBeamInfo(const std::string &name, double maj, double min, double pa)
 {
 
