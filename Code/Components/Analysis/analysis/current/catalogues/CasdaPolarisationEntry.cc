@@ -38,6 +38,7 @@
 
 #include <polarisation/RMSynthesis.h>
 #include <polarisation/RMData.h>
+#include <polarisation/FDFwriter.h>
 #include <Common/ParameterSet.h>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
 #include <duchamp/Outputs/columns.hh>
@@ -50,14 +51,9 @@ namespace askap {
 
 namespace analysis {
 
-static const float defaultSNRthreshold = 8.0;
-static const float defaultDebiasThreshold = 5.0;
-
 CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
-                                               const LOFAR::ParameterSet &parset):
-    CatalogueEntry(parset),
-    itsDetectionThreshold(parset.getFloat("polThresholdSNR", defaultSNRthreshold)),
-    itsDebiasThreshold(parset.getFloat("polThresholdDebias", defaultDebiasThreshold))
+        const LOFAR::ParameterSet &parset):
+    CatalogueEntry(parset)
 {
 
     itsRA = comp->ra();
@@ -65,20 +61,33 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
     itsName = comp->name();
     itsComponentID = comp->componentID();
 
-    LOFAR::ParameterSet polParset=parset.makeSubset("RMSynthesis.");
-    
+    LOFAR::ParameterSet polParset = parset.makeSubset("RMSynthesis.");
+
     PolarisationData poldata(polParset);
     poldata.initialise(comp);
 
     // Do the RM Synthesis, and calculate all parameters.
     RMSynthesis rmsynth(polParset);
     rmsynth.calculate(poldata);
+
+    if (polParset.getBool("writeSpectra", "true")) {
+        // write out the FDF array to image file on disk
+        FDFwriter writer(polParset, poldata, rmsynth);
+        writer.write();
+    }
+
+    // Parameterise the RM Synthesis results
     RMData rmdata(polParset);
     rmdata.calculate(&rmsynth);
 
-    casa::Unit cubeBunit=poldata.I().bunit();
+    // Now assign the parameters
+
+    itsDetectionThreshold = rmdata.detectionThreshold();
+    itsDebiasThreshold = rmdata.debiasThreshold();
+
+    casa::Unit cubeBunit = poldata.I().bunit();
     const double intFluxScale =
-        casa::Quantum<float>(1.0,cubeBunit).getValue(casda::intFluxUnitContinuum);
+        casa::Quantum<float>(1.0, cubeBunit).getValue(casda::intFluxUnitContinuum);
 
     itsFluxImedian = poldata.I().median() * intFluxScale;
     itsFluxQmedian = poldata.Q().median() * intFluxScale;
@@ -88,11 +97,13 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
     itsRmsQ = poldata.Q().medianNoise() * intFluxScale;
     itsRmsU = poldata.U().medianNoise() * intFluxScale;
     itsRmsV = poldata.V().medianNoise() * intFluxScale;
-    
-    itsPolyCoeff0 = comp->intFlux();
-    itsPolyCoeff1 = comp->alpha();
-    itsPolyCoeff2 = comp->beta();
-    itsPolyCoeff3 = itsPolyCoeff4 = 0.;
+
+    // Correct the scale for the first coefficient, as this is purely flux
+    itsPolyCoeff0 = poldata.model().coeff(0) * intFluxScale;
+    itsPolyCoeff1 = poldata.model().coeff(1);
+    itsPolyCoeff2 = poldata.model().coeff(2);
+    itsPolyCoeff3 = poldata.model().coeff(3);
+    itsPolyCoeff4 = poldata.model().coeff(4);
 
     itsLambdaSqRef = rmsynth.refLambdaSq();
     itsRmsfFwhm = rmsynth.rmsf_width();
@@ -106,7 +117,7 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
 
     itsPintFitSNR.value() = rmdata.SNR();
     itsPintFitSNR.error() = rmdata.SNR_err();
-    
+
     itsPhiPeak.value() = rmdata.phiPeak();
     itsPhiPeak.error() = rmdata.phiPeak_err();
     itsPhiPeakFit.value() = rmdata.phiPeakFit();
@@ -120,9 +131,8 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
     itsFracPol.value() = rmdata.fracPol();
     itsFracPol.error() = rmdata.fracPol_err();
 
-    /// @todo
-    itsComplexity = 0.;
-    itsComplexity_screen = 0.;
+    itsComplexity = rmdata.complexityConstant();
+    itsComplexity_screen = rmdata.complexityResidual();
 
     itsFlagDetection = rmdata.flagDetection();
     itsFlagEdge = rmdata.flagEdge();
