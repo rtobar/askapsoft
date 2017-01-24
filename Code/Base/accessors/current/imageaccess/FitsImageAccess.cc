@@ -188,8 +188,7 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
 /// @param[in] units string describing brightness units of the image (e.g. "Jy/beam")
 void FitsImageAccess::setUnits(const std::string &name, const std::string &units)
 {
-    casa::FITSImage img(name);
-    img.setUnits(casa::Unit(units));
+    itsFITSImage->setUnits(units);
 }
 
 /// @brief set restoring beam info

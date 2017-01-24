@@ -379,6 +379,22 @@ bool FITSImageRW::write(const casa::Array<float> &arr,const casa::IPosition &whe
     return true;
 
 }
+void FITSImageRW::setUnits(const std::string &units) {
+    ASKAPLOG_INFO_STR(FITSlogger,"Updating brightness units");
+    fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
+    int status = 0;
+
+    if ( fits_open_file(&fptr, this->name.c_str(), READWRITE, &status) )
+        printerror( status );
+
+    if ( fits_update_key(fptr, TSTRING, "BUNIT", (void *)(units.c_str()),
+         "Brightness (pixel) unit", &status) )
+        printerror( status );
+
+    if ( fits_close_file(fptr, &status) )
+        printerror( status );
+
+}
 FITSImageRW::~FITSImageRW()
 {
 }

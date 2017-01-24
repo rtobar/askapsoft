@@ -79,6 +79,7 @@ public:
     bool create();
 
     void print_hdr();
+    void setUnits(const std::string &units);
     // write into a FITS image
     bool write(const casa::Array<float>& );
     bool write(const casa::Array<float> &arr,const casa::IPosition &where);
