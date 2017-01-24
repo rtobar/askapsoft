@@ -74,7 +74,8 @@ public:
         const std::string name = "tmpfitsimage.fits";
         unlink(name.c_str());
         CPPUNIT_ASSERT(itsImageAccessor);
-        const casa::IPosition shape(3,100,100,5);
+        size_t ra=100, dec=100, spec=5;
+        const casa::IPosition shape(3,ra,dec,spec);
         casa::Array<float> arr(shape);
         arr.set(1.);
         // Build a coordinate system for the image
@@ -85,8 +86,8 @@ public:
             135*casa::C::pi/180.0, 60*casa::C::pi/180.0,    // 5
             -1*casa::C::pi/180.0, 1*casa::C::pi/180,        // 6
             xform,                              // 7
-            5.0, 5.0,                       // 8
-            999.0, 999.0);
+            ra/2., dec/2.);                       // 8
+
 
         casa::Vector<casa::String> units(2); units = "deg";                        //  9
         radec.setWorldAxisUnits(units);
@@ -112,21 +113,24 @@ public:
         itsImageAccessor->write(name,arr);
 
         // // check shape
-        // CPPUNIT_ASSERT(itsImageAccessor->shape(name) == shape);
+        CPPUNIT_ASSERT(itsImageAccessor->shape(name) == shape);
         // // // read the whole array and check
-        // casa::Array<float> readBack = itsImageAccessor->read(name);
-        // CPPUNIT_ASSERT(readBack.shape() == shape);
-        // for (int x=0; x<shape[0]; ++x) {
-        //     for (int y=0; y<shape[1]; ++y) {
-        //         for (int z = 0; z < shape[2]; ++z) {
-        //             const casa::IPosition index(2,x,y,z);
-        //             CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
-        //         }
-        //     }
-        // }
-      // write a slice
-        // casa::Vector<float> vec(10,2.);
-        // itsImageAccessor->write(name,vec,casa::IPosition(2,0,3));
+        casa::Array<float> readBack = itsImageAccessor->read(name);
+        CPPUNIT_ASSERT(readBack.shape() == shape);
+        for (int x=0; x<shape[0]; ++x) {
+            for (int y=0; y<shape[1]; ++y) {
+                for (int z = 0; z < shape[2]; ++z) {
+                    const casa::IPosition index(2,x,y,z);
+                    CPPUNIT_ASSERT(fabs(readBack(index)-arr(index))<1e-7);
+                }
+            }
+        }
+        // write a slice
+        const casa::IPosition chanShape(2,ra,dec);
+        casa::Array<float> chanArr(chanShape);
+        chanArr.set(2.0);
+
+        itsImageAccessor->write(name,chanArr,casa::IPosition(3,0,0,2));
         // // read a slice
         // vec = itsImageAccessor->read(name,casa::IPosition(2,0,1),casa::IPosition(2,9,1));
         // CPPUNIT_ASSERT(vec.nelements() == 10);
@@ -152,8 +156,8 @@ public:
     //   CPPUNIT_ASSERT(itsImageAccessor->coordSys(name).type(0) == casa::CoordinateSystem::LINEAR);
       //
     //   // auxilliary methods
-    //   itsImageAccessor->setUnits(name,"Jy/pixel");
-    //   itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
+        // itsImageAccessor->setUnits(name,"Jy/pixel");
+        // itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
    }
 
 protected:

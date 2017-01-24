@@ -55,7 +55,7 @@ class FITSImageRW {
 public:
 
     FITSImageRW (const std::string &name);
-    
+
     FITSImageRW (const std::string &name, const casa::IPosition &shape,\
         const casa::CoordinateSystem &csys,\
         uint memoryInMB = 64,\
@@ -81,7 +81,7 @@ public:
     void print_hdr();
     // write into a FITS image
     bool write(const casa::Array<float>& );
-
+    bool write(const casa::Array<float> &arr,const casa::IPosition &where);
     private:
 
 

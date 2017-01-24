@@ -153,7 +153,7 @@ bool FITSImageRW::create() {
     header.define("COMMENT1", ""); // inserts spaces
     // I should FITS-ize the units
 
-    header.define("BUNIT", "UNKNOWN");
+    header.define("BUNIT", "Jy");
     header.setComment("BUNIT", "Brightness (pixel) unit");
     //
     casa::IPosition shapeCopy = shape;
@@ -331,6 +331,53 @@ bool FITSImageRW::write(const casa::Array<float> &arr) {
              printerror( status );
 
     return true;
+}
+bool FITSImageRW::write(const casa::Array<float> &arr,const casa::IPosition &where) {
+    ASKAPLOG_INFO_STR(FITSlogger,"Writing array to FITS image");
+    fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
+
+    int status;
+
+
+    status = 0;
+
+    if ( fits_open_file(&fptr, this->name.c_str(), READWRITE, &status) )
+         printerror( status );
+
+
+    // we do not currently support postage stamps so the write has to be of
+    // the correct dimension
+
+    if (this->shape[0] != arr.shape()[0]) {
+        ASKAPLOG_ERROR_STR(FITSlogger,"RA dimension of slice does not match RA dimension of image");
+        return false;
+    }
+    if (this->shape[1] != arr.shape()[1]) {
+        ASKAPLOG_ERROR_STR(FITSlogger,"Dec dimension of slice does not match Dec dimension of image");
+        return false;
+    }
+    // we have to place the slice at the start of a channel
+
+    if (where[0] != 0 || where[1] != 0) {
+        ASKAPLOG_ERROR_STR(FITSlogger,"slice position not at channel boundary");
+    }
+
+
+    size_t fpixel = where[2]*this->shape[0]*this->shape[1];                               /* first pixel to write      */
+    size_t nelements = arr.nelements();          /* number of pixels to write */
+    bool deleteIt;
+    const float *data = arr.getStorage(deleteIt);
+    void *dataptr = (void *) data;
+
+         /* write the array of unsigned integers to the FITS file */
+    if ( fits_write_img(fptr, TFLOAT, fpixel, nelements, dataptr, &status) )
+        printerror( status );
+
+    if ( fits_close_file(fptr, &status) )
+             printerror( status );
+
+    return true;
+
 }
 FITSImageRW::~FITSImageRW()
 {

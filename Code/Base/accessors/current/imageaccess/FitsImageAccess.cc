@@ -174,8 +174,11 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
     ASKAPLOG_INFO_STR(logger, "Writing a slice with the shape " << arr.shape() << " into a FITS image " <<
                       name << " at " << where);
     casa::String error;
-    error = casa::String("Not yet implemented");
-    ASKAPTHROW(AskapError,error)
+
+    if (!itsFITSImage->write(arr,where)) {
+        error = casa::String("Failed to write slice");
+        ASKAPTHROW(AskapError,error);
+    }
 
 }
 
