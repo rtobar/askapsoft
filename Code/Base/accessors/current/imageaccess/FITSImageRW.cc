@@ -42,39 +42,34 @@
 #include <casacore/casa/Quanta/MVTime.h>
 #include <imageaccess/FITSImageRW.h>
 
+#include <fitsio.h>
+
+
 ASKAP_LOGGER(FITSlogger, ".FITSImageRW");
+
+void printerror( int status)
+{
+    /*****************************************************/
+    /* Print out cfitsio error messages and exit program */
+    /*****************************************************/
+
+
+    if (status)
+    {
+       ASKAPLOG_ERROR_STR(FITSlogger, status); /* print error report */
+
+       exit( status );    /* terminate the program, returning error status */
+    }
+    return;
+}
 
 using namespace askap;
 using namespace askap::accessors;
 
-casa::FitsKeywordList askap::accessors::theKeywordList;
-bool askap::accessors::created;
-
-FITSImageRW::FITSImageRW(const casa::String& name, casa::uInt whichRep, casa::uInt whichHDU)
-: FITSImage(name, whichRep, whichHDU)
-{
-    ASKAPLOG_INFO_STR(FITSlogger,"Instantiating FITSImageRW");
-    extern bool created;
-    extern casa::FitsKeywordList theKeywordList;
-    if (created == true)
-        itsPrimaryArray.reset(new casa::PrimaryArray<float>(theKeywordList));
-
-
-
-
-
+FITSImageRW::FITSImageRW(const std::string &name) {
+    this->name = std::string(name.c_str());
 }
-FITSImageRW::FITSImageRW(const casa::String& name, const casa::MaskSpecifier& mask, casa::uInt whichRep, casa::uInt whichHDU)
-: FITSImage(name, mask, whichRep, whichHDU)
-{
-    ASKAPLOG_INFO_STR(FITSlogger,"Instantiating FITSImageRW");
-}
-FITSImageRW::FITSImageRW(const FITSImageRW& other)
-: FITSImage(other)
-{
-    ASKAPLOG_INFO_STR(FITSlogger,"Entering Copy FITSImageRW Constructor");
-}
-bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
+FITSImageRW::FITSImageRW(const std::string &name, const casa::IPosition &shape,\
     const casa::CoordinateSystem &csys,\
     uint memoryInMB, bool preferVelocity,\
 	bool opticalVelocity, int BITPIX, float minPix, float maxPix,\
@@ -82,8 +77,29 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 	bool preferWavelength, bool airWavelength, bool primHead,\
 	bool allowAppend, bool history) {
 
-    extern casa::FitsKeywordList theKeywordList;
-    extern bool created;
+
+    this->name = std::string(name.c_str());
+    this->shape = shape;
+    this->csys = csys;
+    this->memoryInMB = memoryInMB;
+    this->preferVelocity = preferVelocity;
+    this->opticalVelocity = opticalVelocity;
+    this->BITPIX=BITPIX;
+    this->minPix = minPix;
+    this->maxPix = maxPix;
+    this->degenerateLast = degenerateLast;
+    this->verbose = verbose ;
+    this->stokesLast = stokesLast;
+    this->preferWavelength = preferWavelength;
+    this->airWavelength = airWavelength;
+    this->primHead = primHead;
+    this->allowAppend = allowAppend;
+    this->history = history;
+
+
+
+}
+bool FITSImageRW::create() {
 
     ASKAPLOG_INFO_STR(FITSlogger,"Creating R/W FITSImage");
 
@@ -204,8 +220,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     header.define("ORIGIN", "ASKAPSoft");
 
 
-    // // Set up the FITS header
-    extern casa::FitsKeywordList theKeywordList;
+
 
     theKeywordList = casa::FITSKeywordUtil::makeKeywordList(primHead, casa::True);
 
@@ -221,6 +236,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     //
     // END
     //
+
     theKeywordList.end();
     casa::PrimaryArray<float>* fits32 = 0;
 
@@ -230,7 +246,7 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
 
 
     fits32 = new casa::PrimaryArray<float>(theKeywordList);
-
+/// I could use cfitsio access routines here for a cleaner interface
     if (fits32==0 || fits32->err()) {
         ASKAPLOG_WARN_STR(FITSlogger, "Error creating Primary HDU from keywords");
         return false;
@@ -242,25 +258,79 @@ bool FITSImageRW::create(const std::string &name, const casa::IPosition &shape,\
     }
     ASKAPLOG_INFO_STR(FITSlogger,"Written header");
 
-
     std::cout << *fits32 << std::endl;
     delete(fits32);
     delete(outfile);
 
-    created = true;
     return true;
+
+}
+void FITSImageRW::print_hdr() {
+    fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
+
+    int status, nkeys, keypos, hdutype, ii, jj;
+    char card[FLEN_CARD];   /* standard string lengths defined in fitsioc.h */
+
+    status = 0;
+
+    if ( fits_open_file(&fptr, this->name.c_str(), READONLY, &status) )
+         printerror( status );
+
+    /* attempt to move to next HDU, until we get an EOF error */
+    for (ii = 1; !(fits_movabs_hdu(fptr, ii, &hdutype, &status) ); ii++)
+    {
+        /* get no. of keywords */
+        if (fits_get_hdrpos(fptr, &nkeys, &keypos, &status) )
+            printerror( status );
+
+        printf("Header listing for HDU #%d:\n", ii);
+        for (jj = 1; jj <= nkeys; jj++)  {
+            if ( fits_read_record(fptr, jj, card, &status) )
+                 printerror( status );
+
+            printf("%s\n", card); /* print the keyword card */
+        }
+        printf("END\n\n");  /* terminate listing with END */
+    }
+
+    if (status == END_OF_FILE)   /* status values are defined in fitsioc.h */
+        status = 0;              /* got the expected EOF error; reset = 0  */
+    else
+       printerror( status );     /* got an unexpected error                */
+
+    if ( fits_close_file(fptr, &status) )
+         printerror( status );
+
+    return;
 
 }
 bool FITSImageRW::write(const casa::Array<float> &arr) {
     ASKAPLOG_INFO_STR(FITSlogger,"Writing array to FITS image");
+    fitsfile *fptr;       /* pointer to the FITS file, defined in fitsio.h */
 
-    casa::FitsOutput *fout = new casa::FitsOutput(this->name.c_str(),casa::FITS::Disk);
-    casa::Bool deleteIt;
-    itsPrimaryArray->store(arr.getStorage(deleteIt));
-    itsPrimaryArray->write(*fout);
-    delete(fout);
 
-    return false;
+    int status;
+
+
+    status = 0;
+
+    if ( fits_open_file(&fptr, this->name.c_str(), READWRITE, &status) )
+         printerror( status );
+
+    size_t fpixel = 1;                               /* first pixel to write      */
+    size_t nelements = arr.nelements();          /* number of pixels to write */
+    bool deleteIt;
+    const float *data = arr.getStorage(deleteIt);
+    void *dataptr = (void *) data;
+
+         /* write the array of unsigned integers to the FITS file */
+    if ( fits_write_img(fptr, TFLOAT, fpixel, nelements, dataptr, &status) )
+        printerror( status );
+
+    if ( fits_close_file(fptr, &status) )
+             printerror( status );
+
+    return true;
 }
 FITSImageRW::~FITSImageRW()
 {

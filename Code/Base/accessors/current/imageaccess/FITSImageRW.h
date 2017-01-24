@@ -47,35 +47,16 @@ namespace accessors {
 /// I will implement what ASKAP needs here
 /// @ingroup imageaccess
 
-extern casa::FitsKeywordList theKeywordList;
+
 extern bool created;
 
-class FITSImageRW: public casa::FITSImage, public casa::ImageFITSConverter {
+class FITSImageRW {
 
 public:
-    // Construct a FITSImage from the disk FITS file name  and extension and apply mask.
 
-    explicit FITSImageRW(const casa::String& name, casa::uInt whichRep=0, casa::uInt whichHDU=0);
-
-    // Construct a FITSImage from the disk FITS file name and extension and apply mask or not.
-    FITSImageRW(const casa::String& name, const casa::MaskSpecifier& mask, casa::uInt whichRep=0, casa::uInt whichHDU=0);
-
-    // Copy constructor (reference semantics)
-    FITSImageRW(const FITSImageRW& other);
-
-    // Destructor does nothing
-    virtual ~FITSImageRW();
-
-    // write into a FITS image
-    bool write(const casa::Array<float>& );
-
-    // build a FITS file with a header and coordinate system matching
-    // This function heavily adapted from the casacore ImagetoFITS converters
-    // made this static so it can be called without an instance.
-    // All of the FITSimage parent calss constructors require the existance of
-    // the file on disk. Which will not always be the case
-
-    static bool create(const std::string &name, const casa::IPosition &shape,\
+    FITSImageRW (const std::string &name);
+    
+    FITSImageRW (const std::string &name, const casa::IPosition &shape,\
         const casa::CoordinateSystem &csys,\
         uint memoryInMB = 64,\
         bool preferVelocity = true,\
@@ -92,17 +73,38 @@ public:
         bool allowAppend=false,\
         bool history=true);
 
-        /// keyword list from the primary array
-        /// the same for all instances filled by create
-        casa::FitsKeywordList theKeywordList;
+    // Destructor does nothing
+    virtual ~FITSImageRW();
+
+    bool create();
+
+    void print_hdr();
+    // write into a FITS image
+    bool write(const casa::Array<float>& );
 
     private:
-        /// The name of the output file
+
+
+
         std::string name;
+        casa::IPosition shape;
+        casa::CoordinateSystem csys;
+        uint memoryInMB;
+        bool preferVelocity;
+        bool opticalVelocity;
+        int BITPIX;
+        float minPix;
+        float maxPix;
+        bool degenerateLast;
+        bool verbose;
+        bool stokesLast;
+        bool preferWavelength;
+        bool airWavelength;
+        bool primHead;
+        bool allowAppend;
+        bool history;
 
-        /// pointer to the primary array
-        boost::scoped_ptr<casa::PrimaryArray<float> > itsPrimaryArray;
-
+        casa::FitsKeywordList theKeywordList;
 
 };
 }

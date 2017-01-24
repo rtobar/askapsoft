@@ -134,12 +134,13 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
     ASKAPLOG_INFO_STR(logger, "Creating a new FITS image " << name << " with the shape " << shape);
     casa::String error;
 
-    if (!FITSImageRW::create(name,shape,csys)) {
+    itsFITSImage.reset(new FITSImageRW(name,shape,csys));
+    if (!itsFITSImage->create()) {
         casa::String error;
         error = casa::String("Failed to create FITSFile");
         ASKAPTHROW(AskapError,error);
     }
-
+    itsFITSImage->print_hdr();
     // make an array
     // this requires that the whole array fits in memory
     // which may not in general be the case
@@ -158,11 +159,7 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr)
 {
     ASKAPLOG_INFO_STR(logger, "Writing an array with the shape " << arr.shape() << " into a FITS image " << name);
-    casa::String error;
-    //
-    FITSImageRW img(name);
-    //
-    img.write(arr);
+    itsFITSImage->write(arr);
 
 
 }
