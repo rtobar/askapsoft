@@ -71,8 +71,8 @@ public:
 
     void testReadWrite() {
         // Create FITS image
-        const std::string name = "tmpfitsimage.fits";
-        unlink(name.c_str());
+        const std::string name = "tmpfitsimage";
+    
         CPPUNIT_ASSERT(itsImageAccessor);
         size_t ra=100, dec=100, spec=5;
         const casa::IPosition shape(3,ra,dec,spec);
@@ -160,7 +160,7 @@ public:
         itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
 
         casa::Vector<casa::Quantum<double> > beamInfo = itsImageAccessor->beamInfo(name);
-        
+
    }
 
 protected:

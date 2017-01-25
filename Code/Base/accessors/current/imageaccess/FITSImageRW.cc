@@ -67,6 +67,7 @@ using namespace askap;
 using namespace askap::accessors;
 
 FITSImageRW::FITSImageRW(const std::string &name) {
+    std::string fullname = name + ".fits";
     this->name = std::string(name.c_str());
 }
 FITSImageRW::FITSImageRW(const std::string &name, const casa::IPosition &shape,\
@@ -77,8 +78,9 @@ FITSImageRW::FITSImageRW(const std::string &name, const casa::IPosition &shape,\
 	bool preferWavelength, bool airWavelength, bool primHead,\
 	bool allowAppend, bool history) {
 
+    std::string fullname = name + ".fits";
 
-    this->name = std::string(name.c_str());
+    this->name = std::string(fullname.c_str());
     this->shape = shape;
     this->csys = csys;
     this->memoryInMB = memoryInMB;
@@ -103,7 +105,8 @@ bool FITSImageRW::create() {
 
     ASKAPLOG_INFO_STR(FITSlogger,"Creating R/W FITSImage");
 
-
+    unlink(this->name.c_str());
+    
     casa::String error;
     const casa::uInt ndim = shape.nelements();
     // //

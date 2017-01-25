@@ -56,7 +56,8 @@ using namespace askap::accessors;
 /// @return full shape of the given image
 casa::IPosition FitsImageAccess::shape(const std::string &name) const
 {
-    casa::FITSImage img(name);
+    std::string fullname = name + ".fits";
+    casa::FITSImage img(fullname);
     return img.shape();
 }
 
@@ -65,9 +66,10 @@ casa::IPosition FitsImageAccess::shape(const std::string &name) const
 /// @return array with pixels
 casa::Array<float> FitsImageAccess::read(const std::string &name) const
 {
-    ASKAPLOG_INFO_STR(logger, "Reading FITS image " << name);
+    std::string fullname = name + ".fits";
+    ASKAPLOG_INFO_STR(logger, "Reading FITS image " << fullname);
 
-    casa::FITSImage img(name);
+    casa::FITSImage img(fullname);
 
     const casa::IPosition shape = img.shape();
     ASKAPLOG_INFO_STR(logger," - Shape " << shape);
@@ -87,9 +89,10 @@ casa::Array<float> FitsImageAccess::read(const std::string &name) const
 casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IPosition &blc,
         const casa::IPosition &trc) const
 {
+    std::string fullname = name + ".fits";
     ASKAPLOG_INFO_STR(logger, "Reading a slice of the FITS image " << name << " from " << blc << " to " << trc);
 
-    casa::FITSImage img(name);
+    casa::FITSImage img(fullname);
     casa::Array<float> buffer;
     casa::Slicer slc(blc,trc,casa::Slicer::endIsLength);
     // std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
@@ -103,7 +106,8 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
 /// @return coordinate system object
 casa::CoordinateSystem FitsImageAccess::coordSys(const std::string &name) const
 {
-    casa::FITSImage img(name);
+    std::string fullname = name + ".fits";
+    casa::FITSImage img(fullname);
     return img.coordinates();
 }
 
@@ -112,7 +116,8 @@ casa::CoordinateSystem FitsImageAccess::coordSys(const std::string &name) const
 /// @return beam info vector
 casa::Vector<casa::Quantum<double> > FitsImageAccess::beamInfo(const std::string &name) const
 {
-    casa::FITSImage img(name);
+    std::string fullname = name + ".fits";
+    casa::FITSImage img(fullname);
     casa::ImageInfo ii = img.imageInfo();
     return ii.restoringBeam().toVector();
 }
@@ -154,7 +159,7 @@ void FitsImageAccess::create(const std::string &name, const casa::IPosition &sha
 }
 
 /// @brief write full image
-/// @param[in] name image name
+/// @param[in] name image name (not used)
 /// @param[in] arr array with pixels
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr)
 {
@@ -165,7 +170,7 @@ void FitsImageAccess::write(const std::string &name, const casa::Array<float> &a
 }
 
 /// @brief write a slice of an image
-/// @param[in] name image name
+/// @param[in] name image name (not used)
 /// @param[in] arr array with pixels
 /// @param[in] where bottom left corner where to put the slice to (trc is deduced from the array shape)
 void FitsImageAccess::write(const std::string &name, const casa::Array<float> &arr,
