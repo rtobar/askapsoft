@@ -32,6 +32,8 @@
 
 // ASKAPsoft includes
 #include "casdaupload/TypeElementBase.h"
+#include "casdaupload/SpectrumElement.h"
+#include "casdaupload/MomentMapElement.h"
 #include "xercesc/dom/DOM.hpp" // Includes all DOM
 #include "boost/filesystem.hpp"
 #include "Common/ParameterSet.h"
@@ -60,6 +62,9 @@ class ImageElement : public TypeElementBase {
         boost::filesystem::path itsThumbnailLarge;
         /// The small PNG/JPG thumbnail image
         boost::filesystem::path itsThumbnailSmall;
+
+    std::vector<SpectrumElement> itsSpectra;
+    std::vector<MomentMapElement> itsMomentmaps;
 
 };
 
