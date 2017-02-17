@@ -32,6 +32,7 @@
 
 // System includes
 #include <string>
+#include <glob.h>
 
 // ASKAPsoft includes
 #include "casdaupload/ProjectElementBase.h"
@@ -75,12 +76,28 @@ void SpectrumElement::checkWildcards()
 
     // glob itsFilepath to get a list of possible names
     //     --> fills itsFilenameList
+    glob_t specGlob;
+    int errSpec = glob(itsFilepath.filename().string().c_str(), 0, NULL, &specGlob);
+    ASKAPCHECK(errSpec==0, "Failure interpreting spectrum filepath \""
+               << itsFilepath.filename().string() << "\"");
+    itsNumSpectra = specGlob.gl_matchc;
+    for(size_t i=0;i<itsNumSpectra; i++) {
+        itsFilenameList.push_back(specGlob.gl_pathv[i]);
+    }
+    globfree(&specGlob);
 
     // glob itsThumbnail to get a list of possible names
     //     --> fills itsThumbnailList
 
-    itsNumSpectra = itsFilenameList.size();
-    ASKAPCHECK(itsThumbnailList.size() != itsNumSpectra, "Thumbnail wildcard produces more files than filename");
+    glob_t thumbGlob;
+    int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
+    ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
+               << itsThumbnail.filename().string() << "\"");
+    ASKAPCHECK(thumbGlob.gl_matchc != itsNumSpectra, "Thumbnail wildcard produces different number of files than filename");
+    for(size_t i=0;i<thumbGlob.gl_matchc; i++) {
+        itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
+    }
+    globfree(&thumbGlob);
     
 }
 

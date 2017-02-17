@@ -32,6 +32,7 @@
 
 // System includes
 #include <string>
+#include <glob.h>
 
 // ASKAPsoft includes
 #include "casdaupload/ProjectElementBase.h"
@@ -57,7 +58,7 @@ MomentMapElement::MomentMapElement(const LOFAR::ParameterSet &parset)
     : TypeElementBase(parset),
       itsFilenameList(),
       itsThumbnailList(),
-      itsNumSpectra(0)
+      itsNumMoms(0)
 {
     itsName = "moment_map";
     itsFormat = "fits";
@@ -75,12 +76,29 @@ void MomentMapElement::checkWildcards()
 
     // glob itsFilepath to get a list of possible names
     //     --> fills itsFilenameList
+    glob_t momGlob;
+    int errMom = glob(itsFilepath.filename().string().c_str(), 0, NULL, &momGlob);
+    ASKAPCHECK(errMom==0, "Failure interpreting moment map filepath \""
+               << itsFilepath.filename().string() << "\"");
+    itsNumMoms = momGlob.gl_matchc;
+    for(size_t i=0;i<itsNumMoms; i++) {
+        itsFilenameList.push_back(momGlob.gl_pathv[i]);
+    }
+    globfree(&momGlob);
 
     // glob itsThumbnail to get a list of possible names
     //     --> fills itsThumbnailList
 
-    itsNumSpectra = itsFilenameList.size();
-    ASKAPCHECK(itsThumbnailList.size() != itsNumSpectra, "Thumbnail wildcard produces more files than filename");
+    glob_t thumbGlob;
+    int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
+    ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
+               << itsThumbnail.filename().string() << "\"");
+    ASKAPCHECK(thumbGlob.gl_matchc != itsNumMoms, "Thumbnail wildcard produces different number of files than filename");
+    for(size_t i=0;i<thumbGlob.gl_matchc; i++) {
+        itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
+    }
+    globfree(&thumbGlob);
+    
     
 }
 
@@ -93,7 +111,7 @@ xercesc::DOMElement* MomentMapElement::toXmlElement(xercesc::DOMDocument& doc) c
     }
 
     std::stringstream ss;
-    ss << itsNumSpectra;
+    ss << itsNumMoms;
     XercescUtils::addTextElement(*e, "number", ss.str());
 
     return e;

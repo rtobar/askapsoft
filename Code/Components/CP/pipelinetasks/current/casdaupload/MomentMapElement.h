@@ -74,7 +74,7 @@ class MomentMapElement : public TypeElementBase {
     std::vector<std::string> itsThumbnailList;
 
     /// Number of spectra meeting image name definition
-    unsigned int itsNumSpectra;
+    unsigned int itsNumMoms;
 
 };
 
