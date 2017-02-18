@@ -80,7 +80,7 @@ void MomentMapElement::checkWildcards()
     int errMom = glob(itsFilepath.filename().string().c_str(), 0, NULL, &momGlob);
     ASKAPCHECK(errMom==0, "Failure interpreting moment map filepath \""
                << itsFilepath.filename().string() << "\"");
-    itsNumMoms = momGlob.gl_matchc;
+    itsNumMoms = momGlob.gl_pathc;
     for(size_t i=0;i<itsNumMoms; i++) {
         itsFilenameList.push_back(momGlob.gl_pathv[i]);
     }
@@ -93,7 +93,7 @@ void MomentMapElement::checkWildcards()
     int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
     ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
                << itsThumbnail.filename().string() << "\"");
-    ASKAPCHECK(thumbGlob.gl_matchc != itsNumMoms, "Thumbnail wildcard produces different number of files than filename");
+    ASKAPCHECK(thumbGlob.gl_pathc != itsNumMoms, "Thumbnail wildcard produces different number of files than filename");
     for(size_t i=0;i<thumbGlob.gl_matchc; i++) {
         itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
     }

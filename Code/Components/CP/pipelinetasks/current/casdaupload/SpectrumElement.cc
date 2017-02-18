@@ -80,7 +80,7 @@ void SpectrumElement::checkWildcards()
     int errSpec = glob(itsFilepath.filename().string().c_str(), 0, NULL, &specGlob);
     ASKAPCHECK(errSpec==0, "Failure interpreting spectrum filepath \""
                << itsFilepath.filename().string() << "\"");
-    itsNumSpectra = specGlob.gl_matchc;
+    itsNumSpectra = specGlob.gl_pathc;
     for(size_t i=0;i<itsNumSpectra; i++) {
         itsFilenameList.push_back(specGlob.gl_pathv[i]);
     }
@@ -93,7 +93,7 @@ void SpectrumElement::checkWildcards()
     int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
     ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
                << itsThumbnail.filename().string() << "\"");
-    ASKAPCHECK(thumbGlob.gl_matchc != itsNumSpectra, "Thumbnail wildcard produces different number of files than filename");
+    ASKAPCHECK(thumbGlob.gl_pathc != itsNumSpectra, "Thumbnail wildcard produces different number of files than filename");
     for(size_t i=0;i<thumbGlob.gl_matchc; i++) {
         itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
     }

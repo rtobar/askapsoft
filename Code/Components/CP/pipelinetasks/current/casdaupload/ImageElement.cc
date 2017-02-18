@@ -101,16 +101,16 @@ xercesc::DOMElement* ImageElement::toXmlElement(xercesc::DOMDocument& doc) const
 
     // Create Spectra elements
     DOMElement* childSpec = doc.createElement(XercescString("spectra"));
-    std::vector<SpectrumElement>::const_iterator spec = itsSpectra.cbegin();
-    for (; spec != itsSpectra.cend(); ++spec) {
+    std::vector<SpectrumElement>::const_iterator spec = itsSpectra.begin();
+    for (; spec != itsSpectra.end(); ++spec) {
         childSpec->appendChild(spec->toXmlElement(doc));
     }
     e->appendChild(childSpec);
 
     // Create MomentMap elements
     DOMElement* childMom = doc.createElement(XercescString("moment_maps"));
-    std::vector<MomentMapElement>::const_iterator mom = itsMomentmaps.cbegin();
-    for (; mom != itsMomentmaps.cend(); ++mom) {
+    std::vector<MomentMapElement>::const_iterator mom = itsMomentmaps.begin();
+    for (; mom != itsMomentmaps.end(); ++mom) {
         childMom->appendChild(mom->toXmlElement(doc));
     }
     e->appendChild(childMom);
@@ -142,12 +142,12 @@ void ImageElement::copyAndChecksum(const boost::filesystem::path& outdir) const
         CasdaFileUtils::copyAndChecksum(inSmall, outSmall);
     }
 
-    std::vector<SpectrumElement>::const_iterator spec=itsSpectra.cbegin();
+    std::vector<SpectrumElement>::const_iterator spec=itsSpectra.begin();
     for(;spec<itsSpectra.end();spec++){
         spec->copyAndChecksum(outdir);
     }
 
-    std::vector<MomentMapElement>::const_iterator mom=itsMomentmaps.cbegin();
+    std::vector<MomentMapElement>::const_iterator mom=itsMomentmaps.begin();
     for(;mom<itsMomentmaps.end();mom++){
         mom->copyAndChecksum(outdir);
     }
