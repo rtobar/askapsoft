@@ -94,7 +94,7 @@ void MomentMapElement::checkWildcards()
     ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
                << itsThumbnail.filename().string() << "\"");
     ASKAPCHECK(thumbGlob.gl_pathc != itsNumMoms, "Thumbnail wildcard produces different number of files than filename");
-    for(size_t i=0;i<thumbGlob.gl_matchc; i++) {
+    for(size_t i=0;i<thumbGlob.gl_pathc; i++) {
         itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
     }
     globfree(&thumbGlob);
