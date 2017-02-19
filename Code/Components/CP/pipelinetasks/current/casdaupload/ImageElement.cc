@@ -83,7 +83,7 @@ ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
     if ( parset.isDefined("momentmaps") ){
         std::vector<std::string> momentMapList = parset.getStringVector("momentmaps","");
         std::vector<std::string>::iterator mom=momentMapList.begin();
-        for(;mom<momentMapList.end();spec++){
+        for(;mom<momentMapList.end();mom++){
             itsMomentmaps.push_back(MomentMapElement(parset));
         }
     }
