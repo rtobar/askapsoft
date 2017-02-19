@@ -77,7 +77,7 @@ void MomentMapElement::checkWildcards()
     // glob itsFilepath to get a list of possible names
     //     --> fills itsFilenameList
     glob_t momGlob;
-    int errMom = glob(itsFilepath.filename().string().c_str(), 0, NULL, &momGlob);
+    int errMom = glob(itsFilepath.string().c_str(), 0, NULL, &momGlob);
     ASKAPCHECK(errMom==0, "Failure interpreting moment map filepath \""
                << itsFilepath.filename().string() << "\"");
     itsNumMoms = momGlob.gl_pathc;
@@ -91,7 +91,7 @@ void MomentMapElement::checkWildcards()
 
     if (itsThumbnail != "" ){
         glob_t thumbGlob;
-        int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
+        int errThumb = glob(itsThumbnail.string().c_str(), 0, NULL, &thumbGlob);
         ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
                    << itsThumbnail.filename().string() << "\"");
         ASKAPCHECK(thumbGlob.gl_pathc == itsNumMoms,

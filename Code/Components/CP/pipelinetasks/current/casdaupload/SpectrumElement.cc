@@ -77,7 +77,7 @@ void SpectrumElement::checkWildcards()
     // glob itsFilepath to get a list of possible names
     //     --> fills itsFilenameList
     glob_t specGlob;
-    int errSpec = glob(itsFilepath.filename().string().c_str(), 0, NULL, &specGlob);
+    int errSpec = glob(itsFilepath.string().c_str(), 0, NULL, &specGlob);
     ASKAPCHECK(errSpec==0, "Failure interpreting spectrum filepath \""
                << itsFilepath.filename().string() << "\"");
     itsNumSpectra = specGlob.gl_pathc;
@@ -91,7 +91,7 @@ void SpectrumElement::checkWildcards()
 
     if (itsThumbnail != "" ){
         glob_t thumbGlob;
-        int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
+        int errThumb = glob(itsThumbnail.string().c_str(), 0, NULL, &thumbGlob);
         ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
                    << itsThumbnail.filename().string() << "\"");
         ASKAPCHECK(thumbGlob.gl_pathc == itsNumSpectra,
@@ -126,7 +126,7 @@ void SpectrumElement::copyAndChecksum(const boost::filesystem::path& outdir) con
     for(size_t i=0;i<itsFilenameList.size();i++){
         const boost::filesystem::path in(itsFilenameList[i]);
         const boost::filesystem::path out(outdir / in.filename());
-        ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
+        ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in << " using filename " << itsFilenameList[i]);
         CasdaFileUtils::copyAndChecksum(in, out);
     }
     

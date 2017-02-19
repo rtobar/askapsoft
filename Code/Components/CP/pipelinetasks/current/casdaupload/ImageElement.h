@@ -48,7 +48,9 @@ namespace pipelinetasks {
 /// CASDA. Simply a specialisation of the ProjectElementBase class,
 /// with the constructor defining the element name ("image") and
 /// format ("fits"), as well as (optionally) the filenames of large
-/// and small thumbnail images,
+/// and small thumbnail images. An ImageElement can also have a list
+/// of spectra or moment maps, each of which is described by a
+/// wildcard filename.
 class ImageElement : public TypeElementBase {
     public:
         ImageElement(const LOFAR::ParameterSet &parset);

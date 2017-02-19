@@ -53,7 +53,8 @@ namespace pipelinetasks {
 /// (optionally) the filenames of a thumbnail image. The class allows
 /// the element filename and thumbnail name to contain wildcards, and
 /// it also records how many spectra there are that meet the wildcard
-/// definition.
+/// definition. If a thumbnail is given, it must resolve to the same
+/// number of files as the filename.
 class SpectrumElement : public TypeElementBase {
     public:
         SpectrumElement(const LOFAR::ParameterSet &parset);
