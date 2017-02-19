@@ -89,16 +89,18 @@ void MomentMapElement::checkWildcards()
     // glob itsThumbnail to get a list of possible names
     //     --> fills itsThumbnailList
 
-    glob_t thumbGlob;
-    int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
-    ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
-               << itsThumbnail.filename().string() << "\"");
-    ASKAPCHECK(thumbGlob.gl_pathc != itsNumMoms, "Thumbnail wildcard produces different number of files than filename");
-    for(size_t i=0;i<thumbGlob.gl_pathc; i++) {
-        itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
+    if (itsThumbnail != "" ){
+        glob_t thumbGlob;
+        int errThumb = glob(itsThumbnail.filename().string().c_str(), 0, NULL, &thumbGlob);
+        ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
+                   << itsThumbnail.filename().string() << "\"");
+        ASKAPCHECK(thumbGlob.gl_pathc == itsNumMoms,
+                   "Thumbnail wildcard for moment maps produces different number of files than filename");
+        for(size_t i=0;i<thumbGlob.gl_pathc; i++) {
+            itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
+        }
+        globfree(&thumbGlob);
     }
-    globfree(&thumbGlob);
-    
     
 }
 
