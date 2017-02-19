@@ -72,19 +72,21 @@ ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
     //    spectra1.filename = ...
     //    spectra2.filename = ...
     // and so forth
-    std::vector<std::string> spectraList = parset.getStringVector("spectra","");
-    std::vector<std::string>::iterator spec=spectraList.begin();
-    for(;spec<spectraList.end();spec++){
-        itsSpectra.push_back(SpectrumElement(parset));
+    if ( parset.isDefined("spectra") ){
+        std::vector<std::string> spectraList = parset.getStringVector("spectra","");
+        std::vector<std::string>::iterator spec=spectraList.begin();
+        for(;spec<spectraList.end();spec++){
+            itsSpectra.push_back(SpectrumElement(parset));
+        }
     }
 
-    std::vector<std::string> momentMapList = parset.getStringVector("momentmaps","");
-    std::vector<std::string>::iterator mom=momentMapList.begin();
-    for(;mom<momentMapList.end();spec++){
-        itsMomentmaps.push_back(MomentMapElement(parset));
+    if ( parset.isDefined("momentmaps") ){
+        std::vector<std::string> momentMapList = parset.getStringVector("momentmaps","");
+        std::vector<std::string>::iterator mom=momentMapList.begin();
+        for(;mom<momentMapList.end();spec++){
+            itsMomentmaps.push_back(MomentMapElement(parset));
+        }
     }
-
-
     
 }
 
