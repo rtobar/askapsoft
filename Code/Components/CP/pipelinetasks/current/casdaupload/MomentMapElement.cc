@@ -123,16 +123,20 @@ xercesc::DOMElement* MomentMapElement::toXmlElement(xercesc::DOMDocument& doc) c
 void MomentMapElement::copyAndChecksum(const boost::filesystem::path& outdir) const
 {
 
-    const boost::filesystem::path in(itsFilepath);
-    const boost::filesystem::path out(outdir / in.filename());
-    ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
-    CasdaFileUtils::copyAndChecksum(in, out);
-
-    if (itsThumbnail != "" ) {
-        const boost::filesystem::path in(itsThumbnail);
+    for(size_t i=0;i<itsFilenameList.size();i++){
+        const boost::filesystem::path in(itsFilenameList[i]);
         const boost::filesystem::path out(outdir / in.filename());
         ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
         CasdaFileUtils::copyAndChecksum(in, out);
+    }
+    
+    if (itsThumbnail != "" ) {
+        for(size_t i=0;i<itsThumbnailList.size();i++){
+            const boost::filesystem::path in(itsThumbnailList[i]);
+            const boost::filesystem::path out(outdir / in.filename());
+            ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
+            CasdaFileUtils::copyAndChecksum(in, out);
+        }
     }
 
 }
