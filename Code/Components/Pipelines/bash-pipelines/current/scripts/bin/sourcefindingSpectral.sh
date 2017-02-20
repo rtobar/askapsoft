@@ -137,6 +137,8 @@ for im in \${imlist}; do
 
     casaim="../\${im##*/}"
     fitsim="../\${im##*/}.fits"
+    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
     ${fitsConvertText}
     # Make a link so we point to a file in the current directory for
     # Selavy. This gets the referencing correct in the catalogue
@@ -225,6 +227,28 @@ EOFINNER
     if [ \$err != 0 ]; then
         exit \$err
     fi
+
+    # Now convert the extracted spectral & moment-map artefacts to FITS
+    if [ \${doRM} == true ]; then
+        parset=temp.in
+        log=$logs/convertToFITS_spectralArtefacts_\${SLURM_JOB_ID}.log
+        for dir in \$spectraDir \$momentDir \$cubeletDir; do
+            cd \${dir}
+            neterr=0
+            for im in \`ls -d\`; do 
+                casaim="../\${im##*/}"
+                fitsim="../\${im##*/}.fits"
+                ${fitsConvertText}
+                err=\$?
+                if [ \$err -ne 0 ];
+                    neterr=\$err
+                fi
+            done
+            extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
+        done
+        rm -f \$parset
+    fi
+
 
 else
 
