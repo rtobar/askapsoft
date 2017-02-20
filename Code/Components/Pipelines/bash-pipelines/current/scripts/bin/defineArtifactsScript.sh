@@ -218,7 +218,7 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                     if [ -e \${itsSelavyDir} ]; then
                         casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*")
                         casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*")
-                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_MOMENT}*")
+                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*")
                         casdaOtherDimImageFDF+=("")
                         casdaOtherDimImageRMSF+=("")
                         casdaOtherDimImagePol+=("")
@@ -244,8 +244,8 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                         fi
                         itsSelavyDir=\${FIELD}/selavy_\${imageName##*/}
                         if [ -e \${itsSelavyDir} ]; then
-                            casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_${POLN}*")
-                            casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_${POLN}*")
+                            casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_\${POLN}*")
+                            casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_\${POLN}*")
                             casdaOtherDimImageMoments+=("")
                             casdaOtherDimImagePol+=(\${pol})
                             if [ "\${POL}" == "Q" ]; then
