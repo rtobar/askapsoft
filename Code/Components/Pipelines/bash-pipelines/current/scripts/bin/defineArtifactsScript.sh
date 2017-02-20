@@ -234,6 +234,9 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
         
                 for POLN in \${POL_LIST}; do
                     pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+                    TTERM=0
+                    setImageProperties cont
+                    contImage=$imageName
                     setImageProperties contcube \$pol
                     if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
                         casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
@@ -242,7 +245,7 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                             casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
                             casdaOtherDimImageTypes+=("\${weightsType}")
                         fi
-                        itsSelavyDir=\${FIELD}/selavy_\${imageName##*/}
+                        itsSelavyDir=\${FIELD}/selavy_\${contImage}
                         if [ -e \${itsSelavyDir} ]; then
                             casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_\${POLN}*")
                             casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_\${POLN}*")
