@@ -57,12 +57,18 @@ cat > ${getArtifacts} <<EOF
 #       of the 2D images
 #   * casdaOtherDimImageNames - list of non-2D FITS files to be archived
 #   * casdaOtherDimImageTypes - their corresponding image types
+#   * casdaOtherDimImageSpectra - extracted spectra from 3D cubes
+#   * casdaOtherDimImageNoise - extracted noise spectra from 3D cubes
+#   * casdaOtherDimImageMoments - extracted moment maps
+#   * casdaOtherDimImageFDF - derived Faraday Dispersion Functions
+#   * casdaOtherDimImageRMSF - derived Rotation Measure Spread Functions
+#   * casdaOtherDimImagePol - lower-case polarisation character
 #   * catNames - names of catalogue files to archived
 #   * catTypes - their corresponding catalogue types
 #   * msNames - names of measurement sets to be archived
 #   * evalNames - names of evaluation files to be archived
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -103,6 +109,12 @@ casdaTwoDimImageTypes=()
 casdaTwoDimThumbTitles=()
 casdaOtherDimImageNames=()
 casdaOtherDimImageTypes=()
+casdaOtherDimImageSpectra=()
+casdaOtherDimImageNoise=()
+casdaOtherDimImageMoments=()
+casdaOtherDimImageFDF=()
+casdaOtherDimImageRMSF=()
+casdaOtherDimImagePol=()
 
 # Variables defined from configuration file
 NOW="${NOW}"
@@ -202,6 +214,22 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                         casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
                         casdaOtherDimImageTypes+=("\${weightsType}")
                     fi
+                    itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
+                    if [ -e \${itsSelavyDir} ]; then
+                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*")
+                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*")
+                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_MOMENT}*")
+                        casdaOtherDimImageFDF+=("")
+                        casdaOtherDimImageRMSF+=("")
+                        casdaOtherDimImagePol+=("")
+                    else
+                        casdaOtherDimImageSpectra+=("")
+                        casdaOtherDimImageNoise+=("")
+                        casdaOtherDimImageMoments+=("")
+                        casdaOtherDimImageFDF+=("")
+                        casdaOtherDimImageRMSF+=("")
+                        casdaOtherDimImagePol+=("")
+                    fi
                 fi
         
                 for POLN in \${POL_LIST}; do
@@ -213,6 +241,24 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                         if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
                             casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
                             casdaOtherDimImageTypes+=("\${weightsType}")
+                        fi
+                        itsSelavyDir=\${FIELD}/selavy_\${imageName##*/}
+                        if [ -e \${itsSelavyDir} ]; then
+                            casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_${POLN}*")
+                            casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_${POLN}*")
+                            casdaOtherDimImageMoments+=("")
+                            casdaOtherDimImagePol+=(\${pol})
+                            if [ "\${POL}" == "Q" ]; then
+                                casdaOtherDimImageFDF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_FDF*")
+                                casdaOtherDimImageRMSF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_RMSF*")
+                            fi
+                        else
+                            casdaOtherDimImageSpectra+=("")
+                            casdaOtherDimImageNoise+=("")
+                            casdaOtherDimImageMoments+=("")
+                            casdaOtherDimImageFDF+=("")
+                            casdaOtherDimImageRMSF+=("")
+                            casdaOtherDimImagePol+=("")
                         fi
                     fi
                 done
