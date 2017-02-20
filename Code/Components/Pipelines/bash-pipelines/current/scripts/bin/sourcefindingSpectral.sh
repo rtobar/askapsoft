@@ -240,7 +240,7 @@ EOFINNER
                 fitsim="../\${im##*/}.fits"
                 ${fitsConvertText}
                 err=\$?
-                if [ \$err -ne 0 ];
+                if [ \$err -ne 0 ]; then
                     neterr=\$err
                 fi
             done
