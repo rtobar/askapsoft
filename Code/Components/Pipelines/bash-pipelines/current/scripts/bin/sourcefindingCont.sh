@@ -258,9 +258,10 @@ EOFINNER
         parset=temp.in
         log=$logs/convertToFITS_polSpectra_\${SLURM_JOB_ID}.log
         neterr=0
-        for im in \`ls -d\`; do 
-            casaim="../\${im##*/}"
-            fitsim="../\${im##*/}.fits"
+        for im in \`ls\`; do 
+            casaim=\${im}
+            fitsim="\${im}.fits"
+            echo "Converting \$casaim to \$fitsim" >> \$log
             ${fitsConvertText}
             err=\$?
             if [ \$err -ne 0 ]; then

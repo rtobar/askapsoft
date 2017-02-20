@@ -235,17 +235,19 @@ EOFINNER
         for dir in \$spectraDir \$momentDir \$cubeletDir; do
             cd \${dir}
             neterr=0
-            for im in \`ls -d\`; do 
-                casaim="../\${im##*/}"
-                fitsim="../\${im##*/}.fits"
+            for im in \`ls\`; do 
+                casaim=\${im}
+                fitsim="\${im}.fits"
+                echo "Converting \$casaim to \$fitsim" >> \$log
                 ${fitsConvertText}
                 err=\$?
                 if [ \$err -ne 0 ]; then
                     neterr=\$err
                 fi
             done
-            extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
+            cd ..
         done
+        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
         rm -f \$parset
     fi
 
