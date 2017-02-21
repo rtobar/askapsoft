@@ -216,9 +216,9 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                     fi
                     itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
                     if [ -e \${itsSelavyDir} ]; then
-                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*")
-                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*")
-                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*")
+                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*\${fitsSuffix}")
+                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*\${fitsSuffix}")
+                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*\${fitsSuffix}")
                         casdaOtherDimImageFDF+=("")
                         casdaOtherDimImageRMSF+=("")
                         casdaOtherDimImagePol+=("")
@@ -233,29 +233,38 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                 fi
         
                 for POLN in \${POL_LIST}; do
-                    pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
                     TTERM=0
                     setImageProperties cont
-                    contImage=$imageName
+                    contImage=\${imageName}
+                    pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
                     setImageProperties contcube \$pol
                     if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
                         casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                         casdaOtherDimImageTypes+=("\${imageType}")
-                        if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
-                            casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
-                            casdaOtherDimImageTypes+=("\${weightsType}")
-                        fi
                         itsSelavyDir=\${FIELD}/selavy_\${contImage}
                         if [ -e \${itsSelavyDir} ]; then
-                            casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_\${POLN}*")
-                            casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_\${POLN}*")
+                            casdaOtherDimImageSpectra+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_spec_\${POLN}*\${fitsSuffix}")
+                            casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_\${POLN}*\${fitsSuffix}")
                             casdaOtherDimImageMoments+=("")
                             casdaOtherDimImagePol+=(\${pol})
                             if [ "\${POL}" == "Q" ]; then
-                                casdaOtherDimImageFDF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_FDF*")
-                                casdaOtherDimImageRMSF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_RMSF*")
+                                casdaOtherDimImageFDF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_FDF*\${fitsSuffix}")
+                                casdaOtherDimImageRMSF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_RMSF*\${fitsSuffix}")
+                            else
+                                casdaOtherDimImageFDF+=("")
+                                casdaOtherDimImageRMSF+=("")
                             fi
                         else
+                            casdaOtherDimImageSpectra+=("")
+                            casdaOtherDimImageNoise+=("")
+                            casdaOtherDimImageMoments+=("")
+                            casdaOtherDimImageFDF+=("")
+                            casdaOtherDimImageRMSF+=("")
+                            casdaOtherDimImagePol+=("")
+                        fi
+                        if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
+                            casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
+                            casdaOtherDimImageTypes+=("\${weightsType}")
                             casdaOtherDimImageSpectra+=("")
                             casdaOtherDimImageNoise+=("")
                             casdaOtherDimImageMoments+=("")
