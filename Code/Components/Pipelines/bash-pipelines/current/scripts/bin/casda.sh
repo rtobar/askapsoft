@@ -142,7 +142,7 @@ image\${count}.noise.project  = ${PROJECT_ID}"
 image\${count}.FDF.filename = \${casdaOtherDimImageFDF[i]}
 image\${count}.FDF.type     = cont_fdf
 image\${count}.FDF.project  = ${PROJECT_ID}
-image\${count}.RMSF.filename = \${casdaOtherDimImageFDF[i]}
+image\${count}.RMSF.filename = \${casdaOtherDimImageRMSF[i]}
 image\${count}.RMSF.type     = cont_rmsf
 image\${count}.RMSF.project  = ${PROJECT_ID}"
         fi
