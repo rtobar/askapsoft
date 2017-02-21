@@ -718,6 +718,10 @@ Parameters for Rotation Measure Synthesis
 |                                       |                |                               | corresponding to at least I,Q,U. See :doc:`extraction` for more      |
 |                                       |                |                               | details.                                                             |
 +---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
+| Selavy.RMSynthesis.beamLog            | string         | ""                            | The filename of a beam log file (see :doc:`extraction`) that can be  |
+|                                       |                |                               | used to correct the extracted fluxes with a channel-dependent        |
+|                                       |                |                               | beam. This can incorporate the "%p" wildcard.                        |
++---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
 | Selavy.RMSynthesis.boxWidth           | int            | 5                             | The width (N) of the NxN box to be applied in the extraction of      |
 |                                       |                |                               | Stokes spectra.                                                      |
 +---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
@@ -744,10 +748,11 @@ Parameters for Rotation Measure Synthesis
 |                                       |                |                               | noise), or "uniform" (each channel has a weight of 1). Anything else |
 |                                       |                |                               | defaults to "variance".                                              |
 +---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
-| Selavy.RMSynthesis.modelType          | string         | taylor                        | The type of model used to represent the Stoks-I spectrum. This can be|
-|                                       |                |                               | either "taylor", in which case the Taylor-term parameters from the   |
+| Selavy.RMSynthesis.modelType          | string         | taylor                        | The type of model used to represent the Stokes-I spectrum. This can  |
+|                                       |                |                               | be either "taylor", in which case the Taylor-term parameters from the|
 |                                       |                |                               | imaging & component fitting are used, or "poly", in which case a     |
 |                                       |                |                               | low-order polynomial is used to model the spectrum.                  |
+|                                       |                |                               |                                                                      |
 +---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
 | Selavy.RMSynthesis.modelPolyOrder     | int            | 3                             | The order of the polynomial to use in the Stokes-I model fit. Only   |
 |                                       |                |                               | used if modelType=poly.                                              |
