@@ -247,7 +247,7 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                             casdaOtherDimImageNoise+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_noise_\${POLN}*\${fitsSuffix}")
                             casdaOtherDimImageMoments+=("")
                             casdaOtherDimImagePol+=(\${pol})
-                            if [ "\${POL}" == "Q" ]; then
+                            if [ "\${POLN}" == "Q" ]; then
                                 casdaOtherDimImageFDF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_FDF*\${fitsSuffix}")
                                 casdaOtherDimImageRMSF+=("\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}_RMSF*\${fitsSuffix}")
                             else
