@@ -318,16 +318,16 @@ for FIELD in \${FIELD_LIST}; do
 
     setImageBase cont
     contSelDir=selavy_\${imageName}
-    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.components.xml ]; then
-        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.components.xml)
+    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml)
         catTypes+=(continuum-component)
     fi
-    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.islands.xml ]; then
-        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.islands.xml)
+    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml)
         catTypes+=(continuum-island)
     fi
-    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.polarisation.xml ]; then
-        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.polarisation.xml)
+    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml)
         catTypes+=(polarisation-component)
     fi
 #    setImageBase spectral
