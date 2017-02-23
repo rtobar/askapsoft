@@ -236,22 +236,6 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                         casdaOtherDimImageRMSF+=("")
                         casdaOtherDimImagePol+=("")
                     fi
-                    itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
-                    if [ -e \${itsSelavyDir} ]; then
-                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*\${fitsSuffix}")
-                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*\${fitsSuffix}")
-                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*\${fitsSuffix}")
-                        casdaOtherDimImageFDF+=("")
-                        casdaOtherDimImageRMSF+=("")
-                        casdaOtherDimImagePol+=("")
-                    else
-                        casdaOtherDimImageSpectra+=("")
-                        casdaOtherDimImageNoise+=("")
-                        casdaOtherDimImageMoments+=("")
-                        casdaOtherDimImageFDF+=("")
-                        casdaOtherDimImageRMSF+=("")
-                        casdaOtherDimImagePol+=("")
-                    fi
                 fi
         
                 for POLN in \${POL_LIST}; do
@@ -314,10 +298,12 @@ catNames=()
 catTypes=()
 
 BEAM=all
+imageCode=restored
 for FIELD in \${FIELD_LIST}; do
 
-    setImageBase cont
+    setImageProperties cont
     contSelDir=selavy_\${imageName}
+    echo "field=\${FIELD}, imageCode=\${imageCode}, imageName=\${imageName}, selavy dir = \${contSelDir}"
     if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml ]; then
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml)
         catTypes+=(continuum-component)
@@ -330,7 +316,7 @@ for FIELD in \${FIELD_LIST}; do
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml)
         catTypes+=(polarisation-component)
     fi
-#    setImageBase spectral
+#    setImageProperties spectral
 #    specSelDir=selavy-spectral-\${imageName}
 #    if [ -e \${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml ]; then
 #        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml)
