@@ -28,13 +28,29 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-if [ $DO_SOURCE_FINDING_SPEC == true ]; then
+DO_IT=$DO_SOURCE_FINDING_SPEC 
 
-    # set imageName etc
-    imageCode=restored
-    setImageProperties spectral
-    beamlog=beamlog.${imageBase}.txt
+# set imageName etc
+imageCode=restored
+setImageProperties spectral
+beamlog=beamlog.${imageBase}.txt
 
+# Dependencies for the job
+DEP=""
+if [ "$FIELD" == "." ]; then
+    DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL_ALL"`
+elif [ $BEAM == "all" ]; then
+    DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL"`
+else
+    DEP=`addDep "$DEP" "$ID_SPECIMG_SCI"`
+fi
+
+if [ ! -e ${OUTPUT}/${imageName} ] && [ "${DEP}" == "" ]; then
+    DO_IT=false
+fi
+
+if [ "${DO_IT}" == "true" ]; then
+    
     # Define the detection thresholds in terms of flux or SNR
     if [ "${SELAVY_SPEC_FLUX_THRESHOLD}" != "" ]; then
         # Use a direct flux threshold if specified
@@ -42,7 +58,7 @@ if [ $DO_SOURCE_FINDING_SPEC == true ]; then
 Selavy.threshold = ${SELAVY_SPEC_FLUX_THRESHOLD}"
         if [ ${SELAVY_SPEC_FLAG_GROWTH} == true ] &&
                [ ${SELAVY_SPEC_GROWTH_THRESHOLD} != "" ]; then
-           thresholdPars="${thresholdPars}
+            thresholdPars="${thresholdPars}
 Selavy.flagGrowth =  ${SELAVY_SPEC_FLAG_GROWTH}
 Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_THRESHOLD}"
         fi
@@ -52,7 +68,7 @@ Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_THRESHOLD}"
 Selavy.snrCut = ${SELAVY_SPEC_SNR_CUT}"
         if [ ${SELAVY_SPEC_FLAG_GROWTH} == true ] && 
                [ ${SELAVY_SPEC_GROWTH_CUT} != "" ]; then
-           thresholdPars="${thresholdPars}
+            thresholdPars="${thresholdPars}
 Selavy.flagGrowth =  ${SELAVY_SPEC_FLAG_GROWTH}
 Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_CUT}"
         fi
@@ -98,7 +114,7 @@ ${RESERVATION_REQUEST}
 #SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
-#SBATCH --output=slurmOutput/slurm-selavy-spec-%j.out
+#SBATCH --output=$slurmOut/slurm-selavy-spec-%j.out
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
@@ -231,28 +247,25 @@ EOFINNER
     fi
 
     # Now convert the extracted spectral & moment-map artefacts to FITS
-    if [ \${doRM} == true ]; then
-        parset=temp.in
-        log=$logs/convertToFITS_spectralArtefacts_\${SLURM_JOB_ID}.log
-        for dir in \$spectraDir \$momentDir \$cubeletDir; do
-            cd \${dir}
-            neterr=0
-            for im in \`ls\`; do 
-                casaim=\${im}
-                fitsim="\${im}.fits"
-                echo "Converting \$casaim to \$fitsim" >> \$log
-                ${fitsConvertText}
-                err=\$?
-                if [ \$err -ne 0 ]; then
-                    neterr=\$err
-                fi
-            done
-            cd ..
-        done
-        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
-        rm -f \$parset
-    fi
-
+     parset=temp.in
+     log=$logs/convertToFITS_spectralArtefacts_\${SLURM_JOB_ID}.log
+     for dir in \$spectraDir \$momentDir \$cubeletDir; do
+         cd \${dir}
+         neterr=0
+         for im in \`ls\`; do 
+             casaim=\${im}
+             fitsim="\${im}.fits"
+             echo "Converting \$casaim to \$fitsim" >> \$log
+             ${fitsConvertText}
+             err=\$?
+             if [ \$err -ne 0 ]; then
+                 neterr=\$err
+             fi
+         done
+         cd ..
+     done
+     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
+     rm -f \$parset
 
 else
 
@@ -260,21 +273,9 @@ else
 
 fi
 
-
-
 EOFOUTER
 
-    # Dependencies for the job
-    DEP=""
-    if [ "$FIELD" == "." ]; then
-        DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL_ALL"`
-    elif [ $BEAM == "all" ]; then
-        DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL"`
-    else
-        DEP=`addDep "$DEP" "$ID_SPECIMG_SCI"`
-    fi
-    
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
 	ID_SOURCEFINDING_SPEC_SCI=`sbatch ${DEP} $sbatchfile | awk '{print $4}'`
 	recordJob ${ID_SOURCEFINDING_SPEC_SCI} "Run the source-finder on the science cube ${imageName} with flags \"$DEP\""
     else
@@ -283,6 +284,4 @@ EOFOUTER
 
     echo " "
 
-
-    
 fi

@@ -210,9 +210,31 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                 if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
                     casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                     casdaOtherDimImageTypes+=("\${imageType}")
+                    itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
+                    if [ -e \${itsSelavyDir} ]; then
+                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*\${fitsSuffix}")
+                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*\${fitsSuffix}")
+                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*\${fitsSuffix}")
+                        casdaOtherDimImageFDF+=("")
+                        casdaOtherDimImageRMSF+=("")
+                        casdaOtherDimImagePol+=("")
+                    else
+                        casdaOtherDimImageSpectra+=("")
+                        casdaOtherDimImageNoise+=("")
+                        casdaOtherDimImageMoments+=("")
+                        casdaOtherDimImageFDF+=("")
+                        casdaOtherDimImageRMSF+=("")
+                        casdaOtherDimImagePol+=("")
+                    fi
                     if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
                         casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
                         casdaOtherDimImageTypes+=("\${weightsType}")
+                        casdaOtherDimImageSpectra+=("")
+                        casdaOtherDimImageNoise+=("")
+                        casdaOtherDimImageMoments+=("")
+                        casdaOtherDimImageFDF+=("")
+                        casdaOtherDimImageRMSF+=("")
+                        casdaOtherDimImagePol+=("")
                     fi
                     itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
                     if [ -e \${itsSelavyDir} ]; then
@@ -295,15 +317,25 @@ BEAM=all
 for FIELD in \${FIELD_LIST}; do
 
     setImageBase cont
-    contSelDir=selavy_\${imageBase}
-    if [ -e \${FIELD}/\${contSelDir}/selavy-results.components.xml ]; then
-        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.components.xml)
+    contSelDir=selavy_\${imageName}
+    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.components.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.components.xml)
         catTypes+=(continuum-component)
     fi
-    if [ -e \${FIELD}/\${contSelDir}/selavy-results.islands.xml ]; then
-        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.islands.xml)
+    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.islands.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.islands.xml)
         catTypes+=(continuum-island)
     fi
+    if [ -e \${FIELD}/\${contSelDir}/selavy-${imageName}.polarisation.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-${imageName}.polarisation.xml)
+        catTypes+=(polarisation-component)
+    fi
+#    setImageBase spectral
+#    specSelDir=selavy-spectral-\${imageName}
+#    if [ -e \${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml ]; then
+#        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml)
+#        catTypes+=(spectralline)
+#    fi
 
 done
 ##############################
