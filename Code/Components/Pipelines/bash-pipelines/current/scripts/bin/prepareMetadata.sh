@@ -251,7 +251,7 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
             fi
         fi
         awkstr="\$1==${SB_SCIENCE}"
-        PROJECT_ID=`awk $awkstr ${schedblockfile} | awk '{split($0,a,FS); print a[NF];}'`
+        PROJECT_ID=`awk $awkstr ${sbinfo} | awk '{split($0,a,FS); print a[NF];}'`
         if [ "$PROJECT_ID" == "" ]; then
             PROJECT_ID=$BACKUP_PROJECT_ID
         fi
