@@ -34,7 +34,7 @@
 #include <string>
 
 // ASKAPsoft includes
-#include "casdaupload/TypeElementBase.h"
+#include "casdaupload/ElementBase.h"
 #include "xercesc/dom/DOM.hpp" // Includes all DOM
 #include "boost/filesystem.hpp"
 #include "Common/ParameterSet.h"
@@ -49,18 +49,21 @@ namespace pipelinetasks {
 /// an image artifact. This can be either a 1D spectrum or a moment
 /// map.
 ///
-/// This class derives from the TypeElementBase class, so that
-/// it includes the <type> tag, but does not need the <project> tag
-/// (since it inherits that of the ImageElement it derives from). It
-/// is intended as a base class, to encapsulate the key functionality
-/// of this type of element, with implemented classes deriving from
-/// this.
+/// This class derives from the ElementBase class: it requires a
+/// <type> tag, but can not use the ProjectElementBase constructor (it
+/// doesn't need the <project> tag, since it inherits that of the
+/// ImageElement it derives from, and if it doesn't have one the
+/// ProjectElementBase will throw an exception). It therefore
+/// duplicates the type functionality of TypeElementBase, but doesn't
+/// derive from it. It is intended as a base class, to encapsulate the
+/// key functionality of this type of element, with implemented
+/// classes deriving from this.
 ///
 /// A key feature of this class is the use of wildcards in the names
 /// of the files and the thumbnails, along with code to resolve these
 /// and record the number of matching files.
 
-class DerivedElementBase : public TypeElementBase {
+class DerivedElementBase : public ElementBase {
     public:
         DerivedElementBase(const LOFAR::ParameterSet &parset);
 
@@ -71,7 +74,9 @@ class DerivedElementBase : public TypeElementBase {
     void checkWildcards();
 
     protected:
-        /// The large PNG/JPG thumbnail image
+        std::string itsType;
+
+/// The large PNG/JPG thumbnail image
     boost::filesystem::path itsThumbnail;
 
     /// List of names that match the filename definition

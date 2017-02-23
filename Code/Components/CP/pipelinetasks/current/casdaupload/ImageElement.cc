@@ -76,7 +76,9 @@ ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
         std::vector<std::string> spectraList = parset.getStringVector("spectra","");
         std::vector<std::string>::iterator spec=spectraList.begin();
         for(;spec<spectraList.end();spec++){
-            itsSpectra.push_back(SpectrumElement(parset.makeSubset(*spec+".")));
+            LOFAR::ParameterSet subset=parset.makeSubset(*spec+".");
+            subset.replace("artifactparam", *spec);
+            itsSpectra.push_back(SpectrumElement(subset));
         }
     }
 
@@ -84,7 +86,9 @@ ImageElement::ImageElement(const LOFAR::ParameterSet &parset)
         std::vector<std::string> momentMapList = parset.getStringVector("momentmaps","");
         std::vector<std::string>::iterator mom=momentMapList.begin();
         for(;mom<momentMapList.end();mom++){
-            itsMomentmaps.push_back(MomentMapElement(parset.makeSubset(*mom+".")));
+            LOFAR::ParameterSet subset=parset.makeSubset(*mom+".");
+            subset.replace("artifactparam", *mom);
+            itsMomentmaps.push_back(MomentMapElement(subset));
         }
     }
     

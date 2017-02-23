@@ -35,7 +35,6 @@
 #include <glob.h>
 
 // ASKAPsoft includes
-#include "casdaupload/ProjectElementBase.h"
 #include "casdaupload/ElementBase.h"
 #include "casdaupload/CasdaFileUtils.h"
 #include "askap/AskapLogging.h"
@@ -55,7 +54,7 @@ ASKAP_LOGGER(logger, ".DerivedElementBase");
 
 
 DerivedElementBase::DerivedElementBase(const LOFAR::ParameterSet &parset)
-    : TypeElementBase(parset),
+    : ElementBase(parset),
       itsFilenameList(),
       itsThumbnailList(),
       itsNumFiles(0)
@@ -64,6 +63,13 @@ DerivedElementBase::DerivedElementBase(const LOFAR::ParameterSet &parset)
     if (itsFilepath.extension() != "." + itsFormat) {
         ASKAPTHROW(AskapError,
                    "Unsupported format image - Expect " << itsFormat << " file extension");
+    }
+    if (parset.isDefined("type")) {
+        itsType = parset.getString("type");
+    } else {
+        ASKAPTHROW(AskapError,
+                   "Type is not defined for artifact: " <<
+                   parset.getString("artifactparam"));
     }
     itsThumbnail = parset.getString("thumbnail", "");
 
