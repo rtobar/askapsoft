@@ -71,21 +71,21 @@ class DerivedElementBase : public ElementBase {
 
         void copyAndChecksum(const boost::filesystem::path& outdir) const;
 
-    void checkWildcards();
+        void checkWildcards();
 
     protected:
         std::string itsType;
 
-/// The large PNG/JPG thumbnail image
-    boost::filesystem::path itsThumbnail;
+        /// The large PNG/JPG thumbnail image
+        boost::filesystem::path itsThumbnail;
 
-    /// List of names that match the filename definition
-    std::vector<std::string> itsFilenameList;
-    /// List of thumbnails that match the itsThumbnail definition
-    std::vector<std::string> itsThumbnailList;
+        /// List of names that match the filename definition
+        std::vector<std::string> itsFilenameList;
+        /// List of thumbnails that match the itsThumbnail definition
+        std::vector<std::string> itsThumbnailList;
 
-    /// Number of files meeting image name definition
-    unsigned int itsNumFiles;
+        /// Number of files meeting image name definition
+        unsigned int itsNumFiles;
 
 };
 

@@ -82,10 +82,10 @@ void DerivedElementBase::checkWildcards()
     //     --> fills itsFilenameList
     glob_t theGlob;
     int errGlob = glob(itsFilepath.string().c_str(), 0, NULL, &theGlob);
-    ASKAPCHECK(errGlob==0, "Failure interpreting "<<itsName <<" filepath \""
+    ASKAPCHECK(errGlob == 0, "Failure interpreting " << itsName << " filepath \""
                << itsFilepath.filename().string() << "\"");
     itsNumFiles = theGlob.gl_pathc;
-    for(size_t i=0;i<itsNumFiles; i++) {
+    for (size_t i = 0; i < itsNumFiles; i++) {
         itsFilenameList.push_back(theGlob.gl_pathv[i]);
     }
     globfree(&theGlob);
@@ -93,19 +93,19 @@ void DerivedElementBase::checkWildcards()
     // glob itsThumbnail to get a list of possible names
     //     --> fills itsThumbnailList
 
-    if (itsThumbnail != "" ){
+    if (itsThumbnail != "") {
         glob_t thumbGlob;
         int errThumb = glob(itsThumbnail.string().c_str(), 0, NULL, &thumbGlob);
-        ASKAPCHECK(errThumb==0, "Failure interpreting thumbnail filepath \""
+        ASKAPCHECK(errThumb == 0, "Failure interpreting thumbnail filepath \""
                    << itsThumbnail.filename().string() << "\"");
         ASKAPCHECK(thumbGlob.gl_pathc == itsNumFiles,
-                   "Thumbnail wildcard for "<<itsName<<" produces different number of files than filename");
-        for(size_t i=0;i<thumbGlob.gl_pathc; i++) {
+                   "Thumbnail wildcard for " << itsName << " produces different number of files than filename");
+        for (size_t i = 0; i < thumbGlob.gl_pathc; i++) {
             itsThumbnailList.push_back(thumbGlob.gl_pathv[i]);
         }
         globfree(&thumbGlob);
     }
-    
+
 }
 
 xercesc::DOMElement* DerivedElementBase::toXmlElement(xercesc::DOMDocument& doc) const
@@ -129,15 +129,15 @@ xercesc::DOMElement* DerivedElementBase::toXmlElement(xercesc::DOMDocument& doc)
 void DerivedElementBase::copyAndChecksum(const boost::filesystem::path& outdir) const
 {
 
-    for(size_t i=0;i<itsFilenameList.size();i++){
+    for (size_t i = 0; i < itsFilenameList.size(); i++) {
         const boost::filesystem::path in(itsFilenameList[i]);
         const boost::filesystem::path out(outdir / in.filename());
         ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in << " using filename " << itsFilenameList[i]);
         CasdaFileUtils::copyAndChecksum(in, out);
     }
-    
-    if (itsThumbnail != "" ) {
-        for(size_t i=0;i<itsThumbnailList.size();i++){
+
+    if (itsThumbnail != "") {
+        for (size_t i = 0; i < itsThumbnailList.size(); i++) {
             const boost::filesystem::path in(itsThumbnailList[i]);
             const boost::filesystem::path out(outdir / in.filename());
             ASKAPLOG_INFO_STR(logger, "Copying and calculating checksum for " << in);
