@@ -8,8 +8,7 @@
 scratch2 Purge Policy
 =====================
 
-The ``scratch2`` 1.4PB Lustre file system at the Pawsey Centre is allocated to the ASKAP project (1 PB) and the MWA (0.4 PB). Hard quotas are not in place, as a certain amount of 
-flexibility between ASKAP and MWA usage benefits both projects so long as total usage is managed. Manually managing free space on ``scratch2`` is not practicable. Due to the configuration and characteristics 
+The ``scratch2`` 1.4PB Lustre file system at the Pawsey Centre is allocated to the ASKAP project and the MWA. Quotas are being applied from 27/2/2017, at a level of 550 TB for each of ASKAP and MWA. Manually managing free space on ``scratch2`` is not practicable. Due to the configuration and characteristics 
 of the Lustre file system, file writes can fail even if the total free space is greater than the file size required. This is primarily due to individual Lustre Object Storage Targets (OSTs) running out of space. 
 To maintain operational stability of the ``scratch2`` filesystem, and ASKAP, free space must be maintained at a reasonable level.
 
@@ -32,14 +31,14 @@ Alternative Locations for Your Files
 
 group
 `````
-The advice from Pawsey admin is that you should be placing ``scratch2`` data that you want to keep in ``/group/astronomy856/$USER``. The ``group`` filesystem has a total quota of 10TB for the astronomy856 group.
+The advice from Pawsey admin is that you should be placing ``scratch2`` data that you want to keep in ``/group/askap/$USER``. The ``group`` filesystem has a total quota of 90TB for the askap group.
 
 .. note:: Although ``/group`` is effectively a robust file system with redundancy and data recovery in place, it is not backed up. It will be upgraded to a system that is backed up later in the year when its capacity 
           is also increased. This means, at the moment, if you delete something from ``group`` once you have moved it there it cannot be recovered.
 
 **Small amounts of data** can be copied directly::
 
-    you@galaxy2> scp data.tar.gz /group/astronomy856/$USER/data.tar.gz
+    you@galaxy2> scp data.tar.gz /group/askap/$USER/data.tar.gz
     
 See the Pawsey documentation for `transferring small files`_ for more information.
 

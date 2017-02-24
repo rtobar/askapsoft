@@ -37,6 +37,7 @@ ASKAP_LOGGER(logger, ".measurementequation.imagecleaningsolver");
 #include <measurementequation/ImageCleaningSolver.h>
 #include <askap/AskapError.h>
 #include <utils/PaddingUtils.h>
+#include <utils/MultiDimArrayPlaneIter.h>
 #include <casacore/casa/Arrays/Array.h>
 #include <casacore/casa/Arrays/ArrayMath.h>
 
@@ -48,14 +49,14 @@ namespace synthesis {
 /// @brief default constructor
 ImageCleaningSolver::ImageCleaningSolver() :
    itsFractionalThreshold(0.), itsMaskingThreshold(-1.), itsPaddingFactor(1.) {}
-   
+
 /// @brief access to a fractional threshold
 /// @return current fractional threshold
 double ImageCleaningSolver::fractionalThreshold() const
 {
   return itsFractionalThreshold;
 }
-   
+
 /// @brief set a new fractional threshold
 /// @param[in] fThreshold new fractional threshold
 /// @note Assign 0. to switch this option off.
@@ -70,7 +71,7 @@ double ImageCleaningSolver::maskingThreshold() const
 {
   return itsMaskingThreshold;
 }
-   
+
 /// @brief set a new masking threshold
 /// @param[in] mThreshold new masking threshold
 /// @note Assign -1. or any negative number to revert to a default behavior of the
@@ -94,15 +95,15 @@ void ImageCleaningSolver::setPaddingFactor(float padding)
 
 /// @brief helper method to pad an image
 /// @details This method encapsulates all padding logic. In addition double to float conversion happens
-/// here. 
-/// @param[in] image input image (to be padded, with double precision at the moment) 
+/// here.
+/// @param[in] image input image (to be padded, with double precision at the moment)
 /// @return padded image converted to floats
 casa::Array<float> ImageCleaningSolver::padImage(const casa::Array<double> &image) const
 {
   casa::Array<float> result(scimath::PaddingUtils::paddedShape(image.shape(),paddingFactor()),0.);
   casa::Array<float> subImage = scimath::PaddingUtils::extract(result,paddingFactor());
   casa::convertArray<float, double>(subImage, image);
-  return result;  
+  return result;
 }
 
 /// @brief helper method to clip the edges of padded image
@@ -134,11 +135,11 @@ casa::Vector<double> ImageCleaningSolver::padDiagonal(const casa::Array<double> 
   return casa::Vector<double>(result.reform(casa::IPosition(1,result.nelements())));
 }
 
-   
+
 /// @brief helper method to pad an image
 /// @details This method encapsulates all padding logic. In addition double to float conversion happens
-/// here. 
-/// @param[in] image input padded image (with single precision at the moment) 
+/// here.
+/// @param[in] image input padded image (with single precision at the moment)
 /// @return image of original (unpadded) shape converted to double precision
 casa::Array<double> ImageCleaningSolver::unpadImage(const casa::Array<float> &image) const
 {
@@ -156,11 +157,98 @@ void ImageCleaningSolver::configure(const LOFAR::ParameterSet &parset)
 {
   ImageSolver::configure(parset);
   setPaddingFactor(parset.getFloat("padding",1.));
-  ASKAPLOG_INFO_STR(logger,"Solver padding of "<<paddingFactor()<<" will be used");       
+  ASKAPLOG_INFO_STR(logger,"Solver padding of "<<paddingFactor()<<" will be used");
 }
+/// @brief Save the dirty image as a model parameter updating the values kept internally
+/// @param[in] ip current model (to be updated)
+void ImageCleaningSolver::saveResidual(askap::scimath::Params& ip, string prefix) const
+{
 
+    
+    uint nParameters=0;
+
+    // Find all the free parameters beginning with image
+    vector<string> names(ip.completions(prefix));
+    map<string, uint> indices;
+
+    for (vector<string>::const_iterator it=names.begin(); it!=names.end(); it++)
+    {
+        string name=prefix + *it;
+        if (ip.isFree(name))
+        {
+          indices[name]=nParameters;
+          nParameters+=ip.value(name).nelements();
+        }
+
+
+    }
+    for (map<string, uint>::const_iterator indit=indices.begin(); indit !=indices.end(); indit++) {
+        ASKAPLOG_INFO_STR(logger,"param: " << indit->first);
+    }
+    ASKAPCHECK(nParameters>0, "No free or fixed parameters in ImageSolver");
+
+    for (map<string, uint>::const_iterator indit=indices.begin(); indit !=indices.end(); indit++) {
+        // Axes are dof, dof for each parameter
+        //casa::IPosition arrShape(itsParams->value(indit->first).shape());
+        for (scimath::MultiDimArrayPlaneIter planeIter(ip.value(indit->first).shape());
+        planeIter.hasMore(); planeIter.next()) {
+
+            ASKAPLOG_INFO_STR(logger, "Processing plane "<<planeIter.sequenceNumber());
+
+            ASKAPCHECK(normalEquations().normalMatrixDiagonal().count(indit->first)>0, "Diagonal not present for solution");
+            casa::Vector<double>  diag(normalEquations().normalMatrixDiagonal().find(indit->first)->second);
+
+            ASKAPCHECK(normalEquations().dataVector(indit->first).size()>0,
+            "Data vector not present for solution");
+            casa::Vector<double> dv = normalEquations().dataVector(indit->first);
+
+            ASKAPCHECK(normalEquations().normalMatrixSlice().count(indit->first)>0,
+            "PSF Slice not present");
+            casa::Vector<double> slice(normalEquations().normalMatrixSlice().find(indit->first)->second);
+
+            ASKAPCHECK(normalEquations().preconditionerSlice().count(indit->first)>0,
+            "Preconditioner Slice not present");
+            casa::Vector<double> pcf(normalEquations().preconditionerSlice().find(indit->first)->second);
+
+            if (planeIter.tag() != "") {
+                // it is not a single plane case, there is something to report
+                ASKAPLOG_INFO_STR(logger, "Processing plane "<<planeIter.sequenceNumber()<<
+                " tagged as "<<planeIter.tag());
+            }
+
+            casa::Array<float> dirtyArray = padImage(planeIter.getPlane(dv));
+            casa::Array<float> psfArray = padImage(planeIter.getPlane(slice));
+
+            // set this up if it is needed.
+            casa::Array<float> pcfArray;
+
+            if (pcf.shape() > 0) {
+    	      ASKAPDEBUGASSERT(pcf.shape() == slice.shape());
+    	      pcfArray = padImage(planeIter.getPlane(pcf));
+            }
+
+
+            // Do the preconditioning
+            doPreconditioning(psfArray,dirtyArray,pcfArray);
+
+            // Normalize by the diagonal
+            doNormalization(planeIter.getPlaneVector(diag),tol(),psfArray,dirtyArray);
+
+            ASKAPLOG_INFO_STR(logger, "Saving current PSF to model parameter");
+            // Save the new PSF in parameter class to be saved to disk later
+
+            saveArrayIntoParameter(ip,indit->first,planeIter.shape(),"psf",
+                                       psfArray,planeIter.position());
+
+
+            ASKAPLOG_INFO_STR(logger, "Saving current residual image to model parameter");
+            saveArrayIntoParameter(ip,indit->first,planeIter.shape(),"residual",
+            dirtyArray,planeIter.position());
+
+        }
+    }       // end of the code storing residual image
+}
 
 } // namespace synthesis
 
 } // namespace askap
-

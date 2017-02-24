@@ -35,19 +35,13 @@ on the fast Lustre filesystem::
 
 Retrieving the tutorial dataset
 -------------------------------
-The measurement set used in this tutorial resides on the "Commissioning Archive" and
-can be retrieved and extracted using the following commands::
+The measurement set used in this tutorial can be found on /group. You
+can copy it to your local directory::
 
-    ashell.py
-    <pawsey.offline>login
-    <pawsey.online>get /projects/ASKAP Commissioning Data/tutorials/basic1.tar
-    <pawsey.online>quit
-    tar xvf basic1.tar
-    cd basic1
+  cp -r /group/askap/askapops/tutorials/basic1 .
+  cd basic1
 
-You may notice the "get"  may stall. This is likely due to the fact the data has not been
-fetched (staged) from tape to disk. This is quite normal, and the length of the stall depends
-upon the load on the system (e.g. other users).
+You will see a single measurement set named *coarse_chan.ms*.
 
 Creating a dirty image
 ----------------------
@@ -97,7 +91,7 @@ for cimager, lets call it **dirty.in**::
 Next create a file called **dirty.sbatch**, this is a description of the batch job that
 the system will execute::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --ntasks=305
     #SBATCH --ntasks-per-node=20
     #SBATCH --time=02:00:00

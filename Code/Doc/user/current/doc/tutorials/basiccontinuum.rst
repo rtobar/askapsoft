@@ -88,23 +88,16 @@ has one measurement set, at full spectral resolution, named
 *sciencefield_SKADS.ms* (290.1GB), along with an averaged version of
 this (channels averaged to 1MHz), named *sciencefield_SKADS_coarse.ms* (8.1GB).
 
-The measurement sets reside on the "Commissioning Archive" and can be retrieved using the
-following commands::
+The datasets for this observation are located on the /group
+filesystem, and you can copy them to your local directory::
 
-    ashell.py
-    <pawsey.offline>login
-    <pawsey.online>get /projects/ASKAP Commissioning Data/tutorials/BasicContinuum.tar
-    <pawsey.online>quit
-    tar xvf BasicContinuum.tar
+  > cp -r /group/askap/askapops/tutorials/BasicContinuum .
+  > ls BasicContinuum
+  calibrator_J1934m638_forSKADS_BEAM0.ms  calibrator_J1934m638_forSKADS_BEAM3.ms  calibrator_J1934m638_forSKADS_BEAM6.ms  sciencefield_SKADS_coarseChan.ms
+  calibrator_J1934m638_forSKADS_BEAM1.ms  calibrator_J1934m638_forSKADS_BEAM4.ms  calibrator_J1934m638_forSKADS_BEAM7.ms  sciencefield_SKADS.ms
+  calibrator_J1934m638_forSKADS_BEAM2.ms  calibrator_J1934m638_forSKADS_BEAM5.ms  calibrator_J1934m638_forSKADS_BEAM8.ms
 
-You need to login with your pawsey password. Further information
-on ashell is available on the :doc:`../platform/comm_archive` page.
-    
-You may notice the **get** may stall. This is likely due to the fact the data has not been
-fetched (staged) from tape to disk. This is quite normal, and the length of the stall
-depends upon the load on the system (e.g. other users). Untarring the
-file will create a new directory *BasicContinuum* that contains the
-measurement sets.
+
 
 Calibration
 -----------
@@ -148,7 +141,7 @@ particular format of the direction string, especially the declination!*
 Save the above parset into a file named **calibrator-BEAM0.in**. To run this, we need to create
 an sbatch file, say, **calibrator-BEAM0.sbatch**::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --time=01:00:00
     #SBATCH --ntasks=1
     #SBATCH --ntasks-per-node=1
@@ -247,7 +240,7 @@ averaged MS provided, and is not in the *BasicContinuum* directory.
 Save this parset into a file named **mssplit.in**. To run this, we need to create a sbatch
 file, say, **mssplit.sbatch**::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --time=04:00:00
     #SBATCH --ntasks=1
     #SBATCH --ntasks-per-node=1
@@ -419,7 +412,7 @@ the cleaning, but it does produce a lot more images. To save clutter we'll keep 
 
 To run the imaging, we need an sbatch file - call it **clean-BEAM0.sbatch**::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --time=03:00:00
     #SBATCH --ntasks=913
     #SBATCH --ntasks-per-node=20
@@ -542,7 +535,7 @@ output images, one for each taylor term present.
 Save this parset into a file, say **linmos_image.in**, and then create an sbatch file as
 before, say, **linmos_image.sbatch**::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --time=01:00:00
     #SBATCH --ntasks=1
     #SBATCH --ntasks-per-node=1
