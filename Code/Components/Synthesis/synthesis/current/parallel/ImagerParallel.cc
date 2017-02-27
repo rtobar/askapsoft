@@ -744,7 +744,8 @@ namespace askap
 
         for (vector<string>::const_iterator it=resultimages.begin(); it
             !=resultimages.end(); it++) {
-            if ((it->find("image") == 0) || (it->find("weights") == 0) || (it->find("mask") == 0) ) {
+            if ((it->find("image") == 0) || (it->find("weights") == 0) || (it->find("mask") == 0) || (it->find("psf") == 0))
+            {
                 ASKAPLOG_INFO_STR(logger, "Saving " << *it << " with name " << *it+postfix );
                 SynthesisParamsHelper::saveImageParameter(*itsModel, *it, *it+postfix);
                 if (itsExportSensitivityImage && (it->find("weights") == 0) && (postfix == "")) {
@@ -753,21 +754,6 @@ namespace askap
             }
         }
 
-
-        { // just using this local scope for isolation
-            ASKAPDEBUGASSERT(itsSolver);
-            boost::shared_ptr<ImageCleaningSolver> image_solver = boost::dynamic_pointer_cast<ImageCleaningSolver>(itsSolver);
-            ASKAPDEBUGASSERT(image_solver);
-            image_solver->saveResidual(*itsModel);
-            resultimages=itsModel->names();
-            for (vector<string>::const_iterator it=resultimages.begin(); it!=resultimages.end(); it++) {
-                if ((it->find("psf") == 0) || (it->find("residual") == 0) ) {
-                    ASKAPLOG_INFO_STR(logger, "Saving " << *it << " with name " << *it+postfix );
-                    SynthesisParamsHelper::saveImageParameter(*itsModel, *it, *it+postfix);
-
-                }
-            }
-        }
 
         if (itsRestore && postfix == "")
         {
@@ -845,11 +831,21 @@ namespace askap
 
                     ir->solveNormalEquations(*itsModel,q);
                     // merged image should be a fixed parameter without facet suffixes
-                    resultimages=itsModel->fixedNames();
+                    resultimages=itsModel->names();
                     for (vector<string>::const_iterator ci=resultimages.begin(); ci!=resultimages.end(); ++ci) {
                         const ImageParamsHelper iph(*ci);
-                        if (!iph.isFacet() && (ci->find("image") == 0)) {
+                        if (!iph.isFacet() && ((ci->find("image") == 0)))  {
                             ASKAPLOG_INFO_STR(logger, "Saving restored image " << *ci << " with name "
+                            << *ci+restore_suffix );
+                            SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
+                        }
+                        if (!iph.isFacet() && ((ci->find("psf.image") == 0)))  {
+                            ASKAPLOG_INFO_STR(logger, "Saving restored image " << *ci << " with name "
+                            << *ci+restore_suffix );
+                            SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
+                        }
+                        if (!iph.isFacet() && ((ci->find("residual") == 0)))  {
+                            ASKAPLOG_INFO_STR(logger, "Saving residual image " << *ci << " with name "
                             << *ci+restore_suffix );
                             SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
                         }
@@ -868,17 +864,7 @@ namespace askap
                 }
 
             }
-            ASKAPLOG_INFO_STR(logger, "Writing out additional parameters made by restore solver as images");
-            vector<string> resultimages2=itsModel->names();
-            for (vector<string>::const_iterator it=resultimages2.begin(); it
-            !=resultimages2.end(); it++) {
-                // ASKAPLOG_INFO_STR(logger, "Checking "<<*it);
-                if ((it->find("psf") == 0) && (std::find(resultimages.begin(),
-                resultimages.end(),*it) == resultimages.end())) {
-                    ASKAPLOG_INFO_STR(logger, "Saving " << *it << " with name " << *it+postfix );
-                    SynthesisParamsHelper::saveImageParameter(*itsModel, *it, *it+postfix);
-                }
-            }
+            
 
         }
     }

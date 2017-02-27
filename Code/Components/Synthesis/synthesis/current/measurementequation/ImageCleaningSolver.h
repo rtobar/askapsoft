@@ -85,10 +85,7 @@ public:
     /// @param[in] parset parset's subset (should have solver.Clean or solver.Dirty removed)
     virtual void configure(const LOFAR::ParameterSet &parset);
 
-    /// @brief Save the current dirty image as a parameter
-    /// @param[in] ip current model (to be updated)
-    void saveResidual(askap::scimath::Params& ip, string prefix = string("image")) const;
-    
+
 protected:
    /// @brief helper method to pad an image
    /// @details This method encapsulates all padding logic. In addition double to float conversion happens
