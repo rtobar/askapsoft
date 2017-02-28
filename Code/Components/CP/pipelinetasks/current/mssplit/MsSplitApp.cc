@@ -38,7 +38,7 @@
 #include <utility>
 #include <limits>
 #include <stdint.h>
-
+#include <unistd.h>
 // ASKAPsoft includes
 #include "askap/AskapError.h"
 #include "askap/AskapLogging.h"
@@ -611,6 +611,7 @@ void MsSplitApp::splitMainTable(const casa::MeasurementSet& source,
     while (row < nRows) {
         // Number of rows to process for this iteration of the loop; either
         // maxSimultaneousRows or the remaining rows.
+        sleep(1);
         uInt nRowsThisIteration = min(maxSimultaneousRows, nRows - row);
         if (rowFiltersExist())
             nRowsThisIteration = mapOfRows[row];
