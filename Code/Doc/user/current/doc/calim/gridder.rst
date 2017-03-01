@@ -143,12 +143,21 @@ The following are common to all gridders:
 |                               |              |              |tolerance cannot be achieved by plane fitting.    |
 +-------------------------------+--------------+--------------+--------------------------------------------------+
 |snapshotimaging.clipping       |double        |0             |Optional clipping to avoid edge effects during    |
-|                               |              |              |image reprojection.This parameter represents the  |
+|                               |              |              |image reprojection. This parameter represents the |
 |                               |              |              |fraction of the image size (on each directional   |
 |                               |              |              |axis) which is zeroed (equally from both          |
 |                               |              |              |sides). It should be a non-negative number less   |
 |                               |              |              |than 1. Set it to 0 (default) to avoid any        |
-|                               |              |              |clipping.                                         |
+|                               |              |              |clipping. Applies to all images (image.*,         |
+|                               |              |              |residual.*, weights.*, etc.).                     |
++-------------------------------+--------------+--------------+--------------------------------------------------+
+|snapshotimaging.weightsclipping|double        |0             |Optional clipping of the weights image to avoid   |
+|                               |              |              |edge effects during image reprojection. As the    |
+|                               |              |              |general clipping mentioned above can create its   |
+|                               |              |              |own edge effects, clipping only the weights will  |
+|                               |              |              |stop edge effects from contaminating the sky model|
+|                               |              |              |during deconvolution. Thus they can be cleaned    |
+|                               |              |              |away and ignored during any linmos operation.     |
 +-------------------------------+--------------+--------------+--------------------------------------------------+
 |snapshotimaging.reprojectpsf   |bool          |false         |If true, the PSF will be reprojected and          |
 |                               |              |              |accumulated the same way as the dirty             |
