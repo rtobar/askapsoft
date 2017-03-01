@@ -88,7 +88,8 @@ The following are common to all gridders:
 |                               |              |              |padded grid. This option is mainly intended for   |
 |                               |              |              |faceting (to reduce aliasing from other facets),  |
 |                               |              |              |but will work for all gridders and in the         |
-|                               |              |              |non-faceted case                                  |
+|                               |              |              |non-faceted case. Note that at present this will  |
+|                               |              |              |damage the Wiener filter if preservecf = true.    |
 +-------------------------------+--------------+--------------+--------------------------------------------------+
 |alldatapsf                     |bool          |false         |Set to true to use all data for PSF calculations  |
 |                               |              |              |instead of just the representative feed and       |
