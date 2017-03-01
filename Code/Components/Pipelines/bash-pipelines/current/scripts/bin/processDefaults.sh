@@ -53,11 +53,13 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         DO_CONT_IMAGING=false
         DO_SELFCAL=false
         DO_APPLY_CAL_CONT=false
+        DO_APPLY_CAL_SL=false
         DO_CONTCUBE_IMAGING=false
         DO_SPECTRAL_IMAGING=false
         DO_SPECTRAL_IMSUB=false
         DO_MOSAIC=true
-        DO_SOURCE_FINDING=false
+        DO_SOURCE_FINDING_CONT=false
+        DO_SOURCE_FINDING_SPEC=false
         DO_SOURCE_FINDING_BEAMWISE=false
         DO_ALT_IMAGER=false
         #
@@ -66,9 +68,16 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         DO_STAGE_FOR_CASDA=false
     fi
 
+    # Turn off the purging of the full-resolution MS if we need to use it.
+    if [ ${DO_COPY_SL} == true ] ||
+           [ ${DO_APPLY_CAL_SL} == true ] ||
+           [ ${DO_CONT_SUB_SL} == true ] ||
+           [ ${DO_SPECTRAL_IMAGING} == true ]; then
 
+        PURGE_FULL_MS=false
 
-    
+    fi
+
     ####################
     # Define the full path of output directory
     OUTPUT="${BASEDIR}/${OUTPUT}"
@@ -82,14 +91,14 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         ln -s ${BASEDIR}/${stats} .
     fi
     cd $BASEDIR
-    
+
     ####################
     # ASKAPsoft module usage
 
     # Make use of the ASKAP module directory right now
     moduleDir="/group/askap/modulefiles"
     module use $moduleDir
-    
+
     if [ "${ASKAP_ROOT}" == "" ]; then
         # Has the user asked for a specific askapsoft module?
         if [ "$ASKAPSOFT_VERSION" != "" ]; then
@@ -145,7 +154,7 @@ module load ${currentASKAPsoftVersion}"
         askapsoftModuleCommands="$askapsoftModuleCommands
 module unload askappipeline
 module load askappipeline/${askappipelineVersion}"
-        
+
         echo " "
 
     else
@@ -153,6 +162,93 @@ module load askappipeline/${askappipelineVersion}"
         echo "Using ASKAPsoft code direct from your code tree at ASKAP_ROOT=$ASKAP_ROOT"
         echo "ASKAPsoft modules will *not* be loaded in the slurm files."
     fi
+
+    #############################
+    # CONVERSION TO FITS FORMAT
+
+    # This function returns a bunch of text in $fitsConvertText that can
+    # be pasted into an external slurm job file.
+    # The text will perform the conversion of an given CASA image to FITS
+    # format, and update the headers and history appropriately.
+    # For the most recent askapsoft versions, it will use the imageToFITS
+    # tool to do both, otherwise it will use casa to do so.
+
+    # Check whether imageToFITS is defined in askapsoft module being
+    # used
+    if [ "`which imageToFITS 2> ${tmp}/whchim2fts`" == "" ]; then
+        # Not found - use casa to do conversion        
+        fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
+if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then 
+    # The FITS version of this image doesn't exist
+
+    script=\`echo \${parset} | sed -e 's/\.in/\.py/g'\`
+    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
+    if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
+        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
+    else
+        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
+    fi
+
+    cat > \$script << EOFSCRIPT
+#!/usr/bin/env python
+
+casaimage='\${casaim}'
+fitsimage='\${fitsim}'
+
+ia.open(casaimage)
+info=ia.miscinfo()
+info['PROJECT']='${PROJECT_ID}'
+info['DATE-OBS']='${DATE_OBS}'
+info['DURATION']=${DURATION}
+info['SBID']='${SB_SCIENCE}'
+#info['INSTRUME']='${INSTRUMENT}'
+ia.setmiscinfo(info)
+imhistory=[]
+imhistory.append('Produced with ASKAPsoft version \${ASKAPSOFT_VERSION_USED}')
+imhistory.append('Produced using ASKAP pipeline version ${PIPELINE_VERSION}')
+imhistory.append('Processed with ASKAP pipelines on ${NOW_FMT}')
+ia.sethistory(origin='ASKAPsoft pipeline',history=imhistory)
+ia.tofits(outfile=fitsimage, velocity=False)
+ia.close()
+EOFSCRIPT
+
+    NCORES=1
+    NPPN=1
+    module load casa
+    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c \${script} >> \${log}
+
+fi"
+    else
+        # We can use the new imageToFITS utility to do the conversion.
+        fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
+if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
+    # The FITS version of this image doesn't exist
+
+    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
+    if [ \"${ASKAPSOFT_VERSION}\" == \"\" ]; then
+        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
+    else
+        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
+    fi
+
+    cat > \$parset << EOFINNER
+ImageToFITS.casaimage = \${casaim}
+ImageToFITS.fitsimage = \${fitsim}
+ImageToFITS.stokesLast = true
+ImageToFITS.headers = [\"project\", \"sbid\", \"date-obs\", \"duration\"]
+ImageToFITS.headers.project = ${PROJECT_ID}
+ImageToFITS.headers.sbid = ${SB_SCIENCE}
+ImageToFITS.headers.date-obs = ${DATE_OBS}
+ImageToFITS.headers.duration = ${DURATION}
+ImageToFITS.history = [\"Produced with ASKAPsoft version \${ASKAPSOFT_VERSION_USED}\", \"Produced using ASKAP pipeline version ${PIPELINE_VERSION}\", \"Processed with ASKAP pipelines on ${NOW_FMT}\"]
+EOFINNER
+    NCORES=1
+    NPPN=1
+    aprun -n \${NCORES} -N \${NPPN} imageToFITS -c \${parset} >> \${log}
+
+fi"
+    fi
+
 
     ####################
     # Slurm file headers
@@ -229,8 +325,11 @@ module load askappipeline/${askappipelineVersion}"
     if [ "$JOB_TIME_LINMOS" == "" ]; then
         JOB_TIME_LINMOS=${JOB_TIME_DEFAULT}
     fi
-    if [ "$JOB_TIME_SOURCEFINDING" == "" ]; then
-        JOB_TIME_SOURCEFINDING=${JOB_TIME_DEFAULT}
+    if [ "$JOB_TIME_SOURCEFINDING_CONT" == "" ]; then
+        JOB_TIME_SOURCEFINDING_CONT=${JOB_TIME_DEFAULT}
+    fi
+    if [ "$JOB_TIME_SOURCEFINDING_SPEC" == "" ]; then
+        JOB_TIME_SOURCEFINDING_SPEC=${JOB_TIME_DEFAULT}
     fi
     if [ "$JOB_TIME_FITS_CONVERT" == "" ]; then
         JOB_TIME_FITS_CONVERT=${JOB_TIME_DEFAULT}
@@ -241,7 +340,7 @@ module load askappipeline/${askappipelineVersion}"
     if [ "$JOB_TIME_CASDA_UPLOAD" == "" ]; then
         JOB_TIME_CASDA_UPLOAD=${JOB_TIME_DEFAULT}
     fi
-    
+
     ####################
     # Configure the list of beams to be processed
     # Lists each beam in ${BEAMS_TO_USE}
@@ -261,13 +360,13 @@ BEGIN{
   str=""
 }
 {
-  n=split(\$1,a,","); 
-  for(i=1;i<=n;i++){ 
-    n2=split(a[i],a2,"-"); 
+  n=split(\$1,a,",");
+  for(i=1;i<=n;i++){
+    n2=split(a[i],a2,"-");
     for(b=a2[1];b<=a2[n2];b++){
       str=sprintf("%s %02d",str,b);
-    } 
-  } 
+    }
+  }
 }
 END{
   print str
@@ -290,9 +389,9 @@ EOF
     done
     maxbeam=`expr $maxbeam + 1`
 
-    
+
     ####################
-    # Parameters required for continuum imaging
+    # Parameters required for science field imaging
     ####
 
     if [ $DO_SCIENCE_FIELD == true ]; then
@@ -300,7 +399,7 @@ EOF
         # Name of the MS that should be flagged by flagScience.sh
         #   This gets set differently at different stages in the scripts
         msToFlag=""
-        
+
         # Total number of channels must be exact multiple of averaging
         # width.
         # If it isn't, report an error and exit without running anything.
@@ -321,7 +420,7 @@ EOF
         if [ "${NUM_CPUS_CONTIMG_SCI}" == "" ]; then
             NUM_CPUS_CONTIMG_SCI=`echo $nchanContSci $nworkergroupsSci | awk '{print $1*$2+1}'`
         fi
-        
+
         # if we are using the new imager we need to tweak this
         if [ $DO_ALT_IMAGER == true ]; then
             NUM_CPUS_CONTIMG_SCI=`echo $nchanContSci $nworkergroupsSci $NCHAN_PER_CORE | awk '{print ($1/$3)*$2+1}'`
@@ -341,7 +440,6 @@ EOF
                [ ${SELFCAL_METHOD} != "Components" ]; then
             SELFCAL_METHOD="Cmodel"
         fi
-        ##     fi
 
         # Set the polarisation list for the continuum cubes
         if [ "${CONTCUBE_POLARISATIONS}" == "" ]; then
@@ -356,7 +454,7 @@ EOF
 
         # Set the number of cores for the continuum cube imaging. Either
         # set to the number of averaged channels + 1, or use that given in
-        # the config file, limiting to no bigger than this number 
+        # the config file, limiting to no bigger than this number
         maxContCubeCores=`expr $nchanContSci + 1`
         if [ "${NUM_CPUS_CONTCUBE_SCI}" == "" ]; then
             # User has not specified
@@ -377,7 +475,7 @@ EOF
             echo "NOTE - Reducing NUM_CPUS_CONTCUBE_LINMOS to $NUM_CPUS_CONTCUBE_SCI to match the number of cores used for imaging"
             NUM_CPUS_CONTCUBE_LINMOS=$NUM_CPUS_CONTCUBE_SCI
         fi
-        
+
         ####################
         # Parameters required for spectral-line imaging
         ####
@@ -385,10 +483,11 @@ EOF
         # Channel range to be used for spectral-line imaging
         # If user has requested a different channel range, and the
         # DO_COPY_SL flag is set, then we define a new spectral-line
-        # range of channels 
-        if [ "${CHAN_RANGE_SL_SCIENCE}" == "" ] || [ $DO_COPY_SL != true ]; then
+        # range of channels
+        if [ "${CHAN_RANGE_SL_SCIENCE}" == "" ] ||
+               [ ${DO_COPY_SL} != true ]; then
             # If this range hasn't been set, or we aren't doing the
-            # copy, then use the full channel range 
+            # copy, then use the full channel range
             CHAN_RANGE_SL_SCIENCE="1-$NUM_CHAN_SCIENCE"
         fi
         # Check that we haven't requested invalid channels
@@ -423,7 +522,7 @@ EOF
 
         ####################
         # Mosaicking parameters
-        
+
         # Fix the direction string for linmos - don't need the J2000 bit
         linmosFeedCentre=`echo $DIRECTION_SCI | awk -F',' '{printf "%s,%s]",$1,$2}'`
 
@@ -442,7 +541,33 @@ EOF
         fi
 
         ####################
-        # Source-finding - number of cores:
+        # Source finding switches
+        
+        # First check for the old DO_SOURCE_FINDING.
+        #  If present, set new source-finding switches to its value
+        #  and give a warning
+        if [ "${DO_SOURCE_FINDING}" != "" ]; then
+            DO_SOURCE_FINDING_CONT=${DO_SOURCE_FINDING}
+            DO_SOURCE_FINDING_SPEC=${DO_SOURCE_FINDING}
+            echo "WARNING - Parameter DO_SOURCE_FINDING has been deprecated."
+            echo "        - Please use DO_SOURCE_FINDING_CONT and DO_SOURCE_FINDING_SPEC."
+            echo "        - For now, these have both been set to ${DO_SOURCE_FINDING}."
+        fi
+        
+        # If DO_SOURCE_FINDING_CONT has not been set, set it to be the same as the DO_CONT_IMAGING switch
+        if [ "${DO_SOURCE_FINDING_CONT}" == "" ]; then
+            DO_SOURCE_FINDING_CONT=${DO_CONT_IMAGING}
+        fi
+        
+        # If DO_SOURCE_FINDING_SPEC has not been set, set it to be the same as the DO_SPECTRAL_IMAGING switch
+        if [ "${DO_SOURCE_FINDING_SPEC}" == "" ]; then
+            DO_SOURCE_FINDING_SPEC=${DO_SPECTRAL_IMAGING}
+        fi
+
+        ####################
+        # Continuum Source-finding
+
+        # Number of cores:
         NUM_CPUS_SELAVY=`echo $SELAVY_NSUBX $SELAVY_NSUBY | awk '{print $1*$2+1}'`
         CPUS_PER_CORE_SELAVY=${NUM_CPUS_SELAVY}
         if [ ${CPUS_PER_CORE_SELAVY} -gt 20 ]; then
@@ -451,183 +576,247 @@ EOF
 
         # If the sourcefinding flag has been set, but we aren't
         # mosaicking, turn on the beam-wise sourcefinding flag
-        if [ ${DO_SOURCE_FINDING} == true ] && [ ${DO_MOSAIC} != true ]; then
+        if [ "${DO_SOURCE_FINDING_CONT}" == "true" ] && [ "${DO_MOSAIC}" != "true" ]; then
             DO_SOURCE_FINDING_BEAMWISE=true
         fi
+        
+        if [ "${SELAVY_POL_WRITE_FDF}" != "" ]; then
+            echo "WARNING - the parameter SELAVY_POL_WRITE_FDF is deprecated"
+            echo "        - use SELAVY_POL_WRITE_COMPLEX_FDF instead (it has been set to ${SELAVY_POL_WRITE_FDF})"
+            SELAVY_POL_WRITE_COMPLEX_FDF=${SELAVY_POL_WRITE_FDF}
+        fi
+
 
         ####################
-        # Variable inputs to Self-calibration settings
+        # Spectral source-finding
+
+        # Number of cores etc
+        NUM_CPUS_SELAVY_SPEC=`echo $SELAVY_SPEC_NSUBX $SELAVY_SPEC_NSUBY $SELAVY_SPEC_NSUBZ | awk '{print $1*$2*$3+1}'`
+        if [ "${CPUS_PER_CORE_SELAVY_SPEC}" == "" ]; then
+            CPUS_PER_CORE_SELAVY_SPEC=${NUM_CPUS_SELAVY_SPEC}
+            if [ ${CPUS_PER_CORE_SELAVY_SPEC} -gt 20 ]; then
+                CPUS_PER_CORE_SELAVY_SPEC=20
+            fi
+        fi
+
+        # Check search type
+        if [ ${SELAVY_SPEC_SEARCH_TYPE} != "spectral" ] ||
+               [ ${SELAVY_SPEC_SEARCH_TYPE} != "spatial" ]; then
+            SELAVY_SPEC_SEARCH_TYPE="spectral"
+            echo "WARNING - SELAVY_SPEC_SEARCH_TYPE needs to be 'spectral' or 'spatial' - Setting to 'spectral'"
+        fi
+
+        # Check smooth type
+        if [ ${SELAVY_SPEC_FLAG_SMOOTH} == "true" ]; then
+            if [ ${SELAVY_SPEC_SMOOTH_TYPE} != "spectral" ] ||
+                   [ ${SELAVY_SPEC_SMOOTH_TYPE} != "spatial" ]; then
+                SELAVY_SPEC_SMOOTH_TYPE="spectral"
+                echo "WARNING - SELAVY_SPEC_SMOOTH_TYPE needs to be 'spectral' or 'spatial' - Setting to 'spectral'"
+            fi
+        fi
+
+        # Spatial smoothing kernel - interpret to form selavy parameters
+        if [ ${SELAVY_SPEC_FLAG_SMOOTH} == "true" ] &&
+               [ ${SELAVY_SPEC_SMOOTH_TYPE} == "spatial" ]; then
+            kernelArray=()
+            for a in `echo $SELAVY_SPEC_SPATIAL_KERNEL | sed -e 's/[][,]/ /g'`; do
+                kernelArray+=($a)
+            done
+            if [ ${#kernelArray[@]} -eq 1 ]; then
+                SELAVY_SPEC_KERN_MAJ=${kernelArray[0]}
+                SELAVY_SPEC_KERN_MIN=${kernelArray[0]}
+                SELAVY_SPEC_KERN_PA=0
+            elif [ ${#kernelArray[@]} -eq 3 ]; then
+                SELAVY_SPEC_KERN_MAJ=${kernelArray[0]}
+                SELAVY_SPEC_KERN_MIN=${kernelArray[1]}
+                SELAVY_SPEC_KERN_PA=${kernelArray[2]}
+            else
+                echo "WARNING - badly formed parameter SELAVY_SPEC_SPATIAL_KERNEL=${SELAVY_SPEC_SPATIAL_KERNEL}"
+                echo "        - turning off Selavy's spatial smoothing."
+                SELAVY_SPEC_FLAG_SMOOTH=false
+            fi
+        fi
+
+
+        ####################
+        # Variable inputs to Continuum imaging and Self-calibration settings
         #  This section takes the provided parameters and creates
         #  arrays that have a (potentially) different value for each
         #  loop of the self-cal operation.
         #  Parameters covered are the selfcal interval, the
         #  source-finding threshold, and whether normalise gains is on
         #  or not
-        if [ $DO_SELFCAL != true ]; then
-            if [ $SELFCAL_NUM_LOOPS -ne 0 ]; then
-                echo "WARNING - Self-cal not selected, so setting SELFCAL_NUM_LOOPS=0"
-            fi
-            SELFCAL_NUM_LOOPS=0
-        fi
-        expectedArrSize=`expr $SELFCAL_NUM_LOOPS + 1`
-        
-        if [ "`echo $SELFCAL_INTERVAL | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - SELFCAL_INTERVAL ($SELFCAL_INTERVAL) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            SELFCAL_INTERVAL_ARRAY=()
-            for a in `echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g'`; do
-                SELFCAL_INTERVAL_ARRAY+=($a)
-            done
-        else
-            SELFCAL_INTERVAL_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                SELFCAL_INTERVAL_ARRAY+=($SELFCAL_INTERVAL)
-            done
-        fi
-        
-        if [ "`echo $SELFCAL_SELAVY_THRESHOLD | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - SELFCAL_SELAVY_THRESHOLD ($SELFCAL_SELAVY_THRESHOLD) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            SELFCAL_SELAVY_THRESHOLD_ARRAY=()
-            for a in `echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g'`; do
-                SELFCAL_SELAVY_THRESHOLD_ARRAY+=($a)
-            done
-        else
-            SELFCAL_SELAVY_THRESHOLD_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                SELFCAL_SELAVY_THRESHOLD_ARRAY+=($SELFCAL_SELAVY_THRESHOLD)
-            done
-        fi
-        
-        if [ "`echo $SELFCAL_NORMALISE_GAINS | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - SELFCAL_NORMALISE_GAINS ($SELFCAL_NORMALISE_GAINS) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            SELFCAL_NORMALISE_GAINS_ARRAY=()
-            for a in `echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g'`; do
-                SELFCAL_NORMALISE_GAINS_ARRAY+=($a)
-            done
-        else
-            SELFCAL_NORMALISE_GAINS_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                SELFCAL_NORMALISE_GAINS_ARRAY+=($SELFCAL_NORMALISE_GAINS)
-            done
-        fi
+        if [ "${DO_CONT_IMAGING}" == "true" ]; then
 
-        if [ "`echo $CLEAN_NUM_MAJORCYCLES | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - CLEAN_NUM_MAJORCYCLES ($CLEAN_NUM_MAJORCYCLES) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            CLEAN_NUM_MAJORCYCLES_ARRAY=()
-            for a in `echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g'`; do
-                CLEAN_NUM_MAJORCYCLES_ARRAY+=($a)
-            done
-        else
-            CLEAN_NUM_MAJORCYCLES_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                CLEAN_NUM_MAJORCYCLES_ARRAY+=($CLEAN_NUM_MAJORCYCLES)
-            done
-        fi
+            expectedArrSize=`expr $SELFCAL_NUM_LOOPS + 1`
 
-        if [ "`echo $CLEAN_THRESHOLD_MAJORCYCLE | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - CLEAN_THRESHOLD_MAJORCYCLE ($CLEAN_THRESHOLD_MAJORCYCLE) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
-            for a in `echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g'`; do
-                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($a)
-            done
-        else
-            CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($CLEAN_THRESHOLD_MAJORCYCLE)
-            done
-        fi
+            if [ "${DO_SELFCAL}" == "true" ]; then
 
-        if [ "`echo $CIMAGER_MINUV | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - CIMAGER_MINUV ($CIMAGER_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            CIMAGER_MINUV_ARRAY=()
-            for a in `echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g'`; do
-                CIMAGER_MINUV_ARRAY+=($a)
-            done
-        else
-            CIMAGER_MINUV_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                CIMAGER_MINUV_ARRAY+=($CIMAGER_MINUV)
-            done
-        fi
+                if [ "`echo $SELFCAL_INTERVAL | grep "\["`" != "" ]; then
+                    # Have entered a comma-separate array in square brackets
+                    arrSize=`echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g' | wc -w`
+                    if [ $arrSize -ne $expectedArrSize ]; then
+                        echo "ERROR - SELFCAL_INTERVAL ($SELFCAL_INTERVAL) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                        exit 1
+                    fi
+                    SELFCAL_INTERVAL_ARRAY=()
+                    for a in `echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g'`; do
+                        SELFCAL_INTERVAL_ARRAY+=($a)
+                    done
+                else
+                    SELFCAL_INTERVAL_ARRAY=()
+                    for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                        SELFCAL_INTERVAL_ARRAY+=($SELFCAL_INTERVAL)
+                    done
+                fi
 
-        if [ "`echo $CCALIBRATOR_MINUV | grep "\["`" != "" ]; then
-            # Have entered a comma-separate array in square brackets
-            arrSize=`echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g' | wc -w`
-            if [ $arrSize -ne $expectedArrSize ]; then
-                echo "ERROR - CCALIBRATOR_MINUV ($CCALIBRATOR_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
-                exit 1
-            fi
-            CCALIBRATOR_MINUV_ARRAY=()
-            for a in `echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g'`; do
-                CCALIBRATOR_MINUV_ARRAY+=($a)
-            done
-        else
-            CCALIBRATOR_MINUV_ARRAY=()
-            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
-                CCALIBRATOR_MINUV_ARRAY+=($CCALIBRATOR_MINUV)
-            done
-        fi
+                if [ "`echo $SELFCAL_SELAVY_THRESHOLD | grep "\["`" != "" ]; then
+                    # Have entered a comma-separate array in square brackets
+                    arrSize=`echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g' | wc -w`
+                    if [ $arrSize -ne $expectedArrSize ]; then
+                        echo "ERROR - SELFCAL_SELAVY_THRESHOLD ($SELFCAL_SELAVY_THRESHOLD) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                        exit 1
+                    fi
+                    SELFCAL_SELAVY_THRESHOLD_ARRAY=()
+                    for a in `echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g'`; do
+                        SELFCAL_SELAVY_THRESHOLD_ARRAY+=($a)
+                    done
+                else
+                    SELFCAL_SELAVY_THRESHOLD_ARRAY=()
+                    for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                        SELFCAL_SELAVY_THRESHOLD_ARRAY+=($SELFCAL_SELAVY_THRESHOLD)
+                    done
+                fi
 
-        # Validate that all these arrays are the same length as
-        # SELFCAL_NUM_LOOPS, as long as the latter is >0
-        if [ $SELFCAL_NUM_LOOPS -gt 0 ]; then
-            arraySize=`expr $SELFCAL_NUM_LOOPS + 1`
-            if [ ${#SELFCAL_INTERVAL_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of SELFCAL_INTERVAL (${SELFCAL_INTERVAL}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+                if [ "`echo $SELFCAL_NORMALISE_GAINS | grep "\["`" != "" ]; then
+                    # Have entered a comma-separate array in square brackets
+                    arrSize=`echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g' | wc -w`
+                    if [ $arrSize -ne $expectedArrSize ]; then
+                        echo "ERROR - SELFCAL_NORMALISE_GAINS ($SELFCAL_NORMALISE_GAINS) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                        exit 1
+                    fi
+                    SELFCAL_NORMALISE_GAINS_ARRAY=()
+                    for a in `echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g'`; do
+                        SELFCAL_NORMALISE_GAINS_ARRAY+=($a)
+                    done
+                else
+                    SELFCAL_NORMALISE_GAINS_ARRAY=()
+                    for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                        SELFCAL_NORMALISE_GAINS_ARRAY+=($SELFCAL_NORMALISE_GAINS)
+                    done
+                fi
+
             fi
-            if [ ${#SELFCAL_SELAVY_THRESHOLD_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of SELFCAL_SELAVY_THRESHOLD (${SELFCAL_SELAVY_THRESHOLD}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+
+            if [ "`echo $CLEAN_NUM_MAJORCYCLES | grep "\["`" != "" ]; then
+                # Have entered a comma-separate array in square brackets
+                arrSize=`echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g' | wc -w`
+                if [ $arrSize -ne $expectedArrSize ]; then
+                    echo "ERROR - CLEAN_NUM_MAJORCYCLES ($CLEAN_NUM_MAJORCYCLES) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                    exit 1
+                fi
+                CLEAN_NUM_MAJORCYCLES_ARRAY=()
+                for a in `echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g'`; do
+                    CLEAN_NUM_MAJORCYCLES_ARRAY+=($a)
+                done
+            else
+                CLEAN_NUM_MAJORCYCLES_ARRAY=()
+                for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                    CLEAN_NUM_MAJORCYCLES_ARRAY+=($CLEAN_NUM_MAJORCYCLES)
+                done
             fi
-            if [ ${#SELFCAL_NORMALISE_GAINS_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of SELFCAL_NORMALISE_GAINS (${SELFCAL_NORMALISE_GAINS}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+
+            if [ "`echo $CLEAN_THRESHOLD_MAJORCYCLE | grep "\["`" != "" ]; then
+                # Have entered a comma-separate array in square brackets
+                arrSize=`echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g' | wc -w`
+                if [ $arrSize -ne $expectedArrSize ]; then
+                    echo "ERROR - CLEAN_THRESHOLD_MAJORCYCLE ($CLEAN_THRESHOLD_MAJORCYCLE) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                    exit 1
+                fi
+                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
+                for a in `echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g'`; do
+                    CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($a)
+                done
+            else
+                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
+                for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                    CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($CLEAN_THRESHOLD_MAJORCYCLE)
+                done
             fi
-            if [ ${#CLEAN_NUM_MAJORCYCLES_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of CLEAN_NUM_MAJORCYCLES (${CLEAN_NUM_MAJORCYCLES}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+
+            if [ "`echo $CIMAGER_MINUV | grep "\["`" != "" ]; then
+                # Have entered a comma-separate array in square brackets
+                arrSize=`echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g' | wc -w`
+                if [ $arrSize -ne $expectedArrSize ]; then
+                    echo "ERROR - CIMAGER_MINUV ($CIMAGER_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                    exit 1
+                fi
+                CIMAGER_MINUV_ARRAY=()
+                for a in `echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g'`; do
+                    CIMAGER_MINUV_ARRAY+=($a)
+                done
+            else
+                CIMAGER_MINUV_ARRAY=()
+                for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                    CIMAGER_MINUV_ARRAY+=($CIMAGER_MINUV)
+                done
             fi
-            if [ ${#CLEAN_THRESHOLD_MAJORCYCLE_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of CLEAN_THRESHOLD_MAJORCYCLE (${CLEAN_THRESHOLD_MAJORCYCLE}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+
+            if [ "`echo $CCALIBRATOR_MINUV | grep "\["`" != "" ]; then
+                # Have entered a comma-separate array in square brackets
+                arrSize=`echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g' | wc -w`
+                if [ $arrSize -ne $expectedArrSize ]; then
+                    echo "ERROR - CCALIBRATOR_MINUV ($CCALIBRATOR_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                    exit 1
+                fi
+                CCALIBRATOR_MINUV_ARRAY=()
+                for a in `echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g'`; do
+                    CCALIBRATOR_MINUV_ARRAY+=($a)
+                done
+            else
+                CCALIBRATOR_MINUV_ARRAY=()
+                for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                    CCALIBRATOR_MINUV_ARRAY+=($CCALIBRATOR_MINUV)
+                done
             fi
-            if [ ${#CIMAGER_MINUV_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of CIMAGER_MINUV (${CIMAGER_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
-            fi
-            if [ ${#CCALIBRATOR_MINUV_ARRAY[@]} -ne $arraySize ]; then
-                echo "ERROR! Size of CCALIBRATOR_MINUV (${CCALIBRATOR_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
-                exit 1
+
+            # Validate that all these arrays are the same length as
+            # SELFCAL_NUM_LOOPS, as long as the latter is >0
+            if [ $SELFCAL_NUM_LOOPS -gt 0 ]; then
+                arraySize=`expr $SELFCAL_NUM_LOOPS + 1`
+
+                if [ "${DO_SELFCAL}" == "true" ]; then
+                    if [ ${#SELFCAL_INTERVAL_ARRAY[@]} -ne $arraySize ]; then
+                        echo "ERROR! Size of SELFCAL_INTERVAL (${SELFCAL_INTERVAL}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                        exit 1
+                    fi
+                    if [ ${#SELFCAL_SELAVY_THRESHOLD_ARRAY[@]} -ne $arraySize ]; then
+                        echo "ERROR! Size of SELFCAL_SELAVY_THRESHOLD (${SELFCAL_SELAVY_THRESHOLD}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                        exit 1
+                    fi
+                    if [ ${#SELFCAL_NORMALISE_GAINS_ARRAY[@]} -ne $arraySize ]; then
+                        echo "ERROR! Size of SELFCAL_NORMALISE_GAINS (${SELFCAL_NORMALISE_GAINS}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                        exit 1
+                    fi
+                fi
+                
+                if [ ${#CLEAN_NUM_MAJORCYCLES_ARRAY[@]} -ne $arraySize ]; then
+                    echo "ERROR! Size of CLEAN_NUM_MAJORCYCLES (${CLEAN_NUM_MAJORCYCLES}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                    exit 1
+                fi
+                if [ ${#CLEAN_THRESHOLD_MAJORCYCLE_ARRAY[@]} -ne $arraySize ]; then
+                    echo "ERROR! Size of CLEAN_THRESHOLD_MAJORCYCLE (${CLEAN_THRESHOLD_MAJORCYCLE}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                    exit 1
+                fi
+                if [ ${#CIMAGER_MINUV_ARRAY[@]} -ne $arraySize ]; then
+                    echo "ERROR! Size of CIMAGER_MINUV (${CIMAGER_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                    exit 1
+                fi
+                if [ ${#CCALIBRATOR_MINUV_ARRAY[@]} -ne $arraySize ]; then
+                    echo "ERROR! Size of CCALIBRATOR_MINUV (${CCALIBRATOR_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                    exit 1
+                fi
+
             fi
 
         fi
@@ -635,3 +824,4 @@ EOF
     fi
 
 fi
+

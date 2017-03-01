@@ -112,7 +112,6 @@ for FIELD in ${FIELD_LIST}; do
             
             findScienceMSnames
             FIELDBEAM=`echo $FIELD_ID $BEAM | awk '{printf "F%02d_B%s",$1,$2}'`
-            FIELDBEAMJOB=`echo $FIELDBEAM | sed -e 's/_//g'`
 
             . ${PIPELINEDIR}/splitScience.sh
 
@@ -134,13 +133,11 @@ for FIELD in ${FIELD_LIST}; do
 
             . ${PIPELINEDIR}/applyCalContinuumScience.sh
 
-            if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
-                imageCode=restored
-                setImageProperties cont
-                . ${PIPELINEDIR}/sourcefinding.sh
-            fi
-
             . ${PIPELINEDIR}/continuumCubeImagingScience.sh
+
+            if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
+                . ${PIPELINEDIR}/sourcefindingCont.sh
+            fi
 
             . ${PIPELINEDIR}/prepareSpectralData.sh
 
@@ -148,19 +145,24 @@ for FIELD in ${FIELD_LIST}; do
 
             . ${PIPELINEDIR}/spectralImContSub.sh
             
-            FIELDBEAM=`echo $FIELD_ID | awk '{printf "F%02d",$1}'`
-            FIELDBEAMJOB=$FIELDBEAM
+            if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
+                . ${PIPELINEDIR}/sourcefindingSpectral.sh
+            fi
 
         done
 
+        FIELDBEAM=`echo $FIELD_ID | awk '{printf "F%02d",$1}'`
+
+        . ${PIPELINEDIR}/linmosCont.sh
+        . ${PIPELINEDIR}/linmosContCube.sh
         if [ $DO_ALT_IMAGER == true ]; then
             . ${PIPELINEDIR}/altLinmos.sh
         else
-            . ${PIPELINEDIR}/linmosCont.sh
-            . ${PIPELINEDIR}/linmosContCube.sh
             . ${PIPELINEDIR}/linmosSpectral.sh
         fi
         
+        # Source-finding on the mosaics created by these jobs
+        . ${PIPELINEDIR}/runMosaicSourcefinding.sh        
         cd ..
 
     fi
@@ -183,3 +185,5 @@ FIELD="."
 . ${PIPELINEDIR}/linmosFieldsContCube.sh
 . ${PIPELINEDIR}/linmosFieldsSpectral.sh
 
+# Final source-finding on the mosaics created by these jobs
+. ${PIPELINEDIR}/runMosaicSourcefinding.sh

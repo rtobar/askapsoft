@@ -32,6 +32,8 @@
 
 // ASKAPsoft includes
 #include "casdaupload/TypeElementBase.h"
+#include "casdaupload/SpectrumElement.h"
+#include "casdaupload/MomentMapElement.h"
 #include "xercesc/dom/DOM.hpp" // Includes all DOM
 #include "boost/filesystem.hpp"
 #include "Common/ParameterSet.h"
@@ -46,7 +48,9 @@ namespace pipelinetasks {
 /// CASDA. Simply a specialisation of the ProjectElementBase class,
 /// with the constructor defining the element name ("image") and
 /// format ("fits"), as well as (optionally) the filenames of large
-/// and small thumbnail images,
+/// and small thumbnail images. An ImageElement can also have a list
+/// of spectra or moment maps, each of which is described by a
+/// wildcard filename.
 class ImageElement : public TypeElementBase {
     public:
         ImageElement(const LOFAR::ParameterSet &parset);
@@ -60,6 +64,9 @@ class ImageElement : public TypeElementBase {
         boost::filesystem::path itsThumbnailLarge;
         /// The small PNG/JPG thumbnail image
         boost::filesystem::path itsThumbnailSmall;
+
+        std::vector<SpectrumElement> itsSpectra;
+        std::vector<MomentMapElement> itsMomentmaps;
 
 };
 

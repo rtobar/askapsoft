@@ -29,23 +29,46 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_FIELD_CONT=""
+ID_LINMOS_CONT_ALL=""
+
+mosaicImageList="restored altrestored image residual"
 
 DO_IT=$DO_MOSAIC
 if [ "$DO_CONT_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Get the name of the mosaicked image
-imageCode=restored
-FIELD="."
-setImageProperties cont
-
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${imageName} exists, so not running continuum mosaicking"
-    fi
+# Don't run if there is only one field
+if [ ${NUM_FIELDS} -eq 1 ]; then
     DO_IT=false
+fi
+
+if [ "${DO_MOSAIC_FIELDS}" != "true" ]; then
+    DO_IT=false
+fi
+
+if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
+    BEAM=all
+    FIELD="."
+    if [ `echo $TILE_LIST | awk '{print NF}'` -gt 1 ]; then
+        FULL_TILE_LIST="$TILE_LIST ALL"
+    else
+        FULL_TILE_LIST="ALL"
+    fi
+    for TILE in $FULL_TILE_LIST; do
+        for imageCode in ${mosaicImageList}; do
+            for((TTERM=0;TTERM<${NUM_TAYLOR_TERMS};TTERM++)); do
+                setImageProperties cont
+                if [ -e ${OUTPUT}/${imageName} ]; then
+                    if [ $DO_IT == true ]; then
+                        echo "Image ${imageName} exists, so not running continuum mosaicking"
+                    fi
+                    DO_IT=false
+                fi
+            done
+            unset TTERM
+        done
+    done
 fi
 
 if [ $DO_IT == true ]; then
@@ -82,7 +105,6 @@ SB_SCIENCE=${SB_SCIENCE}
 
 FIELD_LIST="$FIELD_LIST"
 TILE_LIST="$TILE_LIST"
-echo "Tile list = \$TILE_LIST"
 
 # If there is only one tile, only include the "ALL" case, which
 # mosaics together all fields
@@ -91,7 +113,6 @@ if [ \`echo \$TILE_LIST | awk '{print NF}'\` -gt 1 ]; then
 else
     FULL_TILE_LIST="ALL"
 fi
-echo "Full tile list = \$FULL_TILE_LIST"
 
 for THISTILE in \$FULL_TILE_LIST; do
 
@@ -107,7 +128,7 @@ for THISTILE in \$FULL_TILE_LIST; do
     done
     echo "Tile \$THISTILE has field list \$TILE_FIELD_LIST"
 
-    for imageCode in restored altrestored image residual; do 
+    for imageCode in ${mosaicImageList}; do 
     
         for((TTERM=0;TTERM<\${maxterm};TTERM++)); do
     
@@ -182,19 +203,3 @@ EOFOUTER
 
 fi
 
-
-if [ ${DO_SOURCE_FINDING} == true ]; then
-    # Run the sourcefinder on the mosaicked image.
-
-    # set the $imageBase variable to have 'linmos' in it
-    imageCode=restored
-    BEAM="all"
-    FIELD="."
-    TILE="ALL"
-    FIELDBEAM="Full"
-    FIELDBEAMJOB="Full"
-    setImageProperties cont
-
-    . ${PIPELINEDIR}/sourcefinding.sh
-
-fi

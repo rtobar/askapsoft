@@ -52,47 +52,50 @@ namespace analysis {
 
 StokesSpectrum::StokesSpectrum(const LOFAR::ParameterSet &parset,
                                std::string pol):
-    itsParset(parset),itsPol(pol)
+    itsParset(parset), itsPol(pol)
 {
     itsCubeName = parset.getString("cube", "");
     ASKAPCHECK(itsCubeName != "", "No cube name given");
 
     itsOutputBase = parset.getString("outputBase", "");
     ASKAPCHECK(itsOutputBase != "", "No output name given");
-    
-    itsStokes=scimath::PolConverter::fromString(pol);
+
+    itsBeamLog = parset.getString("beamLog", "");
 
     std::stringstream outputbase;
-    
+
+    // Define the parset used to set up the source extractor
     LOFAR::ParameterSet specParset;
-    specParset.add(LOFAR::KVpair("spectralCube",itsCubeName));
-    outputbase << itsOutputBase<<"_spec_"<<itsPol;
-    specParset.add(LOFAR::KVpair("spectralOutputBase",outputbase.str()));
+    specParset.add(LOFAR::KVpair("spectralCube", itsCubeName));
+    outputbase << itsOutputBase << "_spec_" << itsPol;
+    specParset.add(LOFAR::KVpair("spectralOutputBase", outputbase.str()));
     specParset.add(LOFAR::KVpair("spectralBoxWidth",
                                  itsParset.getInt("boxwidth", 5)));
-    specParset.add(LOFAR::KVpair("polarisation",itsPol));
-    specParset.add(LOFAR::KVpair("useDetectedPixels",false));
-    specParset.add(LOFAR::KVpair("scaleSpectraByBeam",true));
+    specParset.add(LOFAR::KVpair("polarisation", itsPol));
+    specParset.add(LOFAR::KVpair("useDetectedPixels", false));
+    specParset.add(LOFAR::KVpair("scaleSpectraByBeam", true));
+    specParset.add(LOFAR::KVpair("beamLog", itsBeamLog));
     itsSpecExtractor = new SourceSpectrumExtractor(specParset);
-    
+
+    // Define the parset used to set up the noise extractor
     LOFAR::ParameterSet noiseParset;
-    noiseParset.add(LOFAR::KVpair("spectralCube",itsCubeName));
+    noiseParset.add(LOFAR::KVpair("spectralCube", itsCubeName));
     outputbase.str("");
-    outputbase << itsOutputBase << "_noise_"<<itsPol;
-    noiseParset.add(LOFAR::KVpair("spectralOutputBase",outputbase.str()));
+    outputbase << itsOutputBase << "_noise_" << itsPol;
+    noiseParset.add(LOFAR::KVpair("spectralOutputBase", outputbase.str()));
     noiseParset.add(LOFAR::KVpair("noiseArea",
                                   itsParset.getFloat("noiseArea", 50.)));
     noiseParset.add(LOFAR::KVpair("robust",
                                   itsParset.getBool("robust", true)));
-    noiseParset.add(LOFAR::KVpair("useDetectedPixels",false));
-    noiseParset.add(LOFAR::KVpair("scaleSpectraByBeam",true));
+    noiseParset.add(LOFAR::KVpair("useDetectedPixels", false));
+    noiseParset.add(LOFAR::KVpair("scaleSpectraByBeam", true));
     itsNoiseExtractor = new NoiseSpectrumExtractor(noiseParset);
 
-    
+
 }
 
 void StokesSpectrum::extract()
-{ 
+{
 
     extractSpectrum();
 
@@ -107,9 +110,9 @@ void StokesSpectrum::extractSpectrum()
     itsSpecExtractor->extract();
     itsSpectrum = casa::Vector<float>(itsSpecExtractor->array());
     itsMedianValue = casa::median(itsSpectrum);
-    
+
     itsFrequencies = itsSpecExtractor->frequencies();
-    
+
 }
 
 void StokesSpectrum::extractNoise()
@@ -127,7 +130,7 @@ void StokesSpectrum::write()
 
     itsSpecExtractor->writeImage();
     itsNoiseExtractor->writeImage();
-    
+
 }
 
 

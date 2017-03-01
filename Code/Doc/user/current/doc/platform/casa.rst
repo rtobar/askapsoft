@@ -31,7 +31,7 @@ and start the VNC server::
 Note, you may choose any geometry you want, 1024x768 is just an example. You may wish to
 run the VNC session in full-screen mode, in which case the geometry should match your
 monitor. You will then be prompted to enter a password. Be sure to choose a secure
-password, as anyone within the iVEC network can potentially connect to your VNC server.
+password, as anyone within the Pawsey network can potentially connect to your VNC server.
 You will also be prompted to enter a *view only* password, you can answer no to this. You
 will then see output similar to the following::
 
@@ -43,7 +43,7 @@ will then see output similar to the following::
 Shortly you will be configuring your VNC client and you will need the number after the full-colon
 in the first line, in this case "1". Now the VNC server is started and is waiting for your VNC
 client to connect. You are free to use the VNC client of your choice, however as you will be
-connecting via an SSH tunnel (the VNC port is blocked at the iVEC firewall) you will want a client
+connecting via an SSH tunnel (the VNC port is blocked at the Pawsey firewall) you will want a client
 with SSH tunnelling support. On Mac OSX the VNC client "Chicken" works well.
 
 Below is a screen shot of the VNC configuration. The settings you will need to enter are:
@@ -128,3 +128,37 @@ From here you can load the module for CASA and execute CASAPY::
 
     module load casa
     aprun -b casa --nologger --log2term --nogui
+
+
+Visualisation of images on Zeus
+-------------------------------
+
+Pawsey provide facilities for remote visualisation that offer an
+alternative to using the galaxy-vis nodes. This uses a compute node on
+the zeus cluster, combined with TurboVNC and the Strudel client
+(developed by the MASSIVE team at Monash University), to provide very
+good graphical performance. Tests have shown that it is possible to
+animate through a very large (many tens of GB) spectral cube at quite
+fast frame rates.
+
+The one limitation at the moment is that the zeus cluster cannot see
+/scratch2, but only /group and /scratch. If you have access to magnus,
+you may use the associated space on /scratch, else you will need to
+copy your images to /group.
+
+Pawsey have a `detailed set of instructions
+<https://support.pawsey.org.au/documentation/display/US/Getting+started%3A+Remote+visualisation+with+Strudel>`_
+for getting set up. You will need to install both Strudel and TurboVNC
+on your local machine. Connecting this way starts a slurm job on the
+zeus cluster. Once you are set up and connected to your zeus session,
+you may want to use, say, casaviewer to view your image. In the
+terminal, do the following::
+
+  cd /path/to/my/image
+  module load virtualgl
+  module load casa
+  vglrun casaviewer myBigCube
+
+You need the **vglrun** command to go before casaviewer. This makes
+use of the virtualGL library to use the accelerator hardware on the
+zeus nodes.

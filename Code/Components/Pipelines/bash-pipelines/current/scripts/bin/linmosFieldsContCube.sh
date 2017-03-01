@@ -29,23 +29,46 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_FIELD_CONTCUBE=""
+ID_LINMOS_CONTCUBE_ALL=""
+
+mosaicImageList="restored image residual"
 
 DO_IT=$DO_MOSAIC
 if [ "$DO_CONTCUBE_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Get the name of the mosaicked image
-imageCode=restored
-FIELD="."
-setImageProperties contcube
-
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${imageName} exists, so not running continuum mosaicking"
-    fi
+# Don't run if there is only one field
+if [ ${NUM_FIELDS} -eq 1 ]; then
     DO_IT=false
+fi
+
+if [ "${DO_MOSAIC_FIELDS}" != "true" ]; then
+    DO_IT=false
+fi
+
+if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
+    BEAM=all
+    FIELD="."
+    if [ `echo $TILE_LIST | awk '{print NF}'` -gt 1 ]; then
+        FULL_TILE_LIST="$TILE_LIST ALL"
+    else
+        FULL_TILE_LIST="ALL"
+    fi
+    for TILE in $FULL_TILE_LIST; do
+        for POLN in $POL_LIST; do
+            pol=`echo $POLN | tr '[:upper:]' '[:lower:]'`
+            for imageCode in ${mosaicImageList}; do
+                setImageProperties contcube
+                if [ -e ${OUTPUT}/${imageName} ]; then
+                    if [ $DO_IT == true ]; then
+                        echo "Image ${imageName} exists, so not running continuum mosaicking"
+                    fi
+                    DO_IT=false
+                fi
+            done
+        done
+    done
 fi
 
 if [ $DO_IT == true ]; then
@@ -110,7 +133,7 @@ for THISTILE in \$FULL_TILE_LIST; do
     
         pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
     
-        for imageCode in restored image residual; do 
+        for imageCode in ${mosaicImageList}; do 
     
             imList=""
             wtList=""

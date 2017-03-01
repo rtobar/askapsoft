@@ -93,7 +93,7 @@ image\${count}.project   = ${PROJECT_ID}"
 image\${count}.thumbnail_\${size} = \${OUTPUT}/\${thumb}"
         fi
     done
-    count=\`expr \$count + 1\`
+    ((count++))
 done
 
 imageParams="\${imageParams}
@@ -104,7 +104,41 @@ for((i=0;i<\${#casdaOtherDimImageNames[@]};i++)); do
 image\${count}.filename  = \${OUTPUT}/\${casdaOtherDimImageNames[i]}
 image\${count}.type      = \${casdaOtherDimImageTypes[i]}
 image\${count}.project   = ${PROJECT_ID}"
-    count=\`expr \$count + 1\`
+    if [ "\${casdaOtherDimImageMoments[i]}" != "" ]; then
+        imageParams="\${imageParams}
+image\${count}.spectra   = [spec,noise]
+image\${count}.spec.filename = \${casdaOtherDimImageSpectra[i]}
+image\${count}.spec.type     = spectral_integrated_restored
+image\${count}.noise.filename = \${casdaOtherDimImageNoise[i]}
+image\${count}.noise.type     = spectral_noise_restored
+image\${count}.momentmaps = [mom0,mom1,mom2]
+image\${count}.mom0.filename = \`echo \${casdaOtherDimImageMoments[i]} | sed -e 's/%m/0/g'\`
+image\${count}.mom0.type     = spectral_restored_mom0
+image\${count}.mom1.filename = \`echo \${casdaOtherDimImageMoments[i]} | sed -e 's/%m/1/g'\`
+image\${count}.mom1.type     = spectral_restored_mom1
+image\${count}.mom2.filename = \`echo \${casdaOtherDimImageMoments[i]} | sed -e 's/%m/2/g'\`
+image\${count}.mom2.type     = spectral_restored_mom2"
+    elif [ "\${casdaOtherDimImageSpectra[i]}" != "" ]; then
+        if [ "\${casdaOtherDimImageFDF[i]}" != "" ]; then
+            speclist="[spec,noise,FDF,RMSF]"
+        else
+            speclist="[spec,noise]"
+        fi
+        imageParams="\${imageParams}
+image\${count}.spectra = \${speclist}
+image\${count}.spec.filename = \${casdaOtherDimImageSpectra[i]}
+image\${count}.spec.type     = cont_restored_\${casdaOtherDimImagePol[i]}
+image\${count}.noise.filename = \${casdaOtherDimImageNoise[i]}
+image\${count}.noise.type     = cont_noise_\${casdaOtherDimImagePol[i]}"
+        if [ "\${casdaOtherDimImageFDF[i]}" != "" ]; then
+            imageParams="\${imageParams}
+image\${count}.FDF.filename = \${casdaOtherDimImageFDF[i]}
+image\${count}.FDF.type     = cont_fdf
+image\${count}.RMSF.filename = \${casdaOtherDimImageRMSF[i]}
+image\${count}.RMSF.type     = cont_rmsf"
+        fi
+    fi
+    ((count++))
 done
 imageArtifacts=\`echo \${imageArtifacts[@]} | sed -e 's/ /,/g'\`
 

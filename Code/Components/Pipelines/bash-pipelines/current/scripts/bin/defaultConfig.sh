@@ -71,7 +71,8 @@ JOB_TIME_SPECTRAL_CONTSUB=""
 JOB_TIME_SPECTRAL_IMAGE=""
 JOB_TIME_SPECTRAL_IMCONTSUB=""
 JOB_TIME_LINMOS=""
-JOB_TIME_SOURCEFINDING=""
+JOB_TIME_SOURCEFINDING_CONT=""
+JOB_TIME_SOURCEFINDING_SPEC=""
 JOB_TIME_FITS_CONVERT=""
 JOB_TIME_THUMBNAILS=""
 JOB_TIME_CASDA_UPLOAD=""
@@ -169,7 +170,9 @@ DO_CONTCUBE_IMAGING=false
 DO_SPECTRAL_IMAGING=false
 DO_SPECTRAL_IMSUB=false
 DO_MOSAIC=true
-DO_SOURCE_FINDING=true
+DO_MOSAIC_FIELDS=true
+DO_SOURCE_FINDING_CONT=""
+DO_SOURCE_FINDING_SPEC=""
 DO_SOURCE_FINDING_BEAMWISE=false
 DO_ALT_IMAGER=false
 #
@@ -215,6 +218,8 @@ NUM_CPUS_CBPCAL=100
 # Value for the calibrate.scalenoise parameter for applying the
 # bandpass solution
 BANDPASS_SCALENOISE=false
+# Limit the data selection for bandpass solving to a minimum UV distance [m]
+BANDPASS_MINUV=0
 
 # Smoothing of the bandpass table - this is achieved by the ACES tool
 # plot_caltable.py. This tool also plots the cal solutions
@@ -304,6 +309,11 @@ FLAG_THRESHOLD_AMPLITUDE_SCIENCE_LOW=0.0
 ANTENNA_FLAG_SCIENCE=""
 # Whether to flag autocorrelations for the science data
 FLAG_AUTOCORRELATION_SCIENCE=false
+
+# Whether to remove the full-resolution dataset after averaging
+#     (We set this to true by default, but if spectral imaging is
+#      desired we change to false)
+PURGE_FULL_MS=true
 
 # Run flagging after averaging, as well as after bandpass application
 FLAG_AFTER_AVERAGING=true
@@ -658,14 +668,18 @@ LINMOS_PSF_REF=0
 LINMOS_CUTOFF=0.2
 
 ##############################
-# Selavy source finder
+# Selavy source finder - continuum
 #
 # Signal-to-noise ratio threshold
 SELAVY_SNR_CUT=5
+# Flux threshold - leave blank to use SNR
+SELAVY_FLUX_THRESHOLD=""
 # Whether to grow to a lower threshold
 SELAVY_FLAG_GROWTH=true
 # Growth threshold, in SNR
 SELAVY_GROWTH_CUT=3
+# Growth flux threshold - leave blank if using SNR
+SELAVY_GROWTH_THRESHOLD=""
 # Whether to use a variable threshold
 SELAVY_VARIABLE_THRESHOLD=true
 # Half-size of the box used to calculate the local threshold
@@ -674,6 +688,102 @@ SELAVY_BOX_SIZE=50
 SELAVY_NSUBX=6
 SELAVY_NSUBY=3
 
+
+##############################
+# Selavy source finder - polarisation
+#
+# Whether to include the RM synthesis in the continuum sourcefinding
+DO_RM_SYNTHESIS=true
+# Output base name for the spectra
+SELAVY_POL_OUTPUT_BASE=pol
+# Whether to write the spectra as individual files
+SELAVY_POL_WRITE_SPECTRA=true
+# Whether to write the Faraday Dispersion Function as a complex-valued
+# spectrum (true) or as two real-valued spectra for amplitude & phase
+SELAVY_POL_WRITE_COMPLEX_FDF=false
+# The full width of the box used in spectral extraction
+SELAVY_POL_BOX_WIDTH=5
+# The area (in multiples of the beam) for the noise extraction
+SELAVY_POL_NOISE_AREA=50
+# Whether to use robust statistics in the noise calculation
+SELAVY_POL_ROBUST_STATS=true
+# The type of weighting in the RM synthesis
+SELAVY_POL_WEIGHT_TYPE=variance
+# The type of Stokes-I model spectrum
+SELAVY_POL_MODEL_TYPE=taylor
+# For SELAVY_POL_MODEL_TYPE=poly, this is the order of the polynomial
+SELAVY_POL_MODEL_ORDER=3
+# The signal-to-noise threshold to accept a RM synthesis detection
+SELAVY_POL_SNR_THRESHOLD=8
+# The signal-to-noise threshold above which debiasing is performed
+SELAVY_POL_DEBIAS_THRESHOLD=5
+# The number of Faraday depth channels in RM synthesis
+SELAVY_POL_NUM_PHI_CHAN=30
+# Width of the Faraday depth channels [rad/m2]
+SELAVY_POL_DELTA_PHI=5
+# Central Faraday depth of the FDF
+SELAVY_POL_PHI_ZERO=0
+
+
+##############################
+# Selavy source finder - spectral-line
+#
+# Allow user to specify number of cores per node. If blank, we work it
+# out based on number of requested cores
+CPUS_PER_CORE_SELAVY_SPEC=""
+# Signal-to-noise ratio threshold
+SELAVY_SPEC_SNR_CUT=5
+# Flux threshold - leave blank to use SNR
+SELAVY_SPEC_FLUX_THRESHOLD=""
+# Whether to grow to a lower threshold
+SELAVY_SPEC_FLAG_GROWTH=true
+# Growth threshold, in SNR
+SELAVY_SPEC_GROWTH_CUT=3
+# Growth flux threshold - leave blank if using SNR
+SELAVY_SPEC_GROWTH_THRESHOLD=""
+#
+# Preprocessing
+# Smoothing:
+SELAVY_SPEC_FLAG_SMOOTH=false
+# Type of smoothing - 'spectral' or 'spatial'
+SELAVY_SPEC_SMOOTH_TYPE=spectral
+# Spectral smoothing hanning width (channels)
+SELAVY_SPEC_HANN_WIDTH=5
+# Spatial smoothing Gaussian kernel - either a single value ("3") or a
+# vector of three values ("[4,3,45]")
+SELAVY_SPEC_SPATIAL_KERNEL=3
+# Wavelet reconstruction
+SELAVY_SPEC_FLAG_WAVELET=false
+# Dimension to do the wavelet reconstruction
+SELAVY_SPEC_RECON_DIM=1
+# Signal-to-noise for wavelet thresholding 
+SELAVY_SPEC_RECON_SNR=4
+# Minimum scale for inclusion in reconstruction (1=lowest)
+SELAVY_SPEC_RECON_SCALE_MIN=1
+# Maximum scale for inclusion in reconstruction (0 means all scales)
+SELAVY_SPEC_RECON_SCALE_MAX=0
+
+# Type of searching to be done - 'spectral' or 'spatial'
+SELAVY_SPEC_SEARCH_TYPE=spectral
+# Whether to use a variable threshold
+SELAVY_SPEC_VARIABLE_THRESHOLD=false
+# Half-size of the box used to calculate the local threshold
+SELAVY_SPEC_BOX_SIZE=50
+# How the processors subdivide the image
+SELAVY_SPEC_NSUBX=6
+SELAVY_SPEC_NSUBY=3
+SELAVY_SPEC_NSUBZ=1
+#
+# Limits on sizes of reported sources
+SELAVY_SPEC_MIN_PIX=5
+SELAVY_SPEC_MIN_CHAN=5
+SELAVY_SPEC_MAX_CHAN=2592
+#
+# Base names for various extracted data products
+SELAVY_SPEC_BASE_SPECTRUM=spectrum
+SELAVY_SPEC_BASE_NOISE=noiseSpectrum
+SELAVY_SPEC_BASE_MOMENT="moment%m"
+SELAVY_SPEC_BASE_CUBELET=cubelet
 
 ###############################
 # Archiving-related parameters

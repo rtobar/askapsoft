@@ -31,24 +31,27 @@
 
 ID_LINMOS_SPECTRAL=""
 
+mosaicImageList="restored image residual"
+
 DO_IT=$DO_MOSAIC
 if [ "$DO_SPECTRAL_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Get the name of the mosaicked image
-imageCode=restored
-BEAM=all
-setImageProperties spectral
-
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${imageName} exists, so not running continuum mosaicking"
-    fi
-    DO_IT=false
+if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
+    BEAM=all
+    for imageCode in ${mosaicImageList}; do
+        setImageProperties spectral
+        if [ -e ${OUTPUT}/${imageName} ]; then
+            if [ $DO_IT == true ]; then
+                echo "Image ${imageName} exists, so not running continuum mosaicking"
+            fi
+            DO_IT=false
+        fi
+    done
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
         reference="# No reference image or offsets, as we take the image centres"
@@ -60,9 +63,10 @@ linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 ${LINMOS_BEAM_OFFSETS}"
     fi
 
+    for imCode in ${mosaicImageList}; do
 
-    setJob linmosSpectral linmosS
-    cat > $sbatchfile <<EOFOUTER
+        setJob linmosSpectral_${imCode} linmosS${imcode}
+        cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -89,29 +93,32 @@ cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
 FIELD=${FIELD}
 
-for imageCode in restored image residual; do
+imageCode=${imCode}
 
-    beamList=""
-    for BEAM in ${BEAMS_TO_USE}; do
-        setImageProperties spectral
-        if [ -e \${imageName} ]; then
-            if [ "\${beamList}" == "" ]; then
-                beamList="\${imageName}"
-            else
-                beamList="\${beamList},\${imageName}"
-            fi
+beamList=""
+for BEAM in ${BEAMS_TO_USE}; do
+    setImageProperties spectral
+    if [ -e \${imageName} ]; then
+        if [ "\${beamList}" == "" ]; then
+            beamList="\${imageName}"
+        else
+            beamList="\${beamList},\${imageName}"
         fi
-    done
+    fi
+done
 
-    jobCode=${jobname}_\${imageCode}
+jobCode=${jobname}_\${imageCode}
 
-    if [ "\${beamList}" != "" ]; then
-        BEAM=all
-        setImageProperties spectral
-        echo "Mosaicking \${beamList} to form \${imageName}"
-        parset=${parsets}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-        log=${logs}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-        cat > \${parset} << EOFINNER
+if [ "\${beamList}" != "" ]; then
+    BEAM=all
+    setImageProperties spectral
+    if [ "\${imageCode}" != "restored" ]; then
+        weightsImage="\${weightsImage}.\${imageCode}"
+    fi
+    echo "Mosaicking \${beamList} to form \${imageName}"
+    parset=${parsets}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
+    log=${logs}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
+    cat > \${parset} << EOFINNER
 linmos.names            = [\${beamList}]
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
@@ -122,32 +129,33 @@ linmos.psfref           = ${LINMOS_PSF_REF}
 linmos.cutoff           = ${LINMOS_CUTOFF}
 EOFINNER
 
-        NCORES=${NUM_CPUS_SPECTRAL_LINMOS}
-        NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
-        aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
-        err=\$?
-        for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-            rejuvenate \${im}
-        done
-        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
-        if [ \$err != 0 ]; then
-            exit \$err
-        fi
-    else
-        echo "WARNING - no good images were found for mosaicking image type '\${imageCode}'!"
+    NCORES=${NUM_CPUS_SPECTRAL_LINMOS}
+    NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
+    aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
+    err=\$?
+    for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
+        rejuvenate \${im}
+    done
+    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
+    if [ \$err != 0 ]; then
+        exit \$err
     fi
-done
+else
+    echo "WARNING - no good images were found for mosaicking image type '\${imageCode}'!"
+fi
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_SPECIMG=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_SPECIMG} "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
-        FULL_LINMOS_SPECTRAL_DEP=`addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECIMG}"`
-    else
-	echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
-    fi
+        if [ $SUBMIT_JOBS == true ]; then
+            DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
+	    ID_LINMOS_SPECTRAL=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
+	    recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+            FULL_LINMOS_SPECTRAL_DEP=`addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECTRAL}"`
+        else
+	    echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
+        fi
+        
+        echo " "
 
-    echo " "
-
+    done
+    
 fi

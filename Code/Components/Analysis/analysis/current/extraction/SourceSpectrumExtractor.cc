@@ -103,13 +103,13 @@ void SourceSpectrumExtractor::setBeamScale()
         ASKAPLOG_DEBUG_STR(logger, "About to find beam scale for Stokes " << itsCurrentStokes << " and image " << itsInputCube);
 
         if (itsFlagDoScale) {
-            
+
             if (this->openInput()) {
 
                 std::vector< casa::Vector<Quantum<Double> > > beamvec;
 
                 casa::Vector<Quantum<Double> >
-                    inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
+                inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
 
                 ASKAPLOG_DEBUG_STR(logger, "Setting beam scaling factor. BeamLog=" <<
                                    itsBeamLog << ", image beam = " << inputBeam);
@@ -124,7 +124,18 @@ void SourceSpectrumExtractor::setBeamScale()
                         ASKAPLOG_DEBUG_STR(logger, "Beam for input cube = " << inputBeam);
                     }
                 } else {
-                    accessors::BeamLogger beamlog(itsBeamLog);
+                    std::string beamlogfile = itsBeamLog;
+                    if (itsBeamLog.find("%p") != std::string::npos) {
+                        // the beam log has a "%p" string, meaning
+                        // polarisation substitution is possible
+                        casa::Stokes stokes;
+                        casa::String stokesname(stokes.name(itsCurrentStokes));
+                        stokesname.downcase();
+                        ASKAPLOG_DEBUG_STR(logger, "Input beam log: replacing \"%p\" with " <<
+                                           stokesname.c_str() << " in " << beamlogfile);
+                        beamlogfile.replace(beamlogfile.find("%p"), 2, stokesname.c_str());
+                    }
+                    accessors::BeamLogger beamlog(beamlogfile);
                     beamlog.read();
                     beamvec = beamlog.beamlist();
 
@@ -143,18 +154,18 @@ void SourceSpectrumExtractor::setBeamScale()
 
                         int dirCoNum = itsInputCoords.findCoordinate(casa::Coordinate::DIRECTION);
                         casa::DirectionCoordinate
-                            dirCoo = itsInputCoords.directionCoordinate(dirCoNum);
+                        dirCoo = itsInputCoords.directionCoordinate(dirCoNum);
                         double fwhmMajPix = beamvec[i][0].getValue(dirCoo.worldAxisUnits()[0]) /
-                            fabs(dirCoo.increment()[0]);
+                                            fabs(dirCoo.increment()[0]);
                         double fwhmMinPix = beamvec[i][1].getValue(dirCoo.worldAxisUnits()[1]) /
-                            fabs(dirCoo.increment()[1]);
+                                            fabs(dirCoo.increment()[1]);
 
                         if (itsFlagUseDetection) {
                             double bpaDeg = beamvec[i][2].getValue("deg");
                             duchamp::DuchampBeam beam(fwhmMajPix, fwhmMinPix, bpaDeg);
                             itsBeamScaleFactor[itsCurrentStokes].push_back(beam.area());
                             if (itsBeamLog == "") {
-                                ASKAPLOG_DEBUG_STR(logger, "Stokes "<< itsCurrentStokes << " has beam scale factor = " <<
+                                ASKAPLOG_DEBUG_STR(logger, "Stokes " << itsCurrentStokes << " has beam scale factor = " <<
                                                    itsBeamScaleFactor[itsCurrentStokes] << " using beam of " <<
                                                    fwhmMajPix << "x" << fwhmMinPix);
                             }
@@ -211,7 +222,7 @@ void SourceSpectrumExtractor::extract()
         itsCurrentStokes = itsStokesList[stokes];
         itsInputCube = itsCubeStokesMap[itsCurrentStokes];
         ASKAPLOG_INFO_STR(logger, "Extracting spectrum for Stokes " << itsCurrentStokes
-                          << " from image \""<<itsInputCube<<"\".");
+                          << " from image \"" << itsInputCube << "\".");
         this->defineSlicer();
         if (this->openInput()) {
             casa::Stokes stk;
@@ -221,7 +232,7 @@ void SourceSpectrumExtractor::extract()
                               " using slicer " << itsSlicer <<
                               " and Stokes " << stk.name(itsCurrentStokes));
 
-            const boost::shared_ptr<SubImage<Float> >
+            boost::shared_ptr<SubImage<Float> >
             sub(new SubImage<Float>(*itsInputCubePtr, itsSlicer));
 
             ASKAPASSERT(sub->size() > 0);
@@ -270,7 +281,6 @@ void SourceSpectrumExtractor::extract()
                     }
                 }
             }
-
             this->closeInput();
         } else {
             ASKAPLOG_ERROR_STR(logger, "Could not open image \"" << itsInputCube << "\".");

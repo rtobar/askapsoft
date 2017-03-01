@@ -88,13 +88,15 @@ function getAltPrefix()
 # and the second is the shorter one used in the slurm job name and the
 # extractStats results
 #  Usage:  setJob <description> <description2>
-#  Requires:  $slurms, $FIELDBEAM, $FIELDBEAMJOB
+#  Requires:  $slurms, $FIELDBEAM
 #  Sets:  sbatchfile=$slurms/description_FIELDBEAM.sbatch
-#         jobname=description2_FIELDBEAMJOB
+#         jobname=description2_$fieldbeamjob
+#   where fieldbeamjob removes any '_' characters from FIELDBEAM
 function setJob()
 {
     sbatchfile="$slurms/$1_${FIELDBEAM}.sbatch"
-    jobname="$2_${FIELDBEAMJOB}"
+    fieldbeamjob=`echo $FIELDBEAM | sed -e 's/_//g'`
+    jobname="$2_${fieldbeamjob}"
 }
 
 
@@ -164,6 +166,7 @@ function getTile()
 #  * TILE (only for FIELD="." - special value of "ALL" means the full
 #          mosaic over all fields/tiles)
 #  * BEAM
+#  * imageCode (one of restored|altrestored|image|residual|psf|psfimage)
 #  * pol (lower case polarisation i/q/u/v etc)
 #  * TTERM (Taylor term: 0,1,2,...) Can be blank ("" ie. unset), which
 #     defaults to zero
@@ -223,7 +226,8 @@ function setImageProperties()
     fi
     
     weightsImage="weights.${imageBase}${imSuffix}"
-    weightsType="${typebase}_weights_$typeSuffix"
+    #    weightsType="${typebase}_weights_$typeSuffix"
+    weightsType="${typebase}_sensitivity_$typeSuffix"
     weightsLabel="Weights image, $beamSuffix"
     if [ "$imageCode" == "restored" ]; then
         imageName="image.${imageBase}${imSuffix}.restored"
@@ -494,99 +498,6 @@ function dataSelectionSelfcalLoop()
     fi
 }
 
-#############################
-# CONVERSION TO FITS FORMAT
-
-# This function returns a bunch of text in $fitsConvertText that can
-# be pasted into an external slurm job file.
-# The text will perform the conversion of an given CASA image to FITS
-# format, and update the headers and history appropriately.
-# For the most recent askapsoft versions, it will use the imageToFITS
-# tool to do both, otherwise it will use casa to do so.
-function convertToFITStext()
-{
-
-    # Check whether imageToFITS is defined in askapsoft module being
-    # used
-    if [ "`which imageToFITS 2> ${tmp}/whchim2fts`" == "" ]; then
-        # Not found - use casa to do conversion        
-        fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
-if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
-    # The FITS version of this image doesn't exist
-
-    script=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.py
-    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
-    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
-    if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
-        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
-    else
-        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
-    fi
-
-    cat > \$script << EOFSCRIPT
-#!/usr/bin/env python
-
-casaimage='\${casaim}'
-fitsimage='\${fitsim}'
-
-ia.open(casaimage)
-info=ia.miscinfo()
-info['PROJECT']='${PROJECT_ID}'
-info['DATE-OBS']='${DATE_OBS}'
-info['DURATION']=${DURATION}
-info['SBID']='${SB_SCIENCE}'
-#info['INSTRUME']='${INSTRUMENT}'
-ia.setmiscinfo(info)
-imhistory=[]
-imhistory.append('Produced with ASKAPsoft version \${ASKAPSOFT_VERSION_USED}')
-imhistory.append('Produced using ASKAP pipeline version ${PIPELINE_VERSION}')
-imhistory.append('Processed with ASKAP pipelines on ${NOW_FMT}')
-ia.sethistory(origin='ASKAPsoft pipeline',history=imhistory)
-ia.tofits(outfile=fitsimage, velocity=False)
-ia.close()
-EOFSCRIPT
-
-    aprun -n 1 python \$script > \$log
-    NCORES=1
-    NPPN=1
-    module load casa
-    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c \${script} > \${log}
-
-fi"
-    else
-        # We can use the new imageToFITS utility to do the conversion.
-        fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
-if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
-    # The FITS version of this image doesn't exist
-
-    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
-    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
-    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
-    if [ \"${ASKAPSOFT_VERSION}\" == \"\" ]; then
-        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
-    else
-        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
-    fi
-
-    cat > \$parset << EOFINNER
-ImageToFITS.casaimage = \${casaim}
-ImageToFITS.fitsimage = \${fitsim}
-ImageToFITS.stokesLast = true
-ImageToFITS.headers = [\"project\", \"sbid\", \"date-obs\", \"duration\"]
-ImageToFITS.headers.project = ${PROJECT_ID}
-ImageToFITS.headers.sbid = ${SB_SCIENCE}
-ImageToFITS.headers.date-obs = ${DATE_OBS}
-ImageToFITS.headers.duration = ${DURATION}
-ImageToFITS.history = [\"Produced with ASKAPsoft version \${ASKAPSOFT_VERSION_USED}\", \"Produced using ASKAP pipeline version ${PIPELINE_VERSION}\", \"Processed with ASKAP pipelines on ${NOW_FMT}\"]
-EOFINNER
-    NCORES=1
-    NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} imageToFITS -c \${parset} > \${log}
-
-fi"
-    fi
-    
-}
 
 ##############################
 # BEAM FOOTPRINTS AND CENTRES

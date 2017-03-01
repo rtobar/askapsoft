@@ -35,19 +35,13 @@ on the fast Lustre filesystem::
 
 Retrieving the tutorial dataset
 -------------------------------
-The measurement set used in this tutorial resides on the "Commissioning Archive" and
-can be retrieved and extracted using the following commands::
+The measurement set used in this tutorial can be found on /group. You
+can copy it to your local directory::
 
-    ashell.py
-    <ivec.offline>login
-    <ivec.online>get /projects/ASKAP Commissioning Data/tutorials/basic1.tar
-    <ivec.online>quit
-    tar xvf basic1.tar
-    cd basic1
+  cp -r /group/askap/askapops/tutorials/basic1 .
+  cd basic1
 
-You may notice the "get"  may stall. This is likely due to the fact the data has not been
-fetched (staged) from tape to disk. This is quite normal, and the length of the stall depends
-upon the load on the system (e.g. other users).
+You will see a single measurement set named *coarse_chan.ms*.
 
 Creating a dirty image
 ----------------------
@@ -97,7 +91,7 @@ for cimager, lets call it **dirty.in**::
 Next create a file called **dirty.sbatch**, this is a description of the batch job that
 the system will execute::
 
-    #!/usr/bin/env bash
+    #!/bin/bash -l
     #SBATCH --ntasks=305
     #SBATCH --ntasks-per-node=20
     #SBATCH --time=02:00:00
@@ -184,18 +178,24 @@ If you have `CASA`_ installed on your desktop computer you may download and visu
 these images with *casaviewer*. First copy the file from the /scratch2 filesystem to your
 desktop computer::
 
-    scp -r galaxydata.ivec.org:/scratch2/askap/<USERID>/introtutorial/image.i.dirty.restored .
-    scp -r galaxydata.ivec.org:/scratch2/askap/<USERID>/introtutorial/psf.i.dirty .
-    scp -r galaxydata.ivec.org:/scratch2/askap/<USERID>/introtutorial/sensitivity.i.dirty .
-    scp -r galaxydata.ivec.org:/scratch2/askap/<USERID>/introtutorial/weights.i.dirty .
+    scp -r hpc-data.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/image.i.dirty.restored .
+    scp -r hpc-data.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/psf.i.dirty .
+    scp -r hpc-data.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/sensitivity.i.dirty .
+    scp -r hpc-data.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/weights.i.dirty .
 
-The string <USERID> needs to be replaced with your iVEC userid. Alternatively, you may wish to use
+The string <USERID> needs to be replaced with your Pawsey userid. Alternatively, you may wish to use
 the BBCP program for faster data transfer if you have it installed::
 
-    bbcp -z -P 10 -s 16 -w 2M -r galaxy-data1.pawsey.ivec.org:/scratch2/askap/<USERID>/introtutorial/image.i.dirty.restored .
-    bbcp -z -P 10 -s 16 -w 2M -r galaxy-data1.pawsey.ivec.org:/scratch2/askap/<USERID>/introtutorial/psf.i.dirty .
-    bbcp -z -P 10 -s 16 -w 2M -r galaxy-data1.pawsey.ivec.org:/scratch2/askap/<USERID>/introtutorial/sensitivity.i.dirty .
-    bbcp -z -P 10 -s 16 -w 2M -r galaxy-data1.pawsey.ivec.org:/scratch2/askap/<USERID>/introtutorial/weights.i.dirty .
+    bbcp -z -P 10 -s 16 -w 2M -r hpc-data1.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/image.i.dirty.restored .
+    bbcp -z -P 10 -s 16 -w 2M -r hpc-data1.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/psf.i.dirty .
+    bbcp -z -P 10 -s 16 -w 2M -r hpc-data1.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/sensitivity.i.dirty .
+    bbcp -z -P 10 -s 16 -w 2M -r hpc-data1.pawsey.org.au:/scratch2/askap/<USERID>/introtutorial/weights.i.dirty .
+
+.. note:: The hostname necessary to use bbcp is *hpc-data1.pawsey.org.au*. This is one of the
+          four hosts to which the *hpc-data* DNS alias points to (the
+          other that works is *hpc-data2*).
+          This is necessary as bbcp doesn't reliably establish connections via the hpc-data
+          alias due to the fact connections are round-robined between its four nodes.
 
 Once the files have finished downloading, view the restored image with casaviewer::
 

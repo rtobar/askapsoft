@@ -29,9 +29,7 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_SCI=""
-
-DO_IT=$DO_MOSAIC
+ID_LINMOS_SPECTRAL=""
 
 BEAM=all
 setImageBase spectral
@@ -39,17 +37,12 @@ getAltPrefix
 
 for subband in ${wrList}; do
 
-    mosImage=image.${subband}.${imageBase}
+    DO_IT=$DO_MOSAIC
 
-    if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
-        mosImage="${mosImage}.taylor.0"
-    fi
-
-    mosImage="${mosImage}.restored"
-
+    mosImage=linmos.image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
     if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
         if [ $DO_IT == true ]; then
-            echo "Image ${mosImage} exists, so not running continuum mosaicking"
+            echo "Image ${mosImage} exists, so not running spectral-line mosaicking"
         fi
         DO_IT=false
     fi
@@ -65,7 +58,6 @@ linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 # Beam offsets
 ${LINMOS_BEAM_OFFSETS}"
         fi
-
 
         setJob linmos_${subband} linmos_${subband}
         cat > $sbatchfile <<EOFOUTER
@@ -141,33 +133,20 @@ EOFINNER
     fi
 else
 
-    echo "ERROR - no good images were found for mosaicking!"
-    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- txt > stats/stats-\${SLURM_JOB_ID}-linmos.txt
-    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- csv > stats/stats-\${SLURM_JOB_ID}-linmos.csv
+    echo "WARNING - no good images were found for mosaicking!"
 
 fi
 EOFOUTER
 
         if [ $SUBMIT_JOBS == true ]; then
-            FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
-        ID_LINMOS_SCI=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_LINMOS_SCI} "Make a mosaic image of the science observation, with flags \"${FLAG_IMAGING_DEP}\""
+            DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
+            ID_LINMOS_SPECTRAL=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
+            recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
         else
-            echo "Would make a mosaic image  of the science observation with slurm file $sbatchfile"
+            echo "Would make a mosaic spectral cube of the science observation, field $FIELD, with slurm file $sbatchfile"
         fi
 
         echo " "
 
     fi
 done
-
-if [ ${DO_SOURCE_FINDING} == true ]; then
-    # Run the sourcefinder on the mosaicked image.
-
-    # set the $imageBase variable to have 'linmos' in it
-    BEAM="all"
-    setImageBase spectral
-
-    . ${PIPELINEDIR}/sourcefinding.sh
-
-fi
