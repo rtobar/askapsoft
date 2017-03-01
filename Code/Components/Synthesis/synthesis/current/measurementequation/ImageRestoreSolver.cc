@@ -70,7 +70,7 @@ namespace askap
   namespace synthesis
   {
     ImageRestoreSolver::ImageRestoreSolver(const RestoringBeamHelper &beamHelper) :
-	    itsBeamHelper(beamHelper), itsEqualiseNoise(false), itsModelNeedsConvolving(true)
+	    itsBeamHelper(beamHelper), itsEqualiseNoise(false), itsModelNeedsConvolving(true), itsResidualNeedsUpdating(true)
     {
         setIsRestoreSolver();
     }
@@ -297,10 +297,12 @@ namespace askap
 	                 dirtyVector[i] *= maskVector[i];
 	            }
 	        }
+            if (itsResidualNeedsUpdating) {
             // Store the current dirtyImage parameter class to be saved to disk later
-            ASKAPLOG_INFO_STR(logger, "Saving current residual image to model parameter");
-            saveArrayIntoParameter(ip,name,dirtyArray.shape(),"residual",
-            dirtyArray,planeIter.position());
+                ASKAPLOG_INFO_STR(logger, "Saving current residual image to model parameter");
+                saveArrayIntoParameter(ip,name,dirtyArray.shape(),"residual",
+                dirtyArray,planeIter.position());
+            }
             // Store the new PSF in parameter class to be saved to disk later
   	        saveArrayIntoParameter(ip, name, psfArray.shape(), "psf.image", psfArray,
   				     planeIter.position());
@@ -406,6 +408,9 @@ namespace askap
        boost::shared_ptr<ImageRestoreSolver> result(new ImageRestoreSolver(rbh));
        const bool equalise = parset.getBool("equalise",false);
        result->equaliseNoise(equalise);
+       const bool update = parset.getBool("updateresiduals",true);
+       result->updateResiduals(update);
+
        return result;
     }
 

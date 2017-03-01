@@ -97,6 +97,8 @@ namespace askap
       {
         itsRestore=parset.getBool("restore", false);
 
+        itsResidual=parset.getBool("residuals",true);
+
         bool reuseModel = parset.getBool("Images.reuse", false);
 
         itsUseMemoryBuffers = parset.getBool("memorybuffers", false);
@@ -752,6 +754,12 @@ namespace askap
                     makeSensitivityImage(*it);
                 }
             }
+            if ((it->find("residual") == 0)) {
+                if (!itsRestore && itsResidual) {
+                    ASKAPLOG_INFO_STR(logger, "Saving " << *it << " with name " << *it+postfix );
+                    SynthesisParamsHelper::saveImageParameter(*itsModel, *it, *it+postfix);
+                }
+            }
         }
 
 
@@ -845,9 +853,11 @@ namespace askap
                             SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
                         }
                         if (!iph.isFacet() && ((ci->find("residual") == 0)))  {
-                            ASKAPLOG_INFO_STR(logger, "Saving residual image " << *ci << " with name "
-                            << *ci+restore_suffix );
-                            SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
+                            if (itsResidual) {
+                                ASKAPLOG_INFO_STR(logger, "Saving residual image " << *ci << " with name "
+                                << *ci+restore_suffix );
+                                SynthesisParamsHelper::saveImageParameter(*itsModel, *ci, *ci+restore_suffix);
+                            }
                         }
                     }
                 }
@@ -864,7 +874,7 @@ namespace askap
                 }
 
             }
-            
+
 
         }
     }
