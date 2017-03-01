@@ -151,13 +151,15 @@ The following are common to all gridders:
 |                               |              |              |clipping. Applies to all images (image.*,         |
 |                               |              |              |residual.*, weights.*, etc.).                     |
 +-------------------------------+--------------+--------------+--------------------------------------------------+
-|snapshotimaging.weightsclipping|double        |0             |Optional clipping of the weights image to avoid   |
-|                               |              |              |edge effects during image reprojection. As the    |
-|                               |              |              |general clipping mentioned above can create its   |
-|                               |              |              |own edge effects, clipping only the weights will  |
-|                               |              |              |stop edge effects from contaminating the sky model|
+|snapshotimaging.weightsclipping|double        |the general   |Optional clipping of the weights image to avoid   |
+|                               |              |snapshot      |edge effects during image reprojection. As the    |
+|                               |              |imaging       |general clipping mentioned above can create its   |
+|                               |              |clipping      |own edge effects, clipping only the weights will  |
+|                               |              |factor        |stop edge effects from contaminating the sky model|
 |                               |              |              |during deconvolution. Thus they can be cleaned    |
-|                               |              |              |away and ignored during any linmos operation.     |
+|                               |              |              |away and their residuals will be ignored during   |
+|                               |              |              |any linmos operation. See the general clipping    |
+|                               |              |              |factor above for usage.                           |
 +-------------------------------+--------------+--------------+--------------------------------------------------+
 |snapshotimaging.reprojectpsf   |bool          |false         |If true, the PSF will be reprojected and          |
 |                               |              |              |accumulated the same way as the dirty             |
