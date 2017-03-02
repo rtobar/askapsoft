@@ -320,12 +320,12 @@ for FIELD in \${FIELD_LIST}; do
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml)
         catTypes+=(polarisation-component)
     fi
-#    setImageProperties spectral
-#    specSelDir=selavy-spectral-\${imageName}
-#    if [ -e \${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml ]; then
-#        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml)
-#        catTypes+=(spectralline)
-#    fi
+    setImageProperties spectral
+    specSelDir=selavy-spectral-\${imageName}
+    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.hiobjects.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.hiobjects.xml)
+        catTypes+=(spectral-line-emission)
+    fi
 
 done
 ##############################
