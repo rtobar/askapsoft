@@ -159,6 +159,8 @@ namespace askap
       }
 
       float maxPSFBefore = casa::max(psf);
+      ASKAPCHECK(maxPSFBefore > 0.0, "Peak of PSF before Wiener filtering, " <<
+          maxPSFBefore << ", is less than or equal to zero");
       ASKAPLOG_INFO_STR(logger, "Peak of PSF before Wiener filtering = " << maxPSFBefore);
 
       if (itsDoNormalise) {
@@ -233,7 +235,8 @@ namespace askap
           //   where "near by" can be different to the kernel width.
        
           const int maxKernelWidth = ceil(max(kernelWidthArray.asArray()));
-          ASKAPDEBUGASSERT(maxKernelWidth>0);
+          ASKAPCHECK(maxKernelWidth > 0, "Maximum kernel width in the Wiener filter, " <<
+              maxPSFBefore << ", is less than or equal to zero");
           const int boxWidth = maxKernelWidth;
           ASKAPDEBUGASSERT(boxWidth>0);
        
