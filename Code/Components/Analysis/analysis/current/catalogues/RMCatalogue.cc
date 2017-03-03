@@ -58,7 +58,7 @@ RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
     itsComponents(),
     itsSpec(),
     itsCube(cube),
-    itsVersion("casda.polarisation_v0.6")
+    itsVersion("casda.polarisation_v0.7")
 {
     this->defineComponents(srclist, parset);
     this->defineSpec();
