@@ -354,6 +354,30 @@ EOF
             PROJECT_ID=$BACKUP_PROJECT_ID
         fi
 
+        SB_STATE_INITIAL=`awk $awkstr ${sbinfo} | awk '{split($0,a,FS); print a[NF-3];}'`
+        if [ "${SB_STATE_INITIAL}" == "OBSERVED" ]; then
+            module load askapcli
+            schedblock transition -s PROCESSING ${SB_SCIENCE} > ${logs}/transition-to-PROCESSING.log
+            err=$?
+            module unload askapcli
+            if [ $err -ne 0 ]; then
+                echo "`date`: ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err"
+            fi
+            if [ "`whoami`" == "askapops" ]; then
+                if [ $err -eq 0 ]; then
+                    schedblock annotate -i ${SB_JIRA_ISSUE} -c "Commencing processing. SB ${SB_SCIENCE} transitioned to PROCESSING." ${SB_SCIENCE}
+                    if [ $? -ne 0 ]; then
+                        echo "`date`: ERROR - 'schedblock annotate' failed with error code $?" | tee -a ${ERROR_FILE}
+                    fi
+                else
+                    schedblock annotate -i ${SB_JIRA_ISSUE} -c "ERROR -- Failed to transition SB ${SB_SCIENCE} to PROCESSING." ${SB_SCIENCE}
+                    if [ $? -ne 0 ]; then
+                        echo "`date`: ERROR - 'schedblock annotate' failed with error code $?" | tee -a ${ERROR_FILE}
+                    fi
+                fi
+            fi
+        fi
+
     fi
 
     # Find the beam centre locations    

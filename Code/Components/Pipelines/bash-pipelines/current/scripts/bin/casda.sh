@@ -295,13 +295,13 @@ NOW=\`date +%s\`
 ageOfReady=\`expr \$NOW - \$READYdate\`
 
 if [ -e ${CASDA_DIR}/ERROR ]; then
-    errmsg=`cat ${CASDA_DIR}/ERROR`
-    echo "`date`: ERROR - CASDA ingest failed. SB ${SB_SCIENCE} not transitioned to COMPLETED." | tee -a ${ERROR_FILE}
-    if [ "`whoami`" == "askapops" ]; then
+    errmsg=\`cat ${CASDA_DIR}/ERROR\`
+    echo "\`date\`: ERROR - CASDA ingest failed. SB ${SB_SCIENCE} not transitioned to COMPLETED." | tee -a ${ERROR_FILE}
+    if [ "\`whoami\`" == "askapops" ]; then
         module load askapcli
         schedblock annotate -i ${SB_JIRA_ISSUE} -c "ERROR -- CASDA ingest for SB ${SB_SCIENCE} failed with error:\\n\$errmsg" ${SB_SCIENCE}
         if [ \$? -ne 0 ]; then
-            echo "`date`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
+            echo "\`date\`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
         fi
     fi
     exit 1
@@ -309,17 +309,19 @@ elif [ -e ${CASDA_DIR}/DONE ]; then
     module load askapcli
     schedblock transition -s COMPLETED ${SB_SCIENCE}
     err=\$?
+    if [ \$err -ne 0 ]; then
+        echo "\`date\`: ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err" | tee -a ${ERROR_FILE}
+    fi
     if [ "\`whoami\`" == "askapops" ]; then
         if [ \$err -eq 0 ]; then
             schedblock annotate -i ${SB_JIRA_ISSUE} -c "Archiving complete. SB ${SB_SCIENCE} transitioned to COMPLETED." ${SB_SCIENCE}
             if [ \$? -ne 0 ]; then
-                echo "`date`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
+                echo "\`date\`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
             fi
         else
-            echo "\`date\`: ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err" | tee -a \${ERROR_FILE}
             schedblock annotate -i ${SB_JIRA_ISSUE} -c "ERROR -- Archiving complete but SB ${SB_SCIENCE} failed to transition." ${SB_SCIENCE}
             if [ \$? -ne 0 ]; then
-                echo "`date`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
+                echo "\`date\`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
             fi
         fi
     fi
@@ -330,7 +332,7 @@ elif [ \$ageOfReady -gt ${MAX_POLL_WAIT_TIME} ]; then
         module load askapcli
         schedblock annotate -c "ERROR -- CASDA deposit has not completed within ${MAX_POLL_WAIT_TIME} sec - SB ${SB_SCIENCE} not transitioned to COMPLETED" $SB_SCIENCE
         if [ \$? -ne 0 ]; then
-            echo "`date`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
+            echo "\`date\`: ERROR - 'schedblock annotate' failed with error code \$?" | tee -a ${ERROR_FILE}
         fi
     fi
     exit 1
