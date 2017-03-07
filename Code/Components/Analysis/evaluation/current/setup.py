@@ -28,7 +28,7 @@ They then produce nifty plots that enable the user to quickly identify problems.
       dependency = dep,
 # Uncomment if using scripts (applications which go in bin) 
       scripts = ["scripts/fluxEval.py", "scripts/plotEval.py", "scripts/imageEval.py", "scripts/finderEval.py", "scripts/plotEvalOld.py", "scripts/fluxEvalOld.py", 
-"scripts/makePreview.py"],
+"scripts/makeThumbnailImage.py"],
 # Uncomment if using unit tests
 #      test_suite = "nose.collector",
 )
