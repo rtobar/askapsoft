@@ -234,7 +234,7 @@ GlobalSkyModel::ComponentPtr GlobalSkyModel::getComponentByID(datamodel::id_type
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
     double ra,
     double dec,
-    double radius)
+    double radius) const
 {
     return coneSearch(ra, dec, radius, ComponentQuery());
 }
@@ -243,7 +243,7 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
     double ra,
     double dec,
     double radius,
-    ComponentQuery query)
+    ComponentQuery query) const
 {
     ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius);
     //cout << "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius << endl;
@@ -255,9 +255,33 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
             query);
 }
 
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
+    double ra_left,
+    double dec_top,
+    double ra_right,
+    double dec_bottom) const
+{
+    return rectSearch(ra_left, dec_top, ra_right, dec_bottom, ComponentQuery());
+}
+
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
+    double ra_left,
+    double dec_top,
+    double ra_right,
+    double dec_bottom,
+    ComponentQuery query) const
+{
+    ASKAPLOG_DEBUG_STR(logger, "rectSearch: (top,left)=" << dec_top << ", " << 
+        ra_left << ". (bottom, right)=" << dec_bottom << ", " << ra_right);
+    // TODO: add sensible sanity checks on the bounds
+    return queryComponentsByPixel(
+            itsHealPix.queryRect(ra_left, dec_top, ra_right, dec_bottom),
+            query);
+}
+
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
     HealPixFacade::IndexListPtr pixels,
-    ComponentQuery query)
+    ComponentQuery query) const
 {
     ASKAPASSERT(pixels.get());
     ASKAPASSERT(pixels->size() <= MaxSearchPixels());

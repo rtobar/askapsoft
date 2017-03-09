@@ -70,6 +70,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testSimpleConeSearch);
         CPPUNIT_TEST(testConeSearch_frequency_criteria);
         CPPUNIT_TEST(testConeSearch_flux_int);
+        CPPUNIT_TEST(testSimpleRectSearch);
+        CPPUNIT_TEST(testRectSearch_freq_range);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -289,8 +291,6 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testConeSearch_flux_int() {
             initSearch();
-
-            // create a component query for frequencies in the range [1230..1250]
             GlobalSkyModel::ComponentQuery query(
                 GlobalSkyModel::ComponentQuery::flux_int >= 80.0);
 
@@ -303,6 +303,51 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_3a"))));
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));
+        }
+
+        void testSimpleRectSearch() {
+            double ra_left = 79.0;
+            double dec_top = -71.0;
+            double ra_right = 79.75;
+            double dec_bottom = -72.0;
+
+            initSearch();
+            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(
+                ra_left, dec_top,
+                ra_right, dec_bottom);
+            CPPUNIT_ASSERT_EQUAL(size_t(4), results->size());
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1b"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1c"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"))));
+        }
+
+        void testRectSearch_freq_range() {
+            initSearch();
+
+            // use the same bounds as testSimpleRectSearch
+            double ra_left = 79.0;
+            double dec_top = -71.0;
+            double ra_right = 79.75;
+            double dec_bottom = -72.0;
+
+            GlobalSkyModel::ComponentQuery query(
+                GlobalSkyModel::ComponentQuery::freq >= 1200.0 &&
+                GlobalSkyModel::ComponentQuery::freq <= 1260.0);
+
+            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(
+                ra_left, dec_top,
+                ra_right, dec_bottom,
+                query);
+            CPPUNIT_ASSERT_EQUAL(size_t(2), results->size());
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));
+            CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
+                ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"))));
         }
 
     private:

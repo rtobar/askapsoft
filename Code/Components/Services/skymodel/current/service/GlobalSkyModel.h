@@ -132,9 +132,40 @@ class GlobalSkyModel :
         /// @return The component, or null if not found.
         ComponentPtr getComponentByID(datamodel::id_type id) const;
 
-        /// Cone search method.
+        /// @brief Returns the set of all pixels which overlap with the rectangle
+        /// defined by a top-left (ra, dec) and bottom-right (ra, dec) point pair.
         ///
-        /// Coordinate frame is J2000.
+        /// @param ra_left J200 Right ascension in decimal degrees of the top-left point.
+        /// @param dec_top J200 Declination in decimal degrees of the top-left point.
+        /// @param ra_right J200 Right ascension in decimal degrees of the bottom-right point.
+        /// @param dec_bottom J200 Declination in decimal degrees of the bottom-right point.
+        ///
+        /// @return The vector of pixel indicies matching the query.
+        ComponentListPtr rectSearch(
+            double ra_left,
+            double dec_top,
+            double ra_right,
+            double dec_bottom) const;
+
+        /// @brief Returns the set of all pixels which overlap with the rectangle
+        /// defined by a top-left (ra, dec) and bottom-right (ra, dec) point pair.
+        ///
+        /// @param ra_left J200 Right ascension in decimal degrees of the top-left point.
+        /// @param dec_top J200 Declination in decimal degrees of the top-left point.
+        /// @param ra_right J200 Right ascension in decimal degrees of the bottom-right point.
+        /// @param dec_bottom J200 Declination in decimal degrees of the bottom-right point.
+        /// @param query the additional component query.
+        ///
+        /// @return The vector of pixel indicies matching the query.
+        ComponentListPtr rectSearch(
+            double ra_left,
+            double dec_top,
+            double ra_right,
+            double dec_bottom,
+            ComponentQuery query) const;
+
+        /// @brief Cone search method. Coordinate frame is J2000.
+        //
         /// @param ra the right ascension of the centre of the search area (Units: decimal degrees).
         /// @param dec the declination of the centre of the search area (Units: decimal degrees).
         /// @param radius the search radius (Units: decimal degrees).
@@ -142,7 +173,7 @@ class GlobalSkyModel :
         ComponentListPtr coneSearch(
             double ra,
             double dec,
-            double radius);
+            double radius) const;
 
         /// Cone search method with additional criteria
         ///
@@ -156,7 +187,7 @@ class GlobalSkyModel :
             double ra,
             double dec,
             double radius,
-            ComponentQuery query);
+            ComponentQuery query) const;
 
     private:
         typedef odb::result<datamodel::ContinuumComponent> Result;
@@ -194,7 +225,7 @@ class GlobalSkyModel :
         /// @return 
         ComponentListPtr queryComponentsByPixel(
             HealPixFacade::IndexListPtr pixels, 
-            ComponentQuery query);
+            ComponentQuery query) const;
 
         /// @brief The odb database
         boost::shared_ptr<odb::database> itsDb;
