@@ -831,7 +831,6 @@ int MsSplitApp::split(const std::string& invis, const std::string& outvis,
         out(create(outvis, addSigmaSpec, bucketSize, tileNcorr, tileNchan));
 
     // Copy ANTENNA
-    ASKAPLOG_INFO_STR(logger,  "Test version of wasim");
     ASKAPLOG_INFO_STR(logger,  "Copying ANTENNA table");
     copyAntenna(in, *out);
 
