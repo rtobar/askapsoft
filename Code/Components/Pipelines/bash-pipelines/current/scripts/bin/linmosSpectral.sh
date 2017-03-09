@@ -33,7 +33,7 @@ ID_LINMOS_SPECTRAL=""
 
 mosaicImageList="restored contsub image residual"
 
-if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
     reference="# No reference image or offsets, as we take the image centres"
 else
     reference="# Reference image for offsets
@@ -53,8 +53,8 @@ for imageCode in ${mosaicImageList}; do
     if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
         BEAM=all
         setImageProperties spectral
-        if [ -e ${OUTPUT}/${imageName} ]; then
-            if [ $DO_IT == true ]; then
+        if [ -e "${OUTPUT}/${imageName}" ]; then
+            if [ "${DO_IT}" == "true" ]; then
                 echo "Image ${imageName} exists, so not running its spectral-line mosaicking"
             fi
             DO_IT=false
@@ -63,8 +63,8 @@ for imageCode in ${mosaicImageList}; do
 
     if [ "${DO_IT}" == "true" ]; then
 
-        setJob linmosSpectral_${imageCode} linmosS${imcode}
-        cat > $sbatchfile <<EOFOUTER
+        setJob "linmosSpectral_${imageCode}" "linmosS${imcode}"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -143,11 +143,11 @@ else
 fi
 EOFOUTER
 
-        if [ $SUBMIT_JOBS == true ]; then
-            DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
-	    ID_LINMOS_SPECTRAL=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
-	    recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic ${imageCode} spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
-            FULL_LINMOS_SPECTRAL_DEP=`addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECTRAL}"`
+        if [ "${SUBMIT_JOBS}" == "true" ]; then
+            DEP_SPECIMG=$(echo "$DEP_SPECIMG" | sed -e 's/afterok/afterany/g')
+	    ID_LINMOS_SPECTRAL=$(sbatch "$DEP_SPECIMG" "$sbatchfile" | awk '{print $4}')
+	    recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic ${imageCode} spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+            FULL_LINMOS_SPECTRAL_DEP=$(addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECTRAL}")
         else
 	    echo "Would make a mosaic ${imageCode} spectral cube of the science observation, field $FIELD with slurm file $sbatchfile"
         fi

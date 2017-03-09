@@ -39,14 +39,14 @@ else
     selavyImage=${OUTPUT}/image.${imageBase}.taylor.0.restored
 fi
 
-NPROCS_SELAVY=`echo $CONTSUB_SELAVY_NSUBX $CONTSUB_SELAVY_NSUBY | awk '{print $1*$2+1}'`
-if [ ${NPROCS_SELAVY} -le 20 ]; then
+NPROCS_SELAVY=$(echo "${CONTSUB_SELAVY_NSUBX}" "${CONTSUB_SELAVY_NSUBY}" | awk '{print $1*$2+1}')
+if [ "${NPROCS_SELAVY}" -le 20 ]; then
     CPUS_PER_CORE_CONTSUB=${NPROCS_SELAVY}
 else
     CPUS_PER_CORE_CONTSUB=20
 fi
 NPROCS_CONTSUB=${NPROCS_SELAVY}
-if [ ${NPROCS_CONTSUB} -eq 1 ]; then
+if [ "${NPROCS_CONTSUB}" -eq 1 ]; then
     # If Selavy is just serial, increase nprocs to 2 for cmodel
     NPROCS_CONTSUB=2
 fi
@@ -58,7 +58,7 @@ CContsubtract.sources.names                       = [lsm]
 CContsubtract.sources.lsm.direction               = \${modelDirection}
 CContsubtract.sources.lsm.model                   = \${contsubdir}/${modelImage}
 CContsubtract.sources.lsm.nterms                  = ${NUM_TAYLOR_TERMS}"
-if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
+if [ "${NUM_TAYLOR_TERMS}" -gt 1 ]; then
     if [ "$MFS_REF_FREQ" == "" ]; then
         freq=$CENTRE_FREQ
     else
@@ -69,7 +69,7 @@ CContsubtract.visweights                          = MFS
 CContsubtract.visweights.MFS.reffreq              = ${freq}"
 fi
 
-cat > $sbatchfile <<EOFOUTER
+cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}

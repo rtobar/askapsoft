@@ -30,15 +30,15 @@
 ID_CCALAPPLY_SCI=""
 
 DO_IT=$DO_APPLY_BANDPASS
-if [ $DO_IT == true ] && [ -e $BANDPASS_CHECK_FILE ]; then
+if [ "$DO_IT" == "true" ] && [ -e "$BANDPASS_CHECK_FILE" ]; then
     echo "Bandpass has already been applied to beam $BEAM of the science observation - not re-doing"
     DO_IT=false
 fi
 
-if [ $DO_IT == true ]; then
+if [ "$DO_IT" == "true" ]; then
 
     setJob apply_bandpass applyBP
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -104,13 +104,13 @@ fi
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
 	DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_CBPCAL"`
-	ID_CCALAPPLY_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_CCALAPPLY_SCI} "Applying bandpass calibration to science observation, with flags \"$DEP\""
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+        DEP=$(addDep "$DEP" "$ID_CBPCAL")
+	ID_CCALAPPLY_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_CCALAPPLY_SCI}" "Applying bandpass calibration to science observation, with flags \"$DEP\""
     else
 	echo "Would apply bandpass calibration to science observation with slurm file $sbatchfile"
     fi

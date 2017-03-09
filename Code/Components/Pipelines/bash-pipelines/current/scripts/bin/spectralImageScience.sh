@@ -36,7 +36,7 @@ setImageBase spectral
 
 DO_IT=$DO_SPECTRAL_IMAGING
 
-if [ $DO_ALT_IMAGER == true ]; then
+if [ "${DO_ALT_IMAGER}" == "true" ]; then
     theImager=$altimager
     Imager="Cimager"
 else
@@ -44,8 +44,8 @@ else
     Imager="Simager"
 fi
 
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/image.${imageBase}.restored ]; then
-    if [ $DO_IT == true ]; then
+if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/image.${imageBase}.restored" ]; then
+    if [ "${DO_IT}" == "true" ]; then
         echo "Image ${imageBase}.restored exists, so not running spectral-line imaging for beam ${BEAM}"
         echo " "
     fi
@@ -54,11 +54,11 @@ fi
 
 # Define the preconditioning
 preconditioning="${Imager}.preconditioner.Names                    = ${PRECONDITIONER_LIST_SPECTRAL}"
-if [ "`echo ${PRECONDITIONER_LIST_SPECTRAL} | grep GaussianTaper`" != "" ]; then
+if [ "$(echo "${PRECONDITIONER_LIST_SPECTRAL}" | grep GaussianTaper)" != "" ]; then
     preconditioning="$preconditioning
 ${Imager}.preconditioner.GaussianTaper            = ${PRECONDITIONER_SPECTRAL_GAUSS_TAPER}"
 fi
-if [ "`echo ${PRECONDITIONER_LIST_SPECTRAL} | grep Wiener`" != "" ]; then
+if [ "$(echo "${PRECONDITIONER_LIST_SPECTRAL}" | grep Wiener)" != "" ]; then
     # Use the new preservecf preconditioner option, but only for the
     # Wiener filter
     preconditioning="$preconditioning
@@ -73,14 +73,14 @@ ${Imager}.preconditioner.Wiener.taper             = ${PRECONDITIONER_SPECTRAL_WI
     fi
 fi
 shapeDefinition="# Leave shape definition to advise"
-if [ "${NUM_PIXELS_SPECTRAL}" != "" ] && [ $NUM_PIXELS_SPECTRAL -gt 0 ]; then
+if [ "${NUM_PIXELS_SPECTRAL}" != "" ] && [ "${NUM_PIXELS_SPECTRAL}" -gt 0 ]; then
     shapeDefinition="${Imager}.Images.shape                            = [${NUM_PIXELS_SPECTRAL}, ${NUM_PIXELS_SPECTRAL}]"
 else
     echo "WARNING - No valid NUM_PIXELS_SPECTRAL parameter given.  Not running spectral imaging."
     DO_IT=false
 fi
-cellsizeGood=`echo ${CELLSIZE_SPECTRAL} | awk '{if($1>0.) print "true"; else print "false";}'`
-if [ "${CELLSIZE_SPECTRAL}" != "" ] && [ $cellsizeGood == true ]; then
+cellsizeGood=$(echo "${CELLSIZE_SPECTRAL}" | awk '{if($1>0.) print "true"; else print "false";}')
+if [ "${CELLSIZE_SPECTRAL}" != "" ] && [ "$cellsizeGood" == "true" ]; then
     cellsizeDefinition="${Imager}.Images.cellsize                         = [${CELLSIZE_SPECTRAL}arcsec, ${CELLSIZE_SPECTRAL}arcsec]"
 else
     echo "WARNING - No valid CELLSIZE_SPECTRAL parameter given.  Not running spectral imaging."
@@ -93,7 +93,7 @@ fi
 
 cleaningPars="# These parameters define the clean algorithm 
 ${Imager}.solver                                  = ${SOLVER_SPECTRAL}"
-if [ ${SOLVER_SPECTRAL} == "Clean" ]; then
+if [ "${SOLVER_SPECTRAL}" == "Clean" ]; then
     cleaningPars="${cleaningPars}
 ${Imager}.solver.Clean.algorithm                  = ${CLEAN_SPECTRAL_ALGORITHM}
 ${Imager}.solver.Clean.niter                      = ${CLEAN_SPECTRAL_MINORCYCLE_NITER}
@@ -111,7 +111,7 @@ ${Imager}.ncycles                                 = ${CLEAN_SPECTRAL_NUM_MAJORCY
 ${Imager}.Images.writeAtMajorCycle                = ${CLEAN_SPECTRAL_WRITE_AT_MAJOR_CYCLE}
 "
 fi
-if [ ${SOLVER_SPECTRAL} == "Dirty" ]; then
+if [ "${SOLVER_SPECTRAL}" == "Dirty" ]; then
     cleaningPars="${cleaningPars}
 ${Imager}.solver.Dirty.tolerance                  = 0.01
 ${Imager}.solver.Dirty.verbose                    = False
@@ -120,7 +120,7 @@ fi
 
 restorePars="# These parameter govern the restoring of the image and the recording of the beam
 ${Imager}.restore                                 = ${RESTORE_SPECTRAL}"
-if [ ${RESTORE_SPECTRAL} == "true" ]; then
+if [ "${RESTORE_SPECTRAL}" == "true" ]; then
     restorePars="${restorePars}
 ${Imager}.restore.beam                            = ${RESTORING_BEAM_SPECTRAL}
 ${Imager}.restore.beamReference                   = ${RESTORING_BEAM_REFERENCE}
@@ -130,7 +130,7 @@ fi
 
 # This is for the new (alt) imager
 altImagerParams="# Options for the alternate imager"
-if [ $DO_ALT_IMAGER == true ]; then
+if [ "${DO_ALT_IMAGER}" == true ]; then
 
 
     if [ "${NCHAN_PER_CORE_SL}" == "" ]; then
@@ -140,7 +140,7 @@ if [ $DO_ALT_IMAGER == true ]; then
     fi
     altImagerParams="${altImagerParams}
 Cimager.nchanpercore                           = ${nchanpercore}"
-    if [ ${USE_TMPFS} == true ]; then
+    if [ "${USE_TMPFS}" == "true" ]; then
         usetmpfs="true"
     else
         usetmpfs="false"
@@ -168,19 +168,19 @@ else
 fi
 
 namestr="${Imager}.Images"
-if [ $DO_ALT_IMAGER == true ]; then
+if [ "${DO_ALT_IMAGER}" == "true" ]; then
 namestr="${namestr}.Names                           = [image.${imageBase}]"
 else
 namestr="${namestr}.name                            = image.${imageBase}"
 fi
 
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     echo "Imaging the spectral-line science observation"
 
     setJob science_spectral_imager spec
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -269,18 +269,18 @@ fi
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CAL_APPLY_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CONT_SUB_SL_SCI"`
-	ID_SPECIMG_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-        DEP_SPECIMG=`addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI"`
-	recordJob ${ID_SPECIMG_SCI} "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+        DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+        DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SL_SCI")
+        DEP=$(addDep "$DEP" "$ID_CAL_APPLY_SL_SCI")
+        DEP=$(addDep "$DEP" "$ID_CONT_SUB_SL_SCI")
+	ID_SPECIMG_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+        DEP_SPECIMG=$(addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI")
+	recordJob "${ID_SPECIMG_SCI}" "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
     else
 	echo "Would make a spectral-line cube for beam $BEAM of the science observation with slurm file $sbatchfile"
     fi

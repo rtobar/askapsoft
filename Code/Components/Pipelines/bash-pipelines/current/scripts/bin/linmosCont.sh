@@ -41,15 +41,15 @@ fi
 if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     BEAM=all
     NLOOPS=0
-    if [ $DO_SELFCAL == true ] && [ $MOSAIC_SELFCAL_LOOPS == true ]; then
+    if [ "${DO_SELFCAL}" == "true" ] && [ "${MOSAIC_SELFCAL_LOOPS}" == "true" ]; then
         NLOOPS=$SELFCAL_NUM_LOOPS
     fi
-    for((LOOP=0;LOOP<=$NLOOPS;LOOP++)); do
+    for((LOOP=0;LOOP<=NLOOPS;LOOP++)); do
         for imageCode in ${mosaicImageList}; do
-            for((TTERM=0;TTERM<${NUM_TAYLOR_TERMS};TTERM++)); do
+            for((TTERM=0;TTERM<NUM_TAYLOR_TERMS;TTERM++)); do
                 setImageProperties cont
-                if [ -e ${OUTPUT}/${imageName} ]; then
-                    if [ $DO_IT == true ]; then
+                if [ -e "${OUTPUT}/${imageName}" ]; then
+                    if [ "${DO_IT}" == "true" ]; then
                         echo "Image ${imageName} exists, so not running continuum mosaicking"
                     fi
                     DO_IT=false
@@ -62,7 +62,7 @@ fi
 
 if [ "${DO_IT}" == "true" ]; then
 
-    if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+    if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
         reference="# No reference image or offsets, as we take the image centres"
     else
         reference="# Reference image for offsets
@@ -74,7 +74,7 @@ ${LINMOS_BEAM_OFFSETS}"
 
 
     setJob linmosCont linmosC
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -181,11 +181,11 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONT=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONT} "Make a mosaic continuum image of the science observation, field $FIELD, with flags \"${FLAG_IMAGING_DEP}\""
-        FULL_LINMOS_CONT_DEP=`addDep "${FULL_LINMOS_CONT_DEP}" "${ID_LINMOS_CONT}"`
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        FLAG_IMAGING_DEP=$(echo "${FLAG_IMAGING_DEP}" | sed -e 's/afterok/afterany/g')
+	ID_LINMOS_CONT=$(sbatch "${FLAG_IMAGING_DEP}" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_LINMOS_CONT}" "Make a mosaic continuum image of the science observation, field $FIELD, with flags \"${FLAG_IMAGING_DEP}\""
+        FULL_LINMOS_CONT_DEP=$(addDep "${FULL_LINMOS_CONT_DEP}" "${ID_LINMOS_CONT}")
     else
 	echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
     fi

@@ -40,16 +40,16 @@ for subband in ${wrList}; do
     DO_IT=$DO_MOSAIC
 
     mosImage=linmos.image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-    if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
-        if [ $DO_IT == true ]; then
+    if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/${mosImage}" ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "Image ${mosImage} exists, so not running spectral-line mosaicking"
         fi
         DO_IT=false
     fi
 
-    if [ $DO_IT == true ]; then
+    if [ "${DO_IT}" == "true" ]; then
 
-        if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+        if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
             reference="# No reference image or offsets, as we take the image centres"
         else
             reference="# Reference image for offsets
@@ -59,8 +59,8 @@ linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 ${LINMOS_BEAM_OFFSETS}"
         fi
 
-        setJob linmos_${subband} linmos_${subband}
-        cat > $sbatchfile <<EOFOUTER
+        setJob linmos_"${subband}" linmos_"${subband}"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -138,10 +138,10 @@ else
 fi
 EOFOUTER
 
-        if [ $SUBMIT_JOBS == true ]; then
-            DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
-            ID_LINMOS_SPECTRAL=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
-            recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+        if [ "${SUBMIT_JOBS}" == "true" ]; then
+            DEP_SPECIMG=$(echo "$DEP_SPECIMG" | sed -e 's/afterok/afterany/g')
+            ID_LINMOS_SPECTRAL=$(sbatch "$DEP_SPECIMG" "$sbatchfile" | awk '{print $4}')
+            recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
         else
             echo "Would make a mosaic spectral cube of the science observation, field $FIELD, with slurm file $sbatchfile"
         fi

@@ -41,7 +41,7 @@ for imageCode in ${mosaicImageList}; do
     fi
 
     # Don't run if there is only one field
-    if [ ${NUM_FIELDS} -eq 1 ]; then
+    if [ "${NUM_FIELDS}" -eq 1 ]; then
         DO_IT=false
     fi
 
@@ -52,15 +52,16 @@ for imageCode in ${mosaicImageList}; do
     if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
         FIELD="."
         BEAM=all
-        if [ `echo $TILE_LIST | awk '{print NF}'` -gt 1 ]; then
+        tilelistsize=$(echo "$TILE_LIST" | awk '{print NF}')
+        if [ "${tilelistsize}" -gt 1 ]; then
             FULL_TILE_LIST="$TILE_LIST ALL"
         else
             FULL_TILE_LIST="ALL"
         fi
         for TILE in $FULL_TILE_LIST; do
             setImageProperties spectral
-            if [ -e ${OUTPUT}/${imageName} ]; then
-                if [ $DO_IT == true ]; then
+            if [ -e "${OUTPUT}/${imageName}" ]; then
+                if [ "${DO_IT}" == "true" ]; then
                     echo "Image ${imageName} exists, so not running its spectral-line mosaicking"
                 fi
                 DO_IT=false
@@ -68,10 +69,10 @@ for imageCode in ${mosaicImageList}; do
         done
     fi
 
-    if [ $DO_IT == true ]; then
+    if [ "${DO_IT}" == "true" ]; then
 
-        sbatchfile=$slurms/linmos_all_spectral_${imageCode}.sbatch
-        cat > $sbatchfile <<EOFOUTER
+        sbatchfile="$slurms/linmos_all_spectral_${imageCode}.sbatch"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -183,10 +184,10 @@ EOFINNER
 done
 EOFOUTER
 
-        if [ $SUBMIT_JOBS == true ]; then
-            FULL_LINMOS_SPECTRAL_DEP=`echo $FULL_LINMOS_SPECTRAL_DEP | sed -e 's/afterok/afterany/g'`
-	    ID_LINMOS_SPECTRAL_ALL=`sbatch $FULL_LINMOS_SPECTRAL_DEP $sbatchfile | awk '{print $4}'`
-	    recordJob ${ID_LINMOS_SPECTRAL_ALL} "Make a mosaic ${imageCode} spectral cube of the science observation, with flags \"${FULL_LINMOS_SPECTRAL_DEP}\""
+        if [ "${SUBMIT_JOBS}" == "true" ]; then
+            FULL_LINMOS_SPECTRAL_DEP=$(echo "${FULL_LINMOS_SPECTRAL_DEP}" | sed -e 's/afterok/afterany/g')
+	    ID_LINMOS_SPECTRAL_ALL=$(sbatch "${FULL_LINMOS_SPECTRAL_DEP}" "$sbatchfile" | awk '{print $4}')
+	    recordJob "${ID_LINMOS_SPECTRAL_ALL}" "Make a mosaic ${imageCode} spectral cube of the science observation, with flags \"${FULL_LINMOS_SPECTRAL_DEP}\""
         else
 	    echo "Would make a mosaic ${imageCode} spectral cube of the science observation, with slurm file $sbatchfile"
         fi

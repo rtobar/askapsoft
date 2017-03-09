@@ -39,21 +39,21 @@ else
     selavyImage=${OUTPUT}/image.${imageBase}.taylor.0.restored
 fi
 
-NPROCS_SELAVY=`echo $CONTSUB_SELAVY_NSUBX $CONTSUB_SELAVY_NSUBY | awk '{print $1*$2+1}'`
-if [ ${NPROCS_SELAVY} -le 20 ]; then
+NPROCS_SELAVY=$(echo "${CONTSUB_SELAVY_NSUBX}" "${CONTSUB_SELAVY_NSUBY}" | awk '{print $1*$2+1}')
+if [ "${NPROCS_SELAVY}" -le 20 ]; then
     CPUS_PER_CORE_CONTSUB=${NPROCS_SELAVY}
 else
     CPUS_PER_CORE_CONTSUB=20
 fi
 NPROCS_CONTSUB=${NPROCS_SELAVY}
-if [ ${NPROCS_CONTSUB} -eq 1 ]; then
+if [ "${NPROCS_CONTSUB}" -eq 1 ]; then
     # If Selavy is just serial, increase nprocs to 2 for cmodel
     NPROCS_CONTSUB=2
 fi
 
 components=modelComponents.in
 
-cat > $sbatchfile <<EOFOUTER
+cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}

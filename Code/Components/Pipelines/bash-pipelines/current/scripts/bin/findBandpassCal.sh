@@ -34,53 +34,53 @@ ID_CBPCAL=""
 
 DO_IT=$DO_FIND_BANDPASS
 
-if [ $CLOBBER == false ] && [ -e ${TABLE_BANDPASS} ]; then
-    if [ $DO_IT == true ]; then
+if [ "${CLOBBER}" != "true" ] && [ -e "${TABLE_BANDPASS}" ]; then
+    if [ "${DO_IT}" == "true" ]; then
         echo "Bandpass table ${TABLE_BANDPASS} exists, so not running cbpcalibrator"
     fi
     DO_IT=false
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     # Optional data selection
     dataSelectionPars="# Using all the data"
-    if [ ${BANDPASS_MINUV} -gt 0 ]; then
+    if [ "${BANDPASS_MINUV}" -gt 0 ]; then
         dataSelectionPars="# Minimum UV distance for bandpass calibration:
 Cbpcalibrator.MinUV = BANDPASS_MINUV"
     fi        
     
     # Check for bandpass smoothing options
     DO_RUN_PLOT_CALTABLE=false
-    if [ $DO_BANDPASS_PLOT == true ] || [ $DO_BANDPASS_SMOOTH == true ]; then
+    if [ "${DO_BANDPASS_PLOT}" == "true" ] || [ "${DO_BANDPASS_SMOOTH}" == "true" ]; then
         DO_RUN_PLOT_CALTABLE=true
     fi
-    if [ $DO_RUN_PLOT_CALTABLE == true ]; then
+    if [ "${DO_RUN_PLOT_CALTABLE}" == "true" ]; then
         script_location="$ACES/tools"
         script_name="plot_caltable"
-        if [ ! -e ${script_location}/${script_name}.py ]; then
+        if [ ! -e "${script_location}/${script_name}.py" ]; then
             echo "WARNING - ${script_name}.py not found in $script_location - not running bandpass smoothing/plotting."
             DO_RUN_PLOT_CALTABLE=false
         fi
         script_args="-t ${TABLE_BANDPASS} -s B "
-        if [ $DO_BANDPASS_SMOOTH == true ]; then
+        if [ "${DO_BANDPASS_SMOOTH}" == "true" ]; then
             script_args="${script_args} -sm"
-            if [ $DO_BANDPASS_PLOT != true ]; then
+            if [ "${DO_BANDPASS_PLOT}" != "true" ]; then
                 script_args="${script_args} --no_plot"
             fi
         fi
-        if [ $BANDPASS_SMOOTH_AMP == true ]; then
+        if [ "${BANDPASS_SMOOTH_AMP}" == "true" ]; then
             script_args="${script_args} -sa"
         fi
-        if [ $BANDPASS_SMOOTH_OUTLIER == true ]; then
+        if [ "${BANDPASS_SMOOTH_OUTLIER}" == "true" ]; then
             script_args="${script_args} -o"
         fi
         script_args="${script_args} -fit ${BANDPASS_SMOOTH_FIT} -th ${BANDPASS_SMOOTH_THRESHOLD}"
         
     fi
 
-    sbatchfile=$slurms/cbpcalibrator_1934.sbatch
-    cat > $sbatchfile <<EOF
+    sbatchfile="$slurms/cbpcalibrator_1934.sbatch"
+    cat > "$sbatchfile" <<EOF
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -168,9 +168,9 @@ fi
 
 EOF
 
-    if [ $SUBMIT_JOBS == true ]; then
-        ID_CBPCAL=`sbatch ${FLAG_CBPCAL_DEP} $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_CBPCAL} "Finding bandpass calibration with 1934-638, with flags \"$FLAG_CBPCAL_DEP\""
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        ID_CBPCAL=$(sbatch "${FLAG_CBPCAL_DEP}" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_CBPCAL}" "Finding bandpass calibration with 1934-638, with flags \"$FLAG_CBPCAL_DEP\""
     else
         echo "Would find bandpass calibration with slurm file $sbatchfile"
     fi

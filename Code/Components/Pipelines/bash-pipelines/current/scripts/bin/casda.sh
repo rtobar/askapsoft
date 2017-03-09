@@ -28,7 +28,7 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-if [ $DO_STAGE_FOR_CASDA == true ]; then
+if [ "${DO_STAGE_FOR_CASDA}" == "true" ]; then
 
     if [ "${OTHER_SBIDS}" != "" ]; then
         sbids="sbids                           = ${OTHER_SBIDS}"
@@ -37,15 +37,15 @@ if [ $DO_STAGE_FOR_CASDA == true ]; then
     fi
 
     # If we can't create the output directory
-    if [ ! -w ${CASDA_UPLOAD_DIR%/*} ]; then
+    if [ ! -w "${CASDA_UPLOAD_DIR%/*}" ]; then
         # can't write to the destination - make a new one locally.
         echo "WARNING - desired location for the CASDA output directory ${CASDA_UPLOAD_DIR} is not writeable."
         echo "        - changing output directory to ${OUTPUT}/For-CASDA"
         CASDA_UPLOAD_DIR="${OUTPUT}/For-CASDA"
     fi
 
-    sbatchfile=$slurms/casda_upload.sbatch
-    cat > $sbatchfile <<EOFOUTER
+    sbatchfile="$slurms/casda_upload.sbatch"
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -250,13 +250,13 @@ fi
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then    
+    if [ "${SUBMIT_JOBS}" == "true" ]; then    
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:`echo $ALL_JOB_IDS | sed -e 's/,/:/g'`"
+            dep="-d afterok:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
         fi
-        ID_CASDA=`sbatch ${dep} $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_CASDA} "Job to stage data for ingest into CASDA, with flags \"${dep}\""
+        ID_CASDA=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_CASDA}" "Job to stage data for ingest into CASDA, with flags \"${dep}\""
     else
         echo "Would submit job to stage data for ingest into CASDA, with slurm file $sbatchfile"
     fi
@@ -264,7 +264,7 @@ EOFOUTER
 
     # Create job that polls for success of casda ingest
     # Only launch this when we are writing the READY file and transitioning the SBs
-    if [ ${WRITE_CASDA_READY} == true ] && [ ${TRANSITION_SB} == true ]; then
+    if [ "${WRITE_CASDA_READY}" == "true" ] && [ "${TRANSITION_SB}" == "true" ]; then
 
         # This slurm job will check for the existence of a DONE file
         # in the CASDA upload directory and, when it appears,
@@ -274,7 +274,7 @@ EOFOUTER
         # If after some longer period of time it hasn't appeared (a
         # length given by ${MAX_POLL_WAIT_TIME}), then it exits with
         # an error.
-        CASDA_DIR=${CASDA_UPLOAD_DIR}/${SB_SCIENCE}
+        CASDA_DIR="${CASDA_UPLOAD_DIR}/${SB_SCIENCE}"
 
         if [ "${EMAIL}" != "" ]; then
             emailFail="#SBATCH --mail-type=FAIL
@@ -283,8 +283,8 @@ EOFOUTER
             emailFail="# no email notifications"
         fi
         
-        sbatchfile=$slurms/casda_ingest_success_poll.sbatch
-        cat > $sbatchfile <<EOFOUTER
+        sbatchfile="$slurms/casda_ingest_success_poll.sbatch"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --cluster=zeus
 #SBATCH --partition=copyq
@@ -366,14 +366,14 @@ fi
 
 EOFOUTER
 
-        if [ $SUBMIT_JOBS == true ]; then    
+        if [ "${SUBMIT_JOBS}" == "true" ]; then    
             dep=""
             if [ "${ALL_JOB_IDS}" != "" ]; then
-                dep="-d afterok:`echo $ALL_JOB_IDS | sed -e 's/,/:/g'`"
+                dep="-d afterok:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
             fi
-            dep=`addDep "$dep" "$ID_CASDA"`
-            ID_CASDAPOLL=`sbatch ${dep} $sbatchfile | awk '{print $4}'`
-            recordJob ${ID_CASDAPOLL} "Job to poll CASDA directory for successful ingest, with flags \"${dep}\""
+            dep=$(addDep "$dep" "$ID_CASDA")
+            ID_CASDAPOLL=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+            recordJob "${ID_CASDAPOLL}" "Job to poll CASDA directory for successful ingest, with flags \"${dep}\""
         else
             echo "Would submit job to poll CASDA directory for successful ingest, with slurm file $sbatchfile"
         fi

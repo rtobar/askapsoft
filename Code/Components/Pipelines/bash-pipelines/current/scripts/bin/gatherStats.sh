@@ -31,12 +31,14 @@
 
 ##############################
 
-if [ $SUBMIT_JOBS == true ] && [ "${ALL_JOB_IDS}" != "" ]; then
+if [ "${SUBMIT_JOBS}" == "true" ] && [ "${ALL_JOB_IDS}" != "" ]; then
 
     # Gather stats on all running jobs
 
+    joblist=$(echo "$ALL_JOB_IDS" | sed -e 's/,/ /g')
+    
     sbatchfile=$slurms/gatherAll.sbatch
-    cat > $sbatchfile <<EOF
+    cat > "$sbatchfile" <<EOF
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -58,13 +60,13 @@ cd $ORIGINAL_OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+cp $sbatchfile \$(echo $sbatchfile | sed -e \$sedstr)
 
 statsTXT=stats-all-${NOW}.txt
 statsCSV=stats-all-${NOW}.csv
 writeStatsHeader txt > \$statsTXT
 writeStatsHeader csv > \$statsCSV
-for i in `echo $ALL_JOB_IDS | sed -e 's/,/ /g'`; do
+for i in ${joblist}; do
     for file in \`\ls $stats/stats-\$i*.txt\`; do
         grep -v JobID \$file >> \$statsTXT
     done
@@ -74,10 +76,10 @@ for i in `echo $ALL_JOB_IDS | sed -e 's/,/ /g'`; do
 done
 EOF
 
-    if [ $SUBMIT_JOBS == true ]; then    
-        dep="-d afterany:`echo $ALL_JOB_IDS | sed -e 's/,/:/g'`"
-        ID_STATS=`sbatch ${dep} $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_STATS} "Final job to gather statistics on all jobs, with flags \"${dep}\""
+    if [ "${SUBMIT_JOBS}" == "true" ]; then    
+        dep="-d afterany:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
+        ID_STATS=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_STATS}" "Final job to gather statistics on all jobs, with flags \"${dep}\""
     else
         echo "Would submit job to gather statistics based on all jobs, with slurm file $sbatchfile"
     fi

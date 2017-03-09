@@ -33,26 +33,26 @@ ID_AVERAGE_SCI=""
 
 DO_IT=$DO_AVERAGE_CHANNELS
 
-if [ $DO_IT == true ] && [ -e ${OUTPUT}/${msSciAv} ]; then
-    if [ $CLOBBER == false ]; then
+if [ "${DO_IT}" == "true" ] && [ -e "${OUTPUT}/${msSciAv}" ]; then
+    if [ "${CLOBBER}" != "true" ]; then
         # If we aren't clobbering files, don't run anything
-        if [ $DO_IT == true ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "MS ${msSciAv} exists, so not running averaging for beam ${BEAM}"
         fi
         DO_IT=false
     else
         # If we are clobbering files, removing the existing one, but
         # only if we are going to be running the job
-        if [ $DO_IT == true ]; then
-            rm -rf ${OUTPUT}/${msSciAv}
+        if [ "${DO_IT}" == "true" ]; then
+            rm -rf "${OUTPUT}/${msSciAv}"
         fi
     fi
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     setJob science_average avg
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -129,14 +129,14 @@ fi
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
 	DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-	ID_AVERAGE_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_AVERAGE_SCI} "Averaging beam ${BEAM} of the science observation, with flags \"$DEP\""
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+        DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+        DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+	ID_AVERAGE_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_AVERAGE_SCI}" "Averaging beam ${BEAM} of the science observation, with flags \"$DEP\""
     else
 	echo "Would average beam ${BEAM} of the science observation with slurm file $sbatchfile"
     fi

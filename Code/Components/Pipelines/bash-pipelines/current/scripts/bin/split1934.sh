@@ -42,40 +42,40 @@ fi
 
 DO_IT=$DO_SPLIT_1934
 
-if [ -e ${OUTPUT}/${msCal} ]; then
-    if [ $CLOBBER == false ]; then
+if [ -e "${OUTPUT}/${msCal}" ]; then
+    if [ "${CLOBBER}" != "true" ]; then
         # If we aren't clobbering files, don't run anything
-        if [ $DO_IT == true ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "MS ${msCal} exists, so not splitting for beam ${BEAM}"
         fi
         DO_IT=false
     else
         # If we are clobbering files, removing the existing one, but
         # only if we are going to be running the job
-        if [ $DO_IT == true ]; then
-            rm -rf ${OUTPUT}/${msCal}
-            rm -f ${FLAG_1934_CHECK_FILE}
+        if [ "${DO_IT}" == "true" ]; then
+            rm -rf "${OUTPUT}/${msCal}"
+            rm -f "${FLAG_1934_CHECK_FILE}"
         fi
     fi
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
-    if [ $DO_FIND_BANDPASS == true ] && [ -e ${TABLE_BANDPASS} ]; then
+    if [ "${DO_FIND_BANDPASS}" == "true" ] && [ -e "${TABLE_BANDPASS}" ]; then
         # If we are splitting and the user wants to find the bandpass,
         # remove any existing bandpass table so that we will be able
         # to create a new one
         echo "Removing the bandpass table so we can recompute"
-        rm -rf ${TABLE_BANDPASS} ${TABLE_BANDPASS}.smooth
+        rm -rf "${TABLE_BANDPASS}" "${TABLE_BANDPASS}".smooth
     fi
 
-    if [ -e ${FLAG_1934_CHECK_FILE} ]; then
+    if [ -e "${FLAG_1934_CHECK_FILE}" ]; then
         echo "Removing check file for flagging"
-        rm -f ${FLAG_1934_CHECK_FILE}
+        rm -f "${FLAG_1934_CHECK_FILE}"
     fi
     
     setJob split_1934 split
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -141,11 +141,11 @@ fi
 
 EOFOUTER
     
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-	ID_SPLIT_1934=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_SPLIT_1934} "Splitting beam ${BEAM} of 1934-638 observation"
+        DEP=$(addDep "$DEP" "$DEP_START")
+	ID_SPLIT_1934=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_SPLIT_1934}" "Splitting beam ${BEAM} of 1934-638 observation"
     else
 	echo "Would run splitting ${BEAM} of 1934-638 observation with slurm file $sbatchfile"
     fi

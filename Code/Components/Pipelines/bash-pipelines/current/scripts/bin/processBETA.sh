@@ -48,6 +48,6 @@ else
     echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
     echo " "
     
-    ${PIPELINEDIR}/processASKAP.sh $*
+    "${PIPELINEDIR}/processASKAP.sh" "$*"
 
 fi

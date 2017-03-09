@@ -38,8 +38,8 @@
 setImageBase spectral
 
 DO_IT=$DO_SPECTRAL_IMSUB
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/image.${imageBase}.restored.contsub ]; then
-    if [ $DO_IT == true ]; then
+if [ "${CLOBBER}" != "true" ] && [ -e ${OUTPUT}/image.${imageBase}.restored.contsub ]; then
+    if [ "${DO_IT}" == "true" ]; then
         echo "Continuum-subtracted spectral cube image.${imageBase}.restored.contsub exists. Not re-doing."
     fi
     DO_IT=false
@@ -52,10 +52,10 @@ if [ ! -e ${script_location}/${script_name}.py ]; then
     DO_IT=false
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     setJob spectral_imcontsub imcontsub
-    cat > $sbatchfile <<EOF
+    cat > "$sbatchfile" <<EOF
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -108,7 +108,7 @@ fi
 
 EOF
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         submitIt=true
         if [ $DO_SPECTRAL_IMAGING != true ]; then
             # If we aren't creating the cube in this pipeline run, then check to see if it exists.

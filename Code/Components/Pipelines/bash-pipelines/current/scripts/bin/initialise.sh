@@ -33,22 +33,22 @@
 # Define & create directories
 ${askapsoftModuleCommands}
 
-BASEDIR=`pwd`
+BASEDIR=$(pwd)
 
-. ${PIPELINEDIR}/createDirectories.sh
+. "${PIPELINEDIR}/createDirectories.sh"
 
 # These are used as the base directories for these types of files. We
 # make subdirectories in each for different fields (eg. parsets/field1
 # etc), and use $parsets etc to refer to them.
-parsetsBase=$parsets
-logsBase=$logs
-slurmsBase=$slurms
-slurmOutBase=$slurmOut
+parsetsBase="$parsets"
+logsBase="$logs"
+slurmsBase="$slurms"
+slurmOutBase="$slurmOut"
 
 ####################
 # Date and time stamp
-NOW=`date +%F-%H%M`
-NOW_FMT=`date +%FT%T`
+NOW=$(date +%F-%H%M)
+NOW_FMT=$(date +%FT%T)
 
 # File to record list of jobs and descriptions
 JOBLIST="${slurmOut}/jobList-${NOW}.txt"
@@ -56,5 +56,5 @@ JOBLIST="${slurmOut}/jobList-${NOW}.txt"
 ####################
 # Define the default
 
-. ${PIPELINEDIR}/defaultConfig.sh
+. "${PIPELINEDIR}/defaultConfig.sh"
 

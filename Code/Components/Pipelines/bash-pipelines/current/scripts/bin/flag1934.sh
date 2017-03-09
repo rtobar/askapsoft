@@ -33,19 +33,19 @@
 ID_FLAG_1934=""
 
 DO_IT=$DO_FLAG_1934
-if [ -e $FLAG_1934_CHECK_FILE ]; then
-    if [ $DO_IT == true ]; then
+if [ -e "${FLAG_1934_CHECK_FILE}" ]; then
+    if [ "${DO_IT}" == "true" ]; then
         echo "Flagging for beam $BEAM of calibrator observation has already been done - not re-doing."
     fi
     DO_IT=false
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     DO_AMP_FLAG=false
     ruleList=""
 
-    if [ "$ANTENNA_FLAG_1934" == "" ]; then
+    if [ "${ANTENNA_FLAG_1934}" == "" ]; then
         antennaFlagging="# Not flagging any antennas"
     else
         antennaFlagging="# The following flags out the requested antennas:
@@ -58,7 +58,7 @@ Cflag.selection_flagger.rule1.antenna   = ${ANTENNA_FLAG_1934}"
         DO_AMP_FLAG=true
     fi
 
-    if [ ${FLAG_AUTOCORRELATION_1934} == true ]; then
+    if [ "${FLAG_AUTOCORRELATION_1934}" == "true" ]; then
         autocorrFlagging="# The following flags out the autocorrelations, if set to true:
 Cflag.selection_flagger.rule2.autocorr  = ${FLAG_AUTOCORRELATION_1934}"
         if [ "${ruleList}" == "" ]; then
@@ -78,7 +78,7 @@ Cflag.selection_flagger.rule2.autocorr  = ${FLAG_AUTOCORRELATION_1934}"
     fi
     
     # The flat amplitude cut to be applied
-    if [ ${FLAG_DO_FLAT_AMPLITUDE_1934} == true ]; then
+    if [ "${FLAG_DO_FLAT_AMPLITUDE_1934}" == "true" ]; then
         amplitudeCut="# Amplitude based flagging
 #   Here we apply a simple cut at a given amplitude level
 Cflag.amplitude_flagger.enable          = true
@@ -93,7 +93,7 @@ Cflag.amplitude_flagger.low             = ${FLAG_THRESHOLD_AMPLITUDE_1934_LOW}"
     
     
     setJob flag_1934 flag
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -187,13 +187,13 @@ fi
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_1934"`
-        ID_FLAG_1934=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_FLAG_1934} "Flagging 1934-638, beam $BEAM"
-        FLAG_CBPCAL_DEP=`addDep "$FLAG_CBPCAL_DEP" "$ID_FLAG_1934"`
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_1934")
+        ID_FLAG_1934=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_FLAG_1934}" "Flagging 1934-638, beam $BEAM"
+        FLAG_CBPCAL_DEP=$(addDep "$FLAG_CBPCAL_DEP" "$ID_FLAG_1934")
     else
         echo "Would run flagging of 1934-638, beam $BEAM, with slurm file $sbatchfile"
     fi

@@ -32,10 +32,10 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-if [ ${DO_CONVERT_TO_FITS} == true ]; then
+if [ "${DO_CONVERT_TO_FITS}" == "true" ]; then
 
     sbatchfile="$slurms/convert_to_FITS.sbatch"
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -57,7 +57,7 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+cp $sbatchfile \$(echo $sbatchfile | sed -e \$sedstr\)
 
 expectedImageNames=()
 
@@ -85,13 +85,13 @@ done
 
 EOFOUTER
     
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:`echo $ALL_JOB_IDS | sed -e 's/,/:/g'`"
+            dep="-d afterok:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
         fi
-        ID_FITSCONVERT=`sbatch ${dep} $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_FITSCONVERT} "Job to convert remaining images to FITS, with flags \"${dep}\""
+        ID_FITSCONVERT=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_FITSCONVERT}" "Job to convert remaining images to FITS, with flags \"${dep}\""
     else
         echo "Would submit job to convert remaining images to FITS, with slurm file $sbatchfile"
     fi

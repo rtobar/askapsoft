@@ -39,7 +39,7 @@ if [ "$DO_CONT_IMAGING" != "true" ]; then
 fi
 
 # Don't run if there is only one field
-if [ ${NUM_FIELDS} -eq 1 ]; then
+if [ "${NUM_FIELDS}" -eq 1 ]; then
     DO_IT=false
 fi
 
@@ -50,17 +50,18 @@ fi
 if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     BEAM=all
     FIELD="."
-    if [ `echo $TILE_LIST | awk '{print NF}'` -gt 1 ]; then
+    tilelistsize=$(echo "${TILE_LIST}" | awk '{print NF}')
+    if [ "${tilelistsize}" -gt 1 ]; then
         FULL_TILE_LIST="$TILE_LIST ALL"
     else
         FULL_TILE_LIST="ALL"
     fi
     for TILE in $FULL_TILE_LIST; do
         for imageCode in ${mosaicImageList}; do
-            for((TTERM=0;TTERM<${NUM_TAYLOR_TERMS};TTERM++)); do
+            for((TTERM=0;TTERM<NUM_TAYLOR_TERMS;TTERM++)); do
                 setImageProperties cont
-                if [ -e ${OUTPUT}/${imageName} ]; then
-                    if [ $DO_IT == true ]; then
+                if [ -e "${OUTPUT}/${imageName}" ]; then
+                    if [ "${DO_IT}" == "true" ]; then
                         echo "Image ${imageName} exists, so not running continuum mosaicking"
                     fi
                     DO_IT=false
@@ -71,10 +72,10 @@ if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     done
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     sbatchfile=$slurms/linmos_all_cont.sbatch
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -191,10 +192,10 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        FULL_LINMOS_CONT_DEP=`echo $FULL_LINMOS_CONT_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONT_ALL=`sbatch $FULL_LINMOS_CONT_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONT_ALL} "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        FULL_LINMOS_CONT_DEP=$(echo "${FULL_LINMOS_CONT_DEP}" | sed -e 's/afterok/afterany/g')
+	ID_LINMOS_CONT_ALL=$(sbatch "${FULL_LINMOS_CONT_DEP}" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_LINMOS_CONT_ALL}" "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
     else
 	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"
     fi

@@ -34,11 +34,11 @@
 
 ##############################
 
-. ${PIPELINEDIR}/defineArtifactsScript.sh
+. "${PIPELINEDIR}/defineArtifactsScript.sh"
 
-. ${PIPELINEDIR}/convertToFITS.sh
+. "${PIPELINEDIR}/convertToFITS.sh"
 
-. ${PIPELINEDIR}/makeThumbnails.sh
+. "${PIPELINEDIR}/makeThumbnails.sh"
 
-. ${PIPELINEDIR}/casda.sh
+. "${PIPELINEDIR}/casda.sh"
 

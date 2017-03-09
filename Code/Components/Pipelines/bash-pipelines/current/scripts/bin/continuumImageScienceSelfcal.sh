@@ -33,35 +33,35 @@
 #
 
 # Define the Cimager parset and associated parameters
-. ${PIPELINEDIR}/getContinuumCimagerParams.sh
+. "${PIPELINEDIR}/getContinuumCimagerParams.sh"
 
 ID_CONTIMG_SCI_SC=""
 
 DO_IT=$DO_CONT_IMAGING
 
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${outputImage} ]; then
-    if [ $DO_IT == true ]; then
+if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/${outputImage}" ]; then
+    if [ "${DO_IT}" == "true" ]; then
         echo "Image ${outputImage} exists, so not running continuum imaging for beam ${BEAM}"
     fi
     DO_IT=false
 fi
 
-if [ $DO_ALT_IMAGER == true ]; then
+if [ "${DO_ALT_IMAGER}" == "true" ]; then
     theimager=$altimager
 else
     theimager=$cimager
 fi
 
-if [ $DO_IT == true ] && [ $DO_SELFCAL == true ]; then
+if [ "${DO_IT}" == "true" ] && [ "${DO_SELFCAL}" == "true" ]; then
 
-    if [ $NUM_CPUS_CONTIMG_SCI -lt 19 ]; then
+    if [ "${NUM_CPUS_CONTIMG_SCI}" -lt 19 ]; then
 	NUM_CPUS_SELFCAL=19
     else
 	NUM_CPUS_SELFCAL=$NUM_CPUS_CONTIMG_SCI
     fi
 
-    NPROCS_SELAVY=`echo $SELFCAL_SELAVY_NSUBX $SELFCAL_SELAVY_NSUBY | awk '{print $1*$2+1}'`
-    if [ ${CPUS_PER_CORE_CONT_IMAGING} -lt ${NPROCS_SELAVY} ]; then
+    NPROCS_SELAVY=$(echo "${SELFCAL_SELAVY_NSUBX}" "${SELFCAL_SELAVY_NSUBY}" | awk '{print $1*$2+1}')
+    if [ "${CPUS_PER_CORE_CONT_IMAGING}" -lt "${NPROCS_SELAVY}" ]; then
 	CPUS_PER_CORE_SELFCAL=${CPUS_PER_CORE_CONT_IMAGING}
     else
 	CPUS_PER_CORE_SELFCAL=${NPROCS_SELAVY}
@@ -75,8 +75,8 @@ if [ $DO_IT == true ] && [ $DO_SELFCAL == true ]; then
         selavyWeights=${OUTPUT}/weights.${imageBase}.taylor.0
     fi
 
-    cutWeights=`echo ${SELFCAL_SELAVY_WEIGHTSCUT} | awk '{if (($1>0.)&&($1<1.)) print "true"; else print "false";}'`
-    if [ ${cutWeights} == "true" ]; then
+    cutWeights=$(echo "${SELFCAL_SELAVY_WEIGHTSCUT}" | awk '{if (($1>0.)&&($1<1.)) print "true"; else print "false";}')
+    if [ "${cutWeights}" == "true" ]; then
         selavyWeights="# Use the weights image, with a high cutoff - since we are using
 # WProject, everything should be flat. This will reject areas where
 # the snapshot warp is reducing the weight.
@@ -86,7 +86,7 @@ Selavy.Weights.weightsCutoff                    = ${SELFCAL_SELAVY_WEIGHTSCUT}"
         selavyWeights="# No weights scaling applied in Selavy"
     fi
 
-    modelImage=contmodel.${imageBase}
+    modelImage="contmodel.${imageBase}"
 
     if [ "${SELFCAL_METHOD}" == "Cmodel" ]; then
 
@@ -120,7 +120,7 @@ Ccalibrator.sources.names                       = [lsm]
 Ccalibrator.sources.lsm.direction               = \${modelDirection}
 Ccalibrator.sources.lsm.model                   = ${modelImage}
 Ccalibrator.sources.lsm.nterms                  = ${NUM_TAYLOR_TERMS}"
-        if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
+        if [ "${NUM_TAYLOR_TERMS}" -gt 1 ]; then
             if [ "$MFS_REF_FREQ" == "" ]; then
                 freq=$CENTRE_FREQ
             else
@@ -150,7 +150,7 @@ Ccalibrator.sources.definition                  = \${sources}"
     fi
 
     setJob science_continuumImageSelfcal contSC
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -431,17 +431,17 @@ done
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
 	DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-        DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI_AV"`
-	ID_CONTIMG_SCI_SC=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_CONTIMG_SCI_SC} "Make a self-calibrated continuum image for beam $BEAM of the science observation, with flags \"$DEP\""
-        FLAG_IMAGING_DEP=`addDep "$FLAG_IMAGING_DEP" "$ID_CONTIMG_SCI_SC"`
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+        DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+        DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+        DEP=$(addDep "$DEP" "$ID_AVERAGE_SCI")
+        DEP=$(addDep "$DEP" "$ID_FLAG_SCI_AV")
+	ID_CONTIMG_SCI_SC=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_CONTIMG_SCI_SC}" "Make a self-calibrated continuum image for beam $BEAM of the science observation, with flags \"$DEP\""
+        FLAG_IMAGING_DEP=$(addDep "$FLAG_IMAGING_DEP" "$ID_CONTIMG_SCI_SC")
     else
 	echo "Would make a self-calibrated continuum image for beam $BEAM of the science observation with slurm file $sbatchfile"
     fi

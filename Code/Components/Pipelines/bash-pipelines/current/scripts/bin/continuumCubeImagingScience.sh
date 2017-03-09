@@ -32,7 +32,7 @@
 
 ID_CONTCUBE_SCI=""
 
-if [ $DO_ALT_IMAGER == true ]; then
+if [ "${DO_ALT_IMAGER}" == "true" ]; then
 theimager=$altimager
 else
 theimager=$simager
@@ -41,22 +41,22 @@ fi
 for POLN in $POL_LIST; do
 
     # make a lower-case version of the polarisation, for image name
-    pol=`echo $POLN | tr '[:upper:]' '[:lower:]'`
+    pol=$(echo "$POLN" | tr '[:upper:]' '[:lower:]')
 
     # set the $imageBase variable
     setImageBase contcube
 
     DO_IT=$DO_CONTCUBE_IMAGING
 
-    if [ $CLOBBER == false ] && [ -e ${OUTPUT}/image.${imageBase}.restored ]; then
-        if [ $DO_IT == true ]; then
+    if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/image.${imageBase}.restored" ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "Image ${imageBase}.restored exists, so not running continuum-cube imaging for beam ${BEAM}"
             echo " "
         fi
         DO_IT=false
     fi
 
-    if [ ${DO_APPLY_CAL_CONT} == true ]; then
+    if [ "${DO_APPLY_CAL_CONT}" == "true" ]; then
         msToUse=$msSciAvCal
     else
         msToUse=$msSciAv
@@ -67,11 +67,11 @@ for POLN in $POL_LIST; do
 
     # Define the preconditioning
     preconditioning="Simager.preconditioner.Names                    = ${PRECONDITIONER_LIST}"
-    if [ "`echo ${PRECONDITIONER_LIST} | grep GaussianTaper`" != "" ]; then
+    if [ "$(echo "${PRECONDITIONER_LIST}" | grep GaussianTaper)" != "" ]; then
         preconditioning="$preconditioning
 Simager.preconditioner.GaussianTaper            = ${PRECONDITIONER_GAUSS_TAPER}"
     fi
-    if [ "`echo ${PRECONDITIONER_LIST} | grep Wiener`" != "" ]; then
+    if [ "$(echo "${PRECONDITIONER_LIST}" | grep Wiener)" != "" ]; then
         # Use the new preservecf preconditioner option, but only for the
         # Wiener filter
         preconditioning="$preconditioning
@@ -86,14 +86,14 @@ Simager.preconditioner.Wiener.taper             = ${PRECONDITIONER_WIENER_TAPER}
         fi
     fi
     shapeDefinition="# Leave shape definition to advise"
-    if [ "${NUM_PIXELS_CONT}" != "" ] && [ $NUM_PIXELS_CONT -gt 0 ]; then
+    if [ "${NUM_PIXELS_CONT}" != "" ] && [ "${NUM_PIXELS_CONT}" -gt 0 ]; then
         shapeDefinition="Simager.Images.shape                            = [${NUM_PIXELS_CONT}, ${NUM_PIXELS_CONT}]"
     else
         echo "WARNING - No valid NUM_PIXELS_CONT parameter given.  Not running continuum cube imaging."
         DO_IT=false
     fi
-    cellsizeGood=`echo ${CELLSIZE_CONT} | awk '{if($1>0.) print "true"; else print "false";}'`
-    if [ "${CELLSIZE_CONT}" != "" ] && [ $cellsizeGood == true ]; then
+    cellsizeGood=$(echo "${CELLSIZE_CONT}" | awk '{if($1>0.) print "true"; else print "false";}')
+    if [ "${CELLSIZE_CONT}" != "" ] && [ "$cellsizeGood" == "true" ]; then
         cellsizeDefinition="Simager.Images.cellsize                         = [${CELLSIZE_CONT}arcsec, ${CELLSIZE_CONT}arcsec]"
     else
         echo "WARNING - No valid CELLSIZE_CONT parameter given.  Not running continuum cube imaging."
@@ -106,7 +106,7 @@ Simager.preconditioner.Wiener.taper             = ${PRECONDITIONER_WIENER_TAPER}
 
     cleaningPars="# These parameters define the clean algorithm 
 Simager.solver                                  = ${SOLVER_CONTCUBE}"
-    if [ ${SOLVER_CONTCUBE} == "Clean" ]; then
+    if [ "${SOLVER_CONTCUBE}" == "Clean" ]; then
         cleaningPars="${cleaningPars}
 Simager.solver.Clean.algorithm                  = ${CLEAN_CONTCUBE_ALGORITHM}
 Simager.solver.Clean.niter                      = ${CLEAN_CONTCUBE_MINORCYCLE_NITER}
@@ -124,7 +124,7 @@ Simager.ncycles                                 = ${CLEAN_CONTCUBE_NUM_MAJORCYCL
 Simager.Images.writeAtMajorCycle                = ${CLEAN_CONTCUBE_WRITE_AT_MAJOR_CYCLE}
 "
     fi
-    if [ ${SOLVER} == "Dirty" ]; then
+    if [ "${SOLVER}" == "Dirty" ]; then
         cleaningPars="${cleaningPars}
 Simager.solver.Dirty.tolerance                  = 0.01
 Simager.solver.Dirty.verbose                    = False
@@ -137,12 +137,12 @@ Simager.restore.beam                            = ${RESTORING_BEAM_CONTCUBE}
 Simager.restore.beamReference                   = ${RESTORING_BEAM_CONTCUBE_REFERENCE}
 Simager.restore.beamLog                         = beamLog.${imageBase}.txt"
 
-    if [ $DO_IT == true ]; then
+    if [ "${DO_IT}" == "true" ]; then
 
         echo "Imaging the continuum cube, polarisation $POLN, for the science observation"
 
-        setJob science_contcube_imager_${POLN} contcube${POLN}
-        cat > $sbatchfile <<EOFOUTER
+        setJob "science_contcube_imager_${POLN}" "contcube${POLN}"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -231,18 +231,18 @@ fi
 
 EOFOUTER
 
-        if [ $SUBMIT_JOBS == true ]; then
+        if [ "${SUBMIT_JOBS}" == "true" ]; then
             DEP=""
-            DEP=`addDep "$DEP" "$DEP_START"`
-            DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-            DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-            DEP=`addDep "$DEP" "$ID_AVERAGE_SCI"`
-            DEP=`addDep "$DEP" "$ID_FLAG_SCI_AV"`
-            DEP=`addDep "$DEP" "$ID_CAL_APPLY_CONT_SCI"`
-            ID_CONTCUBE_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-            DEP_CONTCUBE=`addDep "$DEP_CONTCUBE" "$ID_CONTCUBE_SCI"`
-	    recordJob ${ID_CONTCUBE_SCI} "Make a continuum cube in pol $POLN for beam $BEAM of the science observation, with flags \"$DEP\""
+            DEP=$(addDep "$DEP" "$DEP_START")
+            DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+            DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+            DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+            DEP=$(addDep "$DEP" "$ID_AVERAGE_SCI")
+            DEP=$(addDep "$DEP" "$ID_FLAG_SCI_AV")
+            DEP=$(addDep "$DEP" "$ID_CAL_APPLY_CONT_SCI")
+            ID_CONTCUBE_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+            DEP_CONTCUBE=$(addDep "$DEP_CONTCUBE" "$ID_CONTCUBE_SCI")
+	    recordJob "${ID_CONTCUBE_SCI}" "Make a continuum cube in pol $POLN for beam $BEAM of the science observation, with flags \"$DEP\""
         else
 	    echo "Would make a continuum cube in pol $POLN for beam $BEAM of the science observation with slurm file $sbatchfile"
         fi

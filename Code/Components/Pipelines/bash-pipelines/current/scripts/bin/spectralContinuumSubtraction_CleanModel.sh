@@ -40,7 +40,7 @@ CContsubtract.sources.names                       = [lsm]
 CContsubtract.sources.lsm.direction               = \${modelDirection}
 CContsubtract.sources.lsm.model                   = ${modelImage}
 CContsubtract.sources.lsm.nterms                  = ${NUM_TAYLOR_TERMS}"
-if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
+if [ "${NUM_TAYLOR_TERMS}" -gt 1 ]; then
     if [ "$MFS_REF_FREQ" == "" ]; then
         freq=$CENTRE_FREQ
     else
@@ -51,7 +51,7 @@ CContsubtract.visweights                          = MFS
 CContsubtract.visweights.MFS.reffreq              = ${freq}"
 fi
 
-cat > $sbatchfile <<EOFOUTER
+cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}

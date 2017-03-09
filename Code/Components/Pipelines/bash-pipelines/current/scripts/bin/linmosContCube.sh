@@ -41,11 +41,11 @@ fi
 if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     BEAM=all
     for POLN in $POL_LIST; do
-        pol=`echo $POLN | tr '[:upper:]' '[:lower:]'`
+        pol=$(echo "$POLN" | tr '[:upper:]' '[:lower:]')
         for imageCode in ${mosaicImageList}; do
             setImageProperties contcube
-            if [ -e ${OUTPUT}/${imageName} ]; then
-                if [ $DO_IT == true ]; then
+            if [ -e "${OUTPUT}/${imageName}" ]; then
+                if [ "${DO_IT}" == "true" ]; then
                     echo "Image ${imageName} exists, so not running continuum cube mosaicking"
                 fi
                 DO_IT=false
@@ -56,7 +56,7 @@ fi
 
 if [ "${DO_IT}" == "true" ]; then
 
-    if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+    if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
         reference="# No reference image or offsets, as we take the image centres"
     else
         reference="# Reference image for offsets
@@ -68,7 +68,7 @@ ${LINMOS_BEAM_OFFSETS}"
 
 
     setJob linmosContCube linmosCC
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -151,11 +151,11 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        DEP_CONTCUBE=`echo $DEP_CONTCUBE | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONTCUBE=`sbatch $DEP_CONTCUBE $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONTCUBE} "Make a mosaic continuum cube of the science observation, field $FIELD, with flags \"${DEP_CONTCUBE}\""
-        FULL_LINMOS_CONTCUBE_DEP=`addDep "${FULL_LINMOS_CONTCUBE_DEP}" "${ID_LINMOS_CONTCUBE}"`
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        DEP_CONTCUBE=$(echo "$DEP_CONTCUBE" | sed -e 's/afterok/afterany/g')
+	ID_LINMOS_CONTCUBE=$(sbatch "$DEP_CONTCUBE" "$sbatchfile" | awk '{print $4}'$)
+	recordJob "${ID_LINMOS_CONTCUBE}" "Make a mosaic continuum cube of the science observation, field $FIELD, with flags \"${DEP_CONTCUBE}\""
+        FULL_LINMOS_CONTCUBE_DEP=$(addDep "${FULL_LINMOS_CONTCUBE_DEP}" "${ID_LINMOS_CONTCUBE}")
     else
 	echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
     fi

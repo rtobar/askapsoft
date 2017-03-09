@@ -35,7 +35,7 @@
 msNameList=()
 for BEAM in ${BEAMS_TO_USE}; do
     findScienceMSnames
-    if [ $DO_APPLY_CAL_CONT == true ]; then
+    if [ "${DO_APPLY_CAL_CONT}" == "true" ]; then
         msNameList+=($msSciAvCal)
     else
         msNameList+=($msSciAv)
@@ -44,8 +44,8 @@ done
 
 imageCodeList="restored altrestored image residual sensitivity psf psfimage"
 
-getArtifacts=${tools}/getArchiveList-${NOW}.sh
-cat > ${getArtifacts} <<EOF
+getArtifacts="${tools}/getArchiveList-${NOW}.sh"
+cat > "${getArtifacts}" <<EOF
 #!/bin/bash -l
 #
 # Defines the lists of images, catalogues and measurement sets that

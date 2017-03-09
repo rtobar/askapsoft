@@ -33,30 +33,30 @@ ID_SPLIT_SCI=""
 
 DO_IT=$DO_SPLIT_SCIENCE
 
-if [ -e ${OUTPUT}/${msSci} ]; then
-    if [ $CLOBBER == false ]; then
+if [ -e "${OUTPUT}/${msSci}" ]; then
+    if [ "${CLOBBER}" != "true" ]; then
         # If we aren't clobbering files, don't run anything
-        if [ $DO_IT == true ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "MS ${msSci} exists, so not splitting for beam ${BEAM}"
         fi
         DO_IT=false
     else
         # If we are clobbering files, removing the existing one, but
         # only if we are going to be running the job
-        if [ $DO_IT == true ]; then
-            rm -rf ${OUTPUT}/${msSci}
-            rm -f ${FLAG_CHECK_FILE}
-            rm -f ${BANDPASS_CHECK_FILE}
+        if [ "${DO_IT}" == "true" ]; then
+            rm -rf "${OUTPUT}/${msSci}"
+            rm -f "${FLAG_CHECK_FILE}"
+            rm -f "${BANDPASS_CHECK_FILE}"
         fi
     fi
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     if [ "$SCAN_SELECTION_SCIENCE" == "" ]; then
 	scanParam="# No scan selection done"
     else
-        if [ `echo ${SCAN_SELECTION_SCIENCE} | awk -F'[' '{print NF}'` -gt 1 ]; then
+        if [ "$(echo "${SCAN_SELECTION_SCIENCE}" | awk -F'[' '{print NF}')" -gt 1 ]; then
 	    scanParam="scans        = ${SCAN_SELECTION_SCIENCE}"
         else
             scanParam="scans        = [${SCAN_SELECTION_SCIENCE}]"
@@ -67,7 +67,7 @@ if [ $DO_IT == true ]; then
     fieldParam="fieldnames   = ${FIELD}"
     
     setJob split_science split
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -137,11 +137,11 @@ fi
 
 EOFOUTER
     
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-	ID_SPLIT_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_SPLIT_SCI} "Splitting beam ${BEAM} of science observation"
+        DEP=$(addDep "$DEP" "$DEP_START")
+	ID_SPLIT_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_SPLIT_SCI}" "Splitting beam ${BEAM} of science observation"
     else
 	echo "Would run splitting ${BEAM} of science observation with slurm file $sbatchfile"
     fi
