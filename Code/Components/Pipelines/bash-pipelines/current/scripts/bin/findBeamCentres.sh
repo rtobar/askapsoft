@@ -28,7 +28,7 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-tmpfp"=${tmp}/listOfFootprints"
+tmpfp="${tmp}/listOfFootprints"
 module load askapcli
 footprint list > "$tmpfp"
 err=$?
@@ -216,7 +216,7 @@ if [ "$DO_SCIENCE_FIELD" == "true" ] && [ "$NEED_BEAM_CENTRES" == "true" ]; then
                     footprintArgs="$footprintArgs -r $FP_PA"
                 fi
                 module load askapcli
-                footprint calculate "$footprintArgs" "$FP_NAME" > "${footprintOut}"
+                footprint calculate $footprintArgs "$FP_NAME" > "${footprintOut}"
                 err=$?
                 module unload askapcli
                 if [ $err -ne 0 ]; then

@@ -34,14 +34,14 @@
 #  We define these based on the SB number
 
 # 1934-638 calibration
-if [ "{$DO_1934_CAL}" == "true" ]; then
+if [ "${DO_1934_CAL}" == "true" ]; then
 
     if [ "${MS_INPUT_1934}" == "" ]; then
         if [ "${SB_1934}" != "SET_THIS" ]; then
 	    sb1934dir="$DIR_SB/$SB_1934"
             msnames=$(find "$sb1934dir" -name "*.ms")
 	    if [ "$(echo "$msnames" | wc -l)" -eq 1 ]; then
-	        MS_INPUT_1934="$sb1934dir/${msnames}"
+	        MS_INPUT_1934="$sb1934dir/${msnames##*/}"
 	    else
 	        echo "SB directory $SB_1934 has more than one measurement set. Please specify with parameter 'MS_INPUT_1934'."
 	    fi
@@ -61,9 +61,9 @@ if [ "${DO_SCIENCE_FIELD}" == "true" ]; then
     if [ "$MS_INPUT_SCIENCE" == "" ]; then
         if [ "${SB_SCIENCE}" != "SET_THIS" ]; then
 	    sbScienceDir=$DIR_SB/$SB_SCIENCE
-            msnames=$(find "$sb1934dir" -name "*.ms")
+            msnames=$(find "$sbScienceDir" -name "*.ms")
 	    if [ "$(echo "$msnames" | wc -l)" -eq 1 ]; then
-	        MS_INPUT_SCIENCE="$sbScienceDir/${msnames}"
+	        MS_INPUT_SCIENCE="$sbScienceDir/${msnames##*/}"
 	    else
 	        echo "SB directory $SB_SCIENCE has more than one measurement set. Please specify with parameter 'MS_INPUT_SCIENCE'."
 	    fi
