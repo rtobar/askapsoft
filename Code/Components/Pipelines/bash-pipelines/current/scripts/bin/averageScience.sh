@@ -74,10 +74,11 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 parset=${parsets}/science_average_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 # Input measurement set
 # Default: <no default>
 vis         = ${msSci}
@@ -110,7 +111,7 @@ log=${logs}/science_average_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} $mssplit -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} $mssplit -c "\${parset}" > "\${log}"
 err=\$?
 rejuvenate ${msSci}
 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"

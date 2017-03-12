@@ -102,10 +102,11 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 parset=${parsets}/cbpcalibrator_1934_\${SLURM_JOB_ID}.in
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 Cbpcalibrator.dataset                         = [${ms1934list}]
 ${dataSelectionPars}
 Cbpcalibrator.nAnt                            = ${NUM_ANT}
@@ -134,7 +135,7 @@ log=${logs}/cbpcalibrator_1934_\${SLURM_JOB_ID}.log
 
 NCORES=${NUM_CPUS_CBPCAL}
 NPPN=20
-aprun -n \${NCORES} -N \${NPPN} $cbpcalibrator -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} $cbpcalibrator -c "\$parset" > "\$log"
 err=\$?
 for ms in \`echo $ms1934list | sed -e 's/,/ /g'\`; do 
     rejuvenate \$ms;

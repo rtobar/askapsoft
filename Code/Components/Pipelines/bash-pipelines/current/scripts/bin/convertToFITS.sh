@@ -68,7 +68,7 @@ ADD_FITS_SUFFIX=false
 expectedImageNames=(\${casdaTwoDimImageNames[@]})
 expectedImageNames+=(\${casdaOtherDimImageNames[@]})
 
-echo "Image names = \${expectedImageNames[@]}"
+echo "Image names = " "\${expectedImageNames[@]}"
 
 for image in \${expectedImageNames[@]}; do
 

@@ -90,7 +90,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 IMAGE_BASE_CONTCUBE=${IMAGE_BASE_CONTCUBE}
 FIELD=${FIELD}
@@ -122,7 +123,7 @@ for POLN in \$POL_LIST; do
             echo "Mosaicking \${beamList} to form \${imageName}"
             parset=${parsets}/science_\${jobCode}_\${pol}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
             log=${logs}/science_\${jobCode}_\${pol}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-            cat > \${parset} << EOFINNER
+            cat > "\${parset}" << EOFINNER
 linmos.names            = [\${beamList}]
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
@@ -135,7 +136,7 @@ EOFINNER
 
             NCORES=${NUM_CPUS_CONTCUBE_LINMOS}
             NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-            aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
+            aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
             err=\$?
             for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
                 rejuvenate \${im}

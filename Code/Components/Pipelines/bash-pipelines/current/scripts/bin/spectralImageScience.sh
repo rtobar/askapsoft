@@ -202,7 +202,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 direction="${DIRECTION}"
 if [ "\${direction}" != "" ]; then
@@ -220,7 +221,7 @@ fi
 
 parset=${parsets}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 
-cat > \$parset << EOF
+cat > "\$parset" << EOF
 ${Imager}.dataset                                 = ${msSciSL}
 #
 ${namestr}
@@ -255,7 +256,7 @@ log=${logs}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 # Now run the simager
 NCORES=${NUM_CPUS_SPECIMG_SCI}
 NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
-aprun -n \${NCORES} -N \${NPPN} ${theImager} -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} ${theImager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSciSL}
 rejuvenate *.${imageBase}*

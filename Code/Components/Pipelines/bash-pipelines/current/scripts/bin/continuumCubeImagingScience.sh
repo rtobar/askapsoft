@@ -164,7 +164,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 ms=${msToUse}
 
@@ -182,7 +183,7 @@ else
 fi
 
 parset=${parsets}/science_contcube_imager_${FIELDBEAM}_${POLN}_\${SLURM_JOB_ID}.in
-cat > \$parset << EOF
+cat > "\$parset" << EOF
 Simager.dataset                                 = \${ms}
 #
 Simager.Images.name                             = image.${imageBase}
@@ -217,7 +218,7 @@ log=${logs}/science_contcube_imager_${FIELDBEAM}_${POLN}_\${SLURM_JOB_ID}.log
 # Now run the simager
 NCORES=${NUM_CPUS_CONTCUBE_SCI}
 NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-aprun -n \${NCORES} -N \${NPPN} ${theimager} -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} ${theimager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate \${ms}
 rejuvenate *.${imageBase}*

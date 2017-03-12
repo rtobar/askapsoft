@@ -122,7 +122,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 # Working directory for the selavy output
 seldir=selavy-spectral-${imageName##*/}
@@ -181,7 +182,7 @@ if [ \${HAVE_IMAGES} == true ]; then
     cubeletDir=Cubelets
     mkdir -p \$cubeletDir
     
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 Selavy.image = \${image##/*}.fits
 Selavy.nsubx = ${SELAVY_SPEC_NSUBX}
 Selavy.nsuby = ${SELAVY_SPEC_NSUBY}

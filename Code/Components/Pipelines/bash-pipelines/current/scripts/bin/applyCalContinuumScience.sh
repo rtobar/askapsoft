@@ -62,7 +62,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 keepRaw=${KEEP_RAW_AV_MS}
 if [ "\${keepRaw}" == "true" ]; then
@@ -72,7 +73,7 @@ fi
 
 parset=${parsets}/apply_gains_cal_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 log=${logs}/apply_gains_cal_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 Ccalapply.dataset                         = ${msSciAvCal}
 #
 # Allow flagging of vis if inversion of Mueller matrix fails
@@ -90,7 +91,7 @@ EOFINNER
 
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c "\${parset}" > "\${log}"
 err=\$?
 rejuvenate ${msSciAvCal}
 rejuvenate ${gainscaltab}

@@ -96,7 +96,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 maxterm=\`echo \${NUM_TAYLOR_TERMS} | awk '{print 2*\$1-1}'\`
@@ -151,7 +152,7 @@ for((LOOP=0;LOOP<=\$NUM_LOOPS;LOOP++)); do
                 echo "Mosaicking to form \${imageName}"
                 parset=${parsets}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
                 log=${logs}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-                cat > \${parset} << EOFINNER
+                cat > "\${parset}" << EOFINNER
 linmos.names            = [\${beamList}]
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
@@ -164,7 +165,7 @@ EOFINNER
 
                 NCORES=1
                 NPPN=1
-                aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
+                aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
                 err=\$?
                 for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
                     rejuvenate \${im}

@@ -135,7 +135,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 seldir=selavy_${contImage}
 mkdir -p \$seldir
@@ -239,7 +240,7 @@ Selavy.RMSynthesis.phiZero = ${SELAVY_POL_PHI_ZERO}"
 Selavy.RMSynthesis = \${doRM}"
     fi
 
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 Selavy.image = \${image##*/}.fits
 Selavy.SBid = ${SB_SCIENCE}
 Selavy.nsubx = ${SELAVY_NSUBX}

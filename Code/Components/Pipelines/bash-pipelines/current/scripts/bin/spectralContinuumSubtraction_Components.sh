@@ -72,7 +72,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 log=${logs}/mslist_for_contsub_\${SLURM_JOB_ID}.log
 NCORES=1
@@ -93,7 +94,7 @@ cd \${contsubdir}
 
 parset=${parsets}/selavy_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 log=${logs}/selavy_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-cat >> \$parset <<EOFINNER
+cat >> "\$parset" <<EOFINNER
 ##########
 ## Source-finding with selavy
 ##
@@ -158,7 +159,7 @@ EOFINNER
 
 NCORES=${NPROCS_SELAVY}
 NPPN=${CPUS_PER_CORE_CONTSUB}
-aprun -n \${NCORES} -N \${NPPN} ${selavy} -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} ${selavy} -c "\${parset}" > "\${log}"
 err=\$?
 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_selavy "txt,csv"
 if [ \$err != 0 ]; then
@@ -179,7 +180,7 @@ else
     
     parset=${parsets}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 # The measurement set name - this will be overwritten
 CContSubtract.dataset                             = ${msSciSL}
 # The model definition
@@ -202,7 +203,7 @@ EOFINNER
     
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c \${parset} > \${log}
+    aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c "\${parset}" > "\${log}"
     err=\$?
     rejuvenate ${msSciSL}
     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"

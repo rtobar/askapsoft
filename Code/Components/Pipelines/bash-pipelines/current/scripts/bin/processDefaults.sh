@@ -182,7 +182,7 @@ if [ -e \"\${casaim}\" ] && [ ! -e \"\${fitsim}\" ]; then
     # The FITS version of this image doesn't exist
 
     script=\`echo \${parset} | sed -e 's/\.in/\.py/g'\`
-    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
+    ASKAPSOFT_VERSION=\"${ASKAPSOFT_VERSION}\"
     if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
         ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
     else
@@ -224,14 +224,14 @@ fi"
 if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
     # The FITS version of this image doesn't exist
 
-    ASKAPSOFT_VERSION=${ASKAPSOFT_VERSION}
-    if [ \"${ASKAPSOFT_VERSION}\" == \"\" ]; then
-        ASKAPSOFT_VERSION_USED=\`module list -t 2>&1 | grep askapsoft\`
+    ASKAPSOFT_VERSION=\"\${ASKAPSOFT_VERSION}\"
+    if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
+        ASKAPSOFT_VERSION_USED=\$(module list -t 2>&1 | grep askapsoft)
     else
-        ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
+        ASKAPSOFT_VERSION_USED=\$(echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g')
     fi
 
-    cat > \$parset << EOFINNER
+    cat > \"\$parset\" << EOFINNER
 ImageToFITS.casaimage = \${casaim}
 ImageToFITS.fitsimage = \${fitsim}
 ImageToFITS.stokesLast = true
@@ -244,7 +244,7 @@ ImageToFITS.history = [\"Produced with ASKAPsoft version \${ASKAPSOFT_VERSION_US
 EOFINNER
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} imageToFITS -c \${parset} >> \${log}
+    aprun -n \${NCORES} -N \${NPPN} imageToFITS -c \"\${parset}\" >> \"\${log}\"
 
 fi"
     fi

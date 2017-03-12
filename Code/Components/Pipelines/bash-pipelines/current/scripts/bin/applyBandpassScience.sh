@@ -60,7 +60,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 RAW_TABLE=${TABLE_BANDPASS}
 SMOOTH_TABLE=${TABLE_BANDPASS}.smooth
@@ -72,7 +73,7 @@ else
 fi
 
 parset=${parsets}/ccalapply_bp_b${BEAM}_\${SLURM_JOB_ID}.in
-cat > \$parset << EOFINNER
+cat > "\$parset" << EOFINNER
 Ccalapply.dataset                         = ${msSci}
 #
 # Allow flagging of vis if inversion of Mueller matrix fails
@@ -91,7 +92,7 @@ log=${logs}/ccalapply_bp_b${BEAM}_\${SLURM_JOB_ID}.log
 
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c \$parset > \$log
+aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSci}
 rejuvenate \${TABLE}

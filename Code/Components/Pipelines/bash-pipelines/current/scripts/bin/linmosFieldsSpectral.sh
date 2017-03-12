@@ -94,7 +94,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
 SB_SCIENCE=${SB_SCIENCE}
@@ -159,7 +160,7 @@ for THISTILE in \$FULL_TILE_LIST; do
         echo "Mosaicking to form \${imageName}"
         parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
         log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
-        cat > \${parset} << EOFINNER
+        cat > "\${parset}" << EOFINNER
 linmos.names            = [\${imList}]
 linmos.weights          = [\${wtList}]
 linmos.outname          = \$imageName
@@ -169,7 +170,7 @@ EOFINNER
 
         NCORES=${NUM_CPUS_SPECTRAL_LINMOS}
         NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
-        aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
+        aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
         err=\$?
         for im in \`echo \${imList} | sed -e 's/,/ /g'\`; do
             rejuvenate \$im

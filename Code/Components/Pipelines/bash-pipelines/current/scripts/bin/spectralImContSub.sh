@@ -78,10 +78,11 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 pyscript=${parsets}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.py
-cat > \$pyscript << EOFINNER
+cat > "\$pyscript" << EOFINNER
 #!/usr/bin/env python
 
 # Need to import this from ACES

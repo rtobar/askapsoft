@@ -168,7 +168,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 selfcalMethod=${SELFCAL_METHOD}
 
@@ -237,7 +238,7 @@ Cimager.calibrate                               = false
     cimagerSelfcalLoopParams
     dataSelectionSelfcalLoop Cimager
 
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 ##########
 ## Continuum imaging with cimager
 ##
@@ -251,7 +252,7 @@ ${cimagerParams}
 EOFINNER
     if [ \${LOOP} -gt 0 ]; then
             dataSelectionSelfcalLoop Cccalibrator
-            cat >> \$parset <<EOFINNER
+            cat >> "\$parset" <<EOFINNER
 ##########
 ## Shallow source-finding with selavy
 ##

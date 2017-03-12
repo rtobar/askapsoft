@@ -82,7 +82,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 parset=${parsets}/science_linmos_\${SLURM_JOB_ID}.in
 log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
@@ -108,7 +109,7 @@ if [ "\${imageList}" != "" ]; then
 
     imageList=\`echo \${imageList} | sed -e 's/ /,/g' \`
     weightList=\`echo \${weightList} | sed -e 's/ /,/g' \`
-    cat > \$parset << EOFINNER
+    cat > "\$parset" << EOFINNER
 linmos.names            = [\${imageList}]
 linmos.weights          = [\${weightList}]
 linmos.outname          = \${outImage}
@@ -124,7 +125,7 @@ EOFINNER
 
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
+    aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
     err=\$?
     rejuvenate *.${IMAGE_BASE_CONT}*
     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"

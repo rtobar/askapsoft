@@ -115,13 +115,14 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 DO_AMP_FLAG=${DO_AMP_FLAG}
 if [ \$DO_AMP_FLAG == true ]; then
 
     parset=${parsets}/cflag_amp_1934_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 # The path/filename for the measurement set
 Cflag.dataset                           = ${msCal}
 
@@ -139,7 +140,7 @@ EOFINNER
 
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} ${cflag} -c \${parset} > \${log}
+    aprun -n \${NCORES} -N \${NPPN} ${cflag} -c "\${parset}" > "\${log}"
     err=\$?
     rejuvenate ${msCal}
     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_Amp "txt,csv"
@@ -154,7 +155,7 @@ DO_DYNAMIC=${FLAG_DO_DYNAMIC_AMPLITUDE_1934}
 if [ \${DO_DYNAMIC} ]; then
 
     parset=${parsets}/cflag_dynamic_1934_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-    cat > \$parset <<EOFINNER
+    cat > "\$parset" <<EOFINNER
 # The path/filename for the measurement set
 Cflag.dataset                           = ${msCal}
 
@@ -174,7 +175,7 @@ EOFINNER
     
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} ${cflag} -c \${parset} > \${log}
+    aprun -n \${NCORES} -N \${NPPN} ${cflag} -c "\${parset}" > "\${log}"
     err=\$?
     rejuvenate ${msCal}
     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_Dyn "txt,csv"

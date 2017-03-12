@@ -86,10 +86,11 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 parset=${parsets}/split_spectralline_science_${FIELDBEAM}_\${SLURM_JOB_ID}.in
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 # Input measurement set
 # Default: <no default>
 vis         = ${msSci}
@@ -114,7 +115,7 @@ log=${logs}/split_spectralline_science_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} ${mssplit} -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} ${mssplit} -c "\${parset}" > "\${log}"
 err=\$?
 rejuvenate ${msSciSL}
 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
@@ -178,11 +179,12 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 parset=${parsets}/apply_gains_cal_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 log=${logs}/apply_gains_cal_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 Ccalapply.dataset                         = ${msSciSL}
 #
 # Allow flagging of vis if inversion of Mueller matrix fails
@@ -200,7 +202,7 @@ EOFINNER
 
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c "\${parset}" > "\${log}"
 err=\$?
 rejuvenate ${msSciSL}
 rejuvenate ${gainscaltab}
