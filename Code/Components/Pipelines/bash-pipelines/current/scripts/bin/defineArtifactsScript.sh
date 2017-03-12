@@ -245,7 +245,7 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                     setImageProperties cont
                     contImage=\${imageName}
                     pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
-                    setImageProperties contcube \$pol
+                    setImageProperties contcube "\$pol"
                     if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
                         casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                         casdaOtherDimImageTypes+=("\${imageType}")
@@ -353,7 +353,7 @@ done
 evalNames=()
 
 # Stats summary files
-for file in \$(find ${OUTPUT} -name "stats-all*.txt"); do
+for file in "${OUTPUT}"/stats-all*.txt; do
     evalNames+=(\${file##*/})
 done
 

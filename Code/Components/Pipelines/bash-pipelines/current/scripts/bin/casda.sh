@@ -68,7 +68,7 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile "$(echo $sbatchfile | sed -e "\$sedstr")"
+cp $sbatchfile "\$(echo $sbatchfile | sed -e "\$sedstr")"
 
 # Define the lists of image names, types, 
 ADD_FITS_SUFFIX=true
@@ -87,7 +87,7 @@ image\${count}.type      = \${casdaTwoDimImageTypes[i]}
 image\${count}.project   = ${PROJECT_ID}"
     for size in ${THUMBNAIL_SIZE_TEXT[@]}; do
         sedstr="s/\.fits/_\${size}.${THUMBNAIL_SUFFIX}/g"
-        thumb=$(echo \${casdaTwoDimImageNames[i]} | sed -e \$sedstr)
+        thumb=\$(echo "\${casdaTwoDimImageNames[i]}" | sed -e \$sedstr)
         if [ -e \${OUTPUT}/"\$thumb" ]; then
             imageParams="\${imageParams}
 image\${count}.thumbnail_\${size} = \${OUTPUT}/\${thumb}"
@@ -112,11 +112,11 @@ image\${count}.spec.type     = spectral_integrated_restored
 image\${count}.noise.filename = \${casdaOtherDimImageNoise[i]}
 image\${count}.noise.type     = spectral_noise_restored
 image\${count}.momentmaps = [mom0,mom1,mom2]
-image\${count}.mom0.filename = $(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/0/g')
+image\${count}.mom0.filename = \$(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/0/g')
 image\${count}.mom0.type     = spectral_restored_mom0
-image\${count}.mom1.filename = $(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/1/g')
+image\${count}.mom1.filename = \$(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/1/g')
 image\${count}.mom1.type     = spectral_restored_mom1
-image\${count}.mom2.filename = $(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/2/g')
+image\${count}.mom2.filename = \$(echo "\${casdaOtherDimImageMoments[i]}" | sed -e 's/%m/2/g')
 image\${count}.mom2.type     = spectral_restored_mom2"
     elif [ "\${casdaOtherDimImageSpectra[i]}" != "" ]; then
         if [ "\${casdaOtherDimImageFDF[i]}" != "" ]; then
@@ -140,7 +140,7 @@ image\${count}.RMSF.type     = cont_rmsf"
     fi
     ((count++))
 done
-imageArtifacts=$(echo "\${imageArtifacts[@]}" | sed -e 's/ /,/g')
+imageArtifacts=\$(echo "\${imageArtifacts[@]}" | sed -e 's/ /,/g')
 
 catArtifacts=()
 catParams="# Individual catalogue details"
@@ -151,7 +151,7 @@ cat\${i}.filename = \${OUTPUT}/\${catNames[i]}
 cat\${i}.type     = \${catTypes[i]}
 cat\${i}.project  = ${PROJECT_ID}"
 done
-catArtifacts=$(echo \${catArtifacts[@]} | sed -e 's/ /,/g')
+catArtifacts=\$(echo "\${catArtifacts[@]}" | sed -e 's/ /,/g')
 
 msArtifacts=()
 msParams="# Individual catalogue details"
@@ -161,7 +161,7 @@ for((i=0;i<\${#msNames[@]};i++)); do
 ms\${i}.filename = \${OUTPUT}/\${msNames[i]}
 ms\${i}.project  = ${PROJECT_ID}"
 done
-msArtifacts=$(echo "\${msArtifacts[@]}" | sed -e 's/ /,/g')
+msArtifacts=\$(echo "\${msArtifacts[@]}" | sed -e 's/ /,/g')
 
 evalArtifacts=()
 evalParams="# Evaluation file details"
@@ -171,7 +171,7 @@ for((i=0;i<\${#evalNames[@]};i++)); do
 eval\${i}.filename = \${OUTPUT}/\${evalNames[i]}
 eval\${i}.project  = ${PROJECT_ID}"
 done
-evalArtifacts=$(echo "\${evalArtifacts[@]}" | sed -e 's/ /,/g')
+evalArtifacts=\$(echo "\${evalArtifacts[@]}" | sed -e 's/ /,/g')
 
 writeREADYfile=${WRITE_CASDA_READY}
 
@@ -227,20 +227,20 @@ if [ "\${writeREADYfile}" == "true" ] && [ "\${doTransition}" == "true" ]; then
     err=\$?
     module unload askapcli
     if [ \${err} -ne 0 ]; then
-        echo "$(date): ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err" | tee -a ${ERROR_FILE}
+        echo "\$(date): ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err" | tee -a ${ERROR_FILE}
     fi
-    if [ "$(whoami)" == "askapops" ]; then
+    if [ "\$(whoami)" == "askapops" ]; then
         if [ \$err -eq 0 ]; then
             schedblock annotate -i ${SB_JIRA_ISSUE} -c "Processing complete. SB ${SB_SCIENCE} transitioned to PENDINGARCHIVE." $SB_SCIENCE
             annotErr=\$?
             if [ \${annotErr} -ne 0 ]; then
-                echo "$(date): ERROR - 'schedblock annotate' failed with error code \${annotErr}" | tee -a ${ERROR_FILE}
+                echo "\$(date): ERROR - 'schedblock annotate' failed with error code \${annotErr}" | tee -a ${ERROR_FILE}
             fi
         else
             schedblock annotate -i ${SB_JIRA_ISSUE} -c "ERROR -- Processing complete but SB ${SB_SCIENCE} failed to transition." ${SB_SCIENCE}
             annotErr=\$?
             if [ \${annotErr} -ne 0 ]; then
-                echo "$(date): ERROR - 'schedblock annotate' failed with error code \${annotErr}" | tee -a ${ERROR_FILE}
+                echo "\$(date): ERROR - 'schedblock annotate' failed with error code \${annotErr}" | tee -a ${ERROR_FILE}
             fi
         fi
     fi
@@ -253,7 +253,7 @@ EOFOUTER
     if [ "${SUBMIT_JOBS}" == "true" ]; then    
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
+            dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
         ID_CASDA=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_CASDA}" "Job to stage data for ingest into CASDA, with flags \"${dep}\""
@@ -316,7 +316,7 @@ ageOfReady=\$(expr \$NOW - \$READYdate)
 if [ -e "${CASDA_DIR}/ERROR" ]; then
     errmsg=\$(cat ${CASDA_DIR}/ERROR)
     echo "\$(date): ERROR - CASDA ingest failed. SB ${SB_SCIENCE} not transitioned to COMPLETED." | tee -a ${ERROR_FILE}
-    if [ "$(whoami)" == "askapops" ]; then
+    if [ "\$(whoami)" == "askapops" ]; then
         module load askapcli
         schedblock annotate -i "${SB_JIRA_ISSUE}" -c "ERROR -- CASDA ingest for SB ${SB_SCIENCE} failed with error:\\n\$errmsg" ${SB_SCIENCE}
         annotErr=\$?
@@ -369,7 +369,7 @@ EOFOUTER
         if [ "${SUBMIT_JOBS}" == "true" ]; then    
             dep=""
             if [ "${ALL_JOB_IDS}" != "" ]; then
-                dep="-d afterok:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
+                dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
             fi
             dep=$(addDep "$dep" "$ID_CASDA")
             ID_CASDAPOLL=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')

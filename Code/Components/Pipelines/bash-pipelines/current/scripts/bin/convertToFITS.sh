@@ -57,7 +57,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \$(echo $sbatchfile | sed -e \$sedstr\)
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 expectedImageNames=()
 
@@ -70,7 +71,7 @@ expectedImageNames+=(\${casdaOtherDimImageNames[@]})
 
 echo "Image names = " "\${expectedImageNames[@]}"
 
-for image in \${expectedImageNames[@]}; do
+for image in "\${expectedImageNames[@]}"; do
 
     echo "Launching conversion job for \$image"
     casaim=\${image}

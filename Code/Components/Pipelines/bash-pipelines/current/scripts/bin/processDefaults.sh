@@ -221,14 +221,14 @@ fi"
     else
         # We can use the new imageToFITS utility to do the conversion.
         fitsConvertText="# The following converts the file in \$casaim to a FITS file, after fixing headers.
-if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
+if [ -e \"\${casaim}\" ] && [ ! -e \"\${fitsim}\" ]; then
     # The FITS version of this image doesn't exist
 
     ASKAPSOFT_VERSION=\"\${ASKAPSOFT_VERSION}\"
     if [ \"\${ASKAPSOFT_VERSION}\" == \"\" ]; then
         ASKAPSOFT_VERSION_USED=\$(module list -t 2>&1 | grep askapsoft)
     else
-        ASKAPSOFT_VERSION_USED=\$(echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g')
+        ASKAPSOFT_VERSION_USED=\$(echo \"\${ASKAPSOFT_VERSION}\" | sed -e 's|/||g')
     fi
 
     cat > \"\$parset\" << EOFINNER

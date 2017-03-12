@@ -96,15 +96,16 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 IMAGE_BASE_CONTCUBE=${IMAGE_BASE_CONTCUBE}
 FIELD=${FIELD}
 POL_LIST="${POL_LIST}"
+BEAMS_TO_USE="${BEAMS_TO_USE}"
 
 for POLN in \$POL_LIST; do
 
-    pol=\$(echo \$POLN | tr '[:upper:]' '[:lower:]')
+    pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
 
     for imageCode in ${mosaicImageList}; do
     
         beamList=""
-        for BEAM in ${BEAMS_TO_USE}; do
+        for BEAM in \${BEAMS_TO_USE}; do
             setImageProperties contcube
             if [ -e "\${imageName}" ]; then
                 if [ "\${beamList}" == "" ]; then

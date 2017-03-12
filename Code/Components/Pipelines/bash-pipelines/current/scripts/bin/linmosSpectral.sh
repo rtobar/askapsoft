@@ -91,11 +91,12 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
 FIELD=${FIELD}
+BEAMS_TO_USE="${BEAMS_TO_USE}"
 
 imageCode=${imageCode}
 
 beamList=""
-for BEAM in ${BEAMS_TO_USE}; do
+for BEAM in \${BEAMS_TO_USE}; do
     setImageProperties spectral
     if [ -e "\${imageName}" ]; then
         if [ "\${beamList}" == "" ]; then

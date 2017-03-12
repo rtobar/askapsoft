@@ -103,6 +103,7 @@ NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 FIELD=${FIELD}
+BEAMS_TO_USE="${BEAMS_TO_USE}"
 
 NUM_LOOPS=0
 DO_SELFCAL=$DO_SELFCAL
@@ -118,7 +119,7 @@ for((LOOP=0;LOOP<=NUM_LOOPS;LOOP++)); do
         for((TTERM=0;TTERM<maxterm;TTERM++)); do
 
             beamList=""
-            for BEAM in ${BEAMS_TO_USE}; do
+            for BEAM in \${BEAMS_TO_USE}; do
                 setImageProperties cont
                 if [ "\$LOOP" -eq 0 ]; then
                     DIR="."

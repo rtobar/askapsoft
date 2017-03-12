@@ -262,7 +262,7 @@ function setImageProperties()
         imageType="${typebase}_psfprecon_$typeSuffix"
         label="Preconditioned PSF ${labelbase}, $beamSuffix"
     else
-        echo "WARNING - unknown image code ${imageCode}"
+        echo "WARNING - unknown image code \"${imageCode}\""
     fi
 
     if [ "$needToUnsetTTerm" == "true" ]; then

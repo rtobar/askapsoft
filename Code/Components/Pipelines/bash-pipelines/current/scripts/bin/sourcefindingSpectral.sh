@@ -45,7 +45,8 @@ else
     DEP=$(addDep "$DEP" "$ID_SPECIMG_SCI")
 fi
 
-if [ ! -e "${OUTPUT}/${imageName}" ] && [ "${DEP}" == "" ]; then
+if [ ! -e "${OUTPUT}/${imageName}" ] && [ "${DEP}" == "" ] &&
+       [ "${SUBMIT_JOBS}" == "true" ]; then
     DO_IT=false
 fi
 
@@ -161,11 +162,11 @@ for im in \${imlist}; do
     # Make a link so we point to a file in the current directory for
     # Selavy. This gets the referencing correct in the catalogue
     # metadata 
-    if [ ! -e \$fitsim ]; then
+    if [ ! -e "\$fitsim" ]; then
         HAVE_IMAGES=false
         echo "ERROR - Could not create \${im}.fits"
     else
-        ln -s \${im}.fits .
+        ln -s "\${im}.fits" .
     fi
 done
 
@@ -256,7 +257,7 @@ EOFINNER
          for im in ./*; do 
              casaim=\${im}
              fitsim="\${im}.fits"
-             echo "Converting \$casaim to \$fitsim" >> \$log
+             echo "Converting \$casaim to \$fitsim" >> "\$log"
              ${fitsConvertText}
              err=\$?
              if [ \$err -ne 0 ]; then

@@ -133,7 +133,7 @@ for THISTILE in \$FULL_TILE_LIST; do
 
     for POLN in \$POL_LIST; do
     
-        pol=\$(echo \$POLN | tr '[:upper:]' '[:lower:]')
+        pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
     
         for imageCode in ${mosaicImageList}; do 
     

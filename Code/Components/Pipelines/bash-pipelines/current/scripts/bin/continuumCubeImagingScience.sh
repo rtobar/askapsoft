@@ -169,7 +169,7 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 ms=${msToUse}
 
-direction=${DIRECTION
+direction="${DIRECTION}"
 if [ "\${direction}" != "" ]; then
     directionDefinition="Simager.Images.direction                       = \${direction}"
 else

@@ -67,6 +67,7 @@ if [ "${DO_IT}" == "true" ] && [ "${DO_SELFCAL}" == "true" ]; then
 	CPUS_PER_CORE_SELFCAL=${NPROCS_SELAVY}
     fi
 
+    imageCode=restored
     setImageProperties cont
     selavyImage=${imageName}
     selavyWeights=${weightsImage}
@@ -181,7 +182,7 @@ ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
 dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
 epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
 
-direction=${DIRECTION}
+direction="${DIRECTION}"
 if [ "\${direction}" != "" ]; then
     modelDirection="\${direction}"
 else
@@ -357,8 +358,8 @@ EOFINNER
         cd \${loopdir}
 
         log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}_selavy.log
-        echo "--- Source finding with $selavy ---" > \$log
-        echo "---    Loop=\$LOOP, Threshold = \${SELFCAL_SELAVY_THRESHOLD_ARRAY[\$LOOP-1]} --" >> \$log
+        echo "--- Source finding with $selavy ---" > "\$log"
+        echo "---    Loop=\$LOOP, Threshold = \${SELFCAL_SELAVY_THRESHOLD_ARRAY[\$LOOP-1]} --" >> "\$log"
         NCORES=${NPROCS_SELAVY}
         NPPN=${CPUS_PER_CORE_SELFCAL}
         aprun -n \${NCORES} -N \${NPPN} $selavy -c "\$parset" >> "\$log"
@@ -371,7 +372,7 @@ EOFINNER
 
         if [ "\${selfcalMethod}" == "Cmodel" ]; then
             log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}_cmodel.log
-            echo "--- Model creation with $cmodel ---" > \$log
+            echo "--- Model creation with $cmodel ---" > "\$log"
             NCORES=2
             NPPN=2
             aprun -n \${NCORES} -N \${NPPN} $cmodel -c "\$parset" >> "\$log"
@@ -385,9 +386,9 @@ EOFINNER
 
 
         log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}_ccalibrator.log
-        echo "--- Calibration with $ccalibrator ---" > \$log
-        echo "---    Loop \$LOOP, Interval = \${SELFCAL_INTERVAL_ARRAY[\$LOOP-1]} --" >> \$log
-        echo "---    Normalise gains = \${SELFCAL_NORMALISE_GAINS_ARRAY[\$LOOP-1]} --" >> \$log
+        echo "--- Calibration with $ccalibrator ---" > "\$log"
+        echo "---    Loop \$LOOP, Interval = \${SELFCAL_INTERVAL_ARRAY[\$LOOP-1]} --" >> "\$log"
+        echo "---    Normalise gains = \${SELFCAL_NORMALISE_GAINS_ARRAY[\$LOOP-1]} --" >> "\$log"
         NCORES=1
         NPPN=1
         aprun -n \${NCORES} -N \${NPPN} $ccalibrator -c "\$parset" >> "\$log"
@@ -413,7 +414,7 @@ EOFINNER
 
     # Run the imager, calibrating if not the first time.
     log=${logs}/science_imagingSelfcal_${FIELDBEAM}_\${SLURM_JOB_ID}_LOOP\${LOOP}.log
-    echo "--- Imaging with $theimager ---" > \$log
+    echo "--- Imaging with $theimager ---" > "\$log"
     NCORES=${NUM_CPUS_CONTIMG_SCI}
     NPPN=${CPUS_PER_CORE_CONT_IMAGING}
     aprun -n \${NCORES} -N \${NPPN} $theimager -c "\$parset" >> "\$log"

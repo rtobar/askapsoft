@@ -66,7 +66,8 @@ if [ "${DO_RM_SYNTHESIS}" == "true" ]; then
     fi
 fi
 
-if [ ! -e "${OUTPUT}/${contImage}" ] && [ "${DEP}" == "" ]; then
+if [ ! -e "${OUTPUT}/${contImage}" ] && [ "${DEP}" == "" ] &&
+       [ "${SUBMIT_JOBS}" == "true" ]; then
     DO_IT=false
 fi
 
@@ -179,7 +180,7 @@ if [ \$doRM == true ]; then
     polList="${polList}"
     for p in \${polList}; do
         sedstr="s/%p/\$p/g"
-        thisim=\$(echo "\$contcube" | sed -e \$sedstr)
+        thisim=\$(echo "\$contcube" | sed -e "\$sedstr")
         if [ -e "\${thisim}" ]; then
             imlist="\${imlist} \${thisim}"
         else
@@ -294,7 +295,7 @@ EOFINNER
         for im in ./*; do 
             casaim=\${im}
             fitsim="\${im}.fits"
-            echo "Converting \$casaim to \$fitsim" >> \$log
+            echo "Converting \$casaim to \$fitsim" >> "\$log"
             ${fitsConvertText}
             err=\$?
             if [ \$err -ne 0 ]; then
