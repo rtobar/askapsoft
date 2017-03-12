@@ -104,8 +104,8 @@ NCORES=${NUM_CPUS_CONTIMG_SCI}
 NPPN=${CPUS_PER_CORE_CONT_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} $theimager -c "\$parset" > "\$log"
 err=\$?
-rejuvenate *.${imageBase}*
-rejuvenate ${OUTPUT}/${msSciAv}
+rejuvenate "./*.${imageBase}*"
+rejuvenate "${OUTPUT}/${msSciAv}"
 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err

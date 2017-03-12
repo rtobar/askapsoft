@@ -176,17 +176,19 @@ selfcalMethod=${SELFCAL_METHOD}
 log=${logs}/mslist_for_selfcal_\${SLURM_JOB_ID}.log
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSci} 2>&1 1> \${log}
-ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
-if [ "${DIRECTION}" != "" ]; then
-    modelDirection="${DIRECTION}"
+aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSci}" 1>& "\${log}"
+ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
+
+direction=${DIRECTION}
+if [ "\${direction}" != "" ]; then
+    modelDirection="\${direction}"
 else
     modelDirection="[\${ra}, \${dec}, \${epoch}]"
 fi
 # Reformat for Selavy's referenceDirection
-ra=\`echo \$ra | awk -F':' '{printf "%sh%sm%s",\$1,\$2,\$3}'\` 
+ra=\$(echo "\$ra" | awk -F':' '{printf "%sh%sm%s",\$1,\$2,\$3}')
 refDirection="[\${ra}, \${dec}, \${epoch}]"
 
 caldir=selfCal_${imageBase}
@@ -203,14 +205,14 @@ CLEAN_NUM_MAJORCYCLES_ARRAY=(${CLEAN_NUM_MAJORCYCLES_ARRAY[@]})
 CIMAGER_MINUV_ARRAY=(${CIMAGER_MINUV_ARRAY[@]})
 CCALIBRATOR_MINUV_ARRAY=(${CCALIBRATOR_MINUV_ARRAY[@]})
 
-for((LOOP=0;LOOP<=${SELFCAL_NUM_LOOPS};LOOP++)); do
+for((LOOP=0;LOOP<=SELFCAL_NUM_LOOPS;LOOP++)); do
 
-    loopdir=\${caldir}/Loop\${LOOP}
+    loopdir="\${caldir}/Loop\${LOOP}"
     sources=sources_loop\${LOOP}.in
     caldata=caldata_loop\${LOOP}.tab
 
-    if [ \${LOOP} -gt 0 ]; then
-        mkdir -p \${loopdir}
+    if [ "\${LOOP}" -gt 0 ]; then
+        mkdir -p "\${loopdir}"
         calparams="# Self-calibration using the recently-generated cal table
 Cimager.calibrate                           = true
 Cimager.calibrate.ignorebeam                = true
@@ -250,7 +252,7 @@ ${cimagerParams}
 \${calparams}
 #
 EOFINNER
-    if [ \${LOOP} -gt 0 ]; then
+    if [ "\${LOOP}" -gt 0 ]; then
             dataSelectionSelfcalLoop Cccalibrator
             cat >> "\$parset" <<EOFINNER
 ##########
@@ -359,7 +361,7 @@ EOFINNER
         echo "---    Loop=\$LOOP, Threshold = \${SELFCAL_SELAVY_THRESHOLD_ARRAY[\$LOOP-1]} --" >> \$log
         NCORES=${NPROCS_SELAVY}
         NPPN=${CPUS_PER_CORE_SELFCAL}
-        aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
+        aprun -n \${NCORES} -N \${NPPN} $selavy -c "\$parset" >> "\$log"
         err=\$?
         extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_selavy "txt,csv"
 
@@ -372,7 +374,7 @@ EOFINNER
             echo "--- Model creation with $cmodel ---" > \$log
             NCORES=2
             NPPN=2
-            aprun -n \${NCORES} -N \${NPPN} $cmodel -c \$parset >> \$log
+            aprun -n \${NCORES} -N \${NPPN} $cmodel -c "\$parset" >> "\$log"
             err=\$?
             extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_cmodel "txt,csv"
             
@@ -388,7 +390,7 @@ EOFINNER
         echo "---    Normalise gains = \${SELFCAL_NORMALISE_GAINS_ARRAY[\$LOOP-1]} --" >> \$log
         NCORES=1
         NPPN=1
-        aprun -n \${NCORES} -N \${NPPN} $ccalibrator -c \$parset >> \$log
+        aprun -n \${NCORES} -N \${NPPN} $ccalibrator -c "\$parset" >> "\$log"
         err=\$?
         extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_ccal "txt,csv"
         if [ \$err != 0 ]; then
@@ -396,14 +398,14 @@ EOFINNER
         fi
 
         # Remove the previous cal table and copy the new one in its place
-        rm -rf ${OUTPUT}/${gainscaltab}
-        cp -r \${caldata} ${OUTPUT}/${gainscaltab}
+        rm -rf "${OUTPUT}/${gainscaltab}"
+        cp -r "\${caldata}" "${OUTPUT}/${gainscaltab}"
 
         # Keep a backup of the intermediate images, prior to re-imaging.
         if [ \${copyImages} == true ]; then
             # Use the . with imageBase to get images only, so we don't
             #  move the selfCal directory itself
-            mv ${OUTPUT}/*.${imageBase}* .
+            mv "${OUTPUT}/*.${imageBase}*" .
         fi
 
         cd $OUTPUT
@@ -414,11 +416,11 @@ EOFINNER
     echo "--- Imaging with $theimager ---" > \$log
     NCORES=${NUM_CPUS_CONTIMG_SCI}
     NPPN=${CPUS_PER_CORE_CONT_IMAGING}
-    aprun -n \${NCORES} -N \${NPPN} $theimager -c \$parset >> \$log
+    aprun -n \${NCORES} -N \${NPPN} $theimager -c "\$parset" >> "\$log"
     err=\$?
-    rejuvenate *.${imageBase}*
-    rejuvenate ${OUTPUT}/${gainscaltab}
-    rejuvenate ${OUTPUT}/${msSciAv}
+    rejuvenate "./*.${imageBase}*"
+    rejuvenate "${OUTPUT}/${gainscaltab}"
+    rejuvenate "${OUTPUT}/${msSciAv}"
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err

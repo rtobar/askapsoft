@@ -98,10 +98,10 @@ DIRECTION="$DIRECTION"
 if [ "\${DIRECTION}" != "" ]; then
     modelDirection="\${DIRECTION}"
 else
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSciSL} 2>&1 1> \${log}
-    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSciSL}" 1>& "\${log}"
+    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
     modelDirection="[\${ra}, \${dec}, \${epoch}]"
 fi
 
@@ -179,8 +179,8 @@ if [ \$err != 0 ]; then
 fi
 
 componentsCatalogue=selavy-results.components.xml
-numComp=\`grep "<TR>" \${componentsCatalogue} | wc -l\`
-if [ \${numComp} -eq 0 ]; then
+numComp=\$(grep -c "<TR>" "\${componentsCatalogue}")
+if [ "\${numComp}" -eq 0 ]; then
     # Nothing detected 
     echo "Continuum subtraction : No continuum components found!"
 else

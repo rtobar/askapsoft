@@ -78,11 +78,11 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 log=${logs}/mslist_for_contsub_\${SLURM_JOB_ID}.log
 NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSci} 2>&1 1> \${log}
-ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-ra=\`echo \$ra | awk -F':' '{printf "%sh%sm%s",\$1,\$2,\$3}'\` 
-dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSci}" 1>& "\${log}"
+ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+ra=\$(echo \$ra | awk -F':' '{printf "%sh%sm%s",\$1,\$2,\$3}')
+dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
 refDirection="[\${ra}, \${dec}, \${epoch}]"
 
 contsubdir=ContSubBeam${BEAM}
@@ -168,7 +168,7 @@ fi
 
 cd ..
 
-if [ ! -e \${contsubdir}/${components} ]; then
+if [ ! -e "\${contsubdir}/${components}" ]; then
 
     # Nothing detected !
     echo "Continuum subtraction : No continuum components found!"
@@ -210,7 +210,7 @@ EOFINNER
     if [ \$err != 0 ]; then
         exit \$err
     else
-        touch $CONT_SUB_CHECK_FILE
+        touch "$CONT_SUB_CHECK_FILE"
     fi
     
 fi

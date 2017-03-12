@@ -119,7 +119,7 @@ casdaOtherDimImagePol=()
 # Variables defined from configuration file
 NOW="${NOW}"
 NUM_TAYLOR_TERMS="${NUM_TAYLOR_TERMS}"
-maxterm=\`echo \$NUM_TAYLOR_TERMS | awk '{print 2*\$1-1}'\`
+maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 list_of_images="${IMAGE_LIST}"
 doBeams="${ARCHIVE_BEAM_IMAGES}"
 doSelfcalLoops="${ARCHIVE_SELFCAL_LOOP_MOSAICS}"
@@ -139,12 +139,12 @@ fi
 
 NUM_LOOPS=0
 DO_SELFCAL=$DO_SELFCAL
-if [ \$DO_SELFCAL == true ] && [ \$doSelfcalLoops == true ]; then
+if [ "\${DO_SELFCAL}" == "true" ] && [ "\$doSelfcalLoops" == "true" ]; then
     NUM_LOOPS=$SELFCAL_NUM_LOOPS
 fi
 
 LOCAL_BEAM_LIST="all"
-if [ "\${doBeams}" == true ]; then
+if [ "\${doBeams}" == "true" ]; then
     LOCAL_BEAM_LIST="\$LOCAL_BEAM_LIST \${beams}"
 fi
 
@@ -152,7 +152,7 @@ LOCAL_FIELD_LIST=". ${FIELD_LIST}"
 
 for FIELD in \${LOCAL_FIELD_LIST}; do
 
-    if [ \${FIELD} == "." ]; then
+    if [ "\${FIELD}" == "." ]; then
         theBeamList="all"
         TILE_LIST="${TILE_LIST} ALL"
     else
@@ -169,11 +169,11 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
         
             for imageCode in ${imageCodeList}; do
         
-                for((TTERM=0;TTERM<\${maxterm};TTERM++)); do
+                for((TTERM=0;TTERM<maxterm;TTERM++)); do
         
-                    for((LOOP=0;LOOP<=\$NUM_LOOPS;LOOP++)); do
+                    for((LOOP=0;LOOP<=NUM_LOOPS;LOOP++)); do
 
-                        if [ \$LOOP -eq 0 ] || [ \$BEAM == "all" ]; then
+                        if [ \$LOOP -eq 0 ] || [ "\$BEAM" == "all" ]; then
 
                             setImageProperties cont
 
@@ -183,7 +183,7 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                             fi
 
 #                            echo \${FIELD}/\${imageName}\${fitsSuffix}
-                            if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                            if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
                                 casdaTwoDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                                 casdaTwoDimImageTypes+=("\${imageType}")
                                 casdaTwoDimThumbTitles+=("\${label}")
@@ -207,11 +207,11 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
             for imageCode in ${imageCodeList}; do
         
                 setImageProperties spectral
-                if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
                     casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                     casdaOtherDimImageTypes+=("\${imageType}")
                     itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
-                    if [ -e \${itsSelavyDir} ]; then
+                    if [ -e "\${itsSelavyDir}" ]; then
                         casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*\${fitsSuffix}")
                         casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*\${fitsSuffix}")
                         casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*\${fitsSuffix}")
@@ -244,13 +244,13 @@ for FIELD in \${LOCAL_FIELD_LIST}; do
                     TTERM=0
                     setImageProperties cont
                     contImage=\${imageName}
-                    pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+                    pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
                     setImageProperties contcube \$pol
-                    if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                    if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
                         casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
                         casdaOtherDimImageTypes+=("\${imageType}")
                         itsSelavyDir=\${FIELD}/selavy_\${contImage}
-                        if [ -e \${itsSelavyDir} ]; then
+                        if [ -e "\${itsSelavyDir}" ]; then
                             prefix="\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}"
                             suffix="SB${SB_SCIENCE}_\${contImage}*\${fitsSuffix}"
                             casdaOtherDimImageSpectra+=("\${prefix}_spec_\${POLN}_\${suffix}")
@@ -308,21 +308,21 @@ for FIELD in \${FIELD_LIST}; do
     setImageProperties cont
     contSelDir=selavy_\${imageName}
     echo "field=\${FIELD}, imageCode=\${imageCode}, imageName=\${imageName}, selavy dir = \${contSelDir}"
-    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml ]; then
+    if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml" ]; then
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml)
         catTypes+=(continuum-component)
     fi
-    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml ]; then
+    if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml" ]; then
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml)
         catTypes+=(continuum-island)
     fi
-    if [ -e \${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml ]; then
+    if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml" ]; then
         catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml)
         catTypes+=(polarisation-component)
     fi
 #    setImageProperties spectral
 #    specSelDir=selavy-spectral-\${imageName}
-#    if [ -e \${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml ]; then
+#    if [ -e "\${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml" ]; then
 #        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.hiobjects.xml)
 #        catTypes+=(spectralline)
 #    fi
@@ -339,7 +339,7 @@ for FIELD in \${FIELD_LIST}; do
 
     for ms in \${possibleMSnames}; do
     
-        if [ -e \${FIELD}/\${ms} ]; then
+        if [ -e "\${FIELD}/\${ms}" ]; then
             msNames+=(\${FIELD}/\${ms})
         fi
     
@@ -353,7 +353,7 @@ done
 evalNames=()
 
 # Stats summary files
-for file in \`\ls ${OUTPUT}/stats-all*.txt\`; do
+for file in \$(find ${OUTPUT} -name "stats-all*.txt"); do
     evalNames+=(\${file##*/})
 done
 

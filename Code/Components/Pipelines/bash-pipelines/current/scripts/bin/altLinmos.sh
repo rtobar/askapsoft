@@ -97,7 +97,7 @@ imageList=""
 weightList=""
 
 for BEAM in ${BEAMS_TO_USE}; do
-    if [ -e \${imagePrefix}.beam\${BEAM} ]; then
+    if [ -e "\${imagePrefix}.beam\${BEAM}" ]; then
         imageList="\${imageList}\${imagePrefix}.beam\${BEAM} "
         weightList="\${imageList}\${weightPrefix}.beam\${BEAM} "
     else
@@ -107,8 +107,8 @@ done
 
 if [ "\${imageList}" != "" ]; then
 
-    imageList=\`echo \${imageList} | sed -e 's/ /,/g' \`
-    weightList=\`echo \${weightList} | sed -e 's/ /,/g' \`
+    imageList=\$(echo "\${imageList}" | sed -e 's/ /,/g')
+    weightList=\$(echo "\${weightList}" | sed -e 's/ /,/g')
     cat > "\$parset" << EOFINNER
 linmos.names            = [\${imageList}]
 linmos.weights          = [\${weightList}]
@@ -127,7 +127,7 @@ EOFINNER
     NPPN=1
     aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
     err=\$?
-    rejuvenate *.${IMAGE_BASE_CONT}*
+    rejuvenate "./*.${IMAGE_BASE_CONT}*"
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err

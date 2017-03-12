@@ -137,8 +137,8 @@ NCORES=${NUM_CPUS_CBPCAL}
 NPPN=20
 aprun -n \${NCORES} -N \${NPPN} $cbpcalibrator -c "\$parset" > "\$log"
 err=\$?
-for ms in \`echo $ms1934list | sed -e 's/,/ /g'\`; do 
-    rejuvenate \$ms;
+for ms in \$(echo $ms1934list | sed -e 's/,/ /g'); do 
+    rejuvenate "\$ms";
 done
 rejuvenate ${TABLE_BANDPASS}
 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} findBandpass "txt,csv"
@@ -155,7 +155,7 @@ if [ \${PLOT_CALTABLE} == true ]; then
     module load casa
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c \${scriptCommand} > \${log}
+    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${scriptCommand}" > "\${log}"
     module unload casa
     err=\$?
     rejuvenate ${TABLE_BANDPASS}*

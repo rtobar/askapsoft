@@ -99,14 +99,14 @@ POL_LIST="${POL_LIST}"
 
 for POLN in \$POL_LIST; do
 
-    pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+    pol=\$(echo \$POLN | tr '[:upper:]' '[:lower:]')
 
     for imageCode in ${mosaicImageList}; do
     
         beamList=""
         for BEAM in ${BEAMS_TO_USE}; do
             setImageProperties contcube
-            if [ -e \${imageName} ]; then
+            if [ -e "\${imageName}" ]; then
                 if [ "\${beamList}" == "" ]; then
                     beamList="\${imageName}"
                 else
@@ -138,8 +138,8 @@ EOFINNER
             NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
             aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
             err=\$?
-            for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-                rejuvenate \${im}
+            for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+                rejuvenate "\${im}"
             done
             extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
             if [ \$err != 0 ]; then

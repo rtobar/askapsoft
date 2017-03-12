@@ -155,13 +155,13 @@ weights=${OUTPUT}/${contWeights}
 contcube=${OUTPUT}/${contCube}
 
 imlist="\${imlist} \${image}"
-if [ \$NUM_TAYLOR_TERMS -gt 1 ]; then
-    t1im=\`echo \$image | sed -e 's/taylor\.0/taylor\.1/g'\`
-    if [ -e \${t1im} ]; then
+if [ "\${NUM_TAYLOR_TERMS}" -gt 1 ]; then
+    t1im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.1/g')
+    if [ -e "\${t1im}" ]; then
         imlist="\${imlist} \${t1im}"
     fi
-    t2im=\`echo \$image | sed -e 's/taylor\.0/taylor\.2/g'\`
-    if [ -e \${t2im} ]; then
+    t2im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.2/g')
+    if [ -e "\${t2im}" ]; then
         imlist="\${imlist} \${t2im}"
     fi
 fi
@@ -179,8 +179,8 @@ if [ \$doRM == true ]; then
     polList="${polList}"
     for p in \${polList}; do
         sedstr="s/%p/\$p/g"
-        thisim=\`echo \$contcube | sed -e \$sedstr\`
-        if [ -e \${thisim} ]; then
+        thisim=\$(echo "\$contcube" | sed -e \$sedstr)
+        if [ -e "\${thisim}" ]; then
             imlist="\${imlist} \${thisim}"
         else
             doRM=false
@@ -199,15 +199,15 @@ for im in \${imlist}; do
     # Make a link so we point to a file in the current directory for
     # Selavy. This gets the referencing correct in the catalogue
     # metadata 
-    if [ ! -e \$fitsim ]; then
+    if [ ! -e "\$fitsim" ]; then
         HAVE_IMAGES=false
         echo "ERROR - Could not create \${im}.fits"
     else
-        ln -s \${im}.fits .
+        ln -s "\${im}.fits" .
     fi
 done
 
-if [ \${HAVE_IMAGES} == true ]; then
+if [ "\${HAVE_IMAGES}" == "true" ]; then
 
     parset=${parsets}/science_selavy_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/science_selavy_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.log
@@ -216,7 +216,7 @@ if [ \${HAVE_IMAGES} == true ]; then
     polDir=PolData
     mkdir -p \$polDir
 
-    if [ \${doRM} == true ]; then
+    if [ "\${doRM}" == "true" ]; then
         rmSynthParams="# RM Synthesis on extracted spectra from continuum cube
 Selavy.RMSynthesis = \${doRM}
 Selavy.RMSynthesis.cube = \$contcube
@@ -278,7 +278,7 @@ EOFINNER
 
     NCORES=${NUM_CPUS_SELAVY}
     NPPN=${CPUS_PER_CORE_SELAVY}
-    aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
+    aprun -n \${NCORES} -N \${NPPN} $selavy -c "\$parset" >> "\$log"
     err=\$?
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
@@ -286,12 +286,12 @@ EOFINNER
     fi
 
     # Now convert the extracted polarisation artefacts to FITS
-    if [ \${doRM} == true ]; then
-        cd \${polDir}
+    if [ "\${doRM}" == "true" ]; then
+        cd "\${polDir}"
         parset=temp.in
         log=$logs/convertToFITS_polSpectra_\${SLURM_JOB_ID}.log
         neterr=0
-        for im in \`ls\`; do 
+        for im in ./*; do 
             casaim=\${im}
             fitsim="\${im}.fits"
             echo "Converting \$casaim to \$fitsim" >> \$log

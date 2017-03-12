@@ -67,11 +67,15 @@ statsCSV=stats-all-${NOW}.csv
 writeStatsHeader txt > \$statsTXT
 writeStatsHeader csv > \$statsCSV
 for i in ${joblist}; do
-    for file in \`\ls $stats/stats-\$i*.txt\`; do
-        grep -v JobID \$file >> \$statsTXT
+    for file in $stats/stats-\$i*.txt; do
+        if [ -e \$file ]; then
+            grep -v JobID \$file >> \$statsTXT
+        fi
     done
-    for file in \`\ls $stats/stats-\$i*.csv\`; do
-        grep -v JobID \$file >> \$statsCSV
+    for file in $stats/stats-\$i*.csv; do
+        if [ -e \$file ]; then
+            grep -v JobID \$file >> \$statsCSV
+        fi
     done
 done
 EOF

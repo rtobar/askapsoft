@@ -127,8 +127,8 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 # Working directory for the selavy output
 seldir=selavy-spectral-${imageName##*/}
-mkdir -p \$seldir
-cd \$seldir
+mkdir -p "\$seldir"
+cd "\$seldir"
     
 HAVE_IMAGES=true
 BEAM=$BEAM
@@ -137,7 +137,7 @@ BEAM=$BEAM
 imlist=""
 
 # Image to be searched
-image=${OUTPUT}/${imageName}
+image="${OUTPUT}/${imageName}"
 imlist="\${imlist} \${image}"
 if [ "\${BEAM}" == "all" ]; then
     # Weights image - really only useful if primary-beam corrected
@@ -169,18 +169,18 @@ for im in \${imlist}; do
     fi
 done
 
-if [ \${HAVE_IMAGES} == true ]; then
+if [ "\${HAVE_IMAGES}" == "true" ]; then
 
     parset=${parsets}/science_selavy_spectral_\${SLURM_JOB_ID}.in
     log=${logs}/science_selavy_spectral_\${SLURM_JOB_ID}.log
     
     # Directories for extracted data products
     spectraDir=Spectra
-    mkdir -p \$spectraDir
+    mkdir -p "\$spectraDir"
     momentDir=Moments
-    mkdir -p \$momentDir
+    mkdir -p "\$momentDir"
     cubeletDir=Cubelets
-    mkdir -p \$cubeletDir
+    mkdir -p "\$cubeletDir"
     
     cat > "\$parset" <<EOFINNER
 Selavy.image = \${image##/*}.fits
@@ -240,7 +240,7 @@ EOFINNER
 
     NCORES=${NUM_CPUS_SELAVY_SPEC}
     NPPN=${CPUS_PER_CORE_SELAVY_SPEC}
-    aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
+    aprun -n \${NCORES} -N \${NPPN} $selavy -c "\$parset" >> "\$log"
     err=\$?
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
@@ -251,9 +251,9 @@ EOFINNER
      parset=temp.in
      log=$logs/convertToFITS_spectralArtefacts_\${SLURM_JOB_ID}.log
      for dir in \$spectraDir \$momentDir \$cubeletDir; do
-         cd \${dir}
+         cd "\${dir}"
          neterr=0
-         for im in \`ls\`; do 
+         for im in ./*; do 
              casaim=\${im}
              fitsim="\${im}.fits"
              echo "Converting \$casaim to \$fitsim" >> \$log

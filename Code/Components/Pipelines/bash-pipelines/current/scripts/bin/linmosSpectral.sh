@@ -97,7 +97,7 @@ imageCode=${imageCode}
 beamList=""
 for BEAM in ${BEAMS_TO_USE}; do
     setImageProperties spectral
-    if [ -e \${imageName} ]; then
+    if [ -e "\${imageName}" ]; then
         if [ "\${beamList}" == "" ]; then
             beamList="\${imageName}"
         else
@@ -132,8 +132,8 @@ EOFINNER
     NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
     aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
     err=\$?
-    for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-        rejuvenate \${im}
+    for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+        rejuvenate "\${im}"
     done
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
     if [ \$err != 0 ]; then

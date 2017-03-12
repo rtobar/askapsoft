@@ -110,7 +110,7 @@ echo "Tile list = \$TILE_LIST"
 
 # If there is only one tile, only include the "ALL" case, which
 # mosaics together all fields
-if [ \`echo \$TILE_LIST | awk '{print NF}'\` -gt 1 ]; then
+if [ "\$(echo \$TILE_LIST | awk '{print NF}')" -gt 1 ]; then
     FULL_TILE_LIST="\$TILE_LIST ALL"
 else
     FULL_TILE_LIST="ALL"
@@ -125,7 +125,7 @@ for THISTILE in \$FULL_TILE_LIST; do
     TILE_FIELD_LIST=""
     for FIELD in \$FIELD_LIST; do
         getTile
-        if [ \$THISTILE == "ALL" ] || [ \$TILE == \$THISTILE ]; then
+        if [ "\$THISTILE" == "ALL" ] || [ "\$TILE" == "\$THISTILE" ]; then
             TILE_FIELD_LIST="\$TILE_FIELD_LIST \$FIELD"
         fi
     done
@@ -133,7 +133,7 @@ for THISTILE in \$FULL_TILE_LIST; do
 
     for POLN in \$POL_LIST; do
     
-        pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+        pol=\$(echo \$POLN | tr '[:upper:]' '[:lower:]')
     
         for imageCode in ${mosaicImageList}; do 
     
@@ -142,7 +142,7 @@ for THISTILE in \$FULL_TILE_LIST; do
             BEAM=all
             for FIELD in \${TILE_FIELD_LIST}; do
                 setImageProperties contcube
-                if [ -e \${FIELD}/\${imageName} ]; then
+                if [ -e "\${FIELD}/\${imageName}" ]; then
                     if [ "\${imList}" == "" ]; then
                         imList="\${FIELD}/\${imageName}"
                         wtList="\${FIELD}/\${weightsImage}"
@@ -153,7 +153,7 @@ for THISTILE in \$FULL_TILE_LIST; do
                 fi
             done
 
-            if [ \$THISTILE == "ALL" ]; then
+            if [ "\$THISTILE" == "ALL" ]; then
                 jobCode=linmosCC_Full_\${imageCode}
             else
                 jobCode=linmosCC_\${THISTILE}_\${imageCode}
@@ -178,8 +178,8 @@ EOFINNER
                 NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
                 aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
                 err=\$?
-                for im in \`echo \${imList} | sed -e 's/,/ /g'\`; do
-                    rejuvenate \$im
+                for im in \$(echo "\${imList}" | sed -e 's/,/ /g'\); do
+                    rejuvenate "\$im"
                 done
                 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then

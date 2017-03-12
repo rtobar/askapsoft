@@ -82,10 +82,10 @@ else
     log=${logs}/mslist_for_ccontsub_\${SLURM_JOB_ID}.log
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSciSL} 2>&1 1> \${log}
-    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSciSL}" 1>& "\${log}"
+    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
     modelDirection="[\${ra}, \${dec}, \${epoch}]"
 fi
 
@@ -111,7 +111,7 @@ CContSubtract.gridder.WProject.variablesupport    = true
 CContSubtract.gridder.WProject.offsetsupport      = true
 EOFINNER
 
-aprun -n 1 -N 1NCORES=1
+NCORES=1
 NPPN=1
 aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c "\${parset}" > "\${log}"
 err=\$?

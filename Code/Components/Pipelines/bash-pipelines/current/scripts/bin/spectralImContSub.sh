@@ -38,7 +38,7 @@
 setImageBase spectral
 
 DO_IT=$DO_SPECTRAL_IMSUB
-if [ "${CLOBBER}" != "true" ] && [ -e ${OUTPUT}/image.${imageBase}.restored.contsub ]; then
+if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/image.${imageBase}.restored.contsub" ]; then
     if [ "${DO_IT}" == "true" ]; then
         echo "Continuum-subtracted spectral cube image.${imageBase}.restored.contsub exists. Not re-doing."
     fi
@@ -47,7 +47,7 @@ fi
 
 script_location="$ACES/tools"
 script_name=robust_contsub
-if [ ! -e ${script_location}/${script_name}.py ]; then
+if [ ! -e "${script_location}/${script_name}.py" ]; then
     echo "WARNING - ${script_name}.py not found in $script_location - not running image-based continuum subtraction."
     DO_IT=false
 fi
@@ -99,9 +99,9 @@ log=${logs}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 NCORES=1
 NPPN=1
 module load casa
-aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c \${pyscript} > \${log}
+aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${pyscript}" > "\${log}"
 err=\$?
-rejuvenate image.${imageBase}.restored
+rejuvenate "image.${imageBase}.restored"
 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
@@ -111,7 +111,7 @@ EOF
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         submitIt=true
-        if [ $DO_SPECTRAL_IMAGING != true ]; then
+        if [ "${DO_SPECTRAL_IMAGING}" != "true" ]; then
             # If we aren't creating the cube in this pipeline run, then check to see if it exists.
             # If it doesn't, we can't run this job.
             if [ ! -e "image.${imageBase}.restored" ]; then
@@ -119,18 +119,18 @@ EOF
                 echo "Not submitting image-based continuum subtraction, since the cube image.${imageBase}.restored doesn't exist."
             fi
         fi
-        if [ $submitIt == true ]; then
+        if [ "$submitIt" == "true" ]; then
             DEP=""
-            DEP=`addDep "$DEP" "$DEP_START"`
-            DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-            DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-            DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-            DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
-            DEP=`addDep "$DEP" "$ID_CAL_APPLY_SL_SCI"`
-            DEP=`addDep "$DEP" "$ID_CONT_SUB_SL_SCI"`
-            DEP=`addDep "$DEP" "$ID_SPECIMG_SCI"`
-            ID_SPEC_IMCONTSUB_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-            recordJob ${ID_SPEC_IMCONTSUB_SCI} "Image-based continuum subtraction for beam $BEAM of the science observation, with flags \"$DEP\""
+            DEP=$(addDep "$DEP" "$DEP_START")
+            DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+            DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+            DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+            DEP=$(addDep "$DEP" "$ID_SPLIT_SL_SCI")
+            DEP=$(addDep "$DEP" "$ID_CAL_APPLY_SL_SCI")
+            DEP=$(addDep "$DEP" "$ID_CONT_SUB_SL_SCI")
+            DEP=$(addDep "$DEP" "$ID_SPECIMG_SCI")
+            ID_SPEC_IMCONTSUB_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+            recordJob "${ID_SPEC_IMCONTSUB_SCI}" "Image-based continuum subtraction for beam $BEAM of the science observation, with flags \"$DEP\""
         fi
     else
         echo "Would run image-based continuum subtraction for beam $BEAM of the science observation with slurm file $sbatchfile"

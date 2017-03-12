@@ -100,32 +100,32 @@ thisfile=$sbatchfile
 cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
-maxterm=\`echo \${NUM_TAYLOR_TERMS} | awk '{print 2*\$1-1}'\`
+maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 FIELD=${FIELD}
 
 NUM_LOOPS=0
 DO_SELFCAL=$DO_SELFCAL
 MOSAIC_SELFCAL_LOOPS=${MOSAIC_SELFCAL_LOOPS}
-if [ \$DO_SELFCAL == true ] && [ \$MOSAIC_SELFCAL_LOOPS == true ]; then
+if [ "\$DO_SELFCAL" == "true" ] && [ "\$MOSAIC_SELFCAL_LOOPS" == "true" ]; then
     NUM_LOOPS=$SELFCAL_NUM_LOOPS
 fi
 
-for((LOOP=0;LOOP<=\$NUM_LOOPS;LOOP++)); do
+for((LOOP=0;LOOP<=NUM_LOOPS;LOOP++)); do
 
     for imageCode in ${mosaicImageList}; do
 
-        for((TTERM=0;TTERM<\${maxterm};TTERM++)); do
+        for((TTERM=0;TTERM<maxterm;TTERM++)); do
 
             beamList=""
             for BEAM in ${BEAMS_TO_USE}; do
                 setImageProperties cont
-                if [ \$LOOP -eq 0 ]; then
+                if [ "\$LOOP" -eq 0 ]; then
                     DIR="."
                 else
                     DIR="selfCal_\${imageBase}/Loop\${LOOP}"
                 fi
-                if [ -e \${DIR}/\${imageName} ]; then
+                if [ -e "\${DIR}/\${imageName}" ]; then
                     if [ "\${beamList}" == "" ]; then
                         beamList="\${DIR}/\${imageName}"
                     else
@@ -135,17 +135,17 @@ for((LOOP=0;LOOP<=\$NUM_LOOPS;LOOP++)); do
             done
 
             jobCode=${jobname}_\${imageCode}
-            if [ \$maxterm -gt 1 ]; then
+            if [ "\$maxterm" -gt 1 ]; then
                 jobCode=\${jobCode}_T\${TTERM}
             fi
-            if [ \$LOOP -gt 0 ]; then
+            if [ "\$LOOP" -gt 0 ]; then
                 jobCode=\${jobCode}_L\${LOOP}
             fi
 
             if [ "\${beamList}" != "" ]; then
                 BEAM=all
                 setImageProperties cont
-                if [ \$LOOP -gt 0 ]; then
+                if [ "\$LOOP" -gt 0 ]; then
                     imageName="\$imageName.SelfCalLoop\${LOOP}"
                     weightsImage="\$weightsImage.SelfCalLoop\${LOOP}"
                 fi
@@ -167,8 +167,8 @@ EOFINNER
                 NPPN=1
                 aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
                 err=\$?
-                for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-                    rejuvenate \${im}
+                for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+                    rejuvenate "\${im}"
                 done
                 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then

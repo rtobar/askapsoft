@@ -169,16 +169,17 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 ms=${msToUse}
 
-if [ "${DIRECTION}" != "" ]; then
-    directionDefinition="Simager.Images.direction                       = ${DIRECTION}"
+direction=${DIRECTION
+if [ "\${direction}" != "" ]; then
+    directionDefinition="Simager.Images.direction                       = \${direction}"
 else
     log=${logs}/mslist_for_simager_\${SLURM_JOB_ID}.log
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full \${ms} 2>&1 1> \${log}
-    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full "\${ms}" 1>& "\${log}"
+    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
     directionDefinition="Simager.Images.direction                       = [\${ra}, \${dec}, \${epoch}]"
 fi
 
@@ -221,7 +222,7 @@ NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} ${theimager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate \${ms}
-rejuvenate *.${imageBase}*
+rejuvenate "./*.${imageBase}*"
 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then

@@ -212,10 +212,10 @@ else
     log=${logs}/mslist_for_${Imager}_\${SLURM_JOB_ID}.log
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSciSL} 2>&1 1> \${log}
-    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSciSL}" 1>& "\${log}"
+    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
     directionDefinition="${Imager}.Images.direction                       = [\${ra}, \${dec}, \${epoch}]"
 fi
 
@@ -259,7 +259,7 @@ NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} ${theImager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSciSL}
-rejuvenate *.${imageBase}*
+rejuvenate "./*.${imageBase}*"
 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
