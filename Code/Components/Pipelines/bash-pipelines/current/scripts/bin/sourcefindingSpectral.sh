@@ -242,7 +242,7 @@ EOFINNER
     NPPN=${CPUS_PER_CORE_SELAVY_SPEC}
     aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
     err=\$?
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
@@ -265,7 +265,7 @@ EOFINNER
          done
          cd ..
      done
-     extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSspec "txt,csv"
+     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${neterr} convertFITSspec "txt,csv"
      rm -f \$parset
 
 else

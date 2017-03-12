@@ -181,7 +181,7 @@ EOFINNER
                 for im in \`echo \${imList} | sed -e 's/,/ /g'\`; do
                     rejuvenate \$im
                 done
-                extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
+                extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then
                     exit \$err
                 fi

@@ -361,7 +361,7 @@ EOFINNER
         NPPN=${CPUS_PER_CORE_SELFCAL}
         aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
         err=\$?
-        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_L\${LOOP}_selavy "txt,csv"
+        extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_selavy "txt,csv"
 
         if [ \$err != 0 ]; then
             exit \$err
@@ -374,7 +374,7 @@ EOFINNER
             NPPN=2
             aprun -n \${NCORES} -N \${NPPN} $cmodel -c \$parset >> \$log
             err=\$?
-            extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_L\${LOOP}_cmodel "txt,csv"
+            extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_cmodel "txt,csv"
             
             if [ \$err != 0 ]; then
                 exit \$err
@@ -390,7 +390,7 @@ EOFINNER
         NPPN=1
         aprun -n \${NCORES} -N \${NPPN} $ccalibrator -c \$parset >> \$log
         err=\$?
-        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_L\${LOOP}_ccal "txt,csv"
+        extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP}_ccal "txt,csv"
         if [ \$err != 0 ]; then
             exit \$err
         fi
@@ -419,7 +419,7 @@ EOFINNER
     rejuvenate *.${imageBase}*
     rejuvenate ${OUTPUT}/${gainscaltab}
     rejuvenate ${OUTPUT}/${msSciAv}
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_L\${LOOP} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_L\${LOOP} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi

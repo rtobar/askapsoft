@@ -260,7 +260,7 @@ aprun -n \${NCORES} -N \${NPPN} ${theImager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSciSL}
 rejuvenate *.${imageBase}*
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
     echo "Error: ${Imager} returned error code \${err}"

@@ -161,7 +161,7 @@ NCORES=${NPROCS_SELAVY}
 NPPN=${CPUS_PER_CORE_CONTSUB}
 aprun -n \${NCORES} -N \${NPPN} ${selavy} -c "\${parset}" > "\${log}"
 err=\$?
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_selavy "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_selavy "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
@@ -206,7 +206,7 @@ EOFINNER
     aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c "\${parset}" > "\${log}"
     err=\$?
     rejuvenate ${msSciSL}
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     else

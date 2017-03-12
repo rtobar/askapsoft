@@ -280,7 +280,7 @@ EOFINNER
     NPPN=${CPUS_PER_CORE_SELAVY}
     aprun -n \${NCORES} -N \${NPPN} $selavy -c \$parset >> \$log
     err=\$?
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
@@ -301,7 +301,7 @@ EOFINNER
                 neterr=\$err
             fi
         done
-        extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${neterr} convertFITSpolspec "txt,csv"
+        extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${neterr} convertFITSpolspec "txt,csv"
         rm -f \$parset
     fi
 

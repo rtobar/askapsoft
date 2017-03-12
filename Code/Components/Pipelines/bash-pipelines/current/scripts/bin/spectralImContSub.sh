@@ -102,7 +102,7 @@ module load casa
 aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c \${pyscript} > \${log}
 err=\$?
 rejuvenate image.${imageBase}.restored
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi

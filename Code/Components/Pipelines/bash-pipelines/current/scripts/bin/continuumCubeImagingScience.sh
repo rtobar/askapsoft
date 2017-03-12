@@ -222,7 +222,7 @@ aprun -n \${NCORES} -N \${NPPN} ${theimager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate \${ms}
 rejuvenate *.${imageBase}*
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
     echo "Error: simager returned error code \${err}"

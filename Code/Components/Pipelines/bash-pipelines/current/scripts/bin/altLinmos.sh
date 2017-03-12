@@ -128,7 +128,7 @@ EOFINNER
     aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
     err=\$?
     rejuvenate *.${IMAGE_BASE_CONT}*
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi

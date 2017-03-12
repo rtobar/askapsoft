@@ -96,7 +96,7 @@ aprun -n \${NCORES} -N \${NPPN} ${ccalapply} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSci}
 rejuvenate \${TABLE}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 else
