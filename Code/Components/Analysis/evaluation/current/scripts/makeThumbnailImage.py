@@ -67,18 +67,30 @@ if __name__ == '__main__':
     vmax=zmax * stddev
 
     thumbim=fitsim.replace('.fits','.%s'%suffix)
-        
-    for i in range(len(figsizes)):
+
+    for i,size in enumerate(figsizes):
         filename=thumbim.replace('.%s'%suffix,'_%s.%s'%(figsizenames[i],suffix))
         print("Writing to file %s"%filename)
-        gc=aplpy.FITSFigure(fitsim,figsize=(figsizes[i],figsizes[i]))
+        gc=aplpy.FITSFigure(fitsim,figsize=(size,size))
         gc.show_colorscale(vmin=vmin,vmax=vmax)
+        if fitsim[:7]=='weights':
+            cs=plt.contour(image.squeeze(),levels=np.arange(10)/10.,colors='k')
+            if size>10:
+                fontsize=10
+            else:
+                fontsize=7
+            plt.clabel(cs,fontsize=fontsize)
+            #            gc.show_contour(levels=np.arange(10)/10.,colors='k')
+#        else:
+#            gc.show_colorscale(vmin=vmin,vmax=vmax)
         gc.tick_labels.set_xformat('hh:mm')
         gc.tick_labels.set_yformat('dd:mm')
         gc.add_grid()
         gc.grid.set_linewidth(0.5)
         gc.grid.set_alpha(0.5)
         plt.title(figtitle)
+        if not fitsim[:7]=='weights':
+            gc.add_colorbar()
         #
         gc.set_theme('publication')
         gc.save(filename)
