@@ -88,34 +88,76 @@ if [ "${NUM_ANT}" != "" ]; then
     echo "You've entered NUM_ANT=${NUM_ANT}. This is no longer used, as we take this info from the MS."
 fi
 
+#####
+# Text to write to metadata files to indicate success
+METADATA_IS_GOOD=METADATA_IS_GOOD
+
+
+
 ####################
 # Once we've defined the bandpass calibrator MS name, extract metadata from it
 if [ $DO_1934_CAL == true ] && [ "${MS_INPUT_1934}" != "" ]; then
 
-    echo "Extracting metadata for calibrator measurement set $MS_INPUT_1934"
-    
     getMSname ${MS_INPUT_1934}
     MS_METADATA=$metadata/mslist-cal-${msname}.txt
-    if [ ! -e ${MS_METADATA} ]; then
+
+    runMSlist=true
+    if [ -e "${MS_METADATA}" ]; then
+        if [ `grep ${METADATA_IS_GOOD} ${MS_METADATA} | wc -l` -gt 0 ]; then
+            runMSlist=false
+        else
+            rm -f ${MS_METADATA}
+        fi
+    fi
+    
+    if [ "${runMSlist}" == "true" ]; then
+        echo "Extracting metadata for calibrator measurement set $MS_INPUT_1934"
         ${mslist} --full $MS_INPUT_1934 1>& ${MS_METADATA}
+        err=$?
+        if [ $err -ne 0 ]; then
+            echo "ERROR - the 'mslist' command failed."
+            echo "        Full command:  ${mslist} --full $MS_INPUT_1934" 
+            echo "Exiting pipeline."
+            exit $err
+        else
+            cat >> ${MS_METADATA} <<EOF
+${METADATA_IS_GOOD} ${NOW}
+EOF
+        fi
+    else
+        echo "Reusing calibrator metadata file ${MS_METADATA}"
     fi
 
     # Number of antennas used in the calibration observation
     NUM_ANT_1934=`grep Antennas ${MS_METADATA} | head -1 | awk '{print $6}'`
     NUM_ANT=$NUM_ANT_1934
 
+    if [ "${NUM_ANT_1934}" == "" ]; then
+        echo "ERROR - unable to determine number of antennas in calibration dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+    
     # Number of channels used in the calibration observation
     NUM_CHAN=`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=nChan`
 
+    if [ "${NUM_CHAN}" == "" ]; then
+        echo "ERROR - unable to determine number of channels in calibration dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+        
     # Number of channels for 1934 observation
-    if [ "$CHAN_RANGE_1934" == "" ]; then
+    if [ "${CHAN_RANGE_1934}" == "" ]; then
         NUM_CHAN_1934=${NUM_CHAN}
         CHAN_RANGE_1934="1-${NUM_CHAN}"
     else
         NUM_CHAN_1934=`echo $CHAN_RANGE_1934 | awk -F'-' '{print $2-$1+1}'`
     fi
 
-    if [ ${NUM_CHAN} -lt ${NUM_CHAN_1934} ]; then
+    if [ "${NUM_CHAN}" -lt "${NUM_CHAN_1934}" ]; then
         echo "ERROR! Number of channels requested for the calibration observation (${NUM_CHAN_1934}, from \"${CHAN_RANGE_1934}\") is bigger than the number in the MS (${NUM_CHAN})."
         exit 1
     fi
@@ -126,15 +168,37 @@ fi
 # Once we've defined the science MS name, extract metadata from it
 if [ "${MS_INPUT_SCIENCE}" != "" ]; then
 
-    echo "Extracting metadata for science measurement set $MS_INPUT_SCIENCE"
-
     # define $msname
     getMSname ${MS_INPUT_SCIENCE}
 
     # Extract the MS metadata into a local file ($MS_METADATA) for parsing
     MS_METADATA=$metadata/mslist-${msname}.txt
-    if [ ! -e ${MS_METADATA} ]; then
+
+    runMSlist=true
+    if [ -e "${MS_METADATA}" ]; then
+        if [ `grep ${METADATA_IS_GOOD} ${MS_METADATA} | wc -l` -gt 0 ]; then
+            runMSlist=false
+        else
+            rm -f ${MS_METADATA}
+        fi
+    fi
+    
+    if [ "${runMSlist}" == "true" ]; then
+        echo "Extracting metadata for science measurement set $MS_INPUT_SCIENCE"
         ${mslist} --full $MS_INPUT_SCIENCE 1>& ${MS_METADATA}
+        err=$?
+        if [ $err -ne 0 ]; then
+            echo "ERROR - the 'mslist' command failed."
+            echo "        Full command:  ${mslist} --full $MS_INPUT_1934" 
+            echo "Exiting pipeline."
+            exit $err
+        else
+            cat >> ${MS_METADATA} <<EOF
+${METADATA_IS_GOOD} ${NOW}
+EOF
+        fi
+    else
+        echo "Reusing science metadata file ${MS_METADATA}"
     fi
 
     # Get the observation time
@@ -143,13 +207,33 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     DATE_OBS=`date -d "$obsdate" +"%Y-%m-%d"`
     DATE_OBS="${DATE_OBS}T${obstime}"
 
+    if [ "${obsdate}" == "" ] || [ "${obstime}" == "" ]; then
+        echo "ERROR - unable to determine observation time/date of science dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+
     # Get the duration of the observation
     DURATION=`grep "elapsed time" ${MS_METADATA} | head -1 | awk '{print $11}'`
+    if [ "${DURATION}" == "" ]; then
+        echo "ERROR - unable to determine observation duration for science dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
 
     # Get the number of antennas used in the observation
     NUM_ANT_SCIENCE=`grep Antennas ${MS_METADATA} | head -1 | awk '{print $6}'`
     NUM_ANT=$NUM_ANT_SCIENCE
 
+    if [ "${NUM_ANT_SCIENCE}" == "" ]; then
+        echo "ERROR - unable to determine number of antennas in science dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+    
     # Get the number of channels used
     NUM_CHAN=`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=nChan`
     # centre frequency - includes units
@@ -157,6 +241,13 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     # bandwidth - includes units
     BANDWIDTH="`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=Bandwidth`"
 
+    if [ "${NUM_CHAN}" == "" ] || [ "${CENTRE_FREQ}" == "" ] || [ "${BANDWIDTH}" == "" ]; then
+        echo "ERROR - unable to determine frequency setup (# channels/freq0/bandwidth) in science dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+    
     # Get the requested number of channels from the config, and make sure they are the same for 1934
     # & science observations
 
@@ -189,6 +280,13 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     
     # Find the number of fields in the MS
     NUM_FIELDS=`grep Fields ${MS_METADATA} | head -1 | cut -f 4- | cut -d' ' -f 2`
+    if [ "${NUM_FIELDS}" == "" ]; then
+        echo "ERROR - unable to determine number of fields in science dataset"
+        echo "        please check metadata in ${MS_METADATA}"
+        echo "Exiting pipeline."
+        exit 1
+    fi
+    
     FIELDLISTFILE=${metadata}/fieldlist-${msname}.txt
     if [ ! -e $FIELDLISTFILE ]; then
         grep -A${NUM_FIELDS} RA ${MS_METADATA} | tail -n ${NUM_FIELDS} | cut -f 4- >> $FIELDLISTFILE
@@ -254,6 +352,39 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
         PROJECT_ID=`awk $awkstr ${sbinfo} | awk '{split($0,a,FS); print a[NF];}'`
         if [ "$PROJECT_ID" == "" ]; then
             PROJECT_ID=$BACKUP_PROJECT_ID
+        fi
+
+        # Check for the current state of the Scheduling block.
+        # If it is OBSERVED, this means the processing has not been
+        # started previously. In this case only, transition the SB
+        # using the command-line interface to PROCESSING. If the
+        # pipeline is being run by the askapops user, then we can
+        # annotate the relevant JIRA ticket that we have done so.
+        #
+        SB_STATE_INITIAL=`awk $awkstr ${sbinfo} | awk '{split($0,a,FS); print a[NF-3];}'`
+        if [ "${SB_STATE_INITIAL}" == "OBSERVED" ]; then
+            module load askapcli
+            schedblock transition -s PROCESSING ${SB_SCIENCE} > ${logs}/transition-to-PROCESSING.log
+            err=$?
+            module unload askapcli
+            if [ $err -ne 0 ]; then
+                echo "`date`: ERROR - 'schedblock transition' failed for SB ${SB_SCIENCE} with error code \$err"
+            fi
+            if [ "`whoami`" == "askapops" ]; then
+                if [ $err -eq 0 ]; then
+                    schedblock annotate -i ${SB_JIRA_ISSUE} -c "Commencing processing. SB ${SB_SCIENCE} transitioned to PROCESSING." ${SB_SCIENCE}
+                    annotErr=$?
+                    if [ ${annotErr} -ne 0 ]; then
+                        echo "`date`: ERROR - 'schedblock annotate' failed with error code ${annotErr}" | tee -a ${ERROR_FILE}
+                    fi
+                else
+                    schedblock annotate -i ${SB_JIRA_ISSUE} -c "ERROR -- Failed to transition SB ${SB_SCIENCE} to PROCESSING." ${SB_SCIENCE}
+                    annotErr=$?
+                    if [ ${annotErr} -ne 0 ]; then
+                        echo "`date`: ERROR - 'schedblock annotate' failed with error code ${annotErr}" | tee -a ${ERROR_FILE}
+                    fi
+                fi
+            fi
         fi
 
     fi

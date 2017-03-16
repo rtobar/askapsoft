@@ -24,7 +24,7 @@ let MAX_CARD=$MAX_BLOCK*$MAX_CARD_IN_BLOCK
 # If argument does not exist
 if [ -z "$1" ]; then
   	echo "The number of cards used in streaming the data must be specified."
-  	echo "Usage: ./run.sh <number of cards: 1~96>"
+  	echo "Usage: ./run.sh <number of cards = 1~96>"
   	exit -1
 else
   	#echo "argument exists: $1"
@@ -109,15 +109,17 @@ if [ $NVSTREAM -eq 1 ]; then
 else
 	# parallel
 	sed -i "s/tasks.tasklist.*/tasks.tasklist = [MergedSource, Merge, CalcUVWTask, Monitor, MSSink]/" $INGEST_PARSET
+	#sed -i "s/tasks.tasklist.*/tasks.tasklist = [MergedSource, CalcUVWTask, Monitor, MSSink]/" $INGEST_PARSET
 fi
 
-echo "Setting ingest parameter: ranks to merge: $NFILE"
-if [ $NVSTREAM -lt $MAX_CARD_IN_BLOCK ]; then
-  	NFILE=$NVSTREAM
-else
-  	NFILE=$MAX_CARD_IN_BLOCK
-fi
-sed -i "s/tasks.Merge.params.ranks2merge.*/tasks.Merge.params.ranks2merge = $NFILE/" $INGEST_PARSET
+#if [ $NVSTREAM -lt $MAX_CARD_IN_BLOCK ]; then
+#  	NFILE=$NVSTREAM
+#else
+#  	NFILE=$MAX_CARD_IN_BLOCK
+#fi
+#let NFILE=1
+#echo "Setting ingest parameter: ranks to merge: $NFILE"
+#sed -i "s/tasks.Merge.params.ranks2merge.*/tasks.Merge.params.ranks2merge = $NFILE/" $INGEST_PARSET
 
 echo "Removing ingest parameter: channel list"
 CHANNEL_COMMENT="# Automatically generated channel list"

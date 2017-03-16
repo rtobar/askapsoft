@@ -382,8 +382,9 @@ EOF
     maxbeam=-1
     nbeams=0
     for b in ${BEAMS_TO_USE}; do
-        if [ $b -gt $maxbeam ]; then
-            maxbeam=$b
+        thisbeam=$( echo "$b" | awk '{printf "%d",$1}')
+        if [ "$thisbeam" -gt "$maxbeam" ]; then
+            maxbeam=$thisbeam
         fi
         nbeams=`expr $nbeams + 1`
     done
@@ -600,7 +601,7 @@ EOF
         fi
 
         # Check search type
-        if [ ${SELAVY_SPEC_SEARCH_TYPE} != "spectral" ] ||
+        if [ ${SELAVY_SPEC_SEARCH_TYPE} != "spectral" ] &&
                [ ${SELAVY_SPEC_SEARCH_TYPE} != "spatial" ]; then
             SELAVY_SPEC_SEARCH_TYPE="spectral"
             echo "WARNING - SELAVY_SPEC_SEARCH_TYPE needs to be 'spectral' or 'spatial' - Setting to 'spectral'"
