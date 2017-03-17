@@ -30,10 +30,10 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-if [ ${DO_MAKE_THUMBNAILS} == true ]; then
+if [ "${DO_MAKE_THUMBNAILS}" == "true" ]; then
 
     sbatchfile=$slurms/makeThumbnails.sbatch
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -51,25 +51,28 @@ ${askapsoftModuleCommands}
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
-. ${PIPELINEDIR}/utils.sh	
+. ${PIPELINEDIR}/utils.sh
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 
 # Define the lists of image names, types, 
 ADD_FITS_SUFFIX=true
-. ${getArtifacts}
+. "${getArtifacts}"
 
-for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
+if [ "$(which makeThumbnailImage.py 2> ${tmp}/whchmkthumb)" == "" ]; then
 
-    im=\${casdaTwoDimImageNames[i]}
-    title=\${casdaTwoDimThumbTitles[i]}
-
-    log=${logs}/thumbnails-\${im##*/}_\${SLURM_JOB_ID}.log
-    script=${parsets}/thumbnails-\${im##*/}_\${SLURM_JOBID}.py
-    cat > \$script <<EOF
+    for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
+    
+        im=\${casdaTwoDimImageNames[i]}
+        title=\${casdaTwoDimThumbTitles[i]}
+    
+        log=${logs}/thumbnails-\${im##*/}_\${SLURM_JOB_ID}.log
+        script=${parsets}/thumbnails-\${im##*/}_\${SLURM_JOBID}.py
+        cat > "\$script" <<EOF
 #!/usr/bin/env python
 import matplotlib
 matplotlib.use('Agg')
@@ -119,18 +122,79 @@ for size in figsizes:
     gc.save(thumbim.replace('.%s'%suffix,'_%s.%s'%(size,suffix)))
 
 EOF
-    python \$script > \$log
+        python "\$script" > "\$log"
+    
+    done
 
-done
+else
+
+    log=${logs}/thumbnails_\${SLURM_JOB_ID}.log
+    parset=${parsets}/thumbnails_\${SLURM_JOB_ID}.in
+    
+    for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
+    
+        cat >> "\$parset" <<EOF
+###### Image #\${i} #############
+makeThumbnail.image = \${casdaTwoDimImageNames[i]}
+makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]}
+makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
+makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
+makeThumbnail.zmax = ${THUMBNAIL_GREYSCALE_MAX}
+makeThumbnail.imageSizes = ${THUMBNAIL_SIZE_INCHES}
+makeThumbnail.imageSizeNames = ${THUMBNAIL_SIZE_TEXT}
+EOF
+    
+        NCORES=1
+        NPPN=1
+        aprun -n \${NCORES} -N \${NPPN} ${makeThumbnails} -c "\${parset}" >> "\${log}"
+        err=\$?
+        if [ \$err != 0 ]; then
+            echo "ERROR - Thumbnail creation failed for image \${casdaTwoDimImageNames[i]}" | tee -a "\${log}"
+            exit \$err
+        fi
+
+        if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
+
+            # make a second plot showing catalogued source positions
+            seldir=$(echo \${casdaTwoDimImageNames[i]} | sed -e 's/image\.i/selavy_image\.i/g')
+            if [ -e "\${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt" ]; then
+                cat >> "\$parset" <<EOF
+###### Image #\${i} catalogue #############
+makeThumbnail.image = \${casdaTwoDimImageNames[i]}
+makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]}
+makeThumbnail.catalogue = \${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt
+makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
+makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
+makeThumbnail.zmax = ${THUMBNAIL_GREYSCALE_MAX}
+makeThumbnail.imageSizes = [16]
+makeThumbnail.imageSizeNames = [sources]
+makeThumbnail.showWeightsContours = True
+EOF
+    
+        NCORES=1
+        NPPN=1
+        aprun -n \${NCORES} -N \${NPPN} ${makeThumbnails} -c "\${parset}" >> "\${log}"
+        err=\$?
+        if [ \$err != 0 ]; then
+            echo "ERROR - Sources thumbnail creation failed for image \${casdaTwoDimImageNames[i]}" | tee -a "\${log}"
+            exit \$err
+        fi
+
+
+        fi
+    
+    done
+
+fi
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:`echo $ALL_JOB_IDS | sed -e 's/,/:/g'`"
+            dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
-        ID_THUMBS=`sbatch ${dep} $sbatchfile | awk '{print $4}'`
-        recordJob ${ID_THUMBS} "Job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with flags \"${dep}\""
+        ID_THUMBS=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        recordJob "${ID_THUMBS}" "Job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with flags \"${dep}\""
     else
         echo "Would submit job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with slurm file $sbatchfile"
     fi

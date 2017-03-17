@@ -121,6 +121,7 @@ if [ "$ASKAP_ROOT" != "" ]; then
     cimstat=${ASKAP_ROOT}/Code/Components/Analysis/analysis/current/apps/cimstat.sh
     mslist=${ASKAP_ROOT}/Code/Components/Synthesis/synthesis/current/apps/mslist.sh
     image2fits=${ASKAP_ROOT}/3rdParty/casacore/casacore-2.0.3/install/bin/image2fits
+    makeThumbnails=${ASKAP_ROOT}/Code/Components/Analysis/evaluation/current/install/bin/makeThumbnailImage.py
     casdaupload=$ASKAP_ROOT/Code/Components/CP/pipelinetasks/current/apps/casdaupload.sh
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=ASKAP_ROOT,AIPSPATH"
@@ -141,6 +142,7 @@ else
     cimstat=cimstat
     mslist=mslist
     image2fits=image2fits
+    makeThumbnails=makeThumbnailImage.py
     casdaupload=casdaupload
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=NONE"
@@ -805,9 +807,9 @@ PROJECT_ID="AS031"
 OBS_PROGRAM="Commissioning"
 
 # For making thumbnails, this is the size value given to figsize (in inches)
-THUMBNAIL_SIZE_INCHES=(16 5)
+THUMBNAIL_SIZE_INCHES="[16,5]"
 # For making thumbnails, this is the corresponding string for the sizes
-THUMBNAIL_SIZE_TEXT=(large small)
+THUMBNAIL_SIZE_TEXT="['large','small']"
 
 # Suffix for thumnail images - determines the image type
 THUMBNAIL_SUFFIX="png"
