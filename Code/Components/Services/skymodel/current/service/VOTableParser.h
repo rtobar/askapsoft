@@ -44,6 +44,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
+#include "SmsTypes.h"
 
 namespace askap {
 namespace cp {
@@ -58,13 +59,11 @@ void parseComponentRowField(
     const std::string& unit,
     const std::string& value,
     std::vector<datamodel::ContinuumComponent>& components,
-    std::vector<double>& ra_buffer,
-    std::vector<double>& dec_buffer) {
+    std::vector<Coordinate>& coord_buffer) {
 
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
-    ASKAPASSERT(row_index < ra_buffer.size());
-    ASKAPASSERT(row_index < dec_buffer.size());
+    ASKAPASSERT(row_index < coord_buffer.size());
 
     if (boost::iequals(ucd, "meta.id;meta.main")) {
         ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
@@ -76,14 +75,14 @@ void parseComponentRowField(
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].ra = boost::lexical_cast<double>(value);
-        ra_buffer[row_index] = components[row_index].ra;
+        coord_buffer[row_index].ra = components[row_index].ra;
     }
     else 
     if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].dec = boost::lexical_cast<double>(value);
-        dec_buffer[row_index] = components[row_index].dec;
+        coord_buffer[row_index].dec = components[row_index].dec;
     }
     else 
     if (boost::iequals(ucd, "stat.error;pos.eq.ra")) {

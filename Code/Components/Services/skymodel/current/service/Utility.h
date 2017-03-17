@@ -54,6 +54,12 @@ template<class Numeric> inline Numeric degreesToRadians(Numeric degrees) {
     return degrees * boost::math::constants::degree<Numeric>();
 }
 
+inline double wrapAngleDegrees(double angle) {
+    angle = std::fmod(angle, 360.0);
+    if (angle < 0.0)
+        angle += 360.0;
+    return angle;
+}
 
 };
 };

@@ -45,6 +45,10 @@ class UtilityTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(UtilityTest);
         CPPUNIT_TEST(testDegreesToRadians_float);
+        CPPUNIT_TEST(testDegreesToRadians_double);
+        CPPUNIT_TEST(testWrapAngleInRange);
+        CPPUNIT_TEST(testWrapAngleLarge);
+        CPPUNIT_TEST(testWrapAngleNegative);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -66,6 +70,62 @@ class UtilityTest : public CppUnit::TestFixture {
             double expected = degrees * boost::math::double_constants::pi / 180;
             double actual = utility::degreesToRadians<double>(degrees);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, 0.000001);
+        }
+
+        void testWrapAngleInRange() {
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                34.092,
+                utility::wrapAngleDegrees(34.092),
+                0.000001);
+
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                127.999,
+                utility::wrapAngleDegrees(127.999),
+                0.000001);
+
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                0.0,
+                utility::wrapAngleDegrees(0.0),
+                0.000001);
+
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                359.999,
+                utility::wrapAngleDegrees(359.999),
+                0.000001);
+        }
+
+        void testWrapAngleLarge() {
+            double expected = 43.9501;
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                expected,
+                utility::wrapAngleDegrees(expected + 360.0),
+                0.000001);
+
+            expected = 343.9501;
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                expected,
+                utility::wrapAngleDegrees(expected + 360.0 * 7),
+                0.000001);
+
+            expected = 0;
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                expected,
+                utility::wrapAngleDegrees(expected + 360.0),
+                0.000001);
+        }
+
+        void testWrapAngleNegative() {
+            double expected = 359.5;
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                expected,
+                utility::wrapAngleDegrees(expected - 360.0),
+                0.000001);
+
+            expected = 121.12;
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                expected,
+                utility::wrapAngleDegrees(expected - 360.0 * 3),
+                0.000001);
         }
     private:
 

@@ -40,6 +40,7 @@
 
 // Local package includes
 #include "Utility.h"
+#include "SmsTypes.h"
 
 
 namespace askap {
@@ -62,49 +63,40 @@ class HealPixFacade : private boost::noncopyable {
         /// @note   I will probably require a vectorisable version of this function
         ///         that operates on a vector of input coordinates, but this function
         ///         will suffice for the initial unit tests.
-        /// @param[in] ra  J2000 right ascension (decimal degrees)
-        /// @param[in] dec J2000 declination (decimal degrees)
-        Index calcHealPixIndex(double ra, double dec) const;
+        /// @param[in] coordinate J2000 coordinate (decimal degrees)
+        Index calcHealPixIndex(Coordinate coordinate) const;
 
         /// @brief Returns the set of all pixels which overlap with the disk
-        /// defined by a centre (ra, dec) and radius.
+        /// defined by a centre and radius.
         ///
-        /// @param ra Right ascension in decimal degrees of the disk centre.
-        /// @param dec Declination in decimal degrees of the disk centre.
-        /// @param radius Radius in degrees of the disk.
-        /// @param fact Oversampling factor. The overlapping test will be done 
+        /// @param[in] centre J2000 coordinate of the disk centre (decimal degrees)
+        /// @param[in] radius Radius in decimal degrees of the disk.
+        /// @param[in] fact Oversampling factor. The overlapping test will be done 
         ///         at the resolution fact*nside. Must be a power of 2.
         ///
         /// @return The vector of pixel indicies matching the query.
-        IndexListPtr queryDisk(double ra, double dec, double radius, int fact=8) const;
+        IndexListPtr queryDisk(Coordinate centre, double radius, int fact=8) const;
 
         /// @brief Returns the set of all pixels which overlap with the rectangle
-        /// defined by a top-left (ra, dec) and bottom-right (ra, dec) point pair.
         ///
-        /// @param ra_left J200 Right ascension in decimal degrees of the top-left point.
-        /// @param dec_top J200 Declination in decimal degrees of the top-left point.
-        /// @param ra_right J200 Right ascension in decimal degrees of the bottom-right point.
-        /// @param dec_bottom J200 Declination in decimal degrees of the bottom-right point.
-        /// @param fact Oversampling factor. The overlapping test will be done 
+        /// @param[in] rect The rectangle
+        /// @param[in] fact Oversampling factor. The overlapping test will be done 
         ///         at the resolution fact*nside. Must be a power of 2.
         ///
         /// @return The vector of pixel indicies matching the query.
-        IndexListPtr queryRect(double ra_left, double dec_top, double ra_right, double dec_bottom, int fact=8) const;
+        IndexListPtr queryRect(Rect rect, int fact=8) const;
 
-        /// @brief Converts Right-ascension and Declination to a HEALPix pointing.
+        /// @brief Converts a J2000 coordinate to a pointing
         ///
-        /// @param ra J2000 Right-ascension in decimal degrees.
-        /// @param dec J2000 declination in decimal degrees.
+        /// @param[in] coordinate J2000 coordinate (decimal degrees)
         ///
         /// @return The pointing.
-        inline static pointing J2000ToPointing(double ra, double dec) {
-            ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
-            ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
+        inline static pointing J2000ToPointing(Coordinate coordinate) {
             return pointing(
                     // theta = (90 - dec)
-                    utility::degreesToRadians(90.0 - dec),
+                    utility::degreesToRadians(90.0 - coordinate.dec),
                     // phi = ra
-                    utility::degreesToRadians(ra));
+                    utility::degreesToRadians(coordinate.ra));
         }
 
     private:

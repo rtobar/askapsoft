@@ -113,7 +113,7 @@ class VOTableDataTest : public CppUnit::TestFixture {
             for (VOTableData::ComponentList::const_iterator it = components.begin();
                  it != components.end();
                  it++) {
-                boost::int64_t expected = hp.calcHealPixIndex(it->ra, it->dec);
+                boost::int64_t expected = hp.calcHealPixIndex(Coordinate(it->ra, it->dec));
                 CPPUNIT_ASSERT_EQUAL(expected, it->healpix_index);
             }
         }

@@ -245,7 +245,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testSimpleConeSearch() {
             initSearch();
-            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(70.2, -61.8, 1.0);
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(Coordinate(70.2, -61.8), 1.0);
             CPPUNIT_ASSERT_EQUAL(size_t(1), results->size());
             CPPUNIT_ASSERT_EQUAL(
                 string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1a"),
@@ -277,8 +277,9 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             GlobalSkyModel::ComponentQuery query(
                 GlobalSkyModel::ComponentQuery::freq >= 1230.0 &&
                 GlobalSkyModel::ComponentQuery::freq <= 1250.0);
-
-            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(76.0, -71.0, 1.5, query);
+            Coordinate centre(76.0, -71.0);
+            double radius = 1.5;
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(centre, radius, query);
 
             CPPUNIT_ASSERT_EQUAL(size_t(3), results->size());
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
@@ -293,8 +294,9 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             initSearch();
             GlobalSkyModel::ComponentQuery query(
                 GlobalSkyModel::ComponentQuery::flux_int >= 80.0);
-
-            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(76.0, -71.0, 1.5, query);
+            Coordinate centre(76.0, -71.0);
+            double radius = 1.5;
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(centre, radius, query);
 
             CPPUNIT_ASSERT_EQUAL(size_t(3), results->size());
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
@@ -306,15 +308,11 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
         }
 
         void testSimpleRectSearch() {
-            double ra_left = 79.0;
-            double dec_top = -71.0;
-            double ra_right = 79.75;
-            double dec_bottom = -72.0;
-
             initSearch();
-            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(
-                ra_left, dec_top,
-                ra_right, dec_bottom);
+
+            Rect roi(Coordinate(79.375, -71.5), Extents(0.75, 1.0));
+            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(roi);
+
             CPPUNIT_ASSERT_EQUAL(size_t(4), results->size());
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1b"))));
@@ -330,19 +328,14 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             initSearch();
 
             // use the same bounds as testSimpleRectSearch
-            double ra_left = 79.0;
-            double dec_top = -71.0;
-            double ra_right = 79.75;
-            double dec_bottom = -72.0;
+            Rect roi(Coordinate(79.375, -71.5), Extents(0.75, 1.0));
 
             GlobalSkyModel::ComponentQuery query(
                 GlobalSkyModel::ComponentQuery::freq >= 1200.0 &&
                 GlobalSkyModel::ComponentQuery::freq <= 1260.0);
 
-            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(
-                ra_left, dec_top,
-                ra_right, dec_bottom,
-                query);
+            GlobalSkyModel::ComponentListPtr results = gsm->rectSearch(roi, query);
+
             CPPUNIT_ASSERT_EQUAL(size_t(2), results->size());
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));

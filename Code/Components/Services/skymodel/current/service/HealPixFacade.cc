@@ -62,7 +62,7 @@ HealPixFacade::HealPixFacade(Index order)
 {
 }
 
-HealPixFacade::Index HealPixFacade::calcHealPixIndex(double ra, double dec) const
+HealPixFacade::Index HealPixFacade::calcHealPixIndex(Coordinate coordinate) const
 {
     // Note: this initial implementation is not likely to be the most efficient,
     // but it does give me enough to sort out the basics.
@@ -70,15 +70,14 @@ HealPixFacade::Index HealPixFacade::calcHealPixIndex(double ra, double dec) cons
     // contiguous arrays of ra and dec coordinates, with the T_Healpix_Base
     // object being reused if possible, or thread-local if it is not
     // thread-safe.
-    return itsHealPixBase.ang2pix(J2000ToPointing(ra, dec));
+    return itsHealPixBase.ang2pix(J2000ToPointing(coordinate));
 }
 
-HealPixFacade::IndexListPtr HealPixFacade::queryDisk(double ra, double dec, double radius, int fact) const
+HealPixFacade::IndexListPtr HealPixFacade::queryDisk(Coordinate centre, double radius, int fact) const
 {
     rangeset<Index> pixels;
-    pointing direction = J2000ToPointing(ra, dec);
     itsHealPixBase.query_disc_inclusive(
-        direction,
+        J2000ToPointing(centre),
         utility::degreesToRadians(radius),
         pixels,
         fact);
@@ -87,22 +86,15 @@ HealPixFacade::IndexListPtr HealPixFacade::queryDisk(double ra, double dec, doub
 }
 
 HealPixFacade::IndexListPtr HealPixFacade::queryRect(
-    double ra_left,
-    double dec_top,
-    double ra_right,
-    double dec_bottom,
+    Rect rect,
     int fact) const
 {
-    // sanity checks
-    ASKAPASSERT(ra_left < ra_right);
-    ASKAPASSERT(dec_bottom < dec_top);
-
     // munge the inputs into a polygon, moving clockwise from the top-left
     std::vector<pointing> vertex;
-    vertex.push_back(J2000ToPointing(ra_left, dec_top));
-    vertex.push_back(J2000ToPointing(ra_right, dec_top));
-    vertex.push_back(J2000ToPointing(ra_right, dec_bottom));
-    vertex.push_back(J2000ToPointing(ra_left, dec_bottom));
+    vertex.push_back(J2000ToPointing(rect.topLeft()));
+    vertex.push_back(J2000ToPointing(rect.topRight()));
+    vertex.push_back(J2000ToPointing(rect.bottomRight()));
+    vertex.push_back(J2000ToPointing(rect.bottomLeft()));
     
     // intersect with HEALPix
     rangeset<Index> pixels;

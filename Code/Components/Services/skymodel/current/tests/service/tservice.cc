@@ -31,6 +31,7 @@
 #include "HealpixTest.h"
 #include "GlobalSkyModelTest.h"
 #include "ServiceTest.h"
+#include "SmsTypesTest.h"
 #include "UtilityTest.h"
 #include "VOTableDataTest.h"
 
@@ -45,6 +46,7 @@ int main(int argc, char *argv[])
     runner.addTest(askap::cp::sms::ServiceTest::suite());
     runner.addTest(askap::cp::sms::HealpixTest::suite());
     runner.addTest(askap::cp::sms::UtilityTest::suite());
+    runner.addTest(askap::cp::sms::SmsTypesTest::suite());
 
     // Run
     const bool wasSucessful = runner.run();

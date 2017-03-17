@@ -48,8 +48,6 @@ class HealpixTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testQueryDisk);
         CPPUNIT_TEST(testQueryRect_Small);
         CPPUNIT_TEST(testQueryRect_Large);
-        CPPUNIT_TEST(testQueryRect_range_error_swapped_dec);
-        CPPUNIT_TEST(testQueryRect_range_error_swapped_ra);
         CPPUNIT_TEST(testJ2000ToPointing_valid_values);
         CPPUNIT_TEST_SUITE_END();
 
@@ -62,14 +60,18 @@ class HealpixTest : public CppUnit::TestFixture {
 
         void testCalcHealpixIndex() {
             HealPixFacade hp(5);
-            HealPixFacade::Index actual = hp.calcHealPixIndex(14.8, 43.1);
+            HealPixFacade::Index actual = hp.calcHealPixIndex(
+                Coordinate(14.8, 43.1));
             HealPixFacade::Index expected = 2663;
             CPPUNIT_ASSERT_EQUAL(expected, actual);
         }
 
         void testQueryDisk() {
             HealPixFacade hp(10);
-            HealPixFacade::IndexListPtr actual = hp.queryDisk(71.8, -63.1, 1.0/60.0, 8);
+            HealPixFacade::IndexListPtr actual = hp.queryDisk(
+                Coordinate(71.8, -63.1),
+                1.0/60.0,
+                8);
             CPPUNIT_ASSERT_EQUAL(size_t(4), actual->size());
             CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
             CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
@@ -80,8 +82,7 @@ class HealpixTest : public CppUnit::TestFixture {
         void testQueryRect_Small() {
             HealPixFacade hp(10);
             HealPixFacade::IndexListPtr actual = hp.queryRect(
-                75.9, -63.1,    // top-left
-                75.94, -63.15,  // bottom-right
+                Rect(Coordinate(75.92, -63.125), Extents(0.04, 0.05)),
                 8);             // oversampling factor
                 
             CPPUNIT_ASSERT_EQUAL(size_t(5), actual->size());
@@ -91,45 +92,20 @@ class HealpixTest : public CppUnit::TestFixture {
             HealPixFacade hp(10);
             // create a rect of ~30 sq degrees (5 * 6)
             HealPixFacade::IndexListPtr actual = hp.queryRect(
-                70.9, -63.1,  // top-left
-                75.9, -69.1,  // bottom-right
+                Rect(Coordinate(73.4, -66.1), Extents(5.0, 6.0)),
                 8);           // oversampling factor
                 
             CPPUNIT_ASSERT_EQUAL(size_t(15201), actual->size());
         }
 
-        void testQueryRect_range_error_swapped_dec() {
-            HealPixFacade hp(10);
-            CPPUNIT_ASSERT_THROW(
-                hp.queryRect(
-                    70.9, -69.1,  // top-left
-                    75.9, -63.1,  // bottom-right
-                    8),           // oversampling factor
-                askap::AskapError);
-        }
-
-        void testQueryRect_range_error_swapped_ra() {
-            HealPixFacade hp(10);
-            CPPUNIT_ASSERT_THROW(
-                hp.queryRect(
-                    75.9, -63.1,  // top-left
-                    70.9, -69.1,  // bottom-right
-                    8),           // oversampling factor
-                askap::AskapError);
-        }
-
         void testJ2000ToPointing_valid_values() {
-            double ra = 10.0;
-            double dec = 89.0;
+            Coordinate coord(10.0, 89.0);
             const double pi_180 = boost::math::double_constants::pi / 180.0;
-            pointing expected((90.0 - dec) * pi_180, ra * pi_180);
-            pointing actual = HealPixFacade::J2000ToPointing(ra, dec);
+            pointing expected((90.0 - coord.dec) * pi_180, coord.ra * pi_180);
+            pointing actual = HealPixFacade::J2000ToPointing(coord);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.theta, actual.theta, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.phi, actual.phi, 0.000001);
         }
-
-    private:
-
 };
 
 }

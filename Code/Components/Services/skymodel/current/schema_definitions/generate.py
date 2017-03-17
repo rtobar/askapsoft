@@ -247,6 +247,7 @@ HEADER_PREAMBLE = \
 
 // Local package includes
 #include "datamodel/ContinuumComponent.h"
+#include "SmsTypes.h"
 
 namespace askap {
 namespace cp {
@@ -284,13 +285,11 @@ void parseComponentRowField(
     const std::string& unit,
     const std::string& value,
     std::vector<datamodel::ContinuumComponent>& components,
-    std::vector<double>& ra_buffer,
-    std::vector<double>& dec_buffer) {
+    std::vector<Coordinate>& coord_buffer) {
 
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
-    ASKAPASSERT(row_index < ra_buffer.size());
-    ASKAPASSERT(row_index < dec_buffer.size());
+    ASKAPASSERT(row_index < coord_buffer.size());
 '''
 
 COMPONENT_UCD_FIELD_PARSE_PATTERN = '''
@@ -353,11 +352,11 @@ def write_field_parsing_code(
             if special_case_ra_dec:
                 if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
                     out.write(
-                        Template('        ra_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                        Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
                             fieldname=field.name))
                 elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
                     out.write(
-                        Template('        dec_buffer[row_index] = components[row_index].$fieldname;\n').substitute(
+                        Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
                             fieldname=field.name))
 
             out.write('    }')

@@ -232,50 +232,36 @@ GlobalSkyModel::ComponentPtr GlobalSkyModel::getComponentByID(datamodel::id_type
 }
 
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
-    double ra,
-    double dec,
+    Coordinate centre,
     double radius) const
 {
-    return coneSearch(ra, dec, radius, ComponentQuery());
+    return coneSearch(centre, radius, ComponentQuery());
 }
 
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
-    double ra,
-    double dec,
+    Coordinate centre,
     double radius,
     ComponentQuery query) const
 {
-    ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius);
-    //cout << "coneSearch: ra=" << ra << ", dec=" << dec << ", radius=" << radius << endl;
-    ASKAPASSERT((ra >= 0.0) && (ra < 360.0));
-    ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
+    ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << centre.ra << ", dec=" << centre.dec << ", radius=" << radius);
     ASKAPASSERT(radius > 0);
     return queryComponentsByPixel(
-            itsHealPix.queryDisk(ra, dec, radius),
+            itsHealPix.queryDisk(centre, radius),
             query);
 }
 
-GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
-    double ra_left,
-    double dec_top,
-    double ra_right,
-    double dec_bottom) const
+GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(Rect rect) const
 {
-    return rectSearch(ra_left, dec_top, ra_right, dec_bottom, ComponentQuery());
+    return rectSearch(rect, ComponentQuery());
 }
 
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
-    double ra_left,
-    double dec_top,
-    double ra_right,
-    double dec_bottom,
-    ComponentQuery query) const
+    Rect rect, ComponentQuery query) const
 {
-    ASKAPLOG_DEBUG_STR(logger, "rectSearch: (top,left)=" << dec_top << ", " << 
-        ra_left << ". (bottom, right)=" << dec_bottom << ", " << ra_right);
-    // TODO: add sensible sanity checks on the bounds
+    ASKAPLOG_DEBUG_STR(logger, "rectSearch: centre=" << rect.centre.ra << ", " << 
+        rect.centre.dec << ". extents=" << rect.extents.width << ", " << rect.extents.height);
     return queryComponentsByPixel(
-            itsHealPix.queryRect(ra_left, dec_top, ra_right, dec_bottom),
+            itsHealPix.queryRect(rect),
             query);
 }
 

@@ -41,6 +41,7 @@
 #include "datamodel/ContinuumComponent.h"
 #include "datamodel/Polarisation.h"
 #include "HealPixFacade.h"
+#include "SmsTypes.h"
 
 namespace askap {
 namespace cp {
@@ -100,8 +101,7 @@ class VOTableData :
 
         ComponentList itsComponents;
         std::vector<HealPixFacade::Index> itsHealpixIndicies;
-        std::vector<double> itsRA;
-        std::vector<double> itsDec;
+        std::vector<Coordinate> itsCoordinates;
 };
 
 }

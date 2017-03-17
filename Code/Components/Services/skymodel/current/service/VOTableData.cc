@@ -95,8 +95,7 @@ boost::shared_ptr<VOTableData> VOTableData::create(
                 fit->getUnit(),
                 rowData[field_index],
                 data->itsComponents,
-                data->itsRA,
-                data->itsDec);
+                data->itsCoordinates);
         }
 
         componentsById.insert(pair<string, size_t>(
@@ -151,8 +150,7 @@ boost::shared_ptr<VOTableData> VOTableData::create(
 VOTableData::VOTableData(unsigned long num_components) :
     itsComponents(num_components),
     itsHealpixIndicies(num_components),
-    itsRA(num_components),
-    itsDec(num_components)
+    itsCoordinates(num_components)
 {
 }
 
@@ -165,8 +163,6 @@ void VOTableData::calcHealpixIndicies(boost::int64_t healpix_order) {
     HealPixFacade hp(healpix_order);
     #pragma omp parallel for
     for (size_t i = 0; i < itsComponents.size(); ++i) {
-        itsComponents[i].healpix_index = hp.calcHealPixIndex(
-            itsRA[i],
-            itsDec[i]);
+        itsComponents[i].healpix_index = hp.calcHealPixIndex(itsCoordinates[i]);
     }
 }
