@@ -144,8 +144,10 @@ if [ "\${BEAM}" == "all" ]; then
     # Weights image - really only useful if primary-beam corrected
     weights=${OUTPUT}/${weightsImage}
     imlist="\${imlist} \${weights}"
+    cutoff=${LINMOS_CUTOFF}
+    cutoff=\$(echo \$cutoff | awk '{print $1*$1}')
     weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
-Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
+Selavy.Weights.weightsCutoff = \${cutoff}"
 else
     weightpars="#"
 fi
@@ -188,6 +190,8 @@ Selavy.image = \${image##/*}.fits
 Selavy.nsubx = ${SELAVY_SPEC_NSUBX}
 Selavy.nsuby = ${SELAVY_SPEC_NSUBY}
 Selavy.nsubz = ${SELAVY_SPEC_NSUBZ}
+#
+Selavy.resultsFile = selavy-${imageName}.txt
 #
 \${weightpars}
 #
