@@ -3,7 +3,7 @@
 # This file holds various utility functions and environment variables
 # that allow the scripts to do various things in a uniform manner.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

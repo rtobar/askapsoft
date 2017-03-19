@@ -4,7 +4,7 @@
 # appropriate measurement set, selecting the required beam and,
 # optionally, a given scan or field
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

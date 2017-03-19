@@ -8,7 +8,7 @@
 #  * Creation of a user script to indicate progress of queued jobs.
 #  * Creation of a user script to kill all launched jobs
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

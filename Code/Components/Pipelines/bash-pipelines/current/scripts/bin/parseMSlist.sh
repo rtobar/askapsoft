@@ -3,7 +3,7 @@
 # Test program to trial the parsing of measurement sets via mslist to
 # extract the list of fields and spectral windows
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

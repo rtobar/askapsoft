@@ -3,7 +3,7 @@
 # Launches a job to image the current beam of the science
 # observation, using the BasisfunctionMFS solver.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

@@ -4,7 +4,7 @@
 # user's config file, and creates other variables that depend upon
 # them and do not require user input.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

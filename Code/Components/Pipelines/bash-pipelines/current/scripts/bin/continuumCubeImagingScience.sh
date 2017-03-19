@@ -5,7 +5,7 @@
 # requested polarisations. This uses the $POL_LIST variable, which
 # should be something like "I Q U V".
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

@@ -7,7 +7,7 @@
 # to calibrate the gains, before running Cimager again. This is done a
 # number of times to hopefully converge to a sensible image.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

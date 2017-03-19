@@ -3,7 +3,7 @@
 # A script to set up all necessary subdirectories required for the
 # pipeline processing.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia

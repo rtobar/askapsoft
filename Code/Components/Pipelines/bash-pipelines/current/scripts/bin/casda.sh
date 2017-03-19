@@ -3,7 +3,7 @@
 # Launches a job to build the observation.xml file, and stages data
 # ready for ingest into CASDA.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
