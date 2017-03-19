@@ -60,20 +60,21 @@ cd $ORIGINAL_OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \$(echo $sbatchfile | sed -e \$sedstr)
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 statsTXT=stats-all-${NOW}.txt
 statsCSV=stats-all-${NOW}.csv
 writeStatsHeader txt > \$statsTXT
 writeStatsHeader csv > \$statsCSV
 for i in ${joblist}; do
-    for file in $stats/stats-\$i*.txt; do
-        if [ -e \$file ]; then
+    for file in "$stats"/stats-\$i*.txt; do
+        if [ -e "\$file" ]; then
             grep -v JobID \$file >> \$statsTXT
         fi
     done
-    for file in $stats/stats-\$i*.csv; do
-        if [ -e \$file ]; then
+    for file in "$stats"/stats-\$i*.csv; do
+        if [ -e "\$file" ]; then
             grep -v JobID \$file >> \$statsCSV
         fi
     done
