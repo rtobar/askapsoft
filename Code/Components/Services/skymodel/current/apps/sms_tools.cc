@@ -125,9 +125,9 @@ int main(int argc, char *argv[])
 {
     SmsToolsApp app;
     app.addParameter(CREATE_SCHEMA, "s", "Initialises an empty database", false);
-    app.addParameter(INGEST_COMPONENTS, "", "Ingest/upload a VO Table of components to the global sky model", true);
-    app.addParameter(INGEST_POLARISATION, "", "Optional polarisation data catalog", true);
-    app.addParameter(SB_ID, "", "Scheduling block ID for ingested catalog", true);
-    app.addParameter(OBS_DATE, "", "Observation date for ingested catalog, in form YYYY-MM-DDTHH:MM:SS", true);
+    app.addParameter(INGEST_COMPONENTS, "c", "Ingest/upload a VO Table of components to the global sky model", true);
+    app.addParameter(INGEST_POLARISATION, "p", "Optional polarisation data catalog", true);
+    app.addParameter(SB_ID, "i", "Scheduling block ID for ingested catalog", true);
+    app.addParameter(OBS_DATE, "d", "Observation date for ingested catalog, in form YYYY-MM-DDTHH:MM:SS", true);
     return app.main(argc, argv);
 }
