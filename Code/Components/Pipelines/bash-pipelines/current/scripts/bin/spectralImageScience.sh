@@ -156,9 +156,9 @@ Cimager.usetmpfs                               = ${usetmpfs}"
 Cimager.tmpfs                                   = ${tmpfs}"
     altImagerParams="${altImagerParams}
 # barycentre and multiple solver mode not supported in continuum imaging (yet)
-Cimager.barycentre                              = true
+Cimager.barycentre                              = ${DO_BARY}
 Cimager.solverpercore                           = true
-Cimager.nwriters                                = ${NSUB_CUBES}"
+Cimager.nwriters                                = ${NUM_SPECTRAL_CUBES}"
 
 # we also need to change the CPU allocations
 
@@ -262,8 +262,8 @@ rejuvenate *.${imageBase}*
 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
-    echo "Error: ${Imager} returned error code \${err}"
-    exit 1
+    echo "Error: ${theImager} returned error code \${err}"
+    exit \$err
 fi
 
 
