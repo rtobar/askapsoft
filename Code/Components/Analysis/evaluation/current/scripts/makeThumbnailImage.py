@@ -46,6 +46,7 @@ if __name__ == '__main__':
     zmax=inputPars.get_value('zmax',40.)
     catalogue = inputPars.get_value('catalogue','')
     suffix=inputPars.get_value('imageSuffix','png')
+    outdir=inputPars.get_value('outdir','')
     figtitle=inputPars.get_value('imageTitle','')
     figsizes=inputPars.get_value('imageSizes',[16])
     figsizenames = inputPars.get_value('imageSizeNames',['large'])
@@ -87,6 +88,8 @@ if __name__ == '__main__':
 
     # Output name
     thumbim=fitsim.replace('.fits','.%s'%suffix)
+    if not outdir == '':
+        thumbim = '%s/%s'%(outdir,thumbim)
 
     # Text for labelling the colourbar
     if fitsim[:7]=='weights':

@@ -231,7 +231,7 @@ if [ -e \${casaim} ] && [ ! -e \${fitsim} ]; then
         ASKAPSOFT_VERSION_USED=\`echo \${ASKAPSOFT_VERSION} | sed -e 's|/||g'\`
     fi
 
-    cat > \$parset << EOFINNER
+    cat >> \$parset << EOFINNER
 ImageToFITS.casaimage = \${casaim}
 ImageToFITS.fitsimage = \${fitsim}
 ImageToFITS.stokesLast = true

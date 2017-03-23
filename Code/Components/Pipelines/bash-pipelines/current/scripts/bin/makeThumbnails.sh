@@ -152,36 +152,6 @@ EOF
             echo "ERROR - Thumbnail creation failed for image \${casdaTwoDimImageNames[i]}" | tee -a "\${log}"
             exit \$err
         fi
-
-        if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
-
-            # make a second plot showing catalogued source positions
-            seldir=$(echo \${casdaTwoDimImageNames[i]} | sed -e 's/image\.i/selavy_image\.i/g')
-            if [ -e "\${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt" ]; then
-                cat >> "\$parset" <<EOF
-###### Image #\${i} catalogue #############
-makeThumbnail.image = \${casdaTwoDimImageNames[i]}
-makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]}
-makeThumbnail.catalogue = \${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt
-makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
-makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
-makeThumbnail.zmax = ${THUMBNAIL_GREYSCALE_MAX}
-makeThumbnail.imageSizes = [16]
-makeThumbnail.imageSizeNames = [sources]
-makeThumbnail.showWeightsContours = True
-EOF
-    
-        NCORES=1
-        NPPN=1
-        aprun -n \${NCORES} -N \${NPPN} ${makeThumbnails} -c "\${parset}" >> "\${log}"
-        err=\$?
-        if [ \$err != 0 ]; then
-            echo "ERROR - Sources thumbnail creation failed for image \${casdaTwoDimImageNames[i]}" | tee -a "\${log}"
-            exit \$err
-        fi
-
-
-        fi
     
     done
 

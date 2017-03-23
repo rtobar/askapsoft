@@ -90,7 +90,9 @@ else
 	. ${PIPELINEDIR}/run1934cal.sh
 	    
         . ${PIPELINEDIR}/scienceCalIm.sh
-	    
+
+        . "${PIPELINEDIR}/diagnostics.sh"
+        
         . ${PIPELINEDIR}/gatherStats.sh
         
         . ${PIPELINEDIR}/archive.sh
