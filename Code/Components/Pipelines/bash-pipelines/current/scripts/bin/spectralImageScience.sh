@@ -31,9 +31,6 @@
 
 ID_SPECIMG_SCI=""
 
-# set the $imageBase variable
-setImageBase spectral
-
 DO_IT=$DO_SPECTRAL_IMAGING
 
 if [ $DO_ALT_IMAGER == true ]; then
@@ -44,13 +41,18 @@ else
     Imager="Simager"
 fi
 
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/image.${imageBase}.restored ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${imageBase}.restored exists, so not running spectral-line imaging for beam ${BEAM}"
-        echo " "
+for subband in ${SUBBAND_WRITER_LIST}; do
+    imageCode=restored
+    setImageProperties spectral
+    if [ "${CLOBBER}" != "true" ] && [ -e "${imageName}" ]; then
+        if [ $DO_IT == true ]; then
+            echo "Image ${imageName} exists, so not running spectral-line imaging for beam ${BEAM}"
+            echo " "
+        fi
+        DO_IT=false
     fi
-    DO_IT=false
-fi
+done
+unset subband
 
 # Define the preconditioning
 preconditioning="${Imager}.preconditioner.Names                    = ${PRECONDITIONER_LIST_SPECTRAL}"
@@ -156,9 +158,9 @@ Cimager.usetmpfs                               = ${usetmpfs}"
 Cimager.tmpfs                                   = ${tmpfs}"
     altImagerParams="${altImagerParams}
 # barycentre and multiple solver mode not supported in continuum imaging (yet)
-Cimager.barycentre                              = true
+Cimager.barycentre                              = ${DO_BARY}
 Cimager.solverpercore                           = true
-Cimager.nwriters                                = ${NSUB_CUBES}"
+Cimager.nwriters                                = ${NUM_SPECTRAL_CUBES}"
 
 # we also need to change the CPU allocations
 
@@ -175,12 +177,12 @@ namestr="${namestr}.name                            = image.${imageBase}"
 fi
 
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     echo "Imaging the spectral-line science observation"
 
     setJob science_spectral_imager spec
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -258,29 +260,31 @@ NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} ${theImager} -c \$parset > \$log
 err=\$?
 rejuvenate ${msSciSL}
-rejuvenate *.${imageBase}*
+for im in *.${imageBase}*; do
+    rejuvenate \$im
+done
 extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
-    echo "Error: ${Imager} returned error code \${err}"
-    exit 1
+    echo "Error: ${theImager} returned error code \${err}"
+    exit \$err
 fi
 
 
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CAL_APPLY_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CONT_SUB_SL_SCI"`
-	ID_SPECIMG_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-        DEP_SPECIMG=`addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI"`
-	recordJob ${ID_SPECIMG_SCI} "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
+        DEP=$(addDep "$DEP" "$DEP_START")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
+        DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
+        DEP=$(addDep "$DEP" "$ID_CCALAPPLY_SCI")
+        DEP=$(addDep "$DEP" "$ID_SPLIT_SL_SCI")
+        DEP=$(addDep "$DEP" "$ID_CAL_APPLY_SL_SCI")
+        DEP=$(addDep "$DEP" "$ID_CONT_SUB_SL_SCI")
+	ID_SPECIMG_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
+        DEP_SPECIMG=$(addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI")
+	recordJob "${ID_SPECIMG_SCI}" "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
     else
 	echo "Would make a spectral-line cube for beam $BEAM of the science observation with slurm file $sbatchfile"
     fi

@@ -40,14 +40,9 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-# set the $imageBase variable
-setImageBase cont
-
-if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
-    outputImage="image.${imageBase}.taylor.0.restored"
-else
-    outputImage="image.${imageBase}.restored"
-fi
+# set the image name
+imageCode=restored
+setImageProperties cont
 
 # Define the shape parameter, or leave to "advise"
 shapeDefinition="# Leave shape definition to Cimager to determine from the data"
@@ -136,7 +131,6 @@ fi
 # This is for the new (alt) imager
 altImagerParams="# Options for the alternate imager"
 if [ $DO_ALT_IMAGER == true ]; then
-
 
     if [ "${NCHAN_PER_CORE}" == "" ]; then
         nchanpercore=1

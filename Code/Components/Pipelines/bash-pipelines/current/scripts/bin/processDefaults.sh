@@ -382,8 +382,9 @@ EOF
     maxbeam=-1
     nbeams=0
     for b in ${BEAMS_TO_USE}; do
-        if [ $b -gt $maxbeam ]; then
-            maxbeam=$b
+        thisbeam=$( echo "$b" | awk '{printf "%d",$1}')
+        if [ "$thisbeam" -gt "$maxbeam" ]; then
+            maxbeam=$thisbeam
         fi
         nbeams=`expr $nbeams + 1`
     done
@@ -520,6 +521,27 @@ EOF
             echo "WARNING - the parameter RESTORING_BEAM_LOG is deprecated, and is constructed from the image name instead."
         fi
 
+        # Define the list of writer ranks used in the askap_imager
+        # spectral-line output
+        # Only define if we are using the askap_imager and not writing
+        # to a single file. Otherwise, we define a single-value list
+        # so that the loop over subbands is only done once ($subband
+        # will not be referenced in that case).
+        if [ "${NSUB_CUBES}" != "" ]; then
+            echo "WARNING - the parameter NSUB_CUBES is deprectated. Using NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES} instead."
+        fi
+        
+        if [ "${DO_ALT_IMAGER}" == "true" ] && [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+            nworkers=$(echo "${NUM_CHAN_SCIENCE}" "${NCHAN_PER_CORE_SL}" | awk '{print $1/$2}')
+            writerIncrement=$(echo "$nworkers" "${NUM_SPECTRAL_CUBES}" | awk '{print $1/$2}')
+            SUBBAND_WRITER_LIST=$(seq 1 "$writerIncrement" "$nworkers")
+            unset nworkers
+            unset writerIncrement
+        else
+            SUBBAND_WRITER_LIST=1
+            NUM_SPECTRAL_CUBES=1
+        fi
+        
         ####################
         # Mosaicking parameters
 
@@ -530,14 +552,14 @@ EOF
         # channels-per-core, else the final process will take care of
         # the rest and may run out of memory
         # If it isn't, give a warning and push on
-        chanPerCoreLinmosOK=`echo $NUM_CHAN_SCIENCE_SL $NCHAN_PER_CORE_SPECTRAL_LINMOS | awk '{if (($1 % $2)==0) print "yes"; else print "no"}'`
-        if [ "${chanPerCoreLinmosOK}" == "no" ] && [ $DO_MOSAIC == true ]; then
+        chanPerCoreLinmosOK=$(echo ${NUM_CHAN_SCIENCE_SL} ${NUM_SPECTRAL_CUBES} ${NCHAN_PER_CORE_SPECTRAL_LINMOS} | awk '{if (($1/$2 % $3)==0) print "yes"; else print "no"}')
+        if [ "${chanPerCoreLinmosOK}" == "no" ] && [ "${DO_MOSAIC}" == "true" ]; then
             echo "Warning! Number of spectral-line channels (${NUM_CHAN_SCIENCE_SL}) is not an exact multiple of NCHAN_PER_CORE_SPECTRAL_LINMOS (${NCHAN_PER_CORE_SPECTRAL_LINMOS})."
             echo "         Pushing on, but there is the risk of memory problems with the spectral linmos task."
         fi
         # Determine the number of cores needed for spectral-line mosaicking
         if [ "$NUM_CPUS_SPECTRAL_LINMOS" == "" ]; then
-            NUM_CPUS_SPECTRAL_LINMOS=`echo $NUM_CHAN_SCIENCE_SL $NCHAN_PER_CORE_SPECTRAL_LINMOS | awk '{print $1/$2}'`
+            NUM_CPUS_SPECTRAL_LINMOS=$(echo ${NUM_CHAN_SCIENCE_SL} ${NUM_SPECTRAL_CUBES} ${NCHAN_PER_CORE_SPECTRAL_LINMOS} | awk '{if($1%($2*$3)==0) print $1/$2/$3; else print int($1/$2/$3)+1;}')
         fi
 
         ####################

@@ -66,7 +66,8 @@ if [ ${DO_RM_SYNTHESIS} == true ]; then
     fi
 fi
 
-if [ ! -e ${OUTPUT}/${contImage} ] && [ "${DEP}" == "" ]; then
+if [ ! -e ${OUTPUT}/${contImage} ] && [ "${DEP}" == "" ] &&
+       [ "${SUBMIT_JOBS}" == "true" ]; then
     DO_IT=false
 fi
 
@@ -167,8 +168,10 @@ fi
 
 if [ "\${BEAM}" == "all" ]; then
     imlist="\${imlist} \${weights}"
+    cutoff=${LINMOS_CUTOFF}
+    cutoff=\$(echo \$cutoff | awk '{print $1*$1}')
     weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
-Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
+Selavy.Weights.weightsCutoff = \${cutoff}"
 else
     weightpars="#"
 fi
