@@ -140,7 +140,7 @@ EOFOUTER
 
         if [ "${SUBMIT_JOBS}" == "true" ]; then
             DEP_SPECIMG=$(echo "$DEP_SPECIMG" | sed -e 's/afterok/afterany/g')
-            ID_LINMOS_SPECTRAL=$(sbatch "$DEP_SPECIMG" "$sbatchfile" | awk '{print $4}')
+            ID_LINMOS_SPECTRAL=$(sbatch ${DEP_SPECIMG} "$sbatchfile" | awk '{print $4}')
             recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
         else
             echo "Would make a mosaic spectral cube of the science observation, field $FIELD, with slurm file $sbatchfile"

@@ -195,7 +195,7 @@ EOFOUTER
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         FULL_LINMOS_CONT_DEP=$(echo "${FULL_LINMOS_CONT_DEP}" | sed -e 's/afterok/afterany/g')
-	ID_LINMOS_CONT_ALL=$(sbatch "${FULL_LINMOS_CONT_DEP}" "$sbatchfile" | awk '{print $4}')
+	ID_LINMOS_CONT_ALL=$(sbatch ${FULL_LINMOS_CONT_DEP} "$sbatchfile" | awk '{print $4}')
 	recordJob "${ID_LINMOS_CONT_ALL}" "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
     else
 	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"

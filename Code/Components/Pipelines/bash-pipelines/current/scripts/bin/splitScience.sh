@@ -147,7 +147,7 @@ EOFOUTER
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
         DEP=$(addDep "$DEP" "$DEP_START")
-	ID_SPLIT_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	ID_SPLIT_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
 	recordJob "${ID_SPLIT_SCI}" "Splitting beam ${BEAM} of science observation"
     else
 	echo "Would run splitting ${BEAM} of science observation with slurm file $sbatchfile"

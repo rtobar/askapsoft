@@ -83,7 +83,7 @@ EOF
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then    
         dep="-d afterany:$(echo "$ALL_JOB_IDS" | sed -e 's/,/:/g')"
-        ID_STATS=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        ID_STATS=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_STATS}" "Final job to gather statistics on all jobs, with flags \"${dep}\""
     else
         echo "Would submit job to gather statistics based on all jobs, with slurm file $sbatchfile"

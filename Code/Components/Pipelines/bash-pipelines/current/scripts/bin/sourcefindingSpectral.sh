@@ -282,7 +282,7 @@ fi
 EOFOUTER
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
-	ID_SOURCEFINDING_SPEC_SCI=$(sbatch "${DEP}" "$sbatchfile" | awk '{print $4}')
+	ID_SOURCEFINDING_SPEC_SCI=$(sbatch ${DEP} "$sbatchfile" | awk '{print $4}')
 	recordJob "${ID_SOURCEFINDING_SPEC_SCI}" "Run the source-finder on the science cube ${imageName} with flags \"$DEP\""
     else
 	echo "Would run the source-finder on the science cube ${imageName} with slurm file $sbatchfile"

@@ -317,7 +317,7 @@ fi
 EOFOUTER
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
-	ID_SOURCEFINDING_CONT_SCI=$(sbatch "${DEP}" "$sbatchfile" | awk '{print $4}')
+	ID_SOURCEFINDING_CONT_SCI=$(sbatch ${DEP} "$sbatchfile" | awk '{print $4}')
 	recordJob "${ID_SOURCEFINDING_CONT_SCI}" "Run the continuum source-finding on the science image ${contImage} with flags \"$DEP\""
     else
 	echo "Would run the continuum source-finding on the science image ${contImage} with slurm file $sbatchfile"

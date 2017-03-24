@@ -130,7 +130,7 @@ EOFOUTER
         if [ "${ALL_JOB_IDS}" != "" ]; then
             dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
-        ID_THUMBS=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        ID_THUMBS=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_THUMBS}" "Job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with flags \"${dep}\""
     else
         echo "Would submit job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with slurm file $sbatchfile"

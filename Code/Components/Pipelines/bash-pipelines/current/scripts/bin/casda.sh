@@ -256,7 +256,7 @@ EOFOUTER
         if [ "${ALL_JOB_IDS}" != "" ]; then
             dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
-        ID_CASDA=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+        ID_CASDA=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_CASDA}" "Job to stage data for ingest into CASDA, with flags \"${dep}\""
     else
         echo "Would submit job to stage data for ingest into CASDA, with slurm file $sbatchfile"
@@ -373,7 +373,7 @@ EOFOUTER
                 dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
             fi
             dep=$(addDep "$dep" "$ID_CASDA")
-            ID_CASDAPOLL=$(sbatch "${dep}" "$sbatchfile" | awk '{print $4}')
+            ID_CASDAPOLL=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
             recordJob "${ID_CASDAPOLL}" "Job to poll CASDA directory for successful ingest, with flags \"${dep}\""
         else
             echo "Would submit job to poll CASDA directory for successful ingest, with slurm file $sbatchfile"

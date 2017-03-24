@@ -192,7 +192,7 @@ EOFOUTER
         DEP=""
         DEP=$(addDep "$DEP" "$DEP_START")
         DEP=$(addDep "$DEP" "$ID_SPLIT_1934")
-        ID_FLAG_1934=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+        ID_FLAG_1934=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_FLAG_1934}" "Flagging 1934-638, beam $BEAM"
         FLAG_CBPCAL_DEP=$(addDep "$FLAG_CBPCAL_DEP" "$ID_FLAG_1934")
     else

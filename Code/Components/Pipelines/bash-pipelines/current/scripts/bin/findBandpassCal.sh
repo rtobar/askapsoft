@@ -170,7 +170,7 @@ fi
 EOF
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
-        ID_CBPCAL=$(sbatch "${FLAG_CBPCAL_DEP}" "$sbatchfile" | awk '{print $4}')
+        ID_CBPCAL=$(sbatch ${FLAG_CBPCAL_DEP} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_CBPCAL}" "Finding bandpass calibration with 1934-638, with flags \"$FLAG_CBPCAL_DEP\""
     else
         echo "Would find bandpass calibration with slurm file $sbatchfile"
