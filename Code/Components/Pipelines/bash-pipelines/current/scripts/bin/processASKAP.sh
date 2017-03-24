@@ -91,6 +91,8 @@ else
 	    
         . ${PIPELINEDIR}/scienceCalIm.sh
 
+        . "${PIPELINEDIR}/defineArtifactsScript.sh"
+
         . "${PIPELINEDIR}/diagnostics.sh"
         
         . ${PIPELINEDIR}/gatherStats.sh

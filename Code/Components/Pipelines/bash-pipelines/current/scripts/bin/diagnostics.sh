@@ -69,20 +69,29 @@ ADD_FITS_SUFFIX=true
 log=${logs}/diagnostics_\${SLURM_JOB_ID}.log
 parset=${parsets}/diagnostics_\${SLURM_JOB_ID}.in    
 
-if [ "$(which makeThumbnailImage.py 2> ${tmp}/whchmkthumb)" == "" ]; then
+pathToScript=\$(which makeThumbnailImage.py 2> ${tmp}/whchmkthumb)
+if [ "\${pathToScript}" != "" ]; then
 
     for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
     
         if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
 
+            imdir="\${casdaTwoDimImageNames[i]%/*}"
+            imageNoFITS=\$(echo "\${casdaTwoDimImageNames[i]##*/}"| sed -e 's/\\.fits//g')
+            echo "image = \${imageNoFITS}"
+
             # make a second plot showing catalogued source positions
-            seldir=$(echo \${casdaTwoDimImageNames[i]} | sed -e 's/image\.i/selavy_image\.i/g')
-            if [ -e "\${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt" ]; then
+            seldir="\${imdir}/selavy_\${imageNoFITS}"
+            echo "selavy dir = \${seldir}"
+            catalogue="\${seldir}/selavy-\${imageNoFITS}.components.txt"
+            echo "catalogue = \$catalogue"
+            if [ -e "\${seldir}" ] && [ -e "\${catalogue}" ]; then
+
                 cat >> "\$parset" <<EOF
 ###### Image #\${i} catalogue #############
 makeThumbnail.image = \${casdaTwoDimImageNames[i]}
 makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]}
-makeThumbnail.catalogue = \${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt
+makeThumbnail.catalogue = \${catalogue}
 makeThumbnail.outdir = ${diagnostics}
 makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
 makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
@@ -117,31 +126,40 @@ fi
 
 # Make thumbnail images of the noise maps created by Selavy
 
-if [ "$(which makeThumbnailImage.py 2> ${tmp}/whchmkthumb)" == "" ]; then
+if [ "\${pathToScript}" != "" ]; then
 
     for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
+
+        imdir="\${casdaTwoDimImageNames[i]%/*}"
+        imageNoFITS=\$(echo "\${casdaTwoDimImageNames[i]##*/}"| sed -e 's/\\.fits//g')
+        echo "image = \$imageNoFITS"
     
         if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
 
             # make a second plot showing catalogued source positions
-            seldir=$(echo \${casdaTwoDimImageNames[i]} | sed -e 's/image\.i/selavy_image\.i/g')
-            noisemapbase="\${seldir}/noiseMap.\${casdaTwoDimImageNames[i]}"
+            seldir="\${imdir}/selavy_\${imageNoFITS}"
+            noisemapbase="\${seldir}/noiseMap.\${imageNoFITS}"
+            echo "selavy dir = \$seldir"
+            echo "noise map base = \$noisemapbase"
+
             if [ ! -e "\${noisemapbase}.fits" ] && [ -e "\${noisemapbase}.img" ]; then
                 # need to convert to FITS
                 casaim=\${noisemapbase}.img
                 fitsim=\${noisemapbase}.fits
                 ${fitsConvertText}
             fi
-            if [ -e "\${seldir}/noiseMap.\${casdaTwoDimImageNames[i]}.fits" ]; then
+            catalogue="\${seldir}/selavy-\${imageNoFITS}.components.txt"
+            if [ -e "\${noisemapbase}.fits" ]; then
                 cat >> "\$parset" <<EOF
 ###### Image #\${i} catalogue #############
 makeThumbnail.image = \${noisemapbase}.fits
-makeThumbnail.imageTitle = "\${casdaTwoDimThumbTitles[i]} - noise map"
-makeThumbnail.catalogue = \${seldir}/selavy-\${casdaTwoDimImageNames[i]}.components.txt
+makeThumbnail.weights = \${seldir}/\$(echo \$imageNoFITS | sed -e 's/image\./weights\./g' | sed -e 's/\.restored//g').fits
+makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]} - noise map
+makeThumbnail.catalogue = \${catalogue}
 makeThumbnail.outdir = ${diagnostics}
 makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
-makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
-makeThumbnail.zmax = ${THUMBNAIL_GREYSCALE_MAX}
+makeThumbnail.zmin = 0
+makeThumbnail.zmax = 10
 makeThumbnail.imageSizes = [16]
 makeThumbnail.imageSizeNames = [sources]
 makeThumbnail.showWeightsContours = True

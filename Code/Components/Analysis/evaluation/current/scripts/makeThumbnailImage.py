@@ -42,6 +42,7 @@ if __name__ == '__main__':
     # user-configurable parameters that determine the data we want to
     # plot and various options.
     fitsim=inputPars.get_value('image','')
+    weightsim=inputPars.get_value('weights','')
     zmin=inputPars.get_value('zmin',-10.)
     zmax=inputPars.get_value('zmax',40.)
     catalogue = inputPars.get_value('catalogue','')
@@ -51,6 +52,8 @@ if __name__ == '__main__':
     figsizes=inputPars.get_value('imageSizes',[16])
     figsizenames = inputPars.get_value('imageSizeNames',['large'])
     showWeightsContours = inputPars.get_value('showWeightsContours',False)
+    robust = inputPars.get_value('robust',True)
+    weightCutoff = inputPars.get_value('weightscutoff',0.)
 
     # Error checking
     
@@ -65,10 +68,13 @@ if __name__ == '__main__':
 
     # Define the weights image - we use this for plotting contours and
     # determining the correct noise level.
-    weightsim=fitsim
-    weightsim = weightsim.replace('.restored','')
-    prefix=weightsim[:weightsim.find('.')]
-    weightsim = weightsim.replace(prefix,'weights',1)
+    # The weights image can be given directly, but if not it is worked out from the image name.
+    if weightsim == '':
+        weightsim=os.path.basename(fitsim)
+        weightsim = weightsim.replace('.restored','')
+        prefix=weightsim[:weightsim.find('.')]
+        weightsim = weightsim.replace(prefix,'weights',1)
+        weightsim = "%s/%s"%(os.path.dirname(fitsim),weightsim)
     if not os.access(weightsim,os.F_OK):
         logging.warn('Weights image %s not found - no weights contours applied'%weightsim)
 
@@ -79,16 +85,23 @@ if __name__ == '__main__':
     isgood=(np.ones(image.shape)>0)
     if os.access(weightsim,os.F_OK):
         weights=fits.getdata(weightsim)
-        isgood=(weights>0)
-    median=np.median(image[isgood])
-    madfm=np.median(abs(image[isgood]-median))
-    stddev=madfm * 0.6744888
+        isgood=(weights>weightCutoff)
+    if robust:
+        median=np.median(image[isgood])
+        madfm=np.median(abs(image[isgood]-median))
+        stddev=madfm * 0.6744888
+    else:
+        stddev=np.std(image[isgood])
+    print("Noise in image measured to be %f"%stddev)
     vmin=zmin * stddev
     vmax=zmax * stddev
+    print("Greyscale range is from %f to %f"%(vmin,vmax))
 
     # Output name
-    thumbim=fitsim.replace('.fits','.%s'%suffix)
-    if not outdir == '':
+    thumbim=os.path.basename(fitsim).replace('.fits','.%s'%suffix)
+    if outdir == '':
+        outdir=os.path.dirname(fitsim)
+    if outdir != '':
         thumbim = '%s/%s'%(outdir,thumbim)
 
     # Text for labelling the colourbar
