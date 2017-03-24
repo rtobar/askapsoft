@@ -29,7 +29,7 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-DO_IT=$RUN_DIAGNOSTICS
+DO_IT=$DO_DIAGNOSTICS
 
 if [ "${DO_IT}" == "true" ]; then
 
