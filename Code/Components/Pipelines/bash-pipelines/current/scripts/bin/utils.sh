@@ -206,7 +206,7 @@ function setImageProperties()
                 band="wr.${subband}."
             fi
         fi
-    elif [ $type == "spectral" ]; then
+    elif [ "$type" == "spectral" ]; then
         typebase="spectral"
         labelbase="spectral cube"
         typeSuffix="3d"
@@ -217,7 +217,7 @@ function setImageProperties()
                 band="wr.${subband}."
             fi
         fi
-    elif [ $type == "contcube" ]; then
+    elif [ "$type" == "contcube" ]; then
         typebase="cont"
         labelbase="continuum cube"
         typeSuffix="3d"
@@ -660,7 +660,7 @@ function writeStats()
     if [ $# -ge 10 ] && [ "$format" == "csv" ]; then
 	echo "$@" | awk '{printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     else
-	echo $@ | awk '{printf "%10s%10s%50s%9s%10s%10s%10s%10s%10s%25s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
+	echo "$@" | awk '{printf "%10s%10s%50s%9s%10s%10s%10s%10s%10s%25s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     fi
 }
 

@@ -45,7 +45,7 @@ for subband in ${SUBBAND_WRITER_LIST}; do
     imageCode=restored
     setImageProperties spectral
     if [ "${CLOBBER}" != "true" ] && [ -e "${imageName}" ]; then
-        if [ $DO_IT == true ]; then
+        if [ "${DO_IT}" == "true" ]; then
             echo "Image ${imageName} exists, so not running spectral-line imaging for beam ${BEAM}"
             echo " "
         fi
