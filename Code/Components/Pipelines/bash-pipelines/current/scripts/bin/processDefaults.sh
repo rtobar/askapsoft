@@ -397,6 +397,24 @@ EOF
 
     if [ "${DO_SCIENCE_FIELD}" == "true" ]; then
 
+        # Switching on the DO_ALT_IMAGER_xxx flags for each type of
+        # imaging. If they aren't defined in the config file, then set
+        # to the value of DO_ALT_IMAGER.
+        if [ "${DO_ALT_IMAGER}" == "true" ]; then
+
+            if [ "${DO_ALT_IMAGER_CONT}" != "" ]; then
+                DO_ALT_IMAGER_CONT=${DO_ALT_IMAGER}
+            fi
+            if [ "${DO_ALT_IMAGER_CONTCUBE}" != "" ]; then
+                DO_ALT_IMAGER_CONTCUBE=${DO_ALT_IMAGER}
+            fi
+            if [ "${DO_ALT_IMAGER_SPECTRAL}" != "" ]; then
+                DO_ALT_IMAGER_SPECTRAL=${DO_ALT_IMAGER}
+            fi
+            
+        fi
+        
+
         # Name of the MS that should be flagged by flagScience.sh
         #   This gets set differently at different stages in the scripts
         msToFlag=""
@@ -423,12 +441,13 @@ EOF
         fi
 
         # if we are using the new imager we need to tweak this
-        if [ "${DO_ALT_IMAGER}" == "true" ]; then
+        if [ "${DO_ALT_IMAGER_CONT}" == "true" ]; then
             NUM_CPUS_CONTIMG_SCI=$(echo "$nchanContSci" "$nworkergroupsSci" "${NCHAN_PER_CORE}" | awk '{print ($1/$3)*$2+1}')
             CPUS_PER_CORE_CONT_IMAGING=8
+        fi
+        if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
             NUM_CPUS_SPECIMG_SCI=$(echo "${NUM_CHAN_SCIENCE}" "${NCHAN_PER_CORE_SL}" | awk '{print ($1/$2) + 1}')
             CPUS_PER_CORE_SPEC_IMAGING=16
-
         fi
 
         # Can't have -N greater than -n in the aprun call
@@ -526,8 +545,12 @@ EOF
         # Only define if we are using the askap_imager and not writing
         # to a single file. Otherwise, we define a single-value list
         # so that the loop over subbands is only done once ($subband
-        # will not be referenced in that case). 
-        if [ "${DO_ALT_IMAGER}" == "true" ] && [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+        # will not be referenced in that case).
+        if [ "${NSUB_CUBES}" != "" ]; then
+            echo "WARNING - the parameter NSUB_CUBES is deprectated. Using NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES} instead."
+        fi
+        
+        if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ] && [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
             nworkers=$(echo "${NUM_CHAN_SCIENCE}" "${NCHAN_PER_CORE_SL}" | awk '{print $1/$2}')
             writerIncrement=$(echo "$nworkers" "${NUM_SPECTRAL_CUBES}" | awk '{print $1/$2}')
             SUBBAND_WRITER_LIST=$(seq 1 "$writerIncrement" "$nworkers")
@@ -548,14 +571,14 @@ EOF
         # channels-per-core, else the final process will take care of
         # the rest and may run out of memory
         # If it isn't, give a warning and push on
-        chanPerCoreLinmosOK=$(echo "${NUM_CHAN_SCIENCE_SL}" "${NCHAN_PER_CORE_SPECTRAL_LINMOS}" | awk '{if (($1 % $2)==0) print "yes"; else print "no"}')
+        chanPerCoreLinmosOK=$(echo ${NUM_CHAN_SCIENCE_SL} ${NUM_SPECTRAL_CUBES} ${NCHAN_PER_CORE_SPECTRAL_LINMOS} | awk '{if (($1/$2 % $3)==0) print "yes"; else print "no"}')
         if [ "${chanPerCoreLinmosOK}" == "no" ] && [ "${DO_MOSAIC}" == "true" ]; then
             echo "Warning! Number of spectral-line channels (${NUM_CHAN_SCIENCE_SL}) is not an exact multiple of NCHAN_PER_CORE_SPECTRAL_LINMOS (${NCHAN_PER_CORE_SPECTRAL_LINMOS})."
             echo "         Pushing on, but there is the risk of memory problems with the spectral linmos task."
         fi
         # Determine the number of cores needed for spectral-line mosaicking
-        if [ "${NUM_CPUS_SPECTRAL_LINMOS}" == "" ]; then
-            NUM_CPUS_SPECTRAL_LINMOS=$(echo "${NUM_CHAN_SCIENCE_SL}" "${NUM_SPECTRAL_CUBES}" "${NCHAN_PER_CORE_SPECTRAL_LINMOS}" | awk '{print $1/$2/$3}')
+        if [ "$NUM_CPUS_SPECTRAL_LINMOS" == "" ]; then
+            NUM_CPUS_SPECTRAL_LINMOS=$(echo ${NUM_CHAN_SCIENCE_SL} ${NUM_SPECTRAL_CUBES} ${NCHAN_PER_CORE_SPECTRAL_LINMOS} | awk '{if($1%($2*$3)==0) print $1/$2/$3; else print int($1/$2/$3)+1;}')
         fi
 
         ####################

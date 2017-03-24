@@ -31,12 +31,9 @@
 
 ID_SPECIMG_SCI=""
 
-# set the $imageBase variable
-setImageBase spectral
-
 DO_IT=$DO_SPECTRAL_IMAGING
 
-if [ "${DO_ALT_IMAGER}" == "true" ]; then
+if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
     theImager=$altimager
     Imager="Cimager"
 else
@@ -44,13 +41,18 @@ else
     Imager="Simager"
 fi
 
-if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/image.${imageBase}.restored" ]; then
-    if [ "${DO_IT}" == "true" ]; then
-        echo "Image ${imageBase}.restored exists, so not running spectral-line imaging for beam ${BEAM}"
-        echo " "
+for subband in ${SUBBAND_WRITER_LIST}; do
+    imageCode=restored
+    setImageProperties spectral
+    if [ "${CLOBBER}" != "true" ] && [ -e "${imageName}" ]; then
+        if [ $DO_IT == true ]; then
+            echo "Image ${imageName} exists, so not running spectral-line imaging for beam ${BEAM}"
+            echo " "
+        fi
+        DO_IT=false
     fi
-    DO_IT=false
-fi
+done
+unset subband
 
 # Define the preconditioning
 preconditioning="${Imager}.preconditioner.Names                    = ${PRECONDITIONER_LIST_SPECTRAL}"
@@ -130,7 +132,7 @@ fi
 
 # This is for the new (alt) imager
 altImagerParams="# Options for the alternate imager"
-if [ "${DO_ALT_IMAGER}" == true ]; then
+if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
 
 
     if [ "${NCHAN_PER_CORE_SL}" == "" ]; then
@@ -167,11 +169,11 @@ else
     altImagerParams="${altImagerParams} are not required"
 fi
 
-namestr="${Imager}.Images"
-if [ "${DO_ALT_IMAGER}" == "true" ]; then
-namestr="${namestr}.Names                           = [image.${imageBase}]"
+nameDefinition="${Imager}.Images"
+if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
+    nameDefinition="${nameDefinition}.Names                           = [image.${imageBase}]"
 else
-namestr="${namestr}.name                            = image.${imageBase}"
+    nameDefinition="${nameDefinition}.name                            = image.${imageBase}"
 fi
 
 
@@ -224,7 +226,7 @@ parset=${parsets}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 cat > "\$parset" << EOF
 ${Imager}.dataset                                 = ${msSciSL}
 #
-${namestr}
+${nameDefinition}
 ${shapeDefinition}
 ${cellsizeDefinition}
 \${directionDefinition}
@@ -259,8 +261,10 @@ NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} ${theImager} -c "\$parset" > "\$log"
 err=\$?
 rejuvenate ${msSciSL}
-rejuvenate "./*.${imageBase}*"
-extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
+for im in *.${imageBase}*; do
+    rejuvenate \$im
+done
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 
 if [ \${err} -ne 0 ]; then
     echo "Error: ${theImager} returned error code \${err}"
@@ -279,7 +283,7 @@ EOFOUTER
         DEP=$(addDep "$DEP" "$ID_SPLIT_SL_SCI")
         DEP=$(addDep "$DEP" "$ID_CAL_APPLY_SL_SCI")
         DEP=$(addDep "$DEP" "$ID_CONT_SUB_SL_SCI")
-	ID_SPECIMG_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	ID_SPECIMG_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
         DEP_SPECIMG=$(addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI")
 	recordJob "${ID_SPECIMG_SCI}" "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
     else

@@ -100,8 +100,9 @@ FIELD=${FIELD}
 BEAMS_TO_USE="${BEAMS_TO_USE}"
 
 imageCode=${imageCode}
+DO_ALT_IMAGER=${DO_ALT_IMAGER}
 NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES}
-subband=${subband}
+subband="${subband}"
 
 beamList=""
 for BEAM in \${BEAMS_TO_USE}; do
@@ -157,8 +158,8 @@ fi
 EOFOUTER
 
             if [ "${SUBMIT_JOBS}" == "true" ]; then
-                DEP_SPECIMG=$(echo "$DEP_SPECIMG" | sed -e 's/afterok/afterany/g')
-	        ID_LINMOS_SPECTRAL=$(sbatch "$DEP_SPECIMG" "$sbatchfile" | awk '{print $4}')
+                DEP_SPECIMG=$(echo "${DEP_SPECIMG}" | sed -e 's/afterok/afterany/g')
+	        ID_LINMOS_SPECTRAL=$(sbatch ${DEP_SPECIMG} "$sbatchfile" | awk '{print $4}')
                 if [ "${NUM_SPECTRAL_CUBES}" -gt 1 ];then
 	            recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic ${imageCode} (subband ${subband}) spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
                 else

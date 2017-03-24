@@ -185,6 +185,9 @@ function setImageProperties()
         TTERM=0
         needToUnsetTTerm=true
     fi
+
+    band=""
+    doAlt=false
     
     if [ "$type" == "cont" ]; then
         typebase="cont"
@@ -196,14 +199,35 @@ function setImageProperties()
             imSuffix=".taylor.$TTERM"
             typeSuffix="T${TTERM}"
         fi
-    elif [ "$type" == "spectral" ]; then
+        # Add the writer information for the askap_imager case, but not when we have a single-file FITS output
+        if [ "${DO_ALT_IMAGER_CONT}" == "true" ]; then
+            doAlt=true
+            if [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+                band="wr.${subband}."
+            fi
+        fi
+    elif [ $type == "spectral" ]; then
         typebase="spectral"
         labelbase="spectral cube"
         typeSuffix="3d"
-    elif [ "$type" == "contcube" ]; then
+        # Add the writer information for the askap_imager case, but not when we have a single-file FITS output
+        if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
+            doAlt=true
+            if [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+                band="wr.${subband}."
+            fi
+        fi
+    elif [ $type == "contcube" ]; then
         typebase="cont"
         labelbase="continuum cube"
         typeSuffix="3d"
+        # Add the writer information for the askap_imager case, but not when we have a single-file FITS output
+        if [ "${DO_ALT_IMAGER_CONTCUBE}" == "true" ]; then
+            doAlt=true
+            if [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+                band="wr.${subband}."
+            fi
+        fi
     else
         echo "ERROR - bad type for setImageProperies: \"$type\""
     fi
@@ -218,18 +242,14 @@ function setImageProperties()
         fi
     fi
 
-    band=""
-    if [ "${NUM_SPECTRAL_CUBES}" -gt 1 ]; then
-        band="wr.${subband}."
-    fi
     base="${band}${imageBase}${imSuffix}"
     
-    weightsImage="weights.${imageBase}${imSuffix}"
+    weightsImage="weights.${base}"
     #    weightsType="${typebase}_weights_$typeSuffix"
     weightsType="${typebase}_sensitivity_$typeSuffix"
     weightsLabel="Weights image, $beamSuffix"
     if [ "$imageCode" == "restored" ]; then
-        if [ "${DO_ALT_IMAGER}" == "true" ] && [ "$type" == "spectral" ]; then
+        if [ "${doAlt}" == "true" ]; then
             imageName="image.restored.${base}"
         else
             imageName="image.${base}.restored"
@@ -237,7 +257,7 @@ function setImageProperties()
         imageType="${typebase}_restored_$typeSuffix"
         label="Restored ${labelbase}, $beamSuffix"
     elif [ "$imageCode" == "contsub" ]; then
-        if [ "${DO_ALT_IMAGER}" == "true" ] && [ "$type" == "spectral" ]; then
+        if [ "${doAlt}" == "true" ]; then
             imageName="image.restored.${base}.contsub"
         else
             imageName="image.${base}.restored.contsub"
@@ -245,7 +265,7 @@ function setImageProperties()
         imageType="${typebase}_restored_$typeSuffix"
         label="Restored, Continuum-subtracted ${labelbase}, $beamSuffix"
     elif [ "$imageCode" == "altrestored" ]; then
-        if [ "${DO_ALT_IMAGER}" == "true" ] && [ "$type" == "spectral" ]; then
+        if [ "${doAlt}" == "true" ]; then
             imageName="image.restored.${base}.alt"
         else
             imageName="image.${base}.alt.restored"
@@ -640,7 +660,7 @@ function writeStats()
     if [ $# -ge 10 ] && [ "$format" == "csv" ]; then
 	echo "$@" | awk '{printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     else
-	echo "$@" | awk '{printf "%10s%10s%40s%9s%10s%10s%10s%10s%10s%25s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
+	echo $@ | awk '{printf "%10s%10s%50s%9s%10s%10s%10s%10s%10s%25s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10}'
     fi
 }
 

@@ -35,13 +35,16 @@ ID_CONTIMG_SCI=""
 
 DO_IT="$DO_CONT_IMAGING"
 
-if [ "${DO_ALT_IMAGER}" == "true" ]; then
+if [ "${DO_ALT_IMAGER_CONT}" == "true" ]; then
     theimager=$altimager
 else
     theimager=$cimager
 fi
 
-if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/${imageName}" ]; then
+imageCode=restored
+setImageProperties cont
+
+if [ "${CLOBBER}" != "true" ] && [ -e "${imageName}" ]; then
     if [ "${DO_IT}" == "true" ]; then
         echo "Image ${imageName} exists, so not running continuum imaging for beam ${BEAM}"
     fi
@@ -104,9 +107,9 @@ NCORES=${NUM_CPUS_CONTIMG_SCI}
 NPPN=${CPUS_PER_CORE_CONT_IMAGING}
 aprun -n \${NCORES} -N \${NPPN} $theimager -c "\$parset" > "\$log"
 err=\$?
-rejuvenate "./*.${imageBase}*"
+rejuvenate *.${imageBase}*
 rejuvenate "${OUTPUT}/${msSciAv}"
-extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
@@ -121,7 +124,7 @@ EOFOUTER
         DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
         DEP=$(addDep "$DEP" "$ID_AVERAGE_SCI")
         DEP=$(addDep "$DEP" "$ID_FLAG_SCI_AV")
-	ID_CONTIMG_SCI=$(sbatch "$DEP" "$sbatchfile" | awk '{print $4}')
+	ID_CONTIMG_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
 	recordJob "${ID_CONTIMG_SCI}" "Make a continuum image for beam $BEAM of the science observation, with flags \"$DEP\""
         FLAG_IMAGING_DEP=$(addDep "$FLAG_IMAGING_DEP" "$ID_CONTIMG_SCI")
     else
