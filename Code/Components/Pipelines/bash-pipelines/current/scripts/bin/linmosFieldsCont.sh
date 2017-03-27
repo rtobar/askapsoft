@@ -100,6 +100,7 @@ sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 thisfile=$sbatchfile
 cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
+DO_ALT_IMAGER_CONT="${DO_ALT_IMAGER_CONT}"
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
@@ -178,7 +179,7 @@ EOFINNER
                 NPPN=1
                 aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
                 err=\$?
-                for im in \$(echo "\${imList}" | sed -e 's/,/ /g'\); do
+                for im in \$(echo "\${imList}" | sed -e 's/,/ /g'); do
                     rejuvenate "\$im"
                 done
                 extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
