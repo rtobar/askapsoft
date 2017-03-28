@@ -47,6 +47,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent-odb.h"
+#include "datamodel/ContinuumComponentLsmView-odb.h"
 #include "Utility.h"
 #include "VOTableData.h"
 
