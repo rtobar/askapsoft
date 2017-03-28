@@ -5,7 +5,7 @@
 # input file, and any value given there will override the default
 # value set here.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -73,6 +73,7 @@ JOB_TIME_SPECTRAL_IMCONTSUB=""
 JOB_TIME_LINMOS=""
 JOB_TIME_SOURCEFINDING_CONT=""
 JOB_TIME_SOURCEFINDING_SPEC=""
+JOB_TIME_DIAGNOSTICS=""
 JOB_TIME_FITS_CONVERT=""
 JOB_TIME_THUMBNAILS=""
 JOB_TIME_CASDA_UPLOAD=""
@@ -121,6 +122,7 @@ if [ "$ASKAP_ROOT" != "" ]; then
     cimstat=${ASKAP_ROOT}/Code/Components/Analysis/analysis/current/apps/cimstat.sh
     mslist=${ASKAP_ROOT}/Code/Components/Synthesis/synthesis/current/apps/mslist.sh
     image2fits=${ASKAP_ROOT}/3rdParty/casacore/casacore-2.0.3/install/bin/image2fits
+    makeThumbnails=${ASKAP_ROOT}/Code/Components/Analysis/evaluation/current/install/bin/makeThumbnailImage.py
     casdaupload=$ASKAP_ROOT/Code/Components/CP/pipelinetasks/current/apps/casdaupload.sh
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=ASKAP_ROOT,AIPSPATH"
@@ -136,11 +138,12 @@ else
     simager=simager
     altimager=imager
     linmos=linmos
-    linmosMPI=linmos-mpi
+    linmosMPI="linmos-mpi"
     selavy=selavy
     cimstat=cimstat
     mslist=mslist
     image2fits=image2fits
+    makeThumbnails=makeThumbnailImage.py
     casdaupload=casdaupload
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=NONE"
@@ -175,7 +178,11 @@ DO_SOURCE_FINDING_CONT=""
 DO_SOURCE_FINDING_SPEC=""
 DO_SOURCE_FINDING_BEAMWISE=false
 DO_ALT_IMAGER=false
+DO_ALT_IMAGER_CONT=""
+DO_ALT_IMAGER_CONTCUBE=""
+DO_ALT_IMAGER_SPECTRAL=""
 #
+DO_DIAGNOSTICS=true
 DO_CONVERT_TO_FITS=false
 DO_MAKE_THUMBNAILS=false
 DO_STAGE_FOR_CASDA=false
@@ -199,6 +206,12 @@ IS_BETA=false
 BEAM_MIN=0
 BEAM_MAX=35
 BEAMLIST=""
+
+####################
+# Image output type
+IMAGETYPE_CONT=casa
+IMAGETYPE_CONTCUBE=casa
+IMAGETYPE_SPECTRAL=casa
 
 ####################
 ##  BANDPASS CAL
@@ -359,7 +372,8 @@ MFS_REF_FREQ=""
 # Restoring beam: 'fit' will fit the PSF to determine the appropriate
 # beam, else give a size
 RESTORING_BEAM_CONT=fit
-
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONT=0.05
 
 ###########################
 # parameters from the new (alt) imager
@@ -385,6 +399,11 @@ NUM_SPECTRAL_CUBES=16
 # Whether to write out a single file in the case of writing to FITS
 # (Note that FITS output is not yet implemented fully)
 ALT_IMAGER_SINGLE_FILE=false
+
+# Same for continuum cubes
+NUM_SPECTRAL_CUBES_CONTCUBE=1
+ALT_IMAGER_SINGLE_FILE_CONTCUBE=true
+
 
 ####################
 # Gridding parameters for continuum imaging
@@ -465,6 +484,12 @@ SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=true
 # If SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=false, this is how many
 # Gaussians to use
 SELFCAL_SELAVY_NUM_GAUSSIANS=1
+# Reference antenna to use in self-calibration. Should be antenna
+# number, 0 - nAnt-1 that matches antenna numbering in MS
+SELFCAL_REF_ANTENNA=""
+# Reference gains to use in self-calibration - something like
+# gain.g11.0.0
+SELFCAL_REF_GAINS=""
 
 # Array-capable self-calibration parameters
 #   These parameters can be given as either a single value (eg. "300")
@@ -507,6 +532,8 @@ REST_FREQUENCY_CONTCUBE=""
 RESTORING_BEAM_CONTCUBE=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_CONTCUBE_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONTCUBE=0.05
 
 # Number of processors for continuum-cube imaging.
 # Leave blank to fit to number of channels
@@ -629,6 +656,8 @@ RESTORE_SPECTRAL=true
 RESTORING_BEAM_SPECTRAL=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_SPECTRAL=0.05
 
 # Image-based continuum subtraction
 # Threshold [sigma] to mask outliers prior to fitting ('threshold' parameter) 
@@ -808,9 +837,9 @@ PROJECT_ID="AS031"
 OBS_PROGRAM="Commissioning"
 
 # For making thumbnails, this is the size value given to figsize (in inches)
-THUMBNAIL_SIZE_INCHES=(16 5)
+THUMBNAIL_SIZE_INCHES="[16,5]"
 # For making thumbnails, this is the corresponding string for the sizes
-THUMBNAIL_SIZE_TEXT=(large small)
+THUMBNAIL_SIZE_TEXT="['large','small']"
 
 # Suffix for thumnail images - determines the image type
 THUMBNAIL_SUFFIX="png"

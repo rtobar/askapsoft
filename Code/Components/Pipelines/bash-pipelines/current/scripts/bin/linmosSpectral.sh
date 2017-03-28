@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -33,7 +33,7 @@ ID_LINMOS_SPECTRAL=""
 
 mosaicImageList="restored contsub image residual"
 
-if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
     reference="# No reference image or offsets, as we take the image centres"
 else
     reference="# Reference image for offsets
@@ -48,15 +48,15 @@ for imageCode in ${mosaicImageList}; do
     for subband in ${SUBBAND_WRITER_LIST}; do
 
         DO_IT=$DO_MOSAIC
-        if [ "$DO_SPECTRAL_IMAGING" != "true" ]; then
+        if [ "${DO_SPECTRAL_IMAGING}" != "true" ]; then
             DO_IT=false
         fi
         
         if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
             BEAM=all
             setImageProperties spectral
-            if [ -e ${OUTPUT}/${imageName} ]; then
-                if [ $DO_IT == true ]; then
+            if [ -e "${OUTPUT}/${imageName}" ]; then
+                if [ "${DO_IT}" == "true" ]; then
                     echo "Image ${imageName} exists, so not running its spectral-line mosaicking"
                 fi
                 DO_IT=false
@@ -69,8 +69,8 @@ for imageCode in ${mosaicImageList}; do
             if [ "${NUM_SPECTRAL_CUBES}" -gt 1 ]; then
                 code="${code}${subband}"
             fi
-            setJob linmosSpectral_${code} linmosS${code}
-            cat > $sbatchfile <<EOFOUTER
+            setJob "linmosSpectral_${code}" "linmosS${code}"
+            cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -92,19 +92,22 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
 FIELD=${FIELD}
+BEAMS_TO_USE="${BEAMS_TO_USE}"
 
 imageCode=${imageCode}
+DO_ALT_IMAGER_SPECTRAL="${DO_ALT_IMAGER_SPECTRAL}"
 NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES}
-subband=${subband}
+subband="${subband}"
 
 beamList=""
-for BEAM in ${BEAMS_TO_USE}; do
+for BEAM in \${BEAMS_TO_USE}; do
     setImageProperties spectral
-    if [ -e \${imageName} ]; then
+    if [ -e "\${imageName}" ]; then
         if [ "\${beamList}" == "" ]; then
             beamList="\${imageName}"
         else
@@ -127,8 +130,9 @@ if [ "\${beamList}" != "" ]; then
     echo "Mosaicking \${beamList} to form \${imageName}"
     parset=${parsets}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-    cat > \${parset} << EOFINNER
+    cat > "\${parset}" << EOFINNER
 linmos.names            = [\${beamList}]
+linmos.imagetype        = ${IMAGETYPE_SPECTRAL}
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
 linmos.weighttype       = FromPrimaryBeamModel
@@ -140,12 +144,12 @@ EOFINNER
 
     NCORES=${NUM_CPUS_SPECTRAL_LINMOS}
     NPPN=${CPUS_PER_CORE_SPEC_IMAGING}
-    aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
+    aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
     err=\$?
-    for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-        rejuvenate \${im}
+    for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+        rejuvenate "\${im}"
     done
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
@@ -154,15 +158,15 @@ else
 fi
 EOFOUTER
 
-            if [ $SUBMIT_JOBS == true ]; then
-                DEP_SPECIMG=`echo $DEP_SPECIMG | sed -e 's/afterok/afterany/g'`
-	        ID_LINMOS_SPECTRAL=`sbatch $DEP_SPECIMG $sbatchfile | awk '{print $4}'`
+            if [ "${SUBMIT_JOBS}" == "true" ]; then
+                DEP_SPECIMG=$(echo "${DEP_SPECIMG}" | sed -e 's/afterok/afterany/g')
+	        ID_LINMOS_SPECTRAL=$(sbatch ${DEP_SPECIMG} "$sbatchfile" | awk '{print $4}')
                 if [ "${NUM_SPECTRAL_CUBES}" -gt 1 ];then
-	            recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic ${imageCode} (subband ${subband}) spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+	            recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic ${imageCode} (subband ${subband}) spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
                 else
-                    recordJob ${ID_LINMOS_SPECTRAL} "Make a mosaic ${imageCode} spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+                    recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic ${imageCode} spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
                 fi
-                FULL_LINMOS_SPECTRAL_DEP=`addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECTRAL}"`
+                FULL_LINMOS_SPECTRAL_DEP=$(addDep "${FULL_LINMOS_SPECTRAL_DEP}" "${ID_LINMOS_SPECTRAL}")
             else
                 if [ "${NUM_SPECTRAL_CUBES}" -gt 1 ];then
 	            echo "Would make a mosaic ${imageCode} (subband ${subband}) spectral cube of the science observation, field $FIELD with slurm file $sbatchfile"

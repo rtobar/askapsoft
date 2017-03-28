@@ -33,6 +33,22 @@ The variables presented below work in the same manner as those for the
 continuum imaging, albeit with names that clearly refer to the
 spectral-imaging. 
 
+A note on the imagers and the output formats. The default approach is
+to use **simager** to produce the spectral-line cubes. The new imager
+application **imager** (:doc:`../calim/imager`) can be used by setting
+``DO_ALT_IMAGER_SPECTRAL`` to true. 
+
+The default output format is CASA images, although FITS files can be
+written directly by setting ``IMAGETYPE_SPECTRAL`` to ``fits`` (rather
+than ``casa``). This will only work with the new imager, as
+**simager** does not yet have this functionality. This mode is still
+in development, so may not be completely reliable. The recommended
+method for getting images into FITS format is still to use the
+``DO_CONVERT_TO_FITS`` flag, which makes use of the
+:doc:`../calim/imageToFITS` application. A single FITS file can be
+produced by setting ``ALT_IMAGER_SINGLE_FILE=true``.
+
+
 
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | Variable                                      | Default                         | Parset equivalent                  | Description                                                       |
@@ -40,6 +56,10 @@ spectral-imaging.
 | ``DO_SPECTRAL_IMAGING``                       | false                           | none                               | Whether to do the spectral-line imaging                           |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``JOB_TIME_SPECTRAL_IMAGE``                   | ``JOB_TIME_DEFAULT`` (12:00:00) | none                               | Time request for imaging the spectral-line data                   |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``IMAGETYPE_SPECTRAL``                        | casa                            | imagetype (:doc:`../calim/imager`) | Image format to use - can be either 'casa' or 'fits', although    |
+|                                               |                                 |                                    | 'fits' can only be given in conjunction with                      |
+|                                               |                                 |                                    | ``DO_ALT_IMAGER_SPECTRAL=true``.                                  |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | **Preparation of spectral dataset**           |                                 |                                    |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
@@ -131,9 +151,9 @@ spectral-imaging.
 |                                               |                                 | (:doc:`../calim/gridder`)          |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``GRIDDER_SPECTRAL_SNAPSHOT_LONGTRACK``       | true                            | snapshotimaging.longtrack          | The longtrack parameter controlling how the best-fit W plane is   |
-|                                               |                                 | (:doc:`../calim/gridder`)          | determined when using snapshots.                                  |
+|                                               |                                 | (:doc:`../calim/gridder`)          | determined when using snapshots.                                  | 
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING``        | 0                               | snapshotimaging.clipping           | If greater than zero, this fraction of the full image width       | 
+| ``GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING``        | 0                               | snapshotimaging.clipping           | If greater than zero, this fraction of the full image width       |
 |                                               |                                 | (:doc:`../calim/gridder`)          | is set to zero. Useful when imaging at high declination as        |
 |                                               |                                 |                                    | the edges can generate artefacts.                                 |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
@@ -206,6 +226,10 @@ spectral-imaging.
 |                                               |                                 |                                    | else give a size (such as 30arcsec, or                            |
 |                                               |                                 |                                    | “[30arcsec, 30arcsec, 0deg]”).                                    |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``RESTORING_BEAM_CUTOFF_SPECTRAL``            | 0.05                            | restore.beam.cutoff                | Cutoff value used in determining the support for the fitting      |
+|                                               |                                 | (:doc:`../calim/simager`)          | (ie. the rectangular area given to the fitting routine). Value is |
+|                                               |                                 |                                    | a fraction of the peak.                                           |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``RESTORING_BEAM_REFERENCE``                  | mid                             | restore.beamReference              | Which channel to use as the reference when writing the restoring  |
 |                                               |                                 | (:doc:`../calim/simager`)          | beam to the image cube. Can be an integer as the channel number   |
 |                                               |                                 |                                    | (0-based), or one of 'mid' (the middle channel), 'first' or 'last'|
@@ -215,10 +239,11 @@ spectral-imaging.
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | **New imager parameters**                     |                                 |                                    |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``DO_ALT_IMAGER``                             | false                           | none                               | If true, the spectral-line imaging is done by imager              |
+| ``DO_ALT_IMAGER_SPECTRAL``                    | ""                              | none                               | If true, the spectral-line imaging is done by imager              |
 |                                               |                                 |                                    | (:doc:`../calim/imager`). If false, it is done by simager         |
 |                                               |                                 |                                    | (:doc:`../calim/simager`). When true, the following parameters are|
-|                                               |                                 |                                    | used.                                                             |
+|                                               |                                 |                                    | used. If left blank (the default), the value is given by the      |
+|                                               |                                 |                                    | overall parameter ``DO_ALT_IMAGER``.                              |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``NCHAN_PER_CORE_SL``                         | 54                              | nchanpercore                       | The number of channels each core will process.                    |
 |                                               |                                 | (:doc:`../calim/imager`)           |                                                                   |
