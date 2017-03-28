@@ -226,7 +226,6 @@ parset=${parsets}/science_spectral_imager_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 
 cat > "\$parset" << EOF
 ${Imager}.dataset                                 = ${msSciSL}
-${Imager}.imagetype                               = ${IMAGETYPE_SPECTRAL}
 #
 ${nameDefinition}
 ${shapeDefinition}
