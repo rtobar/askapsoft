@@ -160,6 +160,10 @@ instead of BasisfunctionMFS).
 |                                            |                                 | (:doc:`../calim/cimager`)                              | the appropriate beam, else give a size (such as 30arcsec, or |
 |                                            |                                 |                                                        | “[30arcsec, 30arcsec, 0deg]”).                               |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
+| ``RESTORING_BEAM_CUTOFF_CONT``             | 0.05                            | restore.beam.cutoff                                    | Cutoff value used in determining the support for the fitting |
+|                                            |                                 | (:doc:`../calim/simager`)                              | (ie. the rectangular area given to the fitting routine).     |
+|                                            |                                 |                                                        | Value is a fraction of the peak.                             |
++--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ``CIMAGER_MINUV``                          | 0                               | MinUV (:doc:`../calim/data_selection`)                 | The minimum UV distance considered in the imaging - used to  |
 |                                            |                                 |                                                        | exclude the short baselines. Can be given as an array with   |
 |                                            |                                 |                                                        | different values for each self-cal loop (e.g. "[200,200,0]").|
@@ -257,10 +261,17 @@ instead of BasisfunctionMFS).
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ***New imager parameters**                 |                                 |                                                        |                                                              |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
-| ``DO_ALT_IMAGER``                          | false                           | none                                                   | If true, the spectral-line imaging is done by imager         |
+| ``DO_ALT_IMAGER_CONT``                     | ""                              | none                                                   | If true, the continuum imaging is done by imager             |
 |                                            |                                 |                                                        | (:doc:`../calim/imager`). If false, it is done by cimager    |
 |                                            |                                 |                                                        | (:doc:`../calim/cimager`). When true, the following          |
-|                                            |                                 |                                                        | parameters are used.                                         |
+|                                            |                                 |                                                        | parameters are used. If left blank (the default), the value  |
+|                                            |                                 |                                                        | is given by the overall parameter ``DO_ALT_IMAGER``.         |
++--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
+| ``DO_ALT_IMAGER_CONTCUBE``                 | ""                              | none                                                   | If true, the continuum cube imaging is done by imager        |
+|                                            |                                 |                                                        | (:doc:`../calim/imager`). If false, it is done by cimager    |
+|                                            |                                 |                                                        | (:doc:`../calim/cimager`). When true, the following          |
+|                                            |                                 |                                                        | parameters are used. If left blank (the default), the value  |
+|                                            |                                 |                                                        | is given by the overall parameter ``DO_ALT_IMAGER``.         |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ``NCHAN_PER_CORE``                         | 1                               | nchanpercore                                           | The number of channels each core will process.               |
 |                                            |                                 | (:doc:`../calim/imager`)                               |                                                              |
@@ -271,7 +282,12 @@ instead of BasisfunctionMFS).
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ``TMPFS``                                  | /dev/shm                        | tmpfs (:doc:`../calim/imager`)                         | Location of the shared memory.                               |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
-|                                            |                                 |                                                        |                                                              |
+| ``NUM_SPECTRAL_CUBES_CONTCUBE``            | 1                               | nwriters (:doc:`../calim/imager`)                      | Number of spectral cubes to be produced. This actually       |
+|                                            |                                 |                                                        | configures the number of writers employed by imager, each of |
+|                                            |                                 |                                                        | which writes a sub-band. No combination of the sub-cubes is  |
+|                                            |                                 |                                                        | currently done. Note that this defaults to a single cube, as |
+|                                            |                                 |                                                        | the continuum cubes are not as I/O intensive as the          |
+|                                            |                                 |                                                        | spectral-line cubes.                                         |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | **Self-calibration**                       |                                 |                                                        |                                                              |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
@@ -325,6 +341,13 @@ instead of BasisfunctionMFS).
 |                                            |                                 |                                                        | be given as an array with different values for each self-cal |
 |                                            |                                 |                                                        | loop (e.g. "[true,true,false]").                             |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
+| ``SELFCAL_REF_ANTENNA``                    | ""                              | refantenna (:doc:`../calim/ccalibrator`)               | Reference antenna to use in the calibration. Should be       |
+|                                            |                                 |                                                        | antenna number, 0 - nAnt-1, that matches the antenna         |
+|                                            |                                 |                                                        | numbering in the MS.                                         |
++--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
+| ``SELFCAL_REF_GAINS``                      | ""                              | refgains (:doc:`../calim/ccalibrator`)                 | Reference gains to use in the calibration - something like   |
+|                                            |                                 |                                                        | gain.g11.0.0.                                                |
++--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ``SELFCAL_SCALENOISE``                     | false                           | calibrate.scalenoise                                   | Whether the noise estimate will be scaled in accordance      |
 |                                            |                                 | (:doc:`../calim/cimager`)                              | with the applied calibrator factor to achieve proper         |
 |                                            |                                 |                                                        | weighting.                                                   |
@@ -373,6 +396,10 @@ instead of BasisfunctionMFS).
 |                                            |                                 |                                                        | separately to determine the appropriate beam for that        |
 |                                            |                                 |                                                        | channel, else give a size (such as 30arcsec, or “[30arcsec,  |
 |                                            |                                 |                                                        | 30arcsec, 0deg]”).                                           |
++--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
+| ``RESTORING_BEAM_CUTOFF_CONTCUBE``         | 0.05                            | restore.beam.cutoff                                    | Cutoff value used in determining the support for the fitting |
+|                                            |                                 | (:doc:`../calim/simager`)                              | (ie. the rectangular area given to the fitting routine).     |
+|                                            |                                 |                                                        | Value is a fraction of the peak.                             |
 +--------------------------------------------+---------------------------------+--------------------------------------------------------+--------------------------------------------------------------+
 | ``RESTORING_BEAM_CONTCUBE_REFERENCE``      | mid                             | restore.beamReference (:doc:`../calim/simager`)        | Which channel to use as the reference when writing the       |
 |                                            |                                 |                                                        | restoring beam to the image cube. Can be an integer as the   |

@@ -86,7 +86,8 @@ fi
 
 # Define the restore solver
 restore="Cimager.restore                                 = true
-Cimager.restore.beam                            = ${RESTORING_BEAM_CONT}"
+Cimager.restore.beam                            = ${RESTORING_BEAM_CONT}
+Cimager.restore.beam.cutoff                     = ${RESTORING_BEAM_CUTOFF_CONT}"
 if [ "${RESTORE_PRECONDITIONER_LIST}" != "" ]; then
     restore="${restore}
 Cimager.restore.preconditioner.Names                    = ${RESTORE_PRECONDITIONER_LIST}"
@@ -193,6 +194,7 @@ Cimager.threshold.minorcycle                    = ${CLEAN_THRESHOLD_MINORCYCLE}
 cimagerParams="#Standard Parameter set for Cimager
 Cimager.dataset                                 = ${msSciAv}
 Cimager.datacolumn                              = ${DATACOLUMN}
+Cimager.imagetype                               = ${IMAGETYPE_CONT}
 #
 # Each worker will read a single channel selection
 Cimager.Channels                                = [1, %w]

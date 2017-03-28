@@ -208,6 +208,12 @@ BEAM_MAX=35
 BEAMLIST=""
 
 ####################
+# Image output type
+IMAGETYPE_CONT=casa
+IMAGETYPE_CONTCUBE=casa
+IMAGETYPE_SPECTRAL=casa
+
+####################
 ##  BANDPASS CAL
 
 # Base name for the 1934 measurement sets after splitting
@@ -366,7 +372,8 @@ MFS_REF_FREQ=""
 # Restoring beam: 'fit' will fit the PSF to determine the appropriate
 # beam, else give a size
 RESTORING_BEAM_CONT=fit
-
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONT=0.05
 
 ###########################
 # parameters from the new (alt) imager
@@ -392,6 +399,10 @@ NUM_SPECTRAL_CUBES=16
 # Whether to write out a single file in the case of writing to FITS
 # (Note that FITS output is not yet implemented fully)
 ALT_IMAGER_SINGLE_FILE=false
+
+# Same for continuum cubes
+NUM_SPECTRAL_CUBES_CONTCUBE=1
+
 
 ####################
 # Gridding parameters for continuum imaging
@@ -520,6 +531,8 @@ REST_FREQUENCY_CONTCUBE=""
 RESTORING_BEAM_CONTCUBE=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_CONTCUBE_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONTCUBE=0.05
 
 # Number of processors for continuum-cube imaging.
 # Leave blank to fit to number of channels
@@ -642,6 +655,8 @@ RESTORE_SPECTRAL=true
 RESTORING_BEAM_SPECTRAL=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_SPECTRAL=0.05
 
 # Image-based continuum subtraction
 # Threshold [sigma] to mask outliers prior to fitting ('threshold' parameter) 
