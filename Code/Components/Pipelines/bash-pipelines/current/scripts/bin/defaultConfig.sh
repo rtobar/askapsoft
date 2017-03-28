@@ -208,6 +208,12 @@ BEAM_MAX=35
 BEAMLIST=""
 
 ####################
+# Image output type
+IMAGETYPE_CONT=casa
+IMAGETYPE_CONTCUBE=casa
+IMAGETYPE_SPECTRAL=casa
+
+####################
 ##  BANDPASS CAL
 
 # Base name for the 1934 measurement sets after splitting
@@ -396,6 +402,7 @@ ALT_IMAGER_SINGLE_FILE=false
 
 # Same for continuum cubes
 NUM_SPECTRAL_CUBES_CONTCUBE=1
+ALT_IMAGER_SINGLE_FILE_CONTCUBE=true
 
 
 ####################
