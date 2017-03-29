@@ -31,6 +31,12 @@
 
 ID_SPECIMG_SCI=""
 
+<<<<<<< .working
+=======
+# set the $imageBase variable
+setImageBase spectral
+
+>>>>>>> .merge-right.r7963
 DO_IT=$DO_SPECTRAL_IMAGING
 
 if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then

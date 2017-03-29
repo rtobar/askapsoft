@@ -4,9 +4,9 @@
 # for archiving. This local script is needed as we need to know which
 # images are present when we actually execute various jobs (such as
 # the thumbnail creation & the casdaupload), rather than when we run
-# processASKAP.
+# processBETA.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -35,7 +35,7 @@
 msNameList=()
 for BEAM in ${BEAMS_TO_USE}; do
     findScienceMSnames
-    if [ "${DO_APPLY_CAL_CONT}" == "true" ]; then
+    if [ $DO_APPLY_CAL_CONT == true ]; then
         msNameList+=($msSciAvCal)
     else
         msNameList+=($msSciAv)
@@ -44,8 +44,8 @@ done
 
 imageCodeList="restored altrestored image residual sensitivity psf psfimage"
 
-getArtifacts="${tools}/getArchiveList-${NOW}.sh"
-cat > "${getArtifacts}" <<EOF
+getArtifacts=${tools}/getArchiveList-${NOW}.sh
+cat > ${getArtifacts} <<EOF
 #!/bin/bash -l
 #
 # Defines the lists of images, catalogues and measurement sets that
@@ -57,18 +57,12 @@ cat > "${getArtifacts}" <<EOF
 #       of the 2D images
 #   * casdaOtherDimImageNames - list of non-2D FITS files to be archived
 #   * casdaOtherDimImageTypes - their corresponding image types
-#   * casdaOtherDimImageSpectra - extracted spectra from 3D cubes
-#   * casdaOtherDimImageNoise - extracted noise spectra from 3D cubes
-#   * casdaOtherDimImageMoments - extracted moment maps
-#   * casdaOtherDimImageFDF - derived Faraday Dispersion Functions
-#   * casdaOtherDimImageRMSF - derived Rotation Measure Spread Functions
-#   * casdaOtherDimImagePol - lower-case polarisation character
 #   * catNames - names of catalogue files to archived
 #   * catTypes - their corresponding catalogue types
 #   * msNames - names of measurement sets to be archived
 #   * evalNames - names of evaluation files to be archived
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -109,21 +103,12 @@ casdaTwoDimImageTypes=()
 casdaTwoDimThumbTitles=()
 casdaOtherDimImageNames=()
 casdaOtherDimImageTypes=()
-casdaOtherDimImageSpectra=()
-casdaOtherDimImageNoise=()
-casdaOtherDimImageMoments=()
-casdaOtherDimImageFDF=()
-casdaOtherDimImageRMSF=()
-casdaOtherDimImagePol=()
 
 # Variables defined from configuration file
 NOW="${NOW}"
-NUM_TAYLOR_TERMS="${NUM_TAYLOR_TERMS}"
-maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
+nterms="${NUM_TAYLOR_TERMS}"
 list_of_images="${IMAGE_LIST}"
 doBeams="${ARCHIVE_BEAM_IMAGES}"
-doSelfcalLoops="${ARCHIVE_SELFCAL_LOOP_MOSAICS}"
-doFieldMosaics="${ARCHIVE_FIELD_MOSAICS}"
 beams="${BEAMS_TO_USE}"
 FIELD_LIST="${FIELD_LIST}"
 IMAGE_BASE_CONT="${IMAGE_BASE_CONT}"
@@ -131,24 +116,14 @@ IMAGE_BASE_CONTCUBE="${IMAGE_BASE_CONTCUBE}"
 IMAGE_BASE_SPECTRAL="${IMAGE_BASE_SPECTRAL}"
 POL_LIST="${POL_LIST}"
 
-DO_ALT_IMAGER_CONT="${DO_ALT_IMAGER_CONT}"
-DO_ALT_IMAGER_CONTCUBE="${DO_ALT_IMAGER_CONTCUBE}"
-DO_ALT_IMAGER_SPECTRAL="${DO_ALT_IMAGER_SPECTRAL}"
-
 fitsSuffix=""
 ADD_FITS_SUFFIX=\${ADD_FITS_SUFFIX}
 if [ "\${ADD_FITS_SUFFIX}" == "true" ] || [ "\${ADD_FITS_SUFFIX}" == "" ]; then
     fitsSuffix=".fits"
 fi
 
-NUM_LOOPS=0
-DO_SELFCAL=$DO_SELFCAL
-if [ "\${DO_SELFCAL}" == "true" ] && [ "\$doSelfcalLoops" == "true" ]; then
-    NUM_LOOPS=$SELFCAL_NUM_LOOPS
-fi
-
 LOCAL_BEAM_LIST="all"
-if [ "\${doBeams}" == "true" ]; then
+if [ "\${doBeams}" == true ]; then
     LOCAL_BEAM_LIST="\$LOCAL_BEAM_LIST \${beams}"
 fi
 
@@ -156,143 +131,63 @@ LOCAL_FIELD_LIST=". ${FIELD_LIST}"
 
 for FIELD in \${LOCAL_FIELD_LIST}; do
 
-    if [ "\${FIELD}" == "." ]; then
+    if [ \${FIELD} == "." ]; then
         theBeamList="all"
-        TILE_LIST="${TILE_LIST} ALL"
     else
         theBeamList=\${LOCAL_BEAM_LIST}
-        getTile
-        TILE_LIST="\${TILE}"
     fi
 
-    for TILE in \${TILE_LIST}; do
+    for BEAM in \${theBeamList}; do
+            
+        # Gather lists of continuum images
+    
+        for imageCode in ${imageCodeList}; do
 
-        for BEAM in \${theBeamList}; do
-                
-            # Gather lists of continuum images
-        
-            for imageCode in ${imageCodeList}; do
-        
-                for((TTERM=0;TTERM<maxterm;TTERM++)); do
-        
-                    for((LOOP=0;LOOP<=NUM_LOOPS;LOOP++)); do
-
-                        if [ \$LOOP -eq 0 ] || [ "\$BEAM" == "all" ]; then
-
-                            setImageProperties cont
-
-                            if [ \$LOOP -gt 0 ]; then
-                                imageName="\$imageName.SelfCalLoop\${LOOP}"
-                                weightsImage="\$weightsImage.SelfCalLoop\${LOOP}"
-                            fi
-
-#                            echo \${FIELD}/\${imageName}\${fitsSuffix}
-                            if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
-                                casdaTwoDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
-                                casdaTwoDimImageTypes+=("\${imageType}")
-                                casdaTwoDimThumbTitles+=("\${label}")
-                                if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
-                                    casdaTwoDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
-                                    casdaTwoDimImageTypes+=("\${weightsType}")
-                                    casdaTwoDimThumbTitles+=("\${weightsLabel}")
-                                fi
-                            fi
-                        fi
-
-                    done
-        
-                done
-        
-            done
-        
-        
-            # Gather lists of spectral cubes & continuum cubes
-        
-            for imageCode in ${imageCodeList}; do
-        
-                setImageProperties spectral
-                if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
-                    casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
-                    casdaOtherDimImageTypes+=("\${imageType}")
-                    itsSelavyDir=\${FIELD}/selavy-spectral-\${imageName##*/}
-                    if [ -e "\${itsSelavyDir}" ]; then
-                        casdaOtherDimImageSpectra+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_SPECTRUM}*\${fitsSuffix}")
-                        casdaOtherDimImageNoise+=("\${itsSelavyDir}/Spectra/${SELAVY_SPEC_BASE_NOISE}*\${fitsSuffix}")
-                        casdaOtherDimImageMoments+=("\${itsSelavyDir}/Moments/${SELAVY_SPEC_BASE_MOMENT}*\${fitsSuffix}")
-                        casdaOtherDimImageFDF+=("")
-                        casdaOtherDimImageRMSF+=("")
-                        casdaOtherDimImagePol+=("")
-                    else
-                        casdaOtherDimImageSpectra+=("")
-                        casdaOtherDimImageNoise+=("")
-                        casdaOtherDimImageMoments+=("")
-                        casdaOtherDimImageFDF+=("")
-                        casdaOtherDimImageRMSF+=("")
-                        casdaOtherDimImagePol+=("")
-                    fi
-#### Leave out spectral weights images - have no defined image type to
-#### support them in CASDA
-##                       if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
-##                           casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
-##                           casdaOtherDimImageTypes+=("\${weightsType}")
-##                           casdaOtherDimImageSpectra+=("")
-##                           casdaOtherDimImageNoise+=("")
-##                           casdaOtherDimImageMoments+=("")
-##                           casdaOtherDimImageFDF+=("")
-##                           casdaOtherDimImageRMSF+=("")
-##                           casdaOtherDimImagePol+=("")
-##                       fi
+            setImageProperties cont
+            echo \${FIELD}/\${imageName}\${fitsSuffix}
+            if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                casdaTwoDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
+                casdaTwoDimImageTypes+=("\${imageType}")
+                casdaTwoDimThumbTitles+=("\${label}")
+                if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
+                    casdaTwoDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
+                    casdaTwoDimImageTypes+=("\${weightsType}")
+                    casdaTwoDimThumbTitles+=("\${weightsLabel}")
                 fi
-        
-                for POLN in \${POL_LIST}; do
-                    TTERM=0
-                    setImageProperties cont
-                    contImage=\${imageName}
-                    pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
-                    setImageProperties contcube "\$pol"
-                    if [ -e "\${FIELD}/\${imageName}\${fitsSuffix}" ]; then
-                        casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
-                        casdaOtherDimImageTypes+=("\${imageType}")
-                        itsSelavyDir=\${FIELD}/selavy_\${contImage}
-                        if [ -e "\${itsSelavyDir}" ]; then
-                            prefix="\${itsSelavyDir}/PolData/${SELAVY_POL_OUTPUT_BASE}"
-                            suffix="SB${SB_SCIENCE}_\${contImage}*\${fitsSuffix}"
-                            casdaOtherDimImageSpectra+=("\${prefix}_spec_\${POLN}_\${suffix}")
-                            casdaOtherDimImageNoise+=("\${prefix}_noise_\${POLN}_\${suffix}")
-                            casdaOtherDimImageMoments+=("")
-                            casdaOtherDimImagePol+=(\${pol})
-                            if [ "\${POLN}" == "Q" ]; then
-                                casdaOtherDimImageFDF+=("\${prefix}_FDF*_\${suffix}")
-                                casdaOtherDimImageRMSF+=("\${prefix}_RMSF*_\${suffix}")
-                            else
-                                casdaOtherDimImageFDF+=("")
-                                casdaOtherDimImageRMSF+=("")
-                            fi
-                        else
-                            casdaOtherDimImageSpectra+=("")
-                            casdaOtherDimImageNoise+=("")
-                            casdaOtherDimImageMoments+=("")
-                            casdaOtherDimImageFDF+=("")
-                            casdaOtherDimImageRMSF+=("")
-                            casdaOtherDimImagePol+=("")
-                        fi
-                        if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
-                            casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
-                            casdaOtherDimImageTypes+=("\${weightsType}")
-                            casdaOtherDimImageSpectra+=("")
-                            casdaOtherDimImageNoise+=("")
-                            casdaOtherDimImageMoments+=("")
-                            casdaOtherDimImageFDF+=("")
-                            casdaOtherDimImageRMSF+=("")
-                            casdaOtherDimImagePol+=("")
-                        fi
-                    fi
-                done
-        
-            done
-        
+            fi
+
         done
 
+    
+        # Gather lists of spectral cubes & continuum cubes
+    
+        for imageCode in ${imageCodeList}; do
+
+            setImageProperties spectral
+            if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
+                casdaOtherDimImageTypes+=("\${imageType}")
+                if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
+                    casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
+                    casdaOtherDimImageTypes+=("\${weightsType}")
+                fi
+            fi
+
+            for POLN in \${POL_LIST}; do
+                pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+                setImageProperties contcube \$pol
+                if [ -e \${FIELD}/\${imageName}\${fitsSuffix} ]; then
+                    casdaOtherDimImageNames+=(\${FIELD}/\${imageName}\${fitsSuffix})
+                    casdaOtherDimImageTypes+=("\${imageType}")
+                    if [ "\${BEAM}" == "all" ] && [ "\${imageCode}" == "restored" ]; then
+                        casdaOtherDimImageNames+=(\${FIELD}/\${weightsImage}\${fitsSuffix})
+                        casdaOtherDimImageTypes+=("\${weightsType}")
+                    fi
+                fi
+            done
+
+        done
+    
     done
 
 done
@@ -306,44 +201,19 @@ catNames=()
 catTypes=()
 
 BEAM=all
-imageCode=restored
 for FIELD in \${FIELD_LIST}; do
 
-    if [ "\${FIELD}" == "." ]; then
-        theBeamList="all"
-        TILE_LIST="${TILE_LIST} ALL"
-    else
-        theBeamList=\${LOCAL_BEAM_LIST}
-        getTile
-        TILE_LIST="\${TILE}"
+    setImageBase cont
+    contSelDir=selavy_\${imageBase}
+    if [ -e \${FIELD}/\${contSelDir}/selavy-results.components.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.components.xml)
+        catTypes+=(continuum-component)
+    fi
+    if [ -e \${FIELD}/\${contSelDir}/selavy-results.islands.xml ]; then
+        catNames+=(\${FIELD}/\${contSelDir}/selavy-results.islands.xml)
+        catTypes+=(continuum-island)
     fi
 
-    for TILE in \${TILE_LIST}; do
-
-        for BEAM in \${theBeamList}; do               
-
-            setImageProperties cont
-            contSelDir=selavy_\${imageName}
-            if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml" ]; then
-                catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.components.xml)
-                catTypes+=(continuum-component)
-            fi
-            if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml" ]; then
-                catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.islands.xml)
-                catTypes+=(continuum-island)
-            fi
-            if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml" ]; then
-                catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.polarisation.xml)
-                catTypes+=(polarisation-component)
-            fi
-            setImageProperties spectral
-            specSelDir=selavy-spectral-\${imageName}
-            if [ -e "\${FIELD}/\${contSelDir}/selavy-\${imageName}.hiobjects.xml" ]; then
-                catNames+=(\${FIELD}/\${contSelDir}/selavy-\${imageName}.hiobjects.xml)
-                catTypes+=(spectral-line-emission)
-            fi
-        done
-    done
 done
 ##############################
 # Next, search for MSs
@@ -356,7 +226,7 @@ for FIELD in \${FIELD_LIST}; do
 
     for ms in \${possibleMSnames}; do
     
-        if [ -e "\${FIELD}/\${ms}" ]; then
+        if [ -e \${FIELD}/\${ms} ]; then
             msNames+=(\${FIELD}/\${ms})
         fi
     
@@ -370,7 +240,7 @@ done
 evalNames=()
 
 # Stats summary files
-for file in "${OUTPUT}"/stats-all*.txt; do
+for file in \`\ls ${OUTPUT}/stats-all*.txt\`; do
     evalNames+=(\${file##*/})
 done
 

@@ -34,9 +34,13 @@ echo "Setting up and calibrating the science observation"
 echo "=================================================="
 
 FIELD_ID=0
+<<<<<<< .working
 FULL_LINMOS_CONT_DEP=""
 FULL_LINMOS_CONTCUBE_DEP=""
 FULL_LINMOS_SPEC_DEP=""
+=======
+FULL_LINMOS_DEP=""
+>>>>>>> .merge-right.r7963
 
 cd "${ORIGINAL_OUTPUT}"
 
@@ -151,11 +155,20 @@ for FIELD in ${FIELD_LIST}; do
 
         done
 
+<<<<<<< .working
         FIELDBEAM=$(echo "$FIELD_ID" | awk '{printf "F%02d",$1}')
 
         . "${PIPELINEDIR}/linmosCont.sh"
         . "${PIPELINEDIR}/linmosContCube.sh"
         . "${PIPELINEDIR}/linmosSpectral.sh"
+=======
+        if [ $DO_ALT_IMAGER == true ]; then
+            . ${PIPELINEDIR}/altLinmos.sh
+        else
+            #            . ${PIPELINEDIR}/linmos.sh
+            . ${PIPELINEDIR}/linmosCont.sh
+        fi
+>>>>>>> .merge-right.r7963
         
         # Source-finding on the mosaics created by these jobs
         . "${PIPELINEDIR}/runMosaicSourcefinding.sh"        
@@ -169,6 +182,7 @@ for FIELD in ${FIELD_LIST}; do
 done
 
 # Put all these back to the original values
+<<<<<<< .working
 OUTPUT="${ORIGINAL_OUTPUT}"
 parsets="$parsetsBase"
 logs="$logsBase"
@@ -183,3 +197,15 @@ FIELD="."
 
 # Final source-finding on the mosaics created by these jobs
 . "${PIPELINEDIR}/runMosaicSourcefinding.sh"
+=======
+OUTPUT=${ORIGINAL_OUTPUT}
+parsets=$parsetsBase
+logs=$logsBase
+slurms=$slurmsBase
+slurmOut=$slurmOutBase
+FIELD="."
+
+# Final linmos, combining fields
+. ${PIPELINEDIR}/linmosFieldsCont.sh
+
+>>>>>>> .merge-right.r7963

@@ -15,7 +15,7 @@
 #   * cellsizeDefinition - the shape of the images, as a Cimager
 #   parameter if 'CELLSIZE_CONT' is defined
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2015 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -40,20 +40,25 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-# set the image name
-imageCode=restored
-setImageProperties cont
+# set the $imageBase variable
+setImageBase cont
+
+if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
+    outputImage="image.${imageBase}.taylor.0.restored"
+else
+    outputImage="image.${imageBase}.restored"
+fi
 
 # Define the shape parameter, or leave to "advise"
 shapeDefinition="# Leave shape definition to Cimager to determine from the data"
-if [ "${NUM_PIXELS_CONT}" != "" ] && [ "${NUM_PIXELS_CONT}" -gt 0 ]; then
+if [ "${NUM_PIXELS_CONT}" != "" ] && [ $NUM_PIXELS_CONT -gt 0 ]; then
     shapeDefinition="Cimager.Images.shape                            = [${NUM_PIXELS_CONT}, ${NUM_PIXELS_CONT}]"
 fi
 
 # Define the cellsize parameter, or leave to "advise"
 cellsizeDefinition="# Leave cellsize definition to Cimager to determine from the data"
-cellsizeGood=$(echo "${CELLSIZE_CONT}" | awk '{if($1>0.) print "true"; else print "false";}')
-if [ "${CELLSIZE_CONT}" != "" ] && [ "$cellsizeGood" == "true" ]; then
+cellsizeGood=`echo ${CELLSIZE_CONT} | awk '{if($1>0.) print "true"; else print "false";}'`
+if [ "${CELLSIZE_CONT}" != "" ] && [ $cellsizeGood == true ]; then
     cellsizeDefinition="Cimager.Images.cellsize                         = [${CELLSIZE_CONT}arcsec, ${CELLSIZE_CONT}arcsec]"
 fi
 
@@ -65,11 +70,11 @@ fi
 
 # Define the preconditioning
 preconditioning="Cimager.preconditioner.Names                    = ${PRECONDITIONER_LIST}"
-if [ "$(echo "${PRECONDITIONER_LIST}" | grep GaussianTaper)" != "" ]; then
+if [ "`echo ${PRECONDITIONER_LIST} | grep GaussianTaper`" != "" ]; then
     preconditioning="$preconditioning
 Cimager.preconditioner.GaussianTaper            = ${PRECONDITIONER_GAUSS_TAPER}"
 fi
-if [ "$(echo "${PRECONDITIONER_LIST}" | grep Wiener)" != "" ]; then
+if [ "`echo ${PRECONDITIONER_LIST} | grep Wiener`" != "" ]; then
     # Use the new preservecf preconditioner option, but only for the
     # Wiener filter
     preconditioning="$preconditioning
@@ -86,16 +91,15 @@ fi
 
 # Define the restore solver
 restore="Cimager.restore                                 = true
-Cimager.restore.beam                            = ${RESTORING_BEAM_CONT}
-Cimager.restore.beam.cutoff                     = ${RESTORING_BEAM_CUTOFF_CONT}"
+Cimager.restore.beam                            = ${RESTORING_BEAM_CONT}"
 if [ "${RESTORE_PRECONDITIONER_LIST}" != "" ]; then
     restore="${restore}
 Cimager.restore.preconditioner.Names                    = ${RESTORE_PRECONDITIONER_LIST}"
-    if [ "$(echo "${RESTORE_PRECONDITIONER_LIST}" | grep GaussianTaper)" != "" ]; then
+    if [ "`echo ${RESTORE_PRECONDITIONER_LIST} | grep GaussianTaper`" != "" ]; then
         restore="$restore
 Cimager.restore.preconditioner.GaussianTaper            = ${RESTORE_PRECONDITIONER_GAUSS_TAPER}"
     fi
-    if [ "$(echo "${RESTORE_PRECONDITIONER_LIST}" | grep Wiener)" != "" ]; then
+    if [ "`echo ${RESTORE_PRECONDITIONER_LIST} | grep Wiener`" != "" ]; then
         # Use the new preservecf preconditioner option, but only for the
         # Wiener filter
         restore="$restore
@@ -131,32 +135,31 @@ fi
 
 # This is for the new (alt) imager
 altImagerParams="# Options for the alternate imager"
-if [ "${DO_ALT_IMAGER_CONT}" == "true" ]; then
+if [ $DO_ALT_IMAGER == true ]; then
+
 
     if [ "${NCHAN_PER_CORE}" == "" ]; then
         nchanpercore=1
     else
         nchanpercore="${NCHAN_PER_CORE}"
     fi
-    altImagerParams="${altImagerParams}
+altImagerParams="${altImagerParams}
 Cimager.nchanpercore                           = ${nchanpercore}"
-    if [ "${USE_TMPFS}" == "true" ]; then
+    if [ ${USE_TMPFS} == true ]; then
         usetmpfs="true"
     else
         usetmpfs="false"
     fi
-    altImagerParams="${altImagerParams}
+altImagerParams="${altImagerParams}
 Cimager.usetmpfs                               = ${usetmpfs}"
-
     if [ "${TMPFS}" == "" ]; then
         tmpfs="/dev/shm"
     else
         tmpfs="${TMPFS}"
     fi
-    altImagerParams="${altImagerParams}
+altImagerParams="${altImagerParams}
 Cimager.tmpfs                                   = ${tmpfs}"
-
-    altImagerParams="${altImagerParams}
+altImagerParams="${altImagerParams}
 # barycentre and multiple solver mode not supported in continuum imaging (yet)
 Cimager.barycentre                              = false
 Cimager.solverpercore                           = false
@@ -168,7 +171,7 @@ fi
 
 cleaningPars="# These parameters define the clean algorithm
 Cimager.solver                                  = ${SOLVER}"
-if [ "${SOLVER}" == "Clean" ]; then
+if [ ${SOLVER} == "Clean" ]; then
     cleaningPars="${cleaningPars}
 Cimager.solver.Clean.algorithm                  = ${CLEAN_ALGORITHM}
 Cimager.solver.Clean.niter                      = ${CLEAN_MINORCYCLE_NITER}
@@ -182,19 +185,16 @@ Cimager.solver.Clean.psfwidth                   = ${CLEAN_PSFWIDTH}
 Cimager.solver.Clean.logevery                   = 50"
 fi
 cleaningPars="${cleaningPars}
-Cimager.Images.writeAtMajorCycle                = ${CLEAN_WRITE_AT_MAJOR_CYCLE}
 Cimager.threshold.minorcycle                    = ${CLEAN_THRESHOLD_MINORCYCLE}
+Cimager.threshold.majorcycle                    = ${CLEAN_THRESHOLD_MAJORCYCLE}
+Cimager.ncycles                                 = ${CLEAN_NUM_MAJORCYCLES}
+Cimager.Images.writeAtMajorCycle                = ${CLEAN_WRITE_AT_MAJOR_CYCLE}
 "
-# threshold.majorcycle and ncycles are defined by the function
-# cimagerSelfcalLoopParams in utils.sh. These can vary according to
-# the self-calibration loop number, so need to be set from within the
-# slurm job
 
 
 cimagerParams="#Standard Parameter set for Cimager
 Cimager.dataset                                 = ${msSciAv}
 Cimager.datacolumn                              = ${DATACOLUMN}
-Cimager.imagetype                               = ${IMAGETYPE_CONT}
 #
 # Each worker will read a single channel selection
 Cimager.Channels                                = [1, %w]

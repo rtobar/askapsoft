@@ -4,7 +4,7 @@
 # image. After completion, runs the source-finder on the mosaicked
 # image.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2015 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -29,26 +29,34 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_SPECTRAL=""
+ID_LINMOS_SCI=""
+
+DO_IT=$DO_MOSAIC
 
 BEAM=all
 setImageBase spectral
+getAltPrefix
 
-for subband in ${SUBBAND_WRITER_LIST}; do
+for subband in ${wrList}; do
 
-    DO_IT=$DO_MOSAIC
+    mosImage=image.${subband}.${imageBase}
 
-    mosImage=linmos.image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-    if [ "${CLOBBER}" != "true" ] && [ -e "${OUTPUT}/${mosImage}" ]; then
-        if [ "${DO_IT}" == "true" ]; then
-            echo "Image ${mosImage} exists, so not running spectral-line mosaicking"
+    if [ $NUM_TAYLOR_TERMS -gt 1 ]; then
+        mosImage="${mosImage}.taylor.0"
+    fi
+
+    mosImage="${mosImage}.restored"
+
+    if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${mosImage} ]; then
+        if [ $DO_IT == true ]; then
+            echo "Image ${mosImage} exists, so not running continuum mosaicking"
         fi
         DO_IT=false
     fi
 
-    if [ "${DO_IT}" == "true" ]; then
+    if [ $DO_IT == true ]; then
 
-        if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
+        if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
             reference="# No reference image or offsets, as we take the image centres"
         else
             reference="# Reference image for offsets
@@ -58,8 +66,9 @@ linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 ${LINMOS_BEAM_OFFSETS}"
         fi
 
-        setJob linmos_"${subband}" linmos_"${subband}"
-        cat > "$sbatchfile" <<EOFOUTER
+    
+        setJob linmos_${subband} linmos_${subband}
+        cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -77,44 +86,35 @@ ${askapsoftModuleCommands}
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
-. ${PIPELINEDIR}/utils.sh
+. ${PIPELINEDIR}/utils.sh	
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-thisfile=$sbatchfile
-cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
+cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
 parset=${parsets}/science_linmos_\${SLURM_JOB_ID}.in
 log=${logs}/science_linmos_\${SLURM_JOB_ID}.log
 
 # bit of image name before the beam ID
 imagePrefix=image.restored.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-weightPrefix=weights.wr.${subband}.${IMAGE_BASE_SPECTRAL}
-outImage="linmos.\${imagePrefix}"
-outWeight="linmos.\${weightPrefix}"
-imageList=""
-weightList=""
-
+imagePartialPrefix=wr.${subband}.${IMAGE_BASE_SPECTRAL}
+beamList=""
 for BEAM in ${BEAMS_TO_USE}; do
-    if [ -e "\${imagePrefix}.beam\${BEAM}" ]; then
-        imageList="\${imageList}\${imagePrefix}.beam\${BEAM} "
-        weightList="\${imageList}\${weightPrefix}.beam\${BEAM} "
+    if [ -e \${imagePrefix}.beam\${BEAM} ]; then
+        beamList="\${beamList}\${imagePartialPrefix}.beam\${BEAM} "
     else
         echo "WARNING: Beam \${BEAM} image not present - not including in mosaic!"
-    fi
+    fi 
 done
 
-if [ "\${imageList}" != "" ]; then
+if [ "\${beamList}" != "" ]; then
 
-    imageList=\$(echo "\${imageList}" | sed -e 's/ /,/g')
-    weightList=\$(echo "\${weightList}" | sed -e 's/ /,/g')
-    cat > "\$parset" << EOFINNER
-linmos.names            = [\${imageList}]
-linmos.weights          = [\${weightList}]
-linmos.outname          = \${outImage}
-linmos.outWeight        = \${outWeight}
-linmos.findmosaics      = false
-linmos.weighttype       = FromWeightImages
+    beamList=\`echo \${beamList} | sed -e 's/ /,/g' \`
+
+    cat > \$parset << EOFINNER
+linmos.names            = [\${beamList}]
+linmos.findmosaics      = true
+linmos.weighttype       = FromPrimaryBeamModel
 linmos.weightstate      = Inherent
 ${reference}
 linmos.psfref           = ${LINMOS_PSF_REF}
@@ -124,29 +124,42 @@ EOFINNER
 
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
+    aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
     err=\$?
-    rejuvenate "./*.${IMAGE_BASE_CONT}*"
-    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
+    rejuvenate *.${IMAGE_BASE_CONT}*
+    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
 else
 
-    echo "WARNING - no good images were found for mosaicking!"
+    echo "ERROR - no good images were found for mosaicking!"
+    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- txt > stats/stats-\${SLURM_JOB_ID}-linmos.txt
+    writeStats \${SLURM_JOB_ID} linmos FAIL --- --- --- --- --- csv > stats/stats-\${SLURM_JOB_ID}-linmos.csv
 
 fi
 EOFOUTER
 
-        if [ "${SUBMIT_JOBS}" == "true" ]; then
-            DEP_SPECIMG=$(echo "$DEP_SPECIMG" | sed -e 's/afterok/afterany/g')
-            ID_LINMOS_SPECTRAL=$(sbatch ${DEP_SPECIMG} "$sbatchfile" | awk '{print $4}')
-            recordJob "${ID_LINMOS_SPECTRAL}" "Make a mosaic spectral cube of the science observation, field $FIELD, with flags \"${DEP_SPECIMG}\""
+        if [ $SUBMIT_JOBS == true ]; then
+            FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
+        ID_LINMOS_SCI=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
+        recordJob ${ID_LINMOS_SCI} "Make a mosaic image of the science observation, with flags \"${FLAG_IMAGING_DEP}\""
         else
-            echo "Would make a mosaic spectral cube of the science observation, field $FIELD, with slurm file $sbatchfile"
+            echo "Would make a mosaic image  of the science observation with slurm file $sbatchfile"
         fi
 
         echo " "
 
     fi
 done
+
+if [ ${DO_SOURCE_FINDING_MOSAIC} == true ]; then
+    # Run the sourcefinder on the mosaicked image.
+
+    # set the $imageBase variable to have 'linmos' in it
+    BEAM="all"
+    setImageBase spectral
+
+    . ${PIPELINEDIR}/sourcefinding.sh
+
+fi

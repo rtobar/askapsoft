@@ -34,7 +34,12 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
+<<<<<<< .working
 for subband in ${SUBBAND_WRITER_LIST}; do
+=======
+# set the $imageBase variable
+setImageBase spectral
+>>>>>>> .merge-right.r7963
 
     DO_IT=$DO_SPECTRAL_IMSUB
 

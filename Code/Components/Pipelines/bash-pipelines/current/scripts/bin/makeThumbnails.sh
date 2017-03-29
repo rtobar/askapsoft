@@ -60,8 +60,13 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 
 # Define the lists of image names, types, 
+<<<<<<< .working
 ADD_FITS_SUFFIX=true
 . "${getArtifacts}"
+=======
+ADD_FITS_SUFFIX=true
+. ${getArtifacts}
+>>>>>>> .merge-right.r7963
 
 pathToScript=\$(which makeThumbnailImage.py 2> "${tmp}/whchmkthumb")
 if [ "\${pathToScript}" == "" ]; then
