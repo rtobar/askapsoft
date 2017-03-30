@@ -3,8 +3,6 @@
 /// Do not edit directly or your changes will be lost!
 /// ----------------------------------------------------------------------------
 ///
-/// @file VOTableParser.h
-///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
