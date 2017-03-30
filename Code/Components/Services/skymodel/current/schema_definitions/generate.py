@@ -73,7 +73,9 @@ COMMON_SLICE_HEADER = COMMON_FILE_HEADER + '''
 
 #include <CommonTypes.ice>
 #include <IService.ice>
+'''
 
+SLICE_NAMESPACES = '''
 module askap
 {
 module interfaces
@@ -82,20 +84,37 @@ module skymodelservice
 {
 '''
 
-CONTINUUM_COMPONENT_HEADER = COMMON_SLICE_HEADER + '''
+CONTINUUM_COMPONENT_HEADER = COMMON_SLICE_HEADER + '''\
+#include <SkyModelServicePolarisation.ice>
+''' + \
+SLICE_NAMESPACES + \
+'''\
     /**
-     * A component.
+     * A continuum component.
      **/
-    struct Component
+    struct ContinuumComponent
+    {
+        optional(1) ContinuumComponentPolarisation polarisation;
+
+'''
+
+POLARISATION_HEADER = COMMON_SLICE_HEADER + SLICE_NAMESPACES + \
+'''
+    /**
+     * Continuum component polarisation data.
+     **/
+    struct ContinuumComponentPolarisation
     {
 '''
 
-POLARISATION_HEADER = COMMON_SLICE_HEADER + '''
-polarisation
-'''
-
 SLICE_FOOTER = '''\
-footer
+    };
+
+};
+};
+};
+
+#endif
 '''
 
 CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
@@ -126,7 +145,7 @@ FILES = [
 SLICE_FILES = [
     {
         'input': CONTINUUM_COMPONENT_SPEC,
-        'output': '../SkyModelServiceContinuumComponent.slice',
+        'output': '../SkyModelServiceContinuumComponent.ice',
         'parse_cols': None,
         'skiprows': [0],
         'file_header': CONTINUUM_COMPONENT_HEADER,
@@ -134,7 +153,7 @@ SLICE_FILES = [
     },
     {
         'input': POLARISATION_SPEC,
-        'output': '../SkyModelServicePolarisation.slice',
+        'output': '../SkyModelServicePolarisation.ice',
         'parse_cols': None,
         'skiprows': [0],
         'file_header': POLARISATION_HEADER,
@@ -480,7 +499,7 @@ if __name__ == '__main__':
             f['output'],
             SLICE_TYPE_MAP,
             is_view=True,
-            indent=4,
+            indent=8,
             file_header=f['file_header'],
             file_footer=f['file_footer'])
 
