@@ -507,3 +507,4 @@ if __name__ == '__main__':
     write_votable_parser()
 
     print('Done')
+    print("* Don't forget to move the generated Ice files to Code/Interfaces/slice/current")

@@ -37,3 +37,7 @@ rebuild: clean
 .PHONY: generate
 generate:
 	cd ./schema_definitions && python3 generate.py
+
+.PHONY: generate_ice
+generate_ice: generate
+	mv *.ice ../../../../Interfaces/slice/current/
