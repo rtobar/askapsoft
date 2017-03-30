@@ -67,11 +67,30 @@ COMMON_FILE_HEADER = '''\
 /// @author Daniel Collins <daniel.collins@csiro.au>
 '''
 
-CONTINUUM_COMPONENT_HEADER = COMMON_FILE_HEADER + '''
-component
+COMMON_SLICE_HEADER = COMMON_FILE_HEADER + '''
+#ifndef ASKAP_SKY_MODEL_SERVICE_ICE
+#define ASKAP_SKY_MODEL_SERVICE_ICE
+
+#include <CommonTypes.ice>
+#include <IService.ice>
+
+module askap
+{
+module interfaces
+{
+module skymodelservice
+{
 '''
 
-POLARISATION_HEADER = COMMON_FILE_HEADER + '''
+CONTINUUM_COMPONENT_HEADER = COMMON_SLICE_HEADER + '''
+    /**
+     * A component.
+     **/
+    struct Component
+    {
+'''
+
+POLARISATION_HEADER = COMMON_SLICE_HEADER + '''
 polarisation
 '''
 
