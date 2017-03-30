@@ -4,6 +4,7 @@ import pandas as pd
 from string import Template
 
 # This script generates ODB schema code for direct inclusion into the ASKAP Sky Model Service code.
+# It also generates the Ice DTO objects from the same definitions.
 
 # Define the Outputs
 # Each schema file defines a dictionary with the following keys:
@@ -218,6 +219,7 @@ class Field(object):
         self.indexed = df_row.index
         self.nullable = df_row.nullable
         self.is_view = is_view
+        self.lsm_view = df_row.lsm_view
         self._magic_names = {}
         self._indent = indent
 
@@ -296,7 +298,8 @@ def write_output(
         if file_header:
             out.write(file_header)
         for field in get_fields(data_frame, type_map, is_view, indent=indent, camel_case=camel_case):
-            out.write(str(field))
+            if not is_view or (is_view and field.lsm_view):
+                out.write(str(field))
         if file_footer:
             out.write(file_footer)
 
