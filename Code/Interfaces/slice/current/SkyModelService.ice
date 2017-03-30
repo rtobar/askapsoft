@@ -177,43 +177,6 @@ module skymodelservice
          * TODO: should I follow Ben's lead and return just the ID list?
          **/
         ComponentSeq rectSearch(Rect roi);
-
-        /**
-         * Obtain a sequence of components. If a component in the componentIds
-         * sequence does not exist in the database, it is simply omitted from
-         * the result set, this the size of the returned sequence of components
-         * may be less than the size of the component id sequence parameter.
-         *
-         * @param component_ids     a sequence of component identifiers
-         *
-         * @return                  a sequence of components.
-         **/
-        //ComponentSeq getComponents(ComponentIdSeq componentIds);
-
-        /**
-         * Add a sequence of one or more components to the component database.
-         *
-         * Note: This is really just here for testing purposes and will likely
-         * not form part of the final API. Indeed the merge LSM into GSM usecase
-         * will replace this one.
-         *
-         * @return a sequence of component ids mapping one-to-one with the
-         * "components" sequence passed to the function.
-         **/
-        //ComponentIdSeq addComponents(ComponentSeq components);
-
-        /**
-         * Remove components from the components table.
-         *
-         * Note: This is really just here for testing purposes and will likely
-         * not form part of the final API.
-         *
-         * @param component_ids a sequence of component identifiers which
-         *                      reference the components to delete.
-         * @throws InvalidComponentIdException  if one or more of the component
-         *                                      identifiers does not exist.
-         **/
-        //void removeComponents(ComponentIdSeq componentIds) throws InvalidComponentIdException;
     };
 
 };

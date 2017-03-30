@@ -432,18 +432,18 @@ if __name__ == '__main__':
             skiprows=f['skiprows'])
         write_output(data, f['output'])
 
-    print('Generating views ...')
-    for f in VIEW_FILES:
-        print('\t' + f['output'])
-        # Load all the input data frames that will be combined into the view
-        view_data = [
-            load(i, parse_cols=f['parse_cols'], skiprows=f['skiprows'])
-            for i in f['inputs']]
+    # print('Generating views ...')
+    # for f in VIEW_FILES:
+        # print('\t' + f['output'])
+        # # Load all the input data frames that will be combined into the view
+        # view_data = [
+            # load(i, parse_cols=f['parse_cols'], skiprows=f['skiprows'])
+            # for i in f['inputs']]
 
-        # concatenate the dataframes, and then select just the fields that have
-        # the view flag set
-        data = pd.concat(view_data).query('lsm_view == True')
-        write_output(data, f['output'], is_view=True)
+        # # concatenate the dataframes, and then select just the fields that have
+        # # the view flag set
+        # data = pd.concat(view_data).query('lsm_view == True')
+        # write_output(data, f['output'], is_view=True)
 
     print('Generating VOTable to datamodel parsing code ...')
     write_votable_parser()

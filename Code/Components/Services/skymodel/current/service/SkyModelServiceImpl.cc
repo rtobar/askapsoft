@@ -78,36 +78,19 @@ std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)
     return "1.0";
 }
 
-ComponentIdSeq SkyModelServiceImpl::coneSearch(
-    double rightAscension,
-    double declination,
+ComponentSeq SkyModelServiceImpl::coneSearch(
+    const sms_interface::Coordinate& centre,
     double searchRadius,
-    double fluxLimit,
     const Ice::Current&)
 {
-    ASKAPLOG_DEBUG_STR(logger, "getServiceVersion");
-    return ComponentIdSeq();
-}
-
-ComponentSeq SkyModelServiceImpl::getComponents(
-    const ComponentIdSeq& componentIds,
-    const Ice::Current&)
-{
-    ASKAPLOG_DEBUG_STR(logger, "getComponents");
+    ASKAPLOG_DEBUG_STR(logger, "simple cone search");
     return ComponentSeq();
 }
 
-ComponentIdSeq SkyModelServiceImpl::addComponents(
-    const ComponentSeq& components,
+ComponentSeq SkyModelServiceImpl::rectSearch(
+    const sms_interface::Rect& roi,
     const Ice::Current&)
 {
-    ASKAPLOG_DEBUG_STR(logger, "addComponents");
-    return ComponentIdSeq();
-}
-
-void SkyModelServiceImpl::removeComponents(
-    const ComponentIdSeq& componentIds,
-    const Ice::Current&)
-{
-    ASKAPLOG_DEBUG_STR(logger, "removeComponents");
+    ASKAPLOG_DEBUG_STR(logger, "simple rect search");
+    return ComponentSeq();
 }

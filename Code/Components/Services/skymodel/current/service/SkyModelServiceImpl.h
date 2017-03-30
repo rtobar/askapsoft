@@ -49,7 +49,7 @@ namespace sms {
 namespace sms_interface = askap::interfaces::skymodelservice;
 
 /// @brief Implementation of the "ISkyModelService" Ice interface.
-class SkyModelServiceImpl : 
+class SkyModelServiceImpl :
     public sms_interface::ISkyModelService,
     private boost::noncopyable {
     public:
@@ -66,27 +66,17 @@ class SkyModelServiceImpl :
 
         virtual std::string getServiceVersion(const Ice::Current&);
 
-        virtual sms_interface::ComponentIdSeq coneSearch(
-            double rightAscension,
-            double declination,
-            double searchRadius, 
-            double fluxLimit,
+        virtual sms_interface::ComponentSeq coneSearch(
+            const sms_interface::Coordinate& centre,
+            double searchRadius,
             const Ice::Current&);
 
-        virtual sms_interface::ComponentSeq getComponents(
-            const sms_interface::ComponentIdSeq& componentIds,
-            const Ice::Current&);
-
-        virtual sms_interface::ComponentIdSeq addComponents(
-            const sms_interface::ComponentSeq& components,
-            const Ice::Current&);
-
-        virtual void removeComponents(
-            const sms_interface::ComponentIdSeq& componentIds,
+        virtual sms_interface::ComponentSeq rectSearch(
+            const sms_interface::Rect& roi,
             const Ice::Current&);
 
     private:
-        /// @brief Constructor. 
+        /// @brief Constructor.
         /// Private. Use the factory method to create.
         /// @param gsm The GlobalSkyModel instance.
         SkyModelServiceImpl(boost::shared_ptr<GlobalSkyModel> gsm);
