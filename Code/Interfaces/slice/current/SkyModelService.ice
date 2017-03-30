@@ -21,12 +21,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
-
-#ifndef ASKAP_SKY_MODEL_SERVICE_ICE
-#define ASKAP_SKY_MODEL_SERVICE_ICE
+#pragma once
 
 #include <CommonTypes.ice>
 #include <IService.ice>
+#include <SkyModelServiceDTO.ice>
 
 module askap
 {
@@ -88,31 +87,6 @@ module skymodelservice
     };
 
     /**
-     * A component.
-     **/
-    struct Component
-    {
-        /**
-         * Unique component index number
-         **/
-        long id;
-
-        /**
-         * Right ascension in the J2000 coordinate system
-         * Units: degrees
-         **/
-        double rightAscension;
-
-        /**
-         * Declination in the J2000 coordinate system
-         * Units: degrees
-         **/
-        double declination;
-
-        // TODO: generate the rest of the data fields
-    };
-
-    /**
      * A sequence of component identifiers
      **/
     ["java:type:java.util.ArrayList<Long>"]
@@ -121,12 +95,12 @@ module skymodelservice
     /**
      * A sequence of Components
      **/
-    ["java:type:java.util.ArrayList<askap.interfaces.skymodelservice.Component>"]
-    sequence<Component> ComponentSeq;
+    ["java:type:java.util.ArrayList<askap.interfaces.skymodelservice.ContinuumComponent>"]
+    sequence<ContinuumComponent> ComponentSeq;
 
     /**
      * This exception is thrown when a component id is specified but the component
-     * does not exit, but is expected to.
+     * does not exist, but is expected to.
      **/
     exception InvalidComponentIdException extends askap::interfaces::AskapIceException
     {
@@ -137,33 +111,6 @@ module skymodelservice
      **/
     interface ISkyModelService extends askap::interfaces::services::IService
     {
-        /**
-         * Cone search method.
-         *
-         * The cone search does not directly return a sequence of components, which
-         * could potentially be very large. Instead a sequence of component ids is
-         * returned. This allows the caller to then call getComponents() for a subset
-         * of the full component list if it is too large. The idea here is to allow
-         * the client access perhaps to be hidden behind an iterator which allows
-         * the client to deal with one a smaller (more manageable) subset of the
-         * result set at a time.
-         *
-         * Coordinate frame is J2000.
-         *
-         * @param right_ascension   the right ascension of the centre of the
-         *                          search area (Units: decimal degrees).
-         * @param declination       the declination of the centre of the search
-         *                          area (Units: decimal degrees).
-         * @param radius            the search radius (Units: decimal degrees).
-         * @param fluxLimit         low limit on flux on sources returned all
-         *                          returned sources shall have flux >= fluxLimit
-         *                          (Units: Jy).
-         *
-         * @return                  a sequence of component identifiers.
-         **/
-        //ComponentIdSeq coneSearch(double rightAscension, double declination,
-            //double searchRadius, double fluxLimit);
-
         /**
          * Cone search
          * TODO: documentation
@@ -182,5 +129,3 @@ module skymodelservice
 };
 };
 };
-
-#endif

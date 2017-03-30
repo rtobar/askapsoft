@@ -68,11 +68,9 @@ COMMON_FILE_HEADER = '''\
 '''
 
 COMMON_SLICE_HEADER = COMMON_FILE_HEADER + '''
-#ifndef ASKAP_SKY_MODEL_SERVICE_ICE
-#define ASKAP_SKY_MODEL_SERVICE_ICE
+#pragma once
 
 #include <CommonTypes.ice>
-#include <IService.ice>
 '''
 
 SLICE_NAMESPACES = '''
@@ -84,17 +82,14 @@ module skymodelservice
 {
 '''
 
-CONTINUUM_COMPONENT_HEADER = COMMON_SLICE_HEADER + '''\
-#include <SkyModelServicePolarisation.ice>
-''' + \
-SLICE_NAMESPACES + \
-'''\
+CONTINUUM_COMPONENT_HEADER = '''
+
     /**
      * A continuum component.
      **/
-    struct ContinuumComponent
+    class ContinuumComponent
     {
-        optional(1) askap::interfaces::skymodelservice::ContinuumComponentPolarisation polarisation;
+        optional(1) ContinuumComponentPolarisation polarisation;
 
 '''
 
@@ -113,8 +108,6 @@ SLICE_FOOTER = '''\
 };
 };
 };
-
-#endif
 '''
 
 CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
@@ -141,23 +134,29 @@ FILES = [
     },
 ]
 
-# configuration for Slice file generation
+# configuration for Slice file generation.
+# This is setup to write to the same file, with continuum component appending to
+# the polarisation file (thus the difference between headers and footers)
+# It also means that order is important, polarisation must come before component
+# definition
 SLICE_FILES = [
     {
+        'input': POLARISATION_SPEC,
+        'output': '../SkyModelServiceDTO.ice',
+        'parse_cols': None,
+        'skiprows': [0],
+        'file_header': POLARISATION_HEADER,
+        'file_footer': '    };',
+        'append_to_file': False,
+    },
+    {
         'input': CONTINUUM_COMPONENT_SPEC,
-        'output': '../SkyModelServiceContinuumComponent.ice',
+        'output': '../SkyModelServiceDTO.ice',
         'parse_cols': None,
         'skiprows': [0],
         'file_header': CONTINUUM_COMPONENT_HEADER,
         'file_footer': SLICE_FOOTER,
-    },
-    {
-        'input': POLARISATION_SPEC,
-        'output': '../SkyModelServicePolarisation.ice',
-        'parse_cols': None,
-        'skiprows': [0],
-        'file_header': POLARISATION_HEADER,
-        'file_footer': SLICE_FOOTER,
+        'append_to_file': True,
     },
 ]
 
@@ -288,10 +287,12 @@ def write_output(
     is_view=False,
     indent=0,
     camel_case=False,
+    append_to_file=False,
     file_header=None,
     file_footer=None):
     "Writes the data model fields to a file"
-    with open(filename, 'w') as out:
+    mode = 'a' if append_to_file else 'w'
+    with open(filename, mode) as out:
         if file_header:
             out.write(file_header)
         for field in get_fields(data_frame, type_map, is_view, indent=indent, camel_case=camel_case):
@@ -515,6 +516,7 @@ if __name__ == '__main__':
             is_view=True,
             indent=8,
             camel_case=True,
+            append_to_file=f['append_to_file'],
             file_header=f['file_header'],
             file_footer=f['file_footer'])
 
