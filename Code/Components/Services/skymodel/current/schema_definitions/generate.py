@@ -15,7 +15,7 @@ from string import Template
 CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
 POLARISATION_SPEC = './GSM_casda_polarisation.xlsx'
 
-files = [
+FILES = [
     {
         'input': CONTINUUM_COMPONENT_SPEC,
         'output': '../schema/ContinuumComponent.i',
@@ -36,7 +36,7 @@ files = [
     },
 ]
 
-view_files = [
+VIEW_FILES = [
     {
         'inputs': [
             CONTINUUM_COMPONENT_SPEC,
@@ -49,17 +49,20 @@ view_files = [
 ]
 
 # configuration for Slice file generation
-slice_files = [
+SLICE_FILES = [
     {
-        'input': CONTINUUM_COMPONENT_SPEC,
-        'output': '../schema/ContinuumComponent.ice',
+        'inputs': [
+            CONTINUUM_COMPONENT_SPEC,
+            POLARISATION_SPEC,
+            ],
+        'output': '../SkyModelServiceDTO.slice',
         'parse_cols': None,
         'skiprows': [0],
     },
 ]
 
 # The mapping from database types to C++ types
-type_map = {
+TYPE_MAP = {
     'BIGINT': 'boost::int64_t',
     'REAL': 'float',
     'DOUBLE': 'double',
@@ -118,7 +121,7 @@ def load(
 
 class Field(object):
     "Represents a database field"
-    def __init__(self, df_row, is_view):
+    def __init__(self, df_row, is_view, type_map=TYPE_MAP):
         self.name = df_row.name.strip()
         self.comment = df_row.description.strip()
         self.raw_type = df_row.datatype.strip()
@@ -421,7 +424,7 @@ def write_votable_parser():
 
 if __name__ == '__main__':
     print('Generating tables ...')
-    for f in files:
+    for f in FILES:
         print('\t' + f['output'])
         data = load(
             f['input'],
@@ -430,7 +433,7 @@ if __name__ == '__main__':
         write_output(data, f['output'])
 
     print('Generating views ...')
-    for f in view_files:
+    for f in VIEW_FILES:
         print('\t' + f['output'])
         # Load all the input data frames that will be combined into the view
         view_data = [

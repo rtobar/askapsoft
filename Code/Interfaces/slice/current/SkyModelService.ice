@@ -35,6 +35,59 @@ module interfaces
 module skymodelservice
 {
     /**
+     * Extents structure. Used to specify the extents of a rectangular region of
+     * interest in spatial searches.
+     **/
+    struct RectExtents
+    {
+        /**
+         * Width of the bounding box
+         * Units: decimal degrees
+         **/
+        double width;
+
+        /**
+         * Height of the bounding box
+         * Units: decimal degrees
+         **/
+        double height;
+    };
+
+    /**
+     * A Right-ascension, declination coordinate pair.
+     **/
+    struct Coordinate
+    {
+        /**
+         * Right ascension in the J2000 coordinate system
+         * Units: degrees
+         **/
+        double rightAscension;
+
+        /**
+         * Declination in the J2000 coordinate system
+         * Units: degrees
+         **/
+        double declination;
+    };
+
+    /**
+     * A rectangular region of interest in the sky.
+     **/
+    struct Rect
+    {
+        /**
+         * The rectangle centre.
+         **/
+        Coordinate centre;
+
+        /**
+         * The rectangle extents.
+         **/
+        RectExtents extents;
+    };
+
+    /**
      * A component.
      **/
     struct Component
@@ -56,41 +109,7 @@ module skymodelservice
          **/
         double declination;
 
-        /**
-         * Position angle. Counted east from north.
-         * Units: radians
-         **/
-        double positionAngle;
-
-        /**
-         * Major axis
-         * Units: arcsecs
-         **/
-        double majorAxis;
-
-        /**
-         * Minor axis
-         * Units: arcsecs
-         **/
-        double minorAxis;
-
-        /**
-         * Flux at 1400 Mhz
-         * Units: Jy
-         **/
-        double i1400;
-
-        /**
-         * Spectral index
-         * Units: N/A
-         **/
-        double spectralIndex;
-
-        /**
-         * Spectral curvature
-         * Units: N/A
-         **/
-        double spectralCurvature;
+        // TODO: generate the rest of the data fields
     };
 
     /**
@@ -142,8 +161,22 @@ module skymodelservice
          *
          * @return                  a sequence of component identifiers.
          **/
-        ComponentIdSeq coneSearch(double rightAscension, double declination,
-            double searchRadius, double fluxLimit);
+        //ComponentIdSeq coneSearch(double rightAscension, double declination,
+            //double searchRadius, double fluxLimit);
+
+        /**
+         * Cone search
+         * TODO: documentation
+         * TODO: should I follow Ben's lead and return just the ID list?
+         **/
+        ComponentSeq coneSearch(Coordinate centre, double searchRadius);
+
+        /**
+         * Rectangular ROI search
+         * TODO: documentation
+         * TODO: should I follow Ben's lead and return just the ID list?
+         **/
+        ComponentSeq rectSearch(Rect roi);
 
         /**
          * Obtain a sequence of components. If a component in the componentIds
@@ -155,11 +188,11 @@ module skymodelservice
          *
          * @return                  a sequence of components.
          **/
-        ComponentSeq getComponents(ComponentIdSeq componentIds);
+        //ComponentSeq getComponents(ComponentIdSeq componentIds);
 
         /**
          * Add a sequence of one or more components to the component database.
-         * 
+         *
          * Note: This is really just here for testing purposes and will likely
          * not form part of the final API. Indeed the merge LSM into GSM usecase
          * will replace this one.
@@ -167,11 +200,11 @@ module skymodelservice
          * @return a sequence of component ids mapping one-to-one with the
          * "components" sequence passed to the function.
          **/
-        ComponentIdSeq addComponents(ComponentSeq components);
+        //ComponentIdSeq addComponents(ComponentSeq components);
 
         /**
          * Remove components from the components table.
-         * 
+         *
          * Note: This is really just here for testing purposes and will likely
          * not form part of the final API.
          *
@@ -180,7 +213,7 @@ module skymodelservice
          * @throws InvalidComponentIdException  if one or more of the component
          *                                      identifiers does not exist.
          **/
-        void removeComponents(ComponentIdSeq componentIds) throws InvalidComponentIdException;
+        //void removeComponents(ComponentIdSeq componentIds) throws InvalidComponentIdException;
     };
 
 };
