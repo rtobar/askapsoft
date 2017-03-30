@@ -94,7 +94,7 @@ SLICE_NAMESPACES + \
      **/
     struct ContinuumComponent
     {
-        optional(1) ContinuumComponentPolarisation polarisation;
+        optional(1) askap::interfaces::skymodelservice::ContinuumComponentPolarisation polarisation;
 
 '''
 
@@ -194,10 +194,24 @@ def load(
 
     return data[data.include_in_gsm == True]
 
+
+def to_camel_case(snake_str):
+    '''Converts a snake string to lower camel case.
+    E.G.: my_identifier --> myIdentifier
+    '''
+    components = snake_str.split('_')
+    # We capitalize the first letter of each component except the first one
+    # with the 'title' method and join them together.
+    return components[0] + "".join(x.title() for x in components[1:])
+
+
 class Field(object):
     "Represents a database field"
-    def __init__(self, df_row, is_view, type_map, indent=0):
+    def __init__(self, df_row, is_view, type_map, indent=0, camel_case=False):
         self.name = df_row.name.strip()
+        if camel_case:
+            self.name = to_camel_case(self.name)
+
         self.comment = df_row.description.strip()
         self.raw_type = df_row.datatype.strip()
         self.dtype = type_map[self.raw_type]
@@ -257,14 +271,13 @@ class Field(object):
         return ['/// ' + c for c in comments]
 
 
-def get_fields(data_frame, type_map, is_view, indent=0):
+def get_fields(data_frame, type_map, is_view, indent=0, camel_case=False):
     "Unpacks a tablespec data frame into a list of field objects"
     fields = []
     for row in data_frame.itertuples(index=False):
         # print(row)
-        field = Field(row, is_view, type_map, indent=indent)
+        field = Field(row, is_view, type_map, indent=indent, camel_case=camel_case)
         fields.append(field)
-
     return fields
 
 
@@ -274,13 +287,14 @@ def write_output(
     type_map,
     is_view=False,
     indent=0,
+    camel_case=False,
     file_header=None,
     file_footer=None):
     "Writes the data model fields to a file"
     with open(filename, 'w') as out:
         if file_header:
             out.write(file_header)
-        for field in get_fields(data_frame, type_map, is_view, indent=indent):
+        for field in get_fields(data_frame, type_map, is_view, indent=indent, camel_case=camel_case):
             out.write(str(field))
         if file_footer:
             out.write(file_footer)
@@ -500,6 +514,7 @@ if __name__ == '__main__':
             SLICE_TYPE_MAP,
             is_view=True,
             indent=8,
+            camel_case=True,
             file_header=f['file_header'],
             file_footer=f['file_footer'])
 
