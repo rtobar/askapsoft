@@ -27,8 +27,7 @@
 ///
 /// @author Daniel Collins <daniel.collins@csiro.au>
 
-#ifndef ASKAP_CP_SMS_VOTABLEPARSER_H
-#define ASKAP_CP_SMS_VOTABLEPARSER_H
+#pragma once
 
 // System includes
 #include <string>
@@ -483,5 +482,3 @@ void parsePolarisationRowField(
 }
 }
 }
-
-#endif

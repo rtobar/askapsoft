@@ -116,7 +116,7 @@ module skymodelservice
          * TODO: documentation
          * TODO: should I follow Ben's lead and return just the ID list?
          **/
-        ComponentSeq coneSearch(Coordinate centre, double searchRadius);
+        ComponentSeq coneSearch(Coordinate centre, double radius);
 
         /**
          * Rectangular ROI search

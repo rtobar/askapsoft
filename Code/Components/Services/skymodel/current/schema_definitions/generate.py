@@ -307,8 +307,7 @@ def write_output(
 # VOTable Parser function code generation section
 #--------------------------------------------------
 VOTABLE_PARSER_HEADER = COMMON_FILE_HEADER + '''
-#ifndef ASKAP_CP_SMS_VOTABLEPARSER_H
-#define ASKAP_CP_SMS_VOTABLEPARSER_H
+#pragma once
 
 // System includes
 #include <string>
@@ -335,8 +334,6 @@ HEADER_POSTAMBLE = '''
 }
 }
 }
-
-#endif
 '''
 
 PARSE_POLARISATION_ROW_FIELD_START = '''
@@ -408,14 +405,14 @@ def write_field_parsing_code(
     count = 0
     for field in fields:
         if field.units:
-            unitCheck = 'boost::iequals(unit, "{0}")'.format(field.units)
+            unit_check = 'boost::iequals(unit, "{0}")'.format(field.units)
         else:
-            unitCheck = 'unit.empty() || unit == "--" || unit == "none"'
+            unit_check = 'unit.empty() || unit == "--" || unit == "none"'
 
         if field.ucd not in ucd_skip_list:
             statement = Template(ucd_field_template).substitute(
                     ucd=field.ucd,
-                    unitCheckExpression=unitCheck,
+                    unitCheckExpression=unit_check,
                     votype=db_to_votable_type_map[field.raw_type],
                     fieldname=field.name,
                     cpptype=field.dtype)
@@ -438,7 +435,7 @@ def write_field_parsing_code(
             count += 1
         elif field.ucd == 'meta.code':
             statement = Template(no_ucd_field_template).substitute(
-                    unitCheckExpression=unitCheck,
+                    unitCheckExpression=unit_check,
                     votype=db_to_votable_type_map[field.raw_type],
                     fieldname=field.name,
                     cpptype=field.dtype)
@@ -490,7 +487,61 @@ def write_votable_parser():
             POLARISATION_NO_UCD_FIELD_PARSE_PATTERN,
             special_case_ra_dec=False)
         out.write('\n}')
+        out.write(HEADER_POSTAMBLE)
 
+#--------------------------------------------------
+# Data marshalling code generation section
+# The data marshaller transfers data from the ORM objects retrieved from
+# a database query into the Ice DTO structures.
+#
+# Only database fields that have the lsm_view flag set to true are marshalled.
+#--------------------------------------------------
+DATA_MARSHALLER_HEADER = COMMON_FILE_HEADER + '''
+#pragma once
+
+// System includes
+#include <string>
+#include <vector>
+#include <boost/cstdint.hpp>
+#include <boost/shared_ptr.hpp>
+
+// ASKAPsoft includes
+#include <askap/AskapError.h>
+#include <askap/AskapLogging.h>
+
+// Ice interfaces
+#include <SkyModelService.h>
+#include <SkyModelServiceDTO.h>
+
+// Local package includes
+#include "datamodel/ContinuumComponent.h"
+#include "SmsTypes.h"
+
+namespace askap {
+namespace cp {
+namespace sms {
+
+
+/// @brief Transfers data from the datamodel::ContinuumComponent class to the
+/// Ice DTO class. If present, polarisation data will be added to the optional
+/// polarisation member of ContinuumComponent.
+///
+/// @param[in] components Pointer to a vector of components for transfer.
+/// @throw AskapError Thrown if there are errors.
+/// @return askap::interfaces::skymodelservice::ComponentSeq
+askap::interfaces::skymodelservice::ComponentSeq marshallComponentsToDTO(
+    boost::shared_ptr< std::vector<datamodel::ContinuumComponent> > components)
+{
+    return askap::interfaces::skymodelservice::ComponentSeq();
+}
+'''
+
+def write_orm_to_dto_marshaller():
+    '''Generates a function for marshalling data from the ORM classes into
+    the Ice DTO structures.'''
+    print('\t../service/DataMarshalling.h')
+    with open('../service/DataMarshalling.h', 'w') as out:
+        out.write(DATA_MARSHALLER_HEADER)
         out.write(HEADER_POSTAMBLE)
 
 
@@ -526,5 +577,8 @@ if __name__ == '__main__':
     print('Generating VOTable to datamodel parsing code ...')
     write_votable_parser()
 
+    print('Generating data marshalling function ...')
+    write_orm_to_dto_marshaller()
+
     print('Done')
-    print("* Don't forget to move the generated Ice files to Code/Interfaces/slice/current")
+    print("* Don't forget to move the generated Ice files to Code/Interfaces/slice/current with 'make generate_ice'")

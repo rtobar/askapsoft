@@ -39,6 +39,7 @@
 
 // Local package includes
 //#include "datamodel/ContinuumComponent-odb.h"
+#include "DataMarshalling.h"
 #include "GlobalSkyModel.h"
 #include "Utility.h"
 
@@ -80,7 +81,7 @@ std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)
 
 ComponentSeq SkyModelServiceImpl::coneSearch(
     const sms_interface::Coordinate& centre,
-    double searchRadius,
+    double radius,
     const Ice::Current&)
 {
     ASKAPLOG_DEBUG_STR(logger, "simple cone search");

@@ -29,6 +29,7 @@
 
 // System includes
 #include <string>
+#include <vector>
 
 // ASKAPsoft includes
 #include <boost/cstdint.hpp>

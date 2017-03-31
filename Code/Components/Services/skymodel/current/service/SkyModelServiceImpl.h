@@ -38,6 +38,7 @@
 
 // Ice interfaces
 #include <SkyModelService.h>
+#include <SkyModelServiceDTO.h>
 
 // Local package includes
 #include "GlobalSkyModel.h"
@@ -68,7 +69,7 @@ class SkyModelServiceImpl :
 
         virtual sms_interface::ComponentSeq coneSearch(
             const sms_interface::Coordinate& centre,
-            double searchRadius,
+            double radius,
             const Ice::Current&);
 
         virtual sms_interface::ComponentSeq rectSearch(

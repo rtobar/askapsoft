@@ -345,6 +345,8 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
     private:
         GlobalSkyModel::IdListPtr initSearch() {
+            // Generate the database file for use in functional tests
+            //parset.replace("sqlite.name", "./tests/service/small_spatial_search.dbtmp");
             initEmptyDatabase();
             return gsm->ingestVOTable(
                 simple_cone_search,
