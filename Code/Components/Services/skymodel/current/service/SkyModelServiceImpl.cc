@@ -38,7 +38,6 @@
 #include <askap/AskapLogging.h>
 
 // Local package includes
-//#include "datamodel/ContinuumComponent-odb.h"
 #include "DataMarshalling.h"
 #include "GlobalSkyModel.h"
 #include "Utility.h"
@@ -84,14 +83,16 @@ ComponentSeq SkyModelServiceImpl::coneSearch(
     double radius,
     const Ice::Current&)
 {
-    ASKAPLOG_DEBUG_STR(logger, "simple cone search");
-    return ComponentSeq();
+    GlobalSkyModel::ComponentListPtr results = itsGsm->coneSearch(
+        Coordinate(centre),
+        radius);
+    return marshallComponentsToDTO(results);
 }
 
 ComponentSeq SkyModelServiceImpl::rectSearch(
     const sms_interface::Rect& roi,
     const Ice::Current&)
 {
-    ASKAPLOG_DEBUG_STR(logger, "simple rect search");
-    return ComponentSeq();
+    GlobalSkyModel::ComponentListPtr results = itsGsm->rectSearch(Rect(roi));
+    return marshallComponentsToDTO(results);
 }

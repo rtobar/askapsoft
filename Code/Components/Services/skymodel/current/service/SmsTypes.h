@@ -32,13 +32,19 @@
 
 // ASKAPsoft includes
 
+// Ice interfaces
+#include <SkyModelService.h>
+#include <SkyModelServiceDTO.h>
+
 // Local package includes
 #include "Utility.h"
-
 
 namespace askap {
 namespace cp {
 namespace sms {
+
+// Create an alias for the Ice interfaces
+namespace sms_interface = askap::interfaces::skymodelservice;
 
 /// @brief Extents structure, used to define a region of interest about
 /// a coordinate.
@@ -53,6 +59,13 @@ struct Extents {
     {
         ASKAPASSERT(width > 0);
         ASKAPASSERT(height > 0);
+    }
+    
+    /// @brief Construct an Extents from the corresponding Ice struct
+    inline Extents(const sms_interface::RectExtents& that) :
+        width(that.width),
+        height(that.height)
+    {
     }
 
     double width;
@@ -81,17 +94,35 @@ struct Coordinate {
         ASKAPASSERT((dec >= -90.0) && (dec <= 90.0));
     }
 
+    /// @brief Construct a Coordinate from the corresponding Ice struct
+    inline Coordinate(const sms_interface::Coordinate& that) :
+        ra(that.rightAscension),
+        dec(that.declination)
+    {
+    }
+
     double ra;
     double dec;
 };
 
+/// @brief A rectangular region specified as a centre coordinate plus extents.
 struct Rect {
+
+    /// @brief Constructs a Rect from centre and extents.
     inline Rect(Coordinate centre, Extents extents) :
         centre(centre),
         extents(extents)
     {
     }
 
+    /// @brief Construct a Rect from the corresponding Ice struct
+    inline Rect(const sms_interface::Rect& that) :
+        centre(that.centre),
+        extents(that.extents)
+    {
+    }
+
+    /// @brief retrieve the top-left coordinate
     inline Coordinate topLeft() const
     {
         return Coordinate(
@@ -99,6 +130,7 @@ struct Rect {
             centre.dec + extents.height / 2.0);
     }
 
+    /// @brief retrieve the top-right coordinate
     inline Coordinate topRight() const
     {
         return Coordinate(
@@ -106,6 +138,7 @@ struct Rect {
             centre.dec + extents.height / 2.0);
     }
 
+    /// @brief retrieve the bottom-left coordinate
     inline Coordinate bottomLeft() const
     {
         return Coordinate(
@@ -113,6 +146,7 @@ struct Rect {
             centre.dec - extents.height / 2.0);
     }
 
+    /// @brief retrieve the bottom-right coordinate
     inline Coordinate bottomRight() const
     {
         return Coordinate(

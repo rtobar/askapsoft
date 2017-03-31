@@ -40,7 +40,6 @@
 // Classes to test
 #include "datamodel/Common.h"
 #include "datamodel/ContinuumComponent.h"
-//#include "datamodel/ContinuumComponent-odb.h"
 #include "service/GlobalSkyModel.h"
 
 using namespace std;

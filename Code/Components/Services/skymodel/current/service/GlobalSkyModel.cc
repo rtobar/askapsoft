@@ -243,7 +243,7 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::coneSearch(
     double radius,
     ComponentQuery query) const
 {
-    ASKAPLOG_DEBUG_STR(logger, "coneSearch: ra=" << centre.ra << ", dec=" << centre.dec << ", radius=" << radius);
+    ASKAPLOG_DEBUG_STR(logger, "ra=" << centre.ra << ", dec=" << centre.dec << ", radius=" << radius);
     ASKAPASSERT(radius > 0);
     return queryComponentsByPixel(
             itsHealPix.queryDisk(centre, radius),
@@ -258,7 +258,7 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(Rect rect) const
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
     Rect rect, ComponentQuery query) const
 {
-    ASKAPLOG_DEBUG_STR(logger, "rectSearch: centre=" << rect.centre.ra << ", " << 
+    ASKAPLOG_DEBUG_STR(logger, "centre=" << rect.centre.ra << ", " << 
         rect.centre.dec << ". extents=" << rect.extents.width << ", " << rect.extents.height);
     return queryComponentsByPixel(
             itsHealPix.queryRect(rect),
@@ -272,7 +272,6 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
     ASKAPASSERT(pixels.get());
     ASKAPASSERT(pixels->size() <= MaxSearchPixels());
     ASKAPLOG_DEBUG_STR(logger, "healpixQuery against : " << pixels->size() << " pixels");
-    //cout << "healpixQuery against : " << pixels->size() << " pixels" << endl;
 
     // We need somewhere to store the results
     ComponentListPtr results(new ComponentList());
@@ -291,7 +290,7 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
         t.commit();
     }
 
-    ASKAPLOG_DEBUG_STR(logger, "coneSearch: " << results->size() << " results");
+    ASKAPLOG_DEBUG_STR(logger, results->size() << " results");
     return results;
 }
 
