@@ -86,11 +86,18 @@ module skymodelservice
 CONTINUUM_COMPONENT_HEADER = '''
 
     /**
+     * Define a sequence for storing the optional polarisation data inside the
+     * component
+     **/
+    sequence<ContinuumComponentPolarisation> PolarisationOpt;
+
+    /**
      * A continuum component.
      **/
-    class ContinuumComponent
+    struct ContinuumComponent
     {
-        optional(1) ContinuumComponentPolarisation polarisation;
+        /// @brief Should only ever contain 0 or 1 elements.
+        PolarisationOpt polarisation;
 
 '''
 
@@ -521,6 +528,8 @@ namespace askap {
 namespace cp {
 namespace sms {
 
+// Alias for the Ice type namespace
+namespace ice_interfaces = askap::interfaces::skymodelservice;
 
 /// @brief Transfers data from the datamodel::ContinuumComponent class to the
 /// Ice DTO class. If present, polarisation data will be added to the optional
@@ -529,10 +538,64 @@ namespace sms {
 /// @param[in] components Pointer to a vector of components for transfer.
 /// @throw AskapError Thrown if there are errors.
 /// @return askap::interfaces::skymodelservice::ComponentSeq
-askap::interfaces::skymodelservice::ComponentSeq marshallComponentsToDTO(
+ice_interfaces::ComponentSeq marshallComponentsToDTO(
     boost::shared_ptr< std::vector<datamodel::ContinuumComponent> > components)
 {
-    return askap::interfaces::skymodelservice::ComponentSeq();
+    // This might be nice if I can define a conversion operator from
+    // datamodel::ContinuumComponent to ice_interfaces::ContinuumComponent
+    // But unfortunately, both source and destination classes are produced by
+    // the corresponding systems (Ice slice compiler, ODB class generation),
+    // so I have no easy way to define the conversion. Doing it manually isn't
+    // too bad though...
+    //return ice_interfaces::ComponentSeq(components->begin(), components->end());
+
+    // preallocate space so I can try OpenMP loop parallelism
+    ice_interfaces::ComponentSeq dst(components->size());
+    //ice_interfaces::ComponentSeq dst();
+
+    for (std::vector<datamodel::ContinuumComponent>::const_iterator it = components->begin();
+        it != components->end();
+        it++) {
+    }
+
+'''
+
+MARSHALLING_FUNCTION_STUB = '''
+    /*
+    reminders of the Ice types
+    typedef ::std::vector< ::askap::interfaces::skymodelservice::ContinuumComponent> ComponentSeq;
+    struct ContinuumComponentPolarisation
+    {
+        ::Ice::Double lambdaRefSq;
+        ::Ice::Double polPeakFit;
+        ::Ice::Double polPeakFitDebias;
+        ::Ice::Double polPeakFitErr;
+        ::Ice::Double polPeakFitSnr;
+        ::Ice::Double polPeakFitSnrErr;
+        ::Ice::Double fdPeakFit;
+        ::Ice::Double fdPeakFitErr;
+    };
+
+    typedef ::std::vector< ::askap::interfaces::skymodelservice::ContinuumComponentPolarisation> PolarisationOpt;
+
+    struct ContinuumComponent
+    {
+        ::askap::interfaces::skymodelservice::PolarisationOpt polarisation;
+        ::Ice::Double ra;
+        ::Ice::Double dec;
+        ::Ice::Float raErr;
+        ::Ice::Float decErr;
+        ::Ice::Float freq;
+        ::Ice::Float fluxPeak;
+        ::Ice::Float fluxPeakErr;
+        ::Ice::Float fluxInt;
+        ::Ice::Float fluxIntErr;
+        ::Ice::Float spectralIndex;
+        ::Ice::Float spectralCurvature;
+    };
+    */
+
+    return dst;
 }
 '''
 
@@ -542,6 +605,7 @@ def write_orm_to_dto_marshaller():
     print('\t../service/DataMarshalling.h')
     with open('../service/DataMarshalling.h', 'w') as out:
         out.write(DATA_MARSHALLER_HEADER)
+        out.write(MARSHALLING_FUNCTION_STUB)
         out.write(HEADER_POSTAMBLE)
 
 

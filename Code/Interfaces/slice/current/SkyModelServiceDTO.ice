@@ -43,81 +43,9 @@ module skymodelservice
      **/
     struct ContinuumComponentPolarisation
     {
-        /// @brief Component identifier
-        /// UCD: meta.id;meta.main
-        string componentId;
-
-        /// @brief Band-median value for Stokes I spectrum (mJy/beam)
-        /// UCD: phot.flux.density;em.radio
-        double fluxIMedian;
-
-        /// @brief Band-median value for Stokes Q spectrum (mJy/beam)
-        /// UCD: phot.flux.density;em.radio;askap:phys.polarization.stokes.Q
-        double fluxQMedian;
-
-        /// @brief Band-median value for Stokes U spectrum (mJy/beam)
-        /// UCD: phot.flux.density;em.radio;askap:phys.polarization.stokes.U
-        double fluxUMedian;
-
-        /// @brief Band-median value for Stokes V spectrum (mJy/beam)
-        /// UCD: phot.flux.density;em.radio;askap:phys.polarization.stokes.V
-        double fluxVMedian;
-
-        /// @brief Band-median sensitivity for Stokes I spectrum (mJy/beam)
-        /// UCD: stat.stdev;phot.flux.density
-        double rmsI;
-
-        /// @brief Band-median sensitivity for Stokes Q spectrum (mJy/beam)
-        /// UCD: stat.stdev;phot.flux.density;askap:phys.polarization.stokes.Q
-        double rmsQ;
-
-        /// @brief Band-median sensitivity for Stokes U spectrum (mJy/beam)
-        /// UCD: stat.stdev;phot.flux.density;askap:phys.polarization.stokes.U
-        double rmsU;
-
-        /// @brief Band-median sensitivity for Stokes V spectrum (mJy/beam)
-        /// UCD: stat.stdev;phot.flux.density;askap:phys.polarization.stokes.V
-        double rmsV;
-
-        /// @brief First order coefficient for polynomial fit to Stokes I spectrum
-        /// UCD: stat.fit.param;spect.continuum
-        double co1;
-
-        /// @brief Second order coefficient for polynomial fit to Stokes I spectrum
-        /// UCD: stat.fit.param;spect.continuum
-        double co2;
-
-        /// @brief Third order coefficient for polynomial fit to Stokes I spectrum
-        /// UCD: stat.fit.param;spect.continuum
-        double co3;
-
-        /// @brief Fourth order coefficient for polynomial fit to Stokes I spectrum
-        /// UCD: stat.fit.param;spect.continuum
-        double co4;
-
-        /// @brief Fifth order coefficient for polynomial fit to Stokes I spectrum
-        /// UCD: stat.fit.param;spect.continuum
-        double co5;
-
         /// @brief Reference wavelength squared (m^2)
         /// UCD: askap:em.wl.squared
         double lambdaRefSq;
-
-        /// @brief Full-width at half maximum of the rotation measure spread function (rad/m^2)
-        /// UCD: phys.polarization.rotMeasure;askap:phys.polarization.rmsfWidth
-        double rmsfFwhm;
-
-        /// @brief Peak polarised intensity in the Faraday Dispersion Function (mJy/beam)
-        /// UCD: phot.flux.density;phys.polarization.rotMeasure;stat.max
-        double polPeak;
-
-        /// @brief Effective peak polarised intensity after correction for bias (mJy/beam)
-        /// UCD: phot.flux.density;phys.polarization.rotMeasure;stat.max;askap:meta.corrected
-        double polPeakDebias;
-
-        /// @brief Uncertainty in pol_peak (mJy/beam)
-        /// UCD: stat.error;phot.flux.density;phys.polarization.rotMeasure;stat.max
-        double polPeakErr;
 
         /// @brief Peak polarised intensity from a three-point parabolic fit (mJy/beam)
         /// UCD: phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit
@@ -139,14 +67,6 @@ module skymodelservice
         /// UCD: stat.error;stat.snr;phot.flux.density;phys.polarization.rotMeasure;stat.max;stat.fit
         double polPeakFitSnrErr;
 
-        /// @brief Faraday Depth from the channel with the peak of the Faraday Dispersion Function (rad/m^2)
-        /// UCD: phys.polarization.rotMeasure
-        double fdPeak;
-
-        /// @brief Uncertainty in far_depth_peak (rad/m^2)
-        /// UCD: stat.error;phys.polarization.rotMeasure
-        double fdPeakErr;
-
         /// @brief Faraday Depth from fit to peak in Faraday Dispersion Function (rad/m^2)
         /// UCD: phys.polarization.rotMeasure;stat.fit
         double fdPeakFit;
@@ -155,78 +75,21 @@ module skymodelservice
         /// UCD: stat.error;phys.polarization.rotMeasure;stat.fit
         double fdPeakFitErr;
 
-        /// @brief Polarisation angle at the reference wavelength (deg)
-        /// UCD: askap:phys.polarization.angle
-        double polAngRef;
-
-        /// @brief Uncertainty in pol_ang_ref (deg)
-        /// UCD: stat.error;askap:phys.polarization.angle
-        double polAngRefErr;
-
-        /// @brief Polarisation angle de-rotated to zero wavelength (deg)
-        /// UCD: askap:phys.polarization.angle;askap:meta.corrected
-        double polAngZero;
-
-        /// @brief Uncertainty in pol_ang_zero (deg)
-        /// UCD: stat.error;askap:phys.polarization.angle;askap:meta.corrected
-        double polAngZeroErr;
-
-        /// @brief Fractional polarisation
-        /// UCD: phys.polarization
-        double polFrac;
-
-        /// @brief Uncertainty in fractional polarisation
-        /// UCD: stat.error;phys.polarization
-        double polFracErr;
-
-        /// @brief Statistical measure of polarisation complexity
-        /// UCD: stat.value;phys.polarization
-        double complex1;
-
-        /// @brief Statistical measure of polarisation complexity after removal of a thin-screen model.
-        /// UCD: stat.value;phys.polarization
-        double complex2;
-
-        /// @brief True if pol_peak_fit is above a threshold value otherwise pol_peak_fit is an upper limit.
-        /// UCD: meta.code
-        bool flagP1;
-
-        /// @brief True if FDF peak is close to edge
-        /// UCD: meta.code
-        bool flagP2;
-
-        /// @brief placeholder flag
-        /// UCD: meta.code
-        bool flagP3;
-
-        /// @brief placeholder flag
-        /// UCD: meta.code
-        bool flagP4;
-
     };
+
+    /**
+     * Define a sequence for storing the optional polarisation data inside the
+     * component
+     **/
+    sequence<ContinuumComponentPolarisation> PolarisationOpt;
 
     /**
      * A continuum component.
      **/
-    class ContinuumComponent
+    struct ContinuumComponent
     {
-        optional(1) ContinuumComponentPolarisation polarisation;
-
-        /// @brief The observation date (Posix Date-time)
-        /// UCD: 
-        string observationDate;
-
-        /// @brief The HEALPix index of this component
-        /// UCD: 
-        long healpixIndex;
-
-        /// @brief Scheduling Block identifier
-        /// UCD: 
-        long sbId;
-
-        /// @brief Component identifier
-        /// UCD: meta.id;meta.main
-        string componentId;
+        // Should only ever contain 0 or 1 elements.
+        PolarisationOpt polarisation;
 
         /// @brief J2000 right ascension (deg)
         /// UCD: pos.eq.ra;meta.main
@@ -264,50 +127,6 @@ module skymodelservice
         /// UCD: stat.error;phot.flux.density;em.radio;stat.fit
         float fluxIntErr;
 
-        /// @brief FWHM major axis before deconvolution (arcsec)
-        /// UCD: phys.angSize.smajAxis;em.radio;stat.fit
-        float majAxis;
-
-        /// @brief FWHM minor axis before deconvolution (arcsec)
-        /// UCD: phys.angSize.sminAxis;em.radio;stat.fit
-        float minAxis;
-
-        /// @brief Position angle before deconvolution (deg)
-        /// UCD: phys.angSize;pos.posAng;em.radio;stat.fit
-        float posAng;
-
-        /// @brief Error in major axis before deconvolution (arcsec)
-        /// UCD: stat.error;phys.angSize.smajAxis;em.radio
-        float majAxisErr;
-
-        /// @brief Error in minor axis before deconvolution (arcsec)
-        /// UCD: stat.error;phys.angSize.sminAxis;em.radio
-        float minAxisErr;
-
-        /// @brief Error in position angle before deconvolution (deg)
-        /// UCD: stat.error;phys.angSize;pos.posAng;em.radio
-        float posAngErr;
-
-        /// @brief FWHM major axis after deconvolution (arcsec)
-        /// UCD: phys.angSize.smajAxis;em.radio;askap:meta.deconvolved
-        float majAxisDeconv;
-
-        /// @brief FWHM minor axis after deconvolution (arcsec)
-        /// UCD: phys.angSize.sminAxis;em.radio;askap:meta.deconvolved
-        float minAxisDeconv;
-
-        /// @brief Position angle after deconvolution (deg)
-        /// UCD: phys.angSize;pos.posAng;em.radio;askap:meta.deconvolved
-        float posAngDeconv;
-
-        /// @brief Chi-squared value of Gaussian fit
-        /// UCD: stat.fit.chi2
-        float chiSquaredFit;
-
-        /// @brief RMS residual of Gaussian fit (mJy/beam)
-        /// UCD: stat.stdev;stat.fit
-        float rmsFitGauss;
-
         /// @brief Spectral index (First Taylor term)
         /// UCD: spect.index;em.radio
         float spectralIndex;
@@ -315,18 +134,6 @@ module skymodelservice
         /// @brief Spectral curvature (Second Taylor term)
         /// UCD: askap:spect.curvature;em.radio
         float spectralCurvature;
-
-        /// @brief rms noise level in image (mJy/beam)
-        /// UCD: stat.stdev;phot.flux.density
-        float rmsImage;
-
-        /// @brief Source has siblings
-        /// UCD: meta.code
-        bool hasSiblings;
-
-        /// @brief Component parameters are initial estimate, not from fit
-        /// UCD: meta.code
-        bool fitIsEstimate;
 
     };
 
