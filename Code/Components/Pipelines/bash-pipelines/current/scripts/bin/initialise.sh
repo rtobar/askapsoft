@@ -4,7 +4,11 @@
 # submission. This defines all necessary subdirectories and sets the
 # date-time stamp.
 #
+<<<<<<< .working
 # @copyright (c) 2017 CSIRO
+=======
+# @copyright (c) 2016 CSIRO
+>>>>>>> .merge-right.r7980
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -33,9 +37,17 @@
 # Define & create directories
 ${askapsoftModuleCommands}
 
+<<<<<<< .working
 BASEDIR=$(pwd)
+=======
+BASEDIR=`pwd`
+>>>>>>> .merge-right.r7980
 
+<<<<<<< .working
 . "${PIPELINEDIR}/createDirectories.sh"
+=======
+. ${PIPELINEDIR}/createDirectories.sh
+>>>>>>> .merge-right.r7980
 
 # These are used as the base directories for these types of files. We
 # make subdirectories in each for different fields (eg. parsets/field1

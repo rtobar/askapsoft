@@ -3,7 +3,11 @@
 # This file holds various utility functions and environment variables
 # that allow the scripts to do various things in a uniform manner.
 #
+<<<<<<< .working
 # @copyright (c) 2017 CSIRO
+=======
+# @copyright (c) 2016 CSIRO
+>>>>>>> .merge-right.r7980
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -28,9 +32,15 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
+<<<<<<< .working
 # Call the createDirectories script, so that we always define the
 # directories in which to put things - most importantly the stats directory.
 . "${PIPELINEDIR}/createDirectories.sh"
+=======
+# Call the createDirectories script, so that we always define the
+# directories in which to put things - most importantly the stats directory.
+. ${PIPELINEDIR}/createDirectories.sh
+>>>>>>> .merge-right.r7980
 
 ##############################
 # PIPELINE VERSION REPORTING
@@ -906,16 +916,29 @@ function parseLog()
 	findWorkerStats "$logfile"
     else
         # if here, it was a serial job
+<<<<<<< .working
         # Can log with either (-1 or (0 as the rank, so instead get the first INFO line & extract time stamp
         START_TIME_JOB=$(grep "INFO" "$logfile" | head -1 | awk '{printf "%sT%s",$5,$6}' | sed -e 's/^\[//g' | sed -e 's/\]$//g')
         if [ "$(grep -c "Total times" "$logfile")" -gt 0 ]; then
             TIME_JOB_REAL=$(grep "Total times" "$logfile" | tail -1 | awk '{print $16}')
             TIME_JOB_SYS=$(grep "Total times" "$logfile" | tail -1 | awk '{print $14}')
             TIME_JOB_USER=$(grep "Total times" "$logfile" | tail -1 | awk '{print $12}')
+=======
+        if [ `grep "Total times" $1 | wc -l` -gt 0 ]; then
+            TIME_JOB_REAL=`grep "Total times" $1 | tail -1 | awk '{print $16}'`
+            TIME_JOB_SYS=`grep "Total times" $1 | tail -1 | awk '{print $14}'`
+            TIME_JOB_USER=`grep "Total times" $1 | tail -1 | awk '{print $12}'`
+>>>>>>> .merge-right.r7980
         fi
+<<<<<<< .working
         if [ "$(grep -c "PeakVM" "$logfile")" -gt 0 ]; then
             PEAK_VM_MASTER=$(grep "PeakVM" "$logfile" | tail -1 | awk '{print $12}')
             PEAK_RSS_MASTER=$(grep "PeakVM" "$logfile" | tail -1 | awk '{print $15}')
+=======
+        if [ `grep "PeakVM" $1 | wc -l` -gt 0 ]; then
+            PEAK_VM_MASTER=`grep "PeakVM" $1 | tail -1 | awk '{print $12}'`
+            PEAK_RSS_MASTER=`grep "PeakVM" $1 | tail -1 | awk '{print $15}'`
+>>>>>>> .merge-right.r7980
         fi
     fi
 
@@ -935,9 +958,14 @@ function findWorkerStats()
 
     if [ "$(wc -l "$tmpfile" | awk '{print $1}')" -gt 0 ]; then
 
+<<<<<<< .working
         awkfile="$tmp/workerstats.awk"
         if [ ! -e "$awkfile" ]; then
             cat > "$awkfile" <<EOF
+=======
+        awkfile=workerstats.awk
+        cat > $awkfile <<EOF
+>>>>>>> .merge-right.r7980
 BEGIN {
     i=0;
     sumV=0.;
