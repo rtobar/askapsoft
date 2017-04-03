@@ -88,8 +88,12 @@ module skymodelservice
      **/
     struct ContinuumComponent
     {
-        // Should only ever contain 0 or 1 elements.
+        /// @brief Should only ever contain 0 or 1 elements.
         PolarisationOpt polarisation;
+
+        /// @brief Component identifier
+        /// UCD: meta.id;meta.main
+        string componentId;
 
         /// @brief J2000 right ascension (deg)
         /// UCD: pos.eq.ra;meta.main
