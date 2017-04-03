@@ -546,66 +546,85 @@ ice_interfaces::ComponentSeq marshallComponentsToDTO(
     // But unfortunately, both source and destination classes are produced by
     // the corresponding systems (Ice slice compiler, ODB class generation),
     // so I have no easy way to define the conversion. Doing it manually isn't
-    // too bad though...
+    // too bad though due to the code generation.
     //return ice_interfaces::ComponentSeq(components->begin(), components->end());
 
     // preallocate space so I can try OpenMP loop parallelism
     ice_interfaces::ComponentSeq dst(components->size());
     //ice_interfaces::ComponentSeq dst();
 
+    int i = 0;
+    #pragma parallel for
     for (std::vector<datamodel::ContinuumComponent>::const_iterator it = components->begin();
         it != components->end();
-        it++) {
-    }
+        it++, i++) {
 
 '''
 
-MARSHALLING_FUNCTION_STUB = '''
-    /*
-    reminders of the Ice types
-    typedef ::std::vector< ::askap::interfaces::skymodelservice::ContinuumComponent> ComponentSeq;
-    struct ContinuumComponentPolarisation
-    {
-        ::Ice::Double lambdaRefSq;
-        ::Ice::Double polPeakFit;
-        ::Ice::Double polPeakFitDebias;
-        ::Ice::Double polPeakFitErr;
-        ::Ice::Double polPeakFitSnr;
-        ::Ice::Double polPeakFitSnrErr;
-        ::Ice::Double fdPeakFit;
-        ::Ice::Double fdPeakFitErr;
-    };
-
-    typedef ::std::vector< ::askap::interfaces::skymodelservice::ContinuumComponentPolarisation> PolarisationOpt;
-
-    struct ContinuumComponent
-    {
-        ::askap::interfaces::skymodelservice::PolarisationOpt polarisation;
-        ::Ice::Double ra;
-        ::Ice::Double dec;
-        ::Ice::Float raErr;
-        ::Ice::Float decErr;
-        ::Ice::Float freq;
-        ::Ice::Float fluxPeak;
-        ::Ice::Float fluxPeakErr;
-        ::Ice::Float fluxInt;
-        ::Ice::Float fluxIntErr;
-        ::Ice::Float spectralIndex;
-        ::Ice::Float spectralCurvature;
-    };
-    */
+MARSHALLING_FUNCTION_TAIL = '''
 
     return dst;
 }
+'''
+
+POLARISATION_START = '''
+        // polarisation may not be present
+        if (it->polarisation.get()) {
+            const datamodel::Polarisation* src_pol = it->polarisation.get();
+
+            // I need to profile how the performance of stack instance followed
+            // by assignment to the vector compares to the resize and assign
+            // members in place. On the surface, it is comparing a default ctor, field assignment, and copy ctor
+            // to default ctor and field assignment. I hope to avoid the additional
+            // copy when pushing the stack instance into the vectory.
+            // Of course, the compiler could be doing all sorts of optimisations, so
+            // sticking to the clearer code is probably best.
+            ice_interfaces::ContinuumComponentPolarisation dst_pol;
+
+            // Or:
+            //dst[i].polarisation.resize(1);
+            // And then:
+            //dst[i].polarisation[0].polPeakFit = src_pol->pol_peak_fit;
+
+'''
+
+POLARISATION_END = '''
+            // Assign our stack variable to the vector. Hopefully the additional
+            // copy constructor gets optimised away.
+            dst[i].polarisation.push_back(dst_pol);
+        } // end of polarisation branch
+    } // end of component loop
 '''
 
 def write_orm_to_dto_marshaller():
     '''Generates a function for marshalling data from the ORM classes into
     the Ice DTO structures.'''
     print('\t../service/DataMarshalling.h')
+    INDENT = '        '
     with open('../service/DataMarshalling.h', 'w') as out:
         out.write(DATA_MARSHALLER_HEADER)
-        out.write(MARSHALLING_FUNCTION_STUB)
+
+        # Copy the component data
+        out.write(INDENT + '// Copy the component data\n')
+        for f in get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0]), TYPE_MAP, False):
+            # only fields with lsm_view=True are written to the Ice structs
+            if f.lsm_view:
+                out.write('{0}dst[i].{1} = it->{2};\n'.format(
+                    INDENT,
+                    to_camel_case(f.name),
+                    f.name))
+
+        out.write(POLARISATION_START)
+        # todo: polarisation fields
+        for f in get_fields(load(POLARISATION_SPEC, skiprows=[0]), TYPE_MAP, False):
+            # only fields with lsm_view=True are written to the Ice structs
+            if f.lsm_view:
+                out.write('{0}    dst_pol.{1} = src_pol->{2};\n'.format(
+                    INDENT,
+                    to_camel_case(f.name),
+                    f.name))
+        out.write(POLARISATION_END)
+        out.write(MARSHALLING_FUNCTION_TAIL)
         out.write(HEADER_POSTAMBLE)
 
 
