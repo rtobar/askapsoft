@@ -83,6 +83,19 @@ module skymodelservice
 {
 '''
 
+SEARCH_CRITERIA_HEADER = COMMON_FILE_HEADER + SLICE_NAMESPACES + \
+'''\
+    /**
+     * Allows specification of additional criteria for sky model searches.
+     * For fields that are invalid for negative values, the default negative
+     * value indicates that a criteria will not be used. For fields that are
+     * valid for negative values, an additional boolean flag indicates whether
+     * that criteria will be applied to the search or not.
+     **/
+    struct SearchCriteria
+    {
+'''
+
 CONTINUUM_COMPONENT_HEADER = '''
 
     /**
@@ -145,8 +158,7 @@ FILES = [
 # configuration for Slice file generation.
 # This is setup to write to the same file, with continuum component appending to
 # the polarisation file (thus the difference between headers and footers)
-# It also means that order is important, polarisation must come before component
-# definition
+# It also means that order is important, the component definition must be last
 SLICE_FILES = [
     {
         'input': POLARISATION_SPEC,
@@ -168,6 +180,7 @@ SLICE_FILES = [
     },
 ]
 
+
 def load(
     filename,
     sheetname='Catalogue description',
@@ -184,6 +197,8 @@ def load(
             'index': bool,
             'nullable': bool,
             'lsm_view': bool,
+            'generate_query_criteria': bool,
+            'negative_is_invalid': bool,
             }):
     """Load the table data from a CASDA definition spreadsheet"""
     data = pd.read_excel(
@@ -229,6 +244,8 @@ class Field(object):
         self.lsm_view = df_row.lsm_view
         self._magic_names = {}
         self._indent = indent
+        self.generate_criteria = df_row.generate_query_criteria
+        self.negative_is_invalid = df_row.negative_is_invalid
 
         # not every tablespec contains the ucd column
         try:
@@ -596,11 +613,11 @@ POLARISATION_END = '''
     } // end of component loop
 '''
 
+INDENT = '        '
 def write_orm_to_dto_marshaller():
     '''Generates a function for marshalling data from the ORM classes into
     the Ice DTO structures.'''
     print('\t../service/DataMarshalling.h')
-    INDENT = '        '
     with open('../service/DataMarshalling.h', 'w') as out:
         out.write(DATA_MARSHALLER_HEADER)
 
@@ -627,6 +644,34 @@ def write_orm_to_dto_marshaller():
         out.write(MARSHALLING_FUNCTION_TAIL)
         out.write(HEADER_POSTAMBLE)
 
+
+def write_search_criteria_structures():
+    '''Generates the Ice search criteria structures.'''
+
+    output = '../SkyModelServiceCriteria.ice'
+    print('Generating ' + output)
+
+    with open(output, 'w') as out:
+        out.write(SEARCH_CRITERIA_HEADER)
+
+        # generate criteria for the component data
+        for f in get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0]), SLICE_TYPE_MAP, False):
+            if f.lsm_view and f.generate_criteria:
+                for minmax in ['min_', 'max_']:
+                    criteriaName = to_camel_case(minmax + f.name)
+                    if f.negative_is_invalid:
+                        out.write('{0}{1} = -1;\n'.format(
+                            INDENT,
+                            criteriaName))
+                    else:
+                        out.write('{0}{1} = 0;\n'.format(
+                            INDENT,
+                            criteriaName))
+                        out.write('{0}{1} = false;\n'.format(
+                            INDENT,
+                            to_camel_case('use_' + minmax + f.name)))
+
+        out.write(SLICE_FOOTER)
 
 if __name__ == '__main__':
     print('Generating tables ...')
@@ -662,6 +707,9 @@ if __name__ == '__main__':
 
     print('Generating data marshalling function ...')
     write_orm_to_dto_marshaller()
+
+    print('Generating Ice search criteria ...')
+    write_search_criteria_structures()
 
     print('Done')
     print("* Don't forget to move the generated Ice files to Code/Interfaces/slice/current with 'make generate_ice'")
