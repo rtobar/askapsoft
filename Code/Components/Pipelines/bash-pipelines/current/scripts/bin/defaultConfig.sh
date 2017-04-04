@@ -397,6 +397,8 @@ SELFCAL_INTERVAL=300
 SELFCAL_NUM_LOOPS=5
 # Should we keep the images from the intermediate selfcal loops?
 SELFCAL_KEEP_IMAGES=true
+# Should we make full-field mosaics of each loop iteration?
+MOSAIC_SELFCAL_LOOPS=true
 # SNR threshold for detection with selavy in determining selfcal sources
 SELFCAL_SELAVY_THRESHOLD=15
 # Division of image for source-finding in selfcal
@@ -610,6 +612,10 @@ IMAGE_LIST="image psf psf.image residual sensitivity"
 
 # Whether to archive individual beam images 
 ARCHIVE_BEAM_IMAGES=false
+# Whether to archive mosaics of self-calibration loops
+ARCHIVE_SELFCAL_LOOP_MOSAICS=true
+# Whether to archive the mosaicked images of each field
+ARCHIVE_FIELD_MOSAICS=true
 
 # OPAL project ID, for CASDA use
 PROJECT_ID="AS031"

@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -29,53 +29,26 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_CONT_ALL=""
-
-mosaicImageList="restored altrestored image residual"
+ID_LINMOS_FIELD_CONT=""
 
 DO_IT=$DO_MOSAIC
-if [ "$DO_CONT_IMAGING" != "true" ]; then
-    DO_IT=false
-fi
 
-# Don't run if there is only one field
-if [ "${NUM_FIELDS}" -eq 1 ]; then
-    DO_IT=false
-fi
+# Get the name of the mosaicked image
+imageCode=restored
+FIELD="."
+setImageProperties cont
 
-if [ "${DO_MOSAIC_FIELDS}" != "true" ]; then
-    DO_IT=false
-fi
-
-if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
-    BEAM=all
-    FIELD="."
-    tilelistsize=$(echo "${TILE_LIST}" | awk '{print NF}')
-    if [ "${tilelistsize}" -gt 1 ]; then
-        FULL_TILE_LIST="$TILE_LIST ALL"
-    else
-        FULL_TILE_LIST="ALL"
+if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
+    if [ $DO_IT == true ]; then
+        echo "Image ${imageName} exists, so not running continuum mosaicking"
     fi
-    for TILE in $FULL_TILE_LIST; do
-        for imageCode in ${mosaicImageList}; do
-            for((TTERM=0;TTERM<NUM_TAYLOR_TERMS;TTERM++)); do
-                setImageProperties cont
-                if [ -e "${OUTPUT}/${imageName}" ]; then
-                    if [ "${DO_IT}" == "true" ]; then
-                        echo "Image ${imageName} exists, so not running continuum mosaicking"
-                    fi
-                    DO_IT=false
-                fi
-            done
-            unset TTERM
-        done
-    done
+    DO_IT=false
 fi
 
-if [ "${DO_IT}" == "true" ]; then
+if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/linmos_all_cont.sbatch
-    cat > "$sbatchfile" <<EOFOUTER
+    sbatchfile=$slurms/linmos_all.sbatch
+    cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -84,10 +57,10 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_LINMOS}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=linmosFullC
+#SBATCH --job-name=linmosFull
 ${EMAIL_REQUEST}
 ${exportDirective}
-#SBATCH --output=$slurmOut/slurm-linmosC-%j.out
+#SBATCH --output=$slurmOut/slurm-linmos-%j.out
 
 ${askapsoftModuleCommands}
 
@@ -97,25 +70,25 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-thisfile=$sbatchfile
-cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
+cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
-DO_ALT_IMAGER_CONT="${DO_ALT_IMAGER_CONT}"
-NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
-maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
+nterms=${NUM_TAYLOR_TERMS}
+maxterm=\`echo \$nterms | awk '{print 2*\$1-1}'\`
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 SB_SCIENCE=${SB_SCIENCE}
 
 FIELD_LIST="$FIELD_LIST"
 TILE_LIST="$TILE_LIST"
+echo "Tile list = \$TILE_LIST"
 
 # If there is only one tile, only include the "ALL" case, which
 # mosaics together all fields
-if [ "\$(echo \$TILE_LIST | awk '{print NF}')" -gt 1 ]; then
+if [ \`echo \$TILE_LIST | awk '{print NF}'\` -gt 1 ]; then
     FULL_TILE_LIST="\$TILE_LIST ALL"
 else
     FULL_TILE_LIST="ALL"
 fi
+echo "Full tile list = \$FULL_TILE_LIST"
 
 for THISTILE in \$FULL_TILE_LIST; do
 
@@ -125,13 +98,13 @@ for THISTILE in \$FULL_TILE_LIST; do
     TILE_FIELD_LIST=""
     for FIELD in \$FIELD_LIST; do
         getTile
-        if [ "\$THISTILE" == "ALL" ] || [ "\$TILE" == "\$THISTILE" ]; then
+        if [ \$THISTILE == "ALL" ] || [ \$TILE == \$THISTILE ]; then
             TILE_FIELD_LIST="\$TILE_FIELD_LIST \$FIELD"
         fi
     done
     echo "Tile \$THISTILE has field list \$TILE_FIELD_LIST"
 
-    for imageCode in ${mosaicImageList}; do 
+    for imageCode in restored altrestored image residual; do 
     
         for((TTERM=0;TTERM<\${maxterm};TTERM++)); do
     
@@ -140,7 +113,7 @@ for THISTILE in \$FULL_TILE_LIST; do
             BEAM=all
             for FIELD in \${TILE_FIELD_LIST}; do
                 setImageProperties cont
-                if [ -e "\${FIELD}/\${imageName}" ]; then
+                if [ -e \${FIELD}/\${imageName} ]; then
                     if [ "\${imList}" == "" ]; then
                         imList="\${FIELD}/\${imageName}"
                         wtList="\${FIELD}/\${weightsImage}"
@@ -151,12 +124,12 @@ for THISTILE in \$FULL_TILE_LIST; do
                 fi
             done
 
-            if [ "\$THISTILE" == "ALL" ]; then
-                jobCode=linmosC_Full_\${imageCode}
+            if [ \$THISTILE == "ALL" ]; then
+                jobCode=linmosFull_\${imageCode}
             else
-                jobCode=linmosC_\${THISTILE}_\${imageCode}
+                jobCode=linmos\${THISTILE}_\${imageCode}
             fi
-            if [ "\$maxterm" -gt 1 ]; then
+            if [ \$maxterm -gt 1 ]; then
                 jobCode=\${jobCode}_T\${TTERM}
             fi
 
@@ -165,12 +138,11 @@ for THISTILE in \$FULL_TILE_LIST; do
                 TILE=\$THISTILE
                 setImageProperties cont
                 echo "Mosaicking to form \${imageName}"
-                parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
-                log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
-                cat > "\${parset}" << EOFINNER
+                parset=${parsets}/science_linmosFull_\${imageCode}_\${SLURM_JOB_ID}.in
+                log=${logs}/science_linmosFull_\${imageCode}_\${SLURM_JOB_ID}.log
+                cat > \${parset} << EOFINNER
 linmos.names            = [\${imList}]
 linmos.weights          = [\${wtList}]
-linmos.imagetype        = ${IMAGETYPE_CONT}
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
 linmos.weighttype       = FromWeightImages
@@ -178,27 +150,29 @@ EOFINNER
 
                 NCORES=1
                 NPPN=1
-                aprun -n \${NCORES} -N \${NPPN} $linmos -c "\$parset" > "\$log"
+                aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
                 err=\$?
-                for im in \$(echo "\${imList}" | sed -e 's/,/ /g'); do
-                    rejuvenate "\$im"
+                for im in `echo \${imList} | sed -e 's/,/ /g'`; do
+                    rejuvenate \$im
                 done
-                extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
+                extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then
                     exit \$err
                 fi
             else
-                echo "WARNING - no good images were found for mosaicking image type '\${imageCode}'!"
+                echo "ERROR - no good images were found for mosaicking image type '\${imageCode}'!"
+                writeStats \${SLURM_JOB_ID} 1 \${jobCode} FAIL --- --- --- --- --- txt > $stats/stats-\${SLURM_JOB_ID}-\${jobCode}.txt
+                writeStats \${SLURM_JOB_ID} 1 \${jobCode} FAIL --- --- --- --- --- csv > $stats/stats-\${SLURM_JOB_ID}-\${jobCode}.csv
             fi
         done
     done
 done
 EOFOUTER
 
-    if [ "${SUBMIT_JOBS}" == "true" ]; then
-        FULL_LINMOS_CONT_DEP=$(echo "${FULL_LINMOS_CONT_DEP}" | sed -e 's/afterok/afterany/g')
-	ID_LINMOS_CONT_ALL=$(sbatch ${FULL_LINMOS_CONT_DEP} "$sbatchfile" | awk '{print $4}')
-	recordJob "${ID_LINMOS_CONT_ALL}" "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
+    if [ $SUBMIT_JOBS == true ]; then
+        FULL_LINMOS_DEP=`echo $FULL_LINMOS_DEP | sed -e 's/afterok/afterany/g'`
+	ID_LINMOS_CONT_ALL=`sbatch $FULL_LINMOS_DEP $sbatchfile | awk '{print $4}'`
+	recordJob ${ID_LINMOS_CONT_ALL} "Make a mosaic image of the science observation, with flags \"${FULL_LINMOS_DEP}\""
     else
 	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"
     fi
@@ -207,3 +181,19 @@ EOFOUTER
 
 fi
 
+
+if [ ${DO_SOURCE_FINDING_MOSAIC} == true ]; then
+    # Run the sourcefinder on the mosaicked image.
+
+    # set the $imageBase variable to have 'linmos' in it
+    imageCode=restored
+    BEAM="all"
+    FIELD="."
+    TILE="ALL"
+    FIELDBEAM="Full"
+    FIELDBEAMJOB="Full"
+    setImageProperties cont
+
+    . ${PIPELINEDIR}/sourcefinding.sh
+
+fi
