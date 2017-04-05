@@ -43,6 +43,8 @@ module skymodelservice
      * value indicates that a criteria will not be used. For fields that are
      * valid for negative values, an additional boolean flag indicates whether
      * that criteria will be applied to the search or not.
+     *
+     * All criteria are combined with the AND operator
      **/
     struct SearchCriteria
     {

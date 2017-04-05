@@ -40,6 +40,7 @@
 // Local package includes
 #include "DataMarshalling.h"
 #include "GlobalSkyModel.h"
+#include "QueryBuilder.h"
 #include "Utility.h"
 
 ASKAP_LOGGER(logger, ".SkyModelService");
@@ -81,18 +82,23 @@ std::string SkyModelServiceImpl::getServiceVersion(const Ice::Current&)
 ComponentSeq SkyModelServiceImpl::coneSearch(
     const sms_interface::Coordinate& centre,
     double radius,
+    const sms_interface::SearchCriteria& criteria,
     const Ice::Current&)
 {
     GlobalSkyModel::ComponentListPtr results = itsGsm->coneSearch(
         Coordinate(centre),
-        radius);
+        radius,
+        queryBuilder(criteria));
     return marshallComponentsToDTO(results);
 }
 
 ComponentSeq SkyModelServiceImpl::rectSearch(
     const sms_interface::Rect& roi,
+    const sms_interface::SearchCriteria& criteria,
     const Ice::Current&)
 {
-    GlobalSkyModel::ComponentListPtr results = itsGsm->rectSearch(Rect(roi));
+    GlobalSkyModel::ComponentListPtr results = itsGsm->rectSearch(
+        Rect(roi),
+        queryBuilder(criteria));
     return marshallComponentsToDTO(results);
 }
