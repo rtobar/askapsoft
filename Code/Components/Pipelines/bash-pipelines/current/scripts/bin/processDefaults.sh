@@ -337,7 +337,7 @@ module load askappipeline/${askappipelineVersion}"
             getPolList
         fi
 
-        # Set the number of CPUs for the continuum cube imaging. Either
+        # Set the number of cores for the continuum cube imaging. Either
         # set to the number of averaged channels + 1, or use that given in
         # the config file, limiting to no bigger than this number 
         maxContCubeCores=`expr $nchanContSci + 1`
@@ -348,6 +348,17 @@ module load askappipeline/${askappipelineVersion}"
             # Have more cores than we need - reduce number
             echo "NOTE - Reducing NUM_CPUS_CONTCUBE_SCI to $maxContCubeCores to match the number of averaged channels"
             NUM_CPUS_CONTCUBE_SCI=$maxContCubeCores
+        fi
+
+        # Set the number of cores for the continuum cube mosaicking. Either
+        # set to the number of averaged channels, or use that given in
+        # the config file
+        if [ "${NUM_CPUS_CONTCUBE_LINMOS}" == "" ]; then
+            # User has not specified
+            NUM_CPUS_CONTCUBE_LINMOS=$nchanContSci
+        elif [ $NUM_CPUS_CONTCUBE_LINMOS -gt $NUM_CPUS_CONTCUBE_SCI ]; then
+            echo "NOTE - Reducing NUM_CPUS_CONTCUBE_LINMOS to $NUM_CPUS_CONTCUBE_SCI to match the number of cores used for imaging"
+            NUM_CPUS_CONTCUBE_LINMOS=$NUM_CPUS_CONTCUBE_SCI
         fi
         
         ####################
@@ -373,6 +384,16 @@ module load askappipeline/${askappipelineVersion}"
 
         if [ "${RESTORING_BEAM_LOG}" != "" ]; then
             echo "WARNING - the parameter RESTORING_BEAM_LOG is deprecated, and is constructed from the image name instead."
+        fi
+
+        # Set the number of cores for the spectral-line mosaicking. Either
+        # set to the number of channels, or use that given in the config file
+        if [ "${NUM_CPUS_SPECTRAL_LINMOS}" == "" ]; then
+            # User has not specified
+            NUM_CPUS_SPECTRAL_LINMOS=$NUM_CHAN_SCIENCE
+        elif [ $NUM_CPUS_SPECTRAL_LINMOS -gt $NUM_CPUS_SPECIMG_SCI ]; then
+            echo "NOTE - Reducing NUM_CPUS_SPECTRAL_LINMOS to $NUM_CPUS_SPECIMG_SCI to match the number of cores used for imaging"
+            NUM_CPUS_SPECTRAL_LINMOS=$NUM_CPUS_SPECIMG_SCI
         fi
 
         ####################
@@ -406,6 +427,10 @@ module load askappipeline/${askappipelineVersion}"
         #  Parameters covered are the selfcal interval, the
         #  source-finding threshold, and whether normalise gains is on
         #  or not
+        if [ $DO_SELFCAL != true ]; then
+            SELFCAL_NUM_LOOPS=0
+        fi
+        
         if [ "`echo $SELFCAL_INTERVAL | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
             SELFCAL_INTERVAL_ARRAY=()
@@ -414,10 +439,11 @@ module load askappipeline/${askappipelineVersion}"
             done
         else
             SELFCAL_INTERVAL_ARRAY=()
-            for((i=0;i<${SELFCAL_NUM_LOOPS};i++)); do
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
                 SELFCAL_INTERVAL_ARRAY+=($SELFCAL_INTERVAL)
             done
         fi
+        
         if [ "`echo $SELFCAL_SELAVY_THRESHOLD | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
             SELFCAL_SELAVY_THRESHOLD_ARRAY=()
@@ -426,10 +452,11 @@ module load askappipeline/${askappipelineVersion}"
             done
         else
             SELFCAL_SELAVY_THRESHOLD_ARRAY=()
-            for((i=0;i<${SELFCAL_NUM_LOOPS};i++)); do
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
                 SELFCAL_SELAVY_THRESHOLD_ARRAY+=($SELFCAL_SELAVY_THRESHOLD)
             done
         fi
+        
         if [ "`echo $SELFCAL_NORMALISE_GAINS | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
             SELFCAL_NORMALISE_GAINS_ARRAY=()
@@ -438,11 +465,98 @@ module load askappipeline/${askappipelineVersion}"
             done
         else
             SELFCAL_NORMALISE_GAINS_ARRAY=()
-            for((i=0;i<${SELFCAL_NUM_LOOPS};i++)); do
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
                 SELFCAL_NORMALISE_GAINS_ARRAY+=($SELFCAL_NORMALISE_GAINS)
             done
         fi
-        
+
+        if [ "`echo $CLEAN_NUM_MAJORCYCLES | grep "\["`" != "" ]; then
+            # Have entered a comma-separate array in square brackets
+            CLEAN_NUM_MAJORCYCLES_ARRAY=()
+            for a in `echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g'`; do
+                CLEAN_NUM_MAJORCYCLES_ARRAY+=($a)
+            done
+        else
+            CLEAN_NUM_MAJORCYCLES_ARRAY=()
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                CLEAN_NUM_MAJORCYCLES_ARRAY+=($CLEAN_NUM_MAJORCYCLES)
+            done
+        fi
+
+        if [ "`echo $CLEAN_THRESHOLD_MAJORCYCLE | grep "\["`" != "" ]; then
+            # Have entered a comma-separate array in square brackets
+            CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
+            for a in `echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g'`; do
+                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($a)
+            done
+        else
+            CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($CLEAN_THRESHOLD_MAJORCYCLE)
+            done
+        fi
+
+        if [ "`echo $CIMAGER_MINUV | grep "\["`" != "" ]; then
+            # Have entered a comma-separate array in square brackets
+            CIMAGER_MINUV_ARRAY=()
+            for a in `echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g'`; do
+                CIMAGER_MINUV_ARRAY+=($a)
+            done
+        else
+            CIMAGER_MINUV_ARRAY=()
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                CIMAGER_MINUV_ARRAY+=($CIMAGER_MINUV)
+            done
+        fi
+
+        if [ "`echo $CCALIBRATOR_MINUV | grep "\["`" != "" ]; then
+            # Have entered a comma-separate array in square brackets
+            CCALIBRATOR_MINUV_ARRAY=()
+            for a in `echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g'`; do
+                CCALIBRATOR_MINUV_ARRAY+=($a)
+            done
+        else
+            CCALIBRATOR_MINUV_ARRAY=()
+            for((i=0;i<=${SELFCAL_NUM_LOOPS};i++)); do
+                CCALIBRATOR_MINUV_ARRAY+=($CCALIBRATOR_MINUV)
+            done
+        fi
+
+        # Validate that all these arrays are the same length as
+        # SELFCAL_NUM_LOOPS, as long as the latter is >0
+        if [ $SELFCAL_NUM_LOOPS -gt 0 ]; then
+            arraySize=`expr $SELFCAL_NUM_LOOPS + 1`
+            if [ ${#SELFCAL_INTERVAL_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of SELFCAL_INTERVAL (${SELFCAL_INTERVAL}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#SELFCAL_SELAVY_THRESHOLD_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of SELFCAL_SELAVY_THRESHOLD (${SELFCAL_SELAVY_THRESHOLD}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#SELFCAL_NORMALISE_GAINS_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of SELFCAL_NORMALISE_GAINS (${SELFCAL_NORMALISE_GAINS}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#CLEAN_NUM_MAJORCYCLES_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of CLEAN_NUM_MAJORCYCLES (${CLEAN_NUM_MAJORCYCLES}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#CLEAN_THRESHOLD_MAJORCYCLE_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of CLEAN_THRESHOLD_MAJORCYCLE (${CLEAN_THRESHOLD_MAJORCYCLE}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#CIMAGER_MINUV_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of CIMAGER_MINUV (${CIMAGER_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+            if [ ${#CCALIBRATOR_MINUV_ARRAY[@]} -ne $arraySize ]; then
+                echo "ERROR! Size of CCALIBRATOR_MINUV (${CCALIBRATOR_MINUV}) needs to be SELFCAL_NUM_LOOPS + 1 ($arraySize). Exiting."
+                exit 1
+            fi
+
+        fi
+
     fi
 
 fi

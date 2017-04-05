@@ -30,6 +30,7 @@
 #
 
 ID_SPECIMG_SCI=""
+DEP_SPECIMG=""
 
 <<<<<<< .working
 =======
@@ -284,6 +285,7 @@ EOFOUTER
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
+<<<<<<< .working
         DEP=$(addDep "$DEP" "$DEP_START")
         DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
         DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
@@ -294,6 +296,18 @@ EOFOUTER
 	ID_SPECIMG_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
         DEP_SPECIMG=$(addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI")
 	recordJob "${ID_SPECIMG_SCI}" "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
+=======
+        DEP=`addDep "$DEP" "$DEP_START"`
+        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
+        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
+        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
+        DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
+        DEP=`addDep "$DEP" "$ID_CAL_APPLY_SL_SCI"`
+        DEP=`addDep "$DEP" "$ID_CONT_SUB_SL_SCI"`
+	ID_SPECIMG_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
+        DEP_SPECIMG=`addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI"`
+	recordJob ${ID_SPECIMG_SCI} "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
+>>>>>>> .merge-right.r8042
     else
 	echo "Would make a spectral-line cube for beam $BEAM of the science observation with slurm file $sbatchfile"
     fi

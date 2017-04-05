@@ -47,7 +47,7 @@ fi
 
 if [ $DO_IT == true ]; then
 
-    sbatchfile=$slurms/linmos_all.sbatch
+    sbatchfile=$slurms/linmos_all_cont.sbatch
     cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
@@ -57,10 +57,10 @@ ${RESERVATION_REQUEST}
 #SBATCH --time=${JOB_TIME_LINMOS}
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --job-name=linmosFull
+#SBATCH --job-name=linmosFullC
 ${EMAIL_REQUEST}
 ${exportDirective}
-#SBATCH --output=$slurmOut/slurm-linmos-%j.out
+#SBATCH --output=$slurmOut/slurm-linmosC-%j.out
 
 ${askapsoftModuleCommands}
 
@@ -125,9 +125,9 @@ for THISTILE in \$FULL_TILE_LIST; do
             done
 
             if [ \$THISTILE == "ALL" ]; then
-                jobCode=linmosFull_\${imageCode}
+                jobCode=linmosC_Full_\${imageCode}
             else
-                jobCode=linmos\${THISTILE}_\${imageCode}
+                jobCode=linmosC_\${THISTILE}_\${imageCode}
             fi
             if [ \$maxterm -gt 1 ]; then
                 jobCode=\${jobCode}_T\${TTERM}
@@ -138,8 +138,8 @@ for THISTILE in \$FULL_TILE_LIST; do
                 TILE=\$THISTILE
                 setImageProperties cont
                 echo "Mosaicking to form \${imageName}"
-                parset=${parsets}/science_linmosFull_\${imageCode}_\${SLURM_JOB_ID}.in
-                log=${logs}/science_linmosFull_\${imageCode}_\${SLURM_JOB_ID}.log
+                parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
+                log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
                 cat > \${parset} << EOFINNER
 linmos.names            = [\${imList}]
 linmos.weights          = [\${wtList}]
@@ -170,9 +170,9 @@ done
 EOFOUTER
 
     if [ $SUBMIT_JOBS == true ]; then
-        FULL_LINMOS_DEP=`echo $FULL_LINMOS_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONT_ALL=`sbatch $FULL_LINMOS_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONT_ALL} "Make a mosaic image of the science observation, with flags \"${FULL_LINMOS_DEP}\""
+        FULL_LINMOS_CONT_DEP=`echo $FULL_LINMOS_CONT_DEP | sed -e 's/afterok/afterany/g'`
+	ID_LINMOS_CONT_ALL=`sbatch $FULL_LINMOS_CONT_DEP $sbatchfile | awk '{print $4}'`
+	recordJob ${ID_LINMOS_CONT_ALL} "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
     else
 	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"
     fi

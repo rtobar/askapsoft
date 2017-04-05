@@ -35,11 +35,17 @@ echo "=================================================="
 
 FIELD_ID=0
 <<<<<<< .working
+<<<<<<< .working
 FULL_LINMOS_CONT_DEP=""
 FULL_LINMOS_CONTCUBE_DEP=""
 FULL_LINMOS_SPEC_DEP=""
 =======
 FULL_LINMOS_DEP=""
+=======
+FULL_LINMOS_CONT_DEP=""
+FULL_LINMOS_CONTCUBE_DEP=""
+FULL_LINMOS_SPEC_DEP=""
+>>>>>>> .merge-right.r8042
 >>>>>>> .merge-right.r7963
 
 cd "${ORIGINAL_OUTPUT}"
@@ -167,6 +173,8 @@ for FIELD in ${FIELD_LIST}; do
         else
             #            . ${PIPELINEDIR}/linmos.sh
             . ${PIPELINEDIR}/linmosCont.sh
+            . ${PIPELINEDIR}/linmosContCube.sh
+            . ${PIPELINEDIR}/linmosSpectral.sh
         fi
 >>>>>>> .merge-right.r7963
         
@@ -207,5 +215,7 @@ FIELD="."
 
 # Final linmos, combining fields
 . ${PIPELINEDIR}/linmosFieldsCont.sh
+. ${PIPELINEDIR}/linmosFieldsContCube.sh
+. ${PIPELINEDIR}/linmosFieldsSpectral.sh
 
 >>>>>>> .merge-right.r7963
