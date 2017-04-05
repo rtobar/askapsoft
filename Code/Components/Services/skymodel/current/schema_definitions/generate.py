@@ -83,7 +83,7 @@ module skymodelservice
 {
 '''
 
-SEARCH_CRITERIA_HEADER = COMMON_FILE_HEADER + SLICE_NAMESPACES + \
+SEARCH_CRITERIA_HEADER = COMMON_SLICE_HEADER + SLICE_NAMESPACES + \
 '''\
     /**
      * Allows specification of additional criteria for sky model searches.
@@ -660,14 +660,16 @@ def write_search_criteria_structures():
                 for minmax in ['min_', 'max_']:
                     criteriaName = to_camel_case(minmax + f.name)
                     if f.negative_is_invalid:
-                        out.write('{0}{1} = -1;\n'.format(
+                        out.write('{0}{2} {1} = -1;\n'.format(
                             INDENT,
-                            criteriaName))
+                            criteriaName,
+                            f.dtype))
                     else:
-                        out.write('{0}{1} = 0;\n'.format(
+                        out.write('{0}{2} {1} = 0;\n'.format(
                             INDENT,
-                            criteriaName))
-                        out.write('{0}{1} = false;\n'.format(
+                            criteriaName,
+                            f.dtype))
+                        out.write('{0}bool {1} = false;\n'.format(
                             INDENT,
                             to_camel_case('use_' + minmax + f.name)))
 

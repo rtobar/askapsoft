@@ -26,6 +26,7 @@
 #include <CommonTypes.ice>
 #include <IService.ice>
 #include <SkyModelServiceDTO.ice>
+#include <SkyModelServiceCriteria.ice>
 
 module askap
 {
@@ -116,14 +117,14 @@ module skymodelservice
          * TODO: documentation
          * TODO: should I follow Ben's lead and return just the ID list?
          **/
-        ComponentSeq coneSearch(Coordinate centre, double radius);
+        ComponentSeq coneSearch(Coordinate centre, double radius, SearchCriteria criteria);
 
         /**
          * Rectangular ROI search
          * TODO: documentation
          * TODO: should I follow Ben's lead and return just the ID list?
          **/
-        ComponentSeq rectSearch(Rect roi);
+        ComponentSeq rectSearch(Rect roi, SearchCriteria criteria);
     };
 
 };
