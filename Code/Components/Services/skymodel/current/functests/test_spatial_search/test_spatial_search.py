@@ -25,6 +25,7 @@ from askap.interfaces.skymodelservice import (
     RectExtents,
     ContinuumComponent,
     ContinuumComponentPolarisation,
+    SearchCriteria,
 )
 
 
@@ -53,7 +54,8 @@ class Test(CPFuncTestBase):
     def test_simple_cone_search(self):
         components = self.sms_client.coneSearch(
             centre=Coordinate(70.2, -61.8),
-            radius=1.0)
+            radius=1.0,
+            criteria=SearchCriteria())
 
         assert len(components) == 1
         c = components[0]
@@ -84,7 +86,7 @@ class Test(CPFuncTestBase):
 
     def test_simple_rect_search(self):
         roi = Rect(centre=Coordinate(79.375, -71.5), extents=RectExtents(0.75, 1.0))
-        results = self.sms_client.rectSearch(roi)
+        results = self.sms_client.rectSearch(roi, SearchCriteria())
 
         assert len(results) == 4
 
