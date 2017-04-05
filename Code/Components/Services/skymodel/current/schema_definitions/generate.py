@@ -137,205 +137,6 @@ SLICE_FOOTER = '''\
 };
 '''
 
-CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
-POLARISATION_SPEC = './GSM_casda_polarisation.xlsx'
-
-FILES = [
-    {
-        'input': CONTINUUM_COMPONENT_SPEC,
-        'output': '../schema/ContinuumComponent.i',
-        'parse_cols': None,
-        'skiprows': [0],
-    },
-    {
-        'input': POLARISATION_SPEC,
-        'output': '../schema/Polarisation.i',
-        'parse_cols': None,
-        'skiprows': [0],
-    },
-    {
-        'input': './GSM_data_source_description.xlsx',
-        'output': '../schema/DataSource.i',
-        'parse_cols': None,
-        'skiprows': [0],
-    },
-]
-
-# configuration for Slice file generation.
-# This is setup to write to the same file, with continuum component appending to
-# the polarisation file (thus the difference between headers and footers)
-# It also means that order is important, the component definition must be last
-SLICE_FILES = [
-    {
-        'input': POLARISATION_SPEC,
-        'output': '../SkyModelServiceDTO.ice',
-        'parse_cols': None,
-        'skiprows': [0],
-        'file_header': POLARISATION_HEADER,
-        'file_footer': '    };',
-        'append_to_file': False,
-    },
-    {
-        'input': CONTINUUM_COMPONENT_SPEC,
-        'output': '../SkyModelServiceDTO.ice',
-        'parse_cols': None,
-        'skiprows': [0],
-        'file_header': CONTINUUM_COMPONENT_HEADER,
-        'file_footer': SLICE_FOOTER,
-        'append_to_file': True,
-    },
-]
-
-
-def load(
-    filename,
-    sheetname='Catalogue description',
-    parse_cols=None,
-    skiprows=None,
-    converters={
-            'name': str,
-            'description': str,
-            'datatype': str,
-            'ucd': str,
-            'units': str,
-            'notes': str,
-            'include_in_gsm': bool,
-            'index': bool,
-            'nullable': bool,
-            'lsm_view': bool,
-            'generate_query_criteria': bool,
-            'negative_is_invalid': bool,
-            }):
-    """Load the table data from a CASDA definition spreadsheet"""
-    data = pd.read_excel(
-        filename,
-        sheetname=sheetname,
-        converters=converters,
-        parse_cols=parse_cols,
-        skiprows=skiprows)
-
-    # Drop any rows with missing data in the name or datatype columns
-    data.dropna(subset=['name', 'datatype'], inplace=True)
-
-    # fill any remaining missing data with empty strings
-    data.fillna('', inplace=True)
-
-    return data[data.include_in_gsm == True]
-
-
-def to_camel_case(snake_str):
-    '''Converts a snake string to lower camel case.
-    E.G.: my_identifier --> myIdentifier
-    '''
-    components = snake_str.split('_')
-    # We capitalize the first letter of each component except the first one
-    # with the 'title' method and join them together.
-    return components[0] + "".join(x.title() for x in components[1:])
-
-
-class Field(object):
-    "Represents a database field"
-    def __init__(self, df_row, is_view, type_map, indent=0, camel_case=False):
-        self.name = df_row.name.strip()
-        if camel_case:
-            self.name = to_camel_case(self.name)
-
-        self.comment = df_row.description.strip()
-        self.raw_type = df_row.datatype.strip()
-        self.dtype = type_map[self.raw_type]
-        self.units = df_row.units.strip()
-        self.indexed = df_row.index
-        self.nullable = df_row.nullable
-        self.is_view = is_view
-        self.lsm_view = df_row.lsm_view
-        self._magic_names = {}
-        self._indent = indent
-        self.generate_criteria = df_row.generate_query_criteria
-        self.negative_is_invalid = df_row.negative_is_invalid
-
-        # not every tablespec contains the ucd column
-        try:
-            self.ucd = df_row.ucd.strip()
-        except:
-            self.ucd = ''
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        _str = self._comment()
-
-        if not self.is_view:
-            # handle any pragmas for magic field names
-            if self.name in self._magic_names:
-                for pragma in self._magic_names[self.name]:
-                    _str.append(pragma)
-
-            if self.indexed:
-                _str.append('#pragma db index')
-
-            if self.nullable:
-                _str.append('#pragma db null')
-            else:
-                _str.append('#pragma db not_null')
-
-        # the field definition
-        _str.append('{0} {1};'.format(
-            self.dtype,
-            self.name))
-
-        # indentation
-        _str = [self._indent * ' ' + line for line in _str]
-
-        _str.append('\n')
-
-        return '\n'.join(_str)
-
-    def _comment(self):
-        "Builds the comment text"
-        comments = []
-        if self.units:
-            comments.append('@brief {0} ({1})'.format(self.comment, self.units))
-        else:
-            comments.append('@brief {0}'.format(self.comment))
-        comments.append('UCD: {0}'.format(self.ucd))
-        return ['/// ' + c for c in comments]
-
-
-def get_fields(data_frame, type_map, is_view, indent=0, camel_case=False):
-    "Unpacks a tablespec data frame into a list of field objects"
-    fields = []
-    for row in data_frame.itertuples(index=False):
-        # print(row)
-        field = Field(row, is_view, type_map, indent=indent, camel_case=camel_case)
-        fields.append(field)
-    return fields
-
-
-def write_output(
-    data_frame,
-    filename,
-    type_map,
-    is_view=False,
-    indent=0,
-    camel_case=False,
-    append_to_file=False,
-    file_header=None,
-    file_footer=None):
-    "Writes the data model fields to a file"
-    mode = 'a' if append_to_file else 'w'
-    with open(filename, mode) as out:
-        if file_header:
-            out.write(file_header)
-        for field in get_fields(data_frame, type_map, is_view, indent=indent, camel_case=camel_case):
-            if not is_view or (is_view and field.lsm_view):
-                out.write(str(field))
-        if file_footer:
-            out.write(file_footer)
-
-#--------------------------------------------------
-# VOTable Parser function code generation section
-#--------------------------------------------------
 VOTABLE_PARSER_HEADER = COMMON_FILE_HEADER + '''
 #pragma once
 
@@ -424,108 +225,6 @@ POLARISATION_NO_UCD_FIELD_PARSE_PATTERN = '''
         pPol->$fieldname = boost::lexical_cast<$cpptype>(value);
     }'''
 
-def write_field_parsing_code(
-    out,
-    fields,
-    db_to_votable_type_map,
-    ucd_skip_list,
-    ucd_field_template,
-    no_ucd_field_template,
-    special_case_ra_dec=False):
-    count = 0
-    for field in fields:
-        if field.units:
-            unit_check = 'boost::iequals(unit, "{0}")'.format(field.units)
-        else:
-            unit_check = 'unit.empty() || unit == "--" || unit == "none"'
-
-        if field.ucd not in ucd_skip_list:
-            statement = Template(ucd_field_template).substitute(
-                    ucd=field.ucd,
-                    unitCheckExpression=unit_check,
-                    votype=db_to_votable_type_map[field.raw_type],
-                    fieldname=field.name,
-                    cpptype=field.dtype)
-            if count:
-                out.write('\n    else ')
-            out.write(statement)
-
-            # special case for RA and declination
-            if special_case_ra_dec:
-                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
-                    out.write(
-                        Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
-                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
-                    out.write(
-                        Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
-
-            out.write('    }')
-            count += 1
-        elif field.ucd == 'meta.code':
-            statement = Template(no_ucd_field_template).substitute(
-                    unitCheckExpression=unit_check,
-                    votype=db_to_votable_type_map[field.raw_type],
-                    fieldname=field.name,
-                    cpptype=field.dtype)
-            if count:
-                out.write('\n    else ')
-            out.write(statement)
-            count += 1
-
-def write_votable_parser():
-    "Writes the VOTable to data model class parsing code"
-    print('\t../service/VOTableParser.h')
-    with open('../service/VOTableParser.h', 'w') as out:
-        out.write(VOTABLE_PARSER_HEADER)
-
-        # map the types in the spec spreadsheet to the strings expected in the
-        # VOTable XML file
-        db_to_votable_type_map = {
-            'BIGINT': 'int',
-            'BIGINT UNSIGNED': 'int',
-            'REAL': 'float',
-            'DOUBLE': 'double',
-            'VARCHAR': 'char',
-            'TEXT': 'char',
-            'BOOLEAN': 'int',
-            'INTEGER': 'int',
-            'INTEGER UNSIGNED': 'int',
-            'DATETIME': 'char',
-        }
-
-        out.write(PARSE_COMPONENT_ROW_FIELD_START)
-        write_field_parsing_code(
-            out,
-            get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0]), TYPE_MAP, False),
-            db_to_votable_type_map,
-            ['', 'meta.code'],
-            COMPONENT_UCD_FIELD_PARSE_PATTERN,
-            COMPONENT_NO_UCD_FIELD_PARSE_PATTERN,
-            special_case_ra_dec=True)
-        out.write('\n}\n\n')
-
-        # Write the polarisation parser function
-        out.write(PARSE_POLARISATION_ROW_FIELD_START)
-        write_field_parsing_code(
-            out,
-            get_fields(load(POLARISATION_SPEC, skiprows=[0]), TYPE_MAP, False),
-            db_to_votable_type_map,
-            ['', 'meta.code'],
-            POLARISATION_UCD_FIELD_PARSE_PATTERN,
-            POLARISATION_NO_UCD_FIELD_PARSE_PATTERN,
-            special_case_ra_dec=False)
-        out.write('\n}')
-        out.write(HEADER_FOOTER)
-
-#--------------------------------------------------
-# Data marshalling code generation section
-# The data marshaller transfers data from the ORM objects retrieved from
-# a database query into the Ice DTO structures.
-#
-# Only database fields that have the lsm_view flag set to true are marshalled.
-#--------------------------------------------------
 DATA_MARSHALLER_HEADER = COMMON_FILE_HEADER + '''
 #pragma once
 
@@ -658,10 +357,310 @@ QUERY_BUILDER_FOOTER = '''
     return q;
 }''' + HEADER_FOOTER
 
+#------------------------------------------------------------
+# Configuration
+#------------------------------------------------------------
+CONTINUUM_COMPONENT_SPEC = './GSM_casda.continuum_component_description.xlsx'
+POLARISATION_SPEC = './GSM_casda_polarisation.xlsx'
 
-def write_orm_to_dto_marshaller():
+FILES = [
+    {
+        'input': CONTINUUM_COMPONENT_SPEC,
+        'output': '../schema/ContinuumComponent.i',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
+    {
+        'input': POLARISATION_SPEC,
+        'output': '../schema/Polarisation.i',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
+    {
+        'input': './GSM_data_source_description.xlsx',
+        'output': '../schema/DataSource.i',
+        'parse_cols': None,
+        'skiprows': [0],
+    },
+]
+
+# This is setup to write to the same file, with continuum component appending to
+# the polarisation file (thus the difference between headers and footers)
+# It also means that order is important, the component definition must be last
+SLICE_FILES = [
+    {
+        'input': POLARISATION_SPEC,
+        'output': '../SkyModelServiceDTO.ice',
+        'parse_cols': None,
+        'skiprows': [0],
+        'file_header': POLARISATION_HEADER,
+        'file_footer': '    };',
+        'append_to_file': False,
+    },
+    {
+        'input': CONTINUUM_COMPONENT_SPEC,
+        'output': '../SkyModelServiceDTO.ice',
+        'parse_cols': None,
+        'skiprows': [0],
+        'file_header': CONTINUUM_COMPONENT_HEADER,
+        'file_footer': SLICE_FOOTER,
+        'append_to_file': True,
+    },
+]
+
+
+#------------------------------------------------------------
+# Utility functions
+#------------------------------------------------------------
+def load(
+    filename,
+    sheetname='Catalogue description',
+    parse_cols=None,
+    skiprows=None,
+    converters={
+            'name': str,
+            'description': str,
+            'datatype': str,
+            'ucd': str,
+            'units': str,
+            'notes': str,
+            'include_in_gsm': bool,
+            'index': bool,
+            'nullable': bool,
+            'lsm_view': bool,
+            'generate_query_criteria': bool,
+            'negative_is_invalid': bool,
+            }):
+    """Load the table data from a CASDA definition spreadsheet"""
+    data = pd.read_excel(
+        filename,
+        sheetname=sheetname,
+        converters=converters,
+        parse_cols=parse_cols,
+        skiprows=skiprows)
+
+    # Drop any rows with missing data in the name or datatype columns
+    data.dropna(subset=['name', 'datatype'], inplace=True)
+
+    # fill any remaining missing data with empty strings
+    data.fillna('', inplace=True)
+
+    return data[data.include_in_gsm == True]
+
+
+def to_camel_case(snake_str):
+    '''Converts a snake string to lower camel case.
+    E.G.: my_identifier --> myIdentifier
+    '''
+    components = snake_str.split('_')
+    # We capitalize the first letter of each component except the first one
+    # with the 'title' method and join them together.
+    return components[0] + "".join(x.title() for x in components[1:])
+
+
+class Field(object):
+    "Represents a database field"
+    def __init__(self, df_row, is_view, type_map, indent=0, camel_case=False):
+        self.name = df_row.name.strip()
+        if camel_case:
+            self.name = to_camel_case(self.name)
+
+        self.comment = df_row.description.strip()
+        self.raw_type = df_row.datatype.strip()
+        self.dtype = type_map[self.raw_type]
+        self.units = df_row.units.strip()
+        self.indexed = df_row.index
+        self.nullable = df_row.nullable
+        self.is_view = is_view
+        self.lsm_view = df_row.lsm_view
+        self._magic_names = {}
+        self._indent = indent
+        self.generate_criteria = df_row.generate_query_criteria
+        self.negative_is_invalid = df_row.negative_is_invalid
+
+        # not every tablespec contains the ucd column
+        try:
+            self.ucd = df_row.ucd.strip()
+        except:
+            self.ucd = ''
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        _str = self._comment()
+
+        if not self.is_view:
+            # handle any pragmas for magic field names
+            if self.name in self._magic_names:
+                for pragma in self._magic_names[self.name]:
+                    _str.append(pragma)
+
+            if self.indexed:
+                _str.append('#pragma db index')
+
+            if self.nullable:
+                _str.append('#pragma db null')
+            else:
+                _str.append('#pragma db not_null')
+
+        # the field definition
+        _str.append('{0} {1};'.format(
+            self.dtype,
+            self.name))
+
+        # indentation
+        _str = [self._indent * ' ' + line for line in _str]
+
+        _str.append('\n')
+
+        return '\n'.join(_str)
+
+    def _comment(self):
+        "Builds the comment text"
+        comments = []
+        if self.units:
+            comments.append('@brief {0} ({1})'.format(self.comment, self.units))
+        else:
+            comments.append('@brief {0}'.format(self.comment))
+        comments.append('UCD: {0}'.format(self.ucd))
+        return ['/// ' + c for c in comments]
+
+
+def get_fields(data_frame, type_map, is_view, indent=0, camel_case=False):
+    "Unpacks a tablespec data frame into a list of field objects"
+    fields = []
+    for row in data_frame.itertuples(index=False):
+        field = Field(row, is_view, type_map, indent=indent, camel_case=camel_case)
+        fields.append(field)
+    return fields
+
+
+def write_output(
+    data_frame,
+    filename,
+    type_map,
+    is_view=False,
+    indent=0,
+    camel_case=False,
+    append_to_file=False,
+    file_header=None,
+    file_footer=None):
+    "Writes the data model fields to a file"
+    mode = 'a' if append_to_file else 'w'
+    print("\t" + filename)
+    with open(filename, mode) as out:
+        if file_header:
+            out.write(file_header)
+        for field in get_fields(data_frame, type_map, is_view, indent=indent, camel_case=camel_case):
+            if not is_view or (is_view and field.lsm_view):
+                out.write(str(field))
+        if file_footer:
+            out.write(file_footer)
+
+
+def write_field_parsing_code(
+    out,
+    fields,
+    db_to_votable_type_map,
+    ucd_skip_list,
+    ucd_field_template,
+    no_ucd_field_template,
+    special_case_ra_dec=False):
+    count = 0
+    for field in fields:
+        if field.units:
+            unit_check = 'boost::iequals(unit, "{0}")'.format(field.units)
+        else:
+            unit_check = 'unit.empty() || unit == "--" || unit == "none"'
+
+        if field.ucd not in ucd_skip_list:
+            statement = Template(ucd_field_template).substitute(
+                    ucd=field.ucd,
+                    unitCheckExpression=unit_check,
+                    votype=db_to_votable_type_map[field.raw_type],
+                    fieldname=field.name,
+                    cpptype=field.dtype)
+            if count:
+                out.write('\n    else ')
+            out.write(statement)
+
+            # special case for RA and declination
+            if special_case_ra_dec:
+                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
+                    out.write(
+                        Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
+                    out.write(
+                        Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
+                            fieldname=field.name))
+
+            out.write('    }')
+            count += 1
+        elif field.ucd == 'meta.code':
+            statement = Template(no_ucd_field_template).substitute(
+                    unitCheckExpression=unit_check,
+                    votype=db_to_votable_type_map[field.raw_type],
+                    fieldname=field.name,
+                    cpptype=field.dtype)
+            if count:
+                out.write('\n    else ')
+            out.write(statement)
+            count += 1
+
+
+def generate_votable_parser():
+    "Writes the VOTable to data model class parsing code"
+    print('\t../service/VOTableParser.h')
+    with open('../service/VOTableParser.h', 'w') as out:
+        out.write(VOTABLE_PARSER_HEADER)
+
+        # map the types in the spec spreadsheet to the strings expected in the
+        # VOTable XML file
+        db_to_votable_type_map = {
+            'BIGINT': 'int',
+            'BIGINT UNSIGNED': 'int',
+            'REAL': 'float',
+            'DOUBLE': 'double',
+            'VARCHAR': 'char',
+            'TEXT': 'char',
+            'BOOLEAN': 'int',
+            'INTEGER': 'int',
+            'INTEGER UNSIGNED': 'int',
+            'DATETIME': 'char',
+        }
+
+        out.write(PARSE_COMPONENT_ROW_FIELD_START)
+        write_field_parsing_code(
+            out,
+            get_fields(load(CONTINUUM_COMPONENT_SPEC, skiprows=[0]), TYPE_MAP, False),
+            db_to_votable_type_map,
+            ['', 'meta.code'],
+            COMPONENT_UCD_FIELD_PARSE_PATTERN,
+            COMPONENT_NO_UCD_FIELD_PARSE_PATTERN,
+            special_case_ra_dec=True)
+        out.write('\n}\n\n')
+
+        # Write the polarisation parser function
+        out.write(PARSE_POLARISATION_ROW_FIELD_START)
+        write_field_parsing_code(
+            out,
+            get_fields(load(POLARISATION_SPEC, skiprows=[0]), TYPE_MAP, False),
+            db_to_votable_type_map,
+            ['', 'meta.code'],
+            POLARISATION_UCD_FIELD_PARSE_PATTERN,
+            POLARISATION_NO_UCD_FIELD_PARSE_PATTERN,
+            special_case_ra_dec=False)
+        out.write('\n}')
+        out.write(HEADER_FOOTER)
+
+
+def generate_orm_to_dto_marshaller():
     '''Generates a function for marshalling data from the ORM classes into
-    the Ice DTO structures.'''
+    the Ice DTO structures.
+    Only database fields that have the lsm_view flag set to true are marshalled.
+    '''
     print('\t../service/DataMarshalling.h')
     with open('../service/DataMarshalling.h', 'w') as out:
         out.write(DATA_MARSHALLER_HEADER)
@@ -690,7 +689,7 @@ def write_orm_to_dto_marshaller():
         out.write(HEADER_FOOTER)
 
 
-def write_query_builder():
+def generate_query_builder():
     '''Generates a function for building an ODB query from the Ice SearchCriteria struct.'''
     def emit_query_term(out, minmax, f):
         ice_criteria_name = to_camel_case(minmax + '_' + f.name)
@@ -710,7 +709,7 @@ def write_query_builder():
             ice_criteria_name))
 
     output = '../service/QueryBuilder.h'
-    print('Generating ' + output)
+    print('\t' + output)
 
     with open(output, 'w') as out:
         out.write(QUERY_BUILDER_HEADER)
@@ -723,11 +722,11 @@ def write_query_builder():
         out.write(QUERY_BUILDER_FOOTER)
 
 
-def write_search_criteria_structures():
+def generate_search_criteria_structures():
     '''Generates the Ice search criteria structures.'''
 
     output = '../SkyModelServiceCriteria.ice'
-    print('Generating ' + output)
+    print('\t' + output)
 
     with open(output, 'w') as out:
         out.write(SEARCH_CRITERIA_HEADER)
@@ -753,19 +752,18 @@ def write_search_criteria_structures():
 
         out.write(SLICE_FOOTER)
 
-if __name__ == '__main__':
-    print('Generating tables ...')
+
+def generate_database_schema():
     for f in FILES:
-        print('\t' + f['output'])
         data = load(
             f['input'],
             parse_cols=f['parse_cols'],
             skiprows=f['skiprows'])
         write_output(data, f['output'], TYPE_MAP)
 
-    print('Generating slice data transfer objects (DTO) ...')
+
+def generate_ice_dto():
     for f in SLICE_FILES:
-        print('\t' + f['output'])
         data = load(
             f['input'],
             parse_cols=f['parse_cols'],
@@ -782,17 +780,25 @@ if __name__ == '__main__':
             file_header=f['file_header'],
             file_footer=f['file_footer'])
 
+
+if __name__ == '__main__':
+    print('Generating database schema files ...')
+    generate_database_schema()
+
+    print('Generating slice data transfer objects (DTO) ...')
+    generate_ice_dto()
+
     print('Generating VOTable to datamodel parsing code ...')
-    write_votable_parser()
+    generate_votable_parser()
 
     print('Generating data marshalling function ...')
-    write_orm_to_dto_marshaller()
+    generate_orm_to_dto_marshaller()
 
     print('Generating query builder function ...')
-    write_query_builder()
+    generate_query_builder()
 
     print('Generating Ice search criteria ...')
-    write_search_criteria_structures()
+    generate_search_criteria_structures()
 
     print('Done')
     print("* Don't forget to move the generated Ice files to Code/Interfaces/slice/current with 'make generate_ice'")
