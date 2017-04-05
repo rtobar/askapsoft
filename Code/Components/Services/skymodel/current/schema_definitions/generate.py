@@ -1,10 +1,16 @@
 # coding: utf-8
+'''
+This script generates ODB schema code for direct inclusion into the ASKAP Sky Model Service code.
+It also generates the Ice DTO objects from the same definitions.
+
+Requirements:
+    * Python 3
+    * Pandas >= 0.18 (older versions do not work)
+    * xlrd (used by Pandas for reading Excel files)
+'''
 
 import pandas as pd
 from string import Template
-
-# This script generates ODB schema code for direct inclusion into the ASKAP Sky Model Service code.
-# It also generates the Ice DTO objects from the same definitions.
 
 # Define the Outputs
 # Each schema file defines a dictionary with the following keys:
