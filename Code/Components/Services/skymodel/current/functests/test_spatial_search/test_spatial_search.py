@@ -51,6 +51,15 @@ class Test(CPFuncTestBase):
             self.shutdown()
             raise
 
+    def check_results(self, results, expected_ids):
+        '''utility method to check query results against a set of expected
+        component identifiers.
+        '''
+        assert len(results) == len(expected_ids)
+        actual_ids = [c.componentId for c in results]
+        for expected in expected_ids:
+            assert expected in actual_ids
+
     def test_simple_cone_search(self):
         components = self.sms_client.coneSearch(
             centre=Coordinate(70.2, -61.8),
@@ -85,17 +94,63 @@ class Test(CPFuncTestBase):
         nt.assert_almost_equal(p.fdPeakFitErr, 5.2)
 
     def test_simple_rect_search(self):
-        roi = Rect(centre=Coordinate(79.375, -71.5), extents=RectExtents(0.75, 1.0))
-        results = self.sms_client.rectSearch(roi, SearchCriteria())
+        self.check_results(
+            # search results
+            self.sms_client.rectSearch(
+                Rect(centre=Coordinate(79.375, -71.5), extents=RectExtents(0.75, 1.0)),
+                SearchCriteria()),
+            # expected component IDs
+            [
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1b",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1c",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"
+            ])
 
-        assert len(results) == 4
+    def test_cone_search_frequency_criteria(self):
+        self.check_results(
+            # search results
+            self.sms_client.coneSearch(
+                centre=Coordinate(76.0, -71.0),
+                radius=1.5,
+                criteria=SearchCriteria(
+                    minFreq=1230.0,
+                    maxFreq=1250.0)),
+            # expected component IDs
+            [
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4b",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_5a",
+            ])
 
-        actual_ids = [c.componentId for c in results]
-        expected_ids = [
-            "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1b",
-            "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1c",
-            "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a",
-            "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"]
+    def test_cone_search_flux_int(self):
+        self.check_results(
+            # search results
+            self.sms_client.coneSearch(
+                centre=Coordinate(76.0, -71.0),
+                radius=1.5,
+                criteria=SearchCriteria(
+                    minFluxInt=80.0)),
+            # expected component IDs
+            [
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_2a",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_3a",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a",
+            ])
 
-        for expected in expected_ids:
-            assert expected in actual_ids
+    def test_rect_search_spectral_index_bounds(self):
+        self.check_results(
+            # search results
+            self.sms_client.rectSearch(
+                Rect(centre=Coordinate(79.375, -71.5), extents=RectExtents(0.75, 1.0)),
+                SearchCriteria(
+                    minSpectralIndex=-3.2,
+                    useMinSpectralIndex=True,
+                    maxSpectralIndex=-0.1,
+                    useMaxSpectralIndex=True
+                )),
+            # expected component IDs
+            [
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_1b",
+                "SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a",
+            ])
