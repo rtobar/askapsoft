@@ -1,0 +1,9 @@
+{
+    "user_name": "Your name here",
+    "user_email": "youremail@mail.org",
+    "year": "2017",
+    "project_directory_name": "sample_data_service",
+    "service_short_name": "SDS",
+    "service_long_name": "Sample Data Service",
+    "namespace": "sds"
+}
