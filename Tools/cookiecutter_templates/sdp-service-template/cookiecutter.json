@@ -5,5 +5,9 @@
     "project_directory_name": "sample_data_service",
     "service_short_name": "SDS",
     "service_long_name": "Sample Data Service",
-    "namespace": "sds"
+    "namespace": "sds",
+    "package_name": "sds",
+    "service_class_name": "SampleDataService",
+    "cli_app_name": "sds",
+    "cli_app_class_name": "SdsApp"
 }

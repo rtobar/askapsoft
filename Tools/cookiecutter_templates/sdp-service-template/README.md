@@ -8,6 +8,12 @@ This template doesn't really do much, but it took almost no time to setup and
 will save time by avoiding the tedious search and replace method of creating
 a new application from an existing one.
 
+Updating
+--------
+New template values can be added through definition in ./cookiecutter.json and
+then adjusting the reference files. Refer to the cookiecutter documentation for
+details.
+
 Usage
 -----
 Install cookiecutter if you haven't already.
