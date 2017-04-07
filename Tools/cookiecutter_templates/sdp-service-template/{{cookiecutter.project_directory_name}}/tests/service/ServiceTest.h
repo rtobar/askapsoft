@@ -1,6 +1,6 @@
 /// @file ServiceTest.cc
 ///
-/// @copyright (c) 2016 CSIRO
+/// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -22,7 +22,7 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Daniel Collins <daniel.collins@csiro.au>
+/// @author {{cookiecutter.user_name}} <{{cookiecutter.user_email}}>
 
 // CPPUnit includes
 #include <cppunit/extensions/HelperMacros.h>
@@ -31,14 +31,11 @@
 #include <string>
 
 // Classes to test
-#include "service/SkyModelService.h"
-
-using std::string;
-using std::vector;
+#include "service/{{cookiecutter.service_class_name}}.h"
 
 namespace askap {
 namespace cp {
-namespace sms {
+namespace {{cookiecutter.namespace}} {
 
 class ServiceTest : public CppUnit::TestFixture {
 
@@ -54,7 +51,7 @@ class ServiceTest : public CppUnit::TestFixture {
         }
 
         void testStub() {
-            //CPPUNIT_ASSERT_EQUAL(true, false);
+            CPPUNIT_ASSERT(true);
         }
 
     private:

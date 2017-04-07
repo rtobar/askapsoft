@@ -1,6 +1,6 @@
-/// @file SkyModelServiceImpl.h
+/// @file {{cookiecutter.service_class_name}}Impl.h
 ///
-/// @copyright (c) 2016 CSIRO
+/// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -22,10 +22,9 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Daniel Collins <daniel.collins@csiro.au>
+/// @author {{cookiecutter.user_name}} <{{cookiecutter.user_email}}>
 
-#ifndef ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
-#define ASKAP_CP_SMS_SKYMODELSERVICEIMPL_H
+#pragma once
 
 // System includes
 #include <string>
@@ -37,56 +36,39 @@
 #include <Ice/Ice.h>
 
 // Ice interfaces
-#include <SkyModelService.h>
-#include <SkyModelServiceDTO.h>
-#include <SkyModelServiceCriteria.h>
+#include <{{cookiecutter.ice_service_name}}.h>
 
 // Local package includes
-#include "GlobalSkyModel.h"
+//#include ".h"
 
 namespace askap {
 namespace cp {
-namespace sms {
+namespace {{cookiecutter.namespace}} {
 
-namespace sms_interface = askap::interfaces::skymodelservice;
+namespace {{cookiecutter.namespace}}_interface = askap::interfaces::{{cookiecutter.ice_interface_namespace}};
 
-/// @brief Implementation of the "ISkyModelService" Ice interface.
-class SkyModelServiceImpl :
-    public sms_interface::ISkyModelService,
+/// @brief Implementation of the "I{{cookiecutter.ice_service_name}}" Ice interface.
+class {{cookiecutter.service_class_name}}Impl :
+    public {{cookiecutter.namespace}}_interface::I{{cookiecutter.service_class_name}},
     private boost::noncopyable {
     public:
 
-        /// @brief Factory method for constructing the SkyModelService
+        /// @brief Factory method for constructing the {{cookiecutter.service_class_name}}
         /// implementation.
         ///
-        /// @return The SkyModelServiceImpl instance.
+        /// @return The {{cookiecutter.service_class_name}}Impl instance.
         /// @throw AskapError   If the implementation cannot be constructed.
-        static SkyModelServiceImpl* create(const LOFAR::ParameterSet& parset);
+        static {{cookiecutter.service_class_name}}Impl* create(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
-        virtual ~SkyModelServiceImpl();
+        virtual ~{{cookiecutter.service_class_name}}Impl();
 
         virtual std::string getServiceVersion(const Ice::Current&);
-
-        virtual sms_interface::ComponentSeq coneSearch(
-            const sms_interface::Coordinate& centre,
-            double radius,
-            const sms_interface::SearchCriteria& criteria,
-            const Ice::Current&);
-
-        virtual sms_interface::ComponentSeq rectSearch(
-            const sms_interface::Rect& roi,
-            const sms_interface::SearchCriteria& criteria,
-            const Ice::Current&);
 
     private:
         /// @brief Constructor.
         /// Private. Use the factory method to create.
-        /// @param gsm The GlobalSkyModel instance.
-        SkyModelServiceImpl(boost::shared_ptr<GlobalSkyModel> gsm);
-
-        /// @brief The GlobalSkyModel instance
-        boost::shared_ptr<GlobalSkyModel> itsGsm;
+        {{cookiecutter.service_class_name}}Impl();
 };
 
 }

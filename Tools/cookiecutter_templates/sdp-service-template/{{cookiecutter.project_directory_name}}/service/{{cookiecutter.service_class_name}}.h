@@ -1,6 +1,6 @@
-/// @file SkyModelService.h
+/// @file {{cookiecutter.service_class_name}}.cc
 ///
-/// @copyright (c) 2016 CSIRO
+/// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -22,10 +22,9 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Daniel Collins <daniel.collins@csiro.au>
+/// @author {{cookiecutter.user_name}} <{{cookiecutter.user_email}}>
 
-#ifndef ASKAP_CP_SMS_SKYMODELSERVICE_H
-#define ASKAP_CP_SMS_SKYMODELSERVICE_H
+#pragma once
 
 // ASKAPsoft includes
 #include <boost/scoped_ptr.hpp>
@@ -39,22 +38,22 @@
 
 namespace askap {
 namespace cp {
-namespace sms {
+namespace {{cookiecutter.namespace}} {
 
 // forward declaration
-class SkyModelServiceImpl;
+class {{cookiecutter.service_class_name}}Impl;
 
 /// @brief Main class for the Sky Model Service
-class SkyModelService : private boost::noncopyable {
+class {{cookiecutter.service_class_name}} : private boost::noncopyable {
     public:
         /// @brief Construct a Sky Model Service Instance
         ///
         /// @param[in]  parset  the parameter set containing
         ///                     the configuration.
-        SkyModelService(const LOFAR::ParameterSet& parset);
+        {{cookiecutter.service_class_name}}(const LOFAR::ParameterSet& parset);
 
         /// @brief Destructor.
-        ~SkyModelService();
+        ~{{cookiecutter.service_class_name}}();
 
         /// @brief Run the service
         void run(void);
@@ -70,5 +69,3 @@ class SkyModelService : private boost::noncopyable {
 };
 };
 };
-
-#endif

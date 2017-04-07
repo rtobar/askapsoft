@@ -1,6 +1,6 @@
-/// @file SkyModelService.cc
+/// @file {{cookiecutter.service_class_name}}.cc
 ///
-/// @copyright (c) 2016 CSIRO
+/// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -22,13 +22,13 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author Daniel Collins <daniel.collins@csiro.au>
+/// @author {{cookiecutter.user_name}} <{{cookiecutter.user_email}}>
 
 // Include own header file first
-#include "SkyModelService.h"
+#include "{{cookiecutter.service_class_name}}.h"
 
 // Include package level header file
-#include "askap_skymodel.h"
+#include "askap_{{cookiecutter.package_name}}.h"
 
 // System includes
 #include <string>
@@ -42,15 +42,15 @@
 #include <iceutils/ServiceManager.h>
 
 // Local includes
-#include "SkyModelServiceImpl.h"
+#include "{{cookiecutter.service_class_name}}Impl.h"
 
-ASKAP_LOGGER(logger, ".SkyModelService");
+ASKAP_LOGGER(logger, ".{{cookiecutter.service_class_name}}");
 
 using namespace askap;
-using namespace askap::cp::sms;
+using namespace askap::cp::{{cookiecutter.namespace}};
 using namespace askap::cp::icewrapper;
 
-SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
+{{cookiecutter.service_class_name}}::{{cookiecutter.service_class_name}}(const LOFAR::ParameterSet& parset) :
     itsParset(parset),
     itsComm(),
     itsServiceManager()
@@ -80,12 +80,12 @@ SkyModelService::SkyModelService(const LOFAR::ParameterSet& parset) :
     itsServiceManager.reset(
         new ServiceManager(
             itsComm,
-            SkyModelServiceImpl::create(parset),
+            {{cookiecutter.service_class_name}}Impl::create(parset),
             serviceName,
             adapterName));
 }
 
-SkyModelService::~SkyModelService()
+{{cookiecutter.service_class_name}}::~{{cookiecutter.service_class_name}}()
 {
     ASKAPLOG_INFO_STR(logger, "Shutting down");
 
@@ -100,7 +100,7 @@ SkyModelService::~SkyModelService()
         itsComm->destroy();
 }
 
-void SkyModelService::run(void)
+void {{cookiecutter.service_class_name}}::run(void)
 {
     ASKAPLOG_INFO_STR(logger, "Running");
     itsServiceManager->start(true);
