@@ -1,4 +1,4 @@
-/// @file {{cookiecutter.service_class_name}}.cc
+/// @file {{cookiecutter.service_class_name}}.h
 ///
 /// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)

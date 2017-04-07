@@ -1,4 +1,4 @@
-/// The central processor {{cookiecutter.service_short_name}} namespace.
+/// The central processor {{cookiecutter.service_long_name}} namespace.
 namespace askap::cp::{{cookiecutter.namespace}} {};
 
 /// @mainpage ASKAP Central Processor {{cookiecutter.service_long_name}}
