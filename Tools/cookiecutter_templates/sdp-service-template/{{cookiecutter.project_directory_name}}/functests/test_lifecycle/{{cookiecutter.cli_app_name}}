@@ -8,4 +8,4 @@ export TEST_DIR=`pwd`/test_lifecycle
 
 # Note that this is not a recursive call, as the working directory means this 
 # file is not sourcing itself.
-source ./sms
+source ./{{cookiecutter.cli_app_name}}

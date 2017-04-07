@@ -9,5 +9,7 @@
     "package_name": "sds",
     "service_class_name": "SampleDataService",
     "cli_app_name": "sds",
-    "cli_app_class_name": "SdsApp"
+    "cli_app_class_name": "SdsApp",
+    "ice_service_name": "SampleDataService",
+    "ice_interface_namespace": "sampledataservice"
 }

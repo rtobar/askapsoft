@@ -8,7 +8,7 @@ source ../init_package_env.sh
 export AIPSPATH=$ASKAP_ROOT/Code/Base/accessors/current
 
 # Execute your application under test
-sms -c $TEST_DIR/sms.cfg -l ./config-files/logging.log_cfg &
+{{cookiecutter.cli_app_name}} -c $TEST_DIR/{{cookiecutter.cli_app_name}}.cfg -l ./config-files/logging.log_cfg &
 
 # Required for the functional test framework. Do not modify below this line!
 PID=$!
