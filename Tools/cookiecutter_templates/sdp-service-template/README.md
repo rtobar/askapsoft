@@ -68,7 +68,10 @@ entry-point code.
 
 **ice_service_name**: The name of your Ice service (minus the I prefix). So if your
 Ice interface is called IRfiService, you would set RfiService here.
-ice_interface_namespace: The bottom-level Ice module name that contains your
+
+**ice_interface_filename**: Name of your Ice interface file (minus the extension).
+
+**ice_interface_namespace**: The bottom-level Ice module name that contains your
 service interface. This value is appended to "askap::interfaces::".
 Typically named after your service. E.G.: The Sky Model Service interface sits
 in "askap::interfaces::skymodelservice".

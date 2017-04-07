@@ -36,9 +36,7 @@
 #include <Ice/Ice.h>
 
 // Ice interfaces
-// Change this include to the name of the slice file that contains your
-// Ice service interface definition
-#include <IService.h>
+#include <{{cookiecutter.ice_interface_filename}}.h>
 
 // Local package includes
 //#include ".h"

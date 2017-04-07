@@ -10,5 +10,6 @@
     "cli_app_name": "cli_app_name",
     "cli_app_class_name": "cli_app_class_name",
     "ice_service_name": "Service",
+    "ice_interface_filename": "IService",
     "ice_interface_namespace": "services"
 }
