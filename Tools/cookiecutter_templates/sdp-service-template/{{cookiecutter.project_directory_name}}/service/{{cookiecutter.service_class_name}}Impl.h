@@ -36,7 +36,9 @@
 #include <Ice/Ice.h>
 
 // Ice interfaces
-#include <{{cookiecutter.ice_service_name}}.h>
+// Change this include to the name of the slice file that contains your
+// Ice service interface definition
+#include <IService.h>
 
 // Local package includes
 //#include ".h"
@@ -49,7 +51,7 @@ namespace {{cookiecutter.namespace}}_interface = askap::interfaces::{{cookiecutt
 
 /// @brief Implementation of the "I{{cookiecutter.ice_service_name}}" Ice interface.
 class {{cookiecutter.service_class_name}}Impl :
-    public {{cookiecutter.namespace}}_interface::I{{cookiecutter.service_class_name}},
+    public {{cookiecutter.namespace}}_interface::I{{cookiecutter.ice_service_name}},
     private boost::noncopyable {
     public:
 
@@ -74,5 +76,3 @@ class {{cookiecutter.service_class_name}}Impl :
 }
 }
 }
-
-#endif

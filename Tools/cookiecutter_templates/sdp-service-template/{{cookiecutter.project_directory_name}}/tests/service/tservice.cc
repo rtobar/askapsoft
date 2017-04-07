@@ -1,4 +1,4 @@
-/// @file tstub.cc
+/// @file tservice.cc
 ///
 /// @copyright (c) {{cookiecutter.year}} CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     askapdev::testutils::AskapTestRunner runner(argv[0]);
 
     // Add all the tests
-    runner.addTest(askap::cp::sms::ServiceTest::suite());
+    runner.addTest(askap::cp::{{cookiecutter.namespace}}::ServiceTest::suite());
 
     // Run
     const bool wasSucessful = runner.run();

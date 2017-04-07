@@ -10,7 +10,7 @@ from unittest import skip
 
 # import IceStorm
 from askap.iceutils import CPFuncTestBase, get_service_object
-from askap.slice import {{cookiecutter.ice_service_name}}
+from askap.slice import I{{cookiecutter.ice_service_name}}
 from askap.interfaces.{{cookiecutter.ice_interface_namespace}} import I{{cookiecutter.ice_service_name}}Prx
 
 
