@@ -40,6 +40,7 @@
 
 // ODB includes
 #include <odb/mysql/database.hxx>
+#include <odb/mysql/connection-factory.hxx>
 #include <odb/sqlite/database.hxx>
 #include <odb/schema-catalog.hxx>
 #include <odb/connection.hxx>
@@ -74,7 +75,6 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
         ASKAPLOG_INFO_STR(logger, "Instantiating sqlite backend into " << dbName);
 
         // TODO Parset flag for db creation control
-        // create the database
         shared_ptr<odb::database> pDb(
             new sqlite::database(
                 dbName,
@@ -83,11 +83,35 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
 
         // create the implementation
         pImpl.reset(new GlobalSkyModel(pDb));
-        ASKAPCHECK(pImpl.get(), "GlobalSkyModel construction failed");
     }
     else if (dbType.compare("mysql") == 0) {
-        // TODO Implement support for MySQL
-        ASKAPTHROW(AskapError, "MySQL support not implemented yet");
+        ASKAPLOG_INFO_STR(logger, "connecting to msql");
+
+        ASKAPLOG_DEBUG_STR(logger, "creating connection pool factory");
+        std::auto_ptr<odb::mysql::connection_factory> pConnectionFactory(
+            new odb::mysql::connection_pool_factory(
+                parset.getInt("database.max_connections"),
+                parset.getInt("database.min_connections"),
+                parset.getBool("database.ping_connections")));
+        ASKAPCHECK(pConnectionFactory.get(), "MySQL connection factory failed");
+
+        ASKAPLOG_DEBUG_STR(logger, "creating MySQL database");
+        shared_ptr<odb::database> pDb(
+            new mysql::database(
+                parset.get("database.user"),
+                parset.get("database.password"),
+                parset.get("database.database"),
+                parset.get("database.host"),
+                parset.getUint("database.port"),
+                parset.get("database.socket"),
+                parset.get("database.charset"),
+                0, // no flags yet
+                pConnectionFactory));
+        ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
+
+        // create the implementation
+        ASKAPLOG_DEBUG_STR(logger, "creating GlobalSkyModel");
+        pImpl.reset(new GlobalSkyModel(pDb));
     }
     else {
         ASKAPTHROW(AskapError, "Unsupported database backend: " << dbType);
@@ -118,7 +142,13 @@ bool GlobalSkyModel::createSchema(bool dropTables)
         createSchemaSqlite(dropTables);
         return true;
     }
-    // TODO: other database backends. Generic code?
+    else if (itsDb->id() == odb::id_mysql) {
+        ASKAPLOG_DEBUG_STR(logger, "Creating MySQL db");
+        transaction t(itsDb->begin());
+        schema_catalog::create_schema(*itsDb, "", dropTables);
+        t.commit();
+        return true;
+    }
 
     return false;
 }

@@ -52,8 +52,8 @@ def odb_prebuild():
         '--multi-database', 'dynamic',
         '--database', 'common',  # Generate the database-agnostic code
         '--database', 'sqlite',
-        # '--database', 'mysql',
-        # '--database', 'pgsql',
+        '--database', 'mysql',
+        '--database', 'pgsql',
         # enable the ODB profile for boost smart pointers and date-times
         '--profile', 'boost/smart-ptr',
         '--profile', 'boost/date-time/posix-time',
