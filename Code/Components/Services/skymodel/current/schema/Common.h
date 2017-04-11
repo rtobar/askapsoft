@@ -42,6 +42,9 @@ namespace cp {
 namespace sms {
 namespace datamodel {
 
+// Datamodel versioning
+#pragma db model version(1, 1)
+
 // Map C++ bool to an INT NOT NULL database type
 #pragma db value(bool) type("INT")
 

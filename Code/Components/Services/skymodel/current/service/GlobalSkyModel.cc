@@ -41,6 +41,8 @@
 // ODB includes
 #include <odb/mysql/database.hxx>
 #include <odb/mysql/connection-factory.hxx>
+#include <odb/pgsql/database.hxx>
+#include <odb/pgsql/connection-factory.hxx>
 #include <odb/sqlite/database.hxx>
 #include <odb/schema-catalog.hxx>
 #include <odb/connection.hxx>
@@ -90,22 +92,48 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
         ASKAPLOG_DEBUG_STR(logger, "creating connection pool factory");
         std::auto_ptr<odb::mysql::connection_factory> pConnectionFactory(
             new odb::mysql::connection_pool_factory(
-                parset.getInt("database.max_connections"),
-                parset.getInt("database.min_connections"),
-                parset.getBool("database.ping_connections")));
+                parset.getInt("mysql.max_connections"),
+                parset.getInt("mysql.min_connections"),
+                parset.getBool("mysql.ping_connections")));
         ASKAPCHECK(pConnectionFactory.get(), "MySQL connection factory failed");
 
         ASKAPLOG_DEBUG_STR(logger, "creating MySQL database");
         shared_ptr<odb::database> pDb(
             new mysql::database(
-                parset.get("database.user"),
-                parset.get("database.password"),
-                parset.get("database.database"),
-                parset.get("database.host"),
-                parset.getUint("database.port"),
-                parset.get("database.socket"),
-                parset.get("database.charset"),
+                parset.get("mysql.user"),
+                parset.get("mysql.password"),
+                parset.get("mysql.database"),
+                parset.get("mysql.host"),
+                parset.getUint("mysql.port"),
+                parset.get("mysql.socket"),
+                parset.get("mysql.charset"),
                 0, // no flags yet
+                pConnectionFactory));
+        ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
+
+        // create the implementation
+        ASKAPLOG_DEBUG_STR(logger, "creating GlobalSkyModel");
+        pImpl.reset(new GlobalSkyModel(pDb));
+    }
+    else if (dbType.compare("pgsql") == 0) {
+        ASKAPLOG_INFO_STR(logger, "connecting to pgsql");
+
+        ASKAPLOG_DEBUG_STR(logger, "creating connection pool factory");
+        std::auto_ptr<odb::pgsql::connection_factory> pConnectionFactory(
+            new odb::pgsql::connection_pool_factory(
+                parset.getInt("pgsql.max_connections"),
+                parset.getInt("pgsql.min_connections")));
+        ASKAPCHECK(pConnectionFactory.get(), "pgsql connection factory failed");
+
+        ASKAPLOG_DEBUG_STR(logger, "creating pgsql database");
+        shared_ptr<odb::database> pDb(
+            new pgsql::database(
+                parset.get("pgsql.user"),
+                parset.get("pgsql.password"),
+                parset.get("pgsql.database"),
+                parset.get("pgsql.host"),
+                parset.getUint("pgsql.port"),
+                "",
                 pConnectionFactory));
         ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
 
@@ -142,8 +170,8 @@ bool GlobalSkyModel::createSchema(bool dropTables)
         createSchemaSqlite(dropTables);
         return true;
     }
-    else if (itsDb->id() == odb::id_mysql) {
-        ASKAPLOG_DEBUG_STR(logger, "Creating MySQL db");
+    else { // if (itsDb->id() == odb::id_mysql) {
+        ASKAPLOG_DEBUG_STR(logger, "Creating schema");
         transaction t(itsDb->begin());
         schema_catalog::create_schema(*itsDb, "", dropTables);
         t.commit();
@@ -288,7 +316,7 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(Rect rect) const
 GlobalSkyModel::ComponentListPtr GlobalSkyModel::rectSearch(
     Rect rect, ComponentQuery query) const
 {
-    ASKAPLOG_DEBUG_STR(logger, "centre=" << rect.centre.ra << ", " << 
+    ASKAPLOG_DEBUG_STR(logger, "centre=" << rect.centre.ra << ", " <<
         rect.centre.dec << ". extents=" << rect.extents.width << ", " << rect.extents.height);
     return queryComponentsByPixel(
             itsHealPix.queryRect(rect),

@@ -54,6 +54,11 @@ def odb_prebuild():
         '--database', 'sqlite',
         '--database', 'mysql',
         '--database', 'pgsql',
+        # For PostgreSQL, ODB needs to know the version. If this is left out, then
+        # exceptions will occur during schema creation:
+        # ERROR: relation "schema_version" already exists
+        # specifying the version lets ODB generate the correct schema
+        '--pgsql-server-version', '9.4',
         # enable the ODB profile for boost smart pointers and date-times
         '--profile', 'boost/smart-ptr',
         '--profile', 'boost/date-time/posix-time',

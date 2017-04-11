@@ -47,9 +47,6 @@ namespace cp {
 namespace sms {
 namespace datamodel {
 
-// Datamodel versioning
-#pragma db model version(1, 1)
-
 /// @brief Datamodel class for Continuum Components
 
 // Do not edit the version of this file in the `datamodel` directory, as it is
