@@ -352,4 +352,26 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
     return results;
 }
 
+GlobalSkyModel::IdListPtr GlobalSkyModel::uploadComponents(
+    const ComponentList::iterator& begin,
+    const ComponentList::iterator& end)
+{
+    IdListPtr results(new std::vector<datamodel::id_type>());
 
+    ASKAPLOG_DEBUG_STR(logger, "Starting upload");
+    transaction t(itsDb->begin());
+
+    // bulk persist is only supported for SQLServer and Oracle.
+    // So we have to fall back to a manual loop persisting one component at
+    // a time...
+    for (ComponentList::iterator it = begin; it != end; it++) {
+        if (it->polarisation.get())
+            itsDb->persist(it->polarisation);
+        results->push_back(itsDb->persist(*it));
+    }
+
+    t.commit();
+    ASKAPLOG_DEBUG_STR(logger, "Uploaded " << results->size() << " components");
+
+    return results;
+}

@@ -63,6 +63,7 @@ ASKAP_LOGGER(logger, ".sms_tools");
 #define INGEST_POLARISATION "ingest-polarisation"
 #define SB_ID "sbid"
 #define OBS_DATE "observation-date"
+#define RANDOMISE "gen-random-components"
 
 class SmsToolsApp : public askap::Application {
     public:
@@ -77,6 +78,10 @@ class SmsToolsApp : public askap::Application {
                 }
                 else if (parameterExists(INGEST_COMPONENTS)) {
                     return ingestVoTable();
+                }
+                else if (parameterExists(RANDOMISE)) {
+                    int64_t count = lexical_cast<int64_t>(parameter(RANDOMISE));
+                    return generateRandomComponents(count);
                 }
             } catch (const AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
@@ -119,6 +124,14 @@ class SmsToolsApp : public askap::Application {
                 obsDate);
             return 0;
         }
+
+        int generateRandomComponents(int64_t componentCount) {
+
+            if (componentCount > 0) {
+            }
+
+            return 0;
+        }
 };
 
 int main(int argc, char *argv[])
@@ -129,5 +142,6 @@ int main(int argc, char *argv[])
     app.addParameter(INGEST_POLARISATION, "p", "Optional polarisation data catalog", true);
     app.addParameter(SB_ID, "i", "Scheduling block ID for ingested catalog", true);
     app.addParameter(OBS_DATE, "d", "Observation date for ingested catalog, in form YYYY-MM-DDTHH:MM:SS", true);
+    app.addParameter(RANDOMISE, "t", "Populate the database by randomly generating the specified number of components", "0");
     return app.main(argc, argv);
 }

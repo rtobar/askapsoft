@@ -82,6 +82,15 @@ class GlobalSkyModel :
         /// @return true if the schema was created; false if the schema already exists
         bool createSchema(bool dropTables=true);
 
+        /// @brief Upload components to the database. This function is only intended for system testing.
+        /// @param begin A ComponentList iterator to the first item to upload. 
+        /// @param end A ComponentList iterator to the item one past the last item to upload.
+        /// @throw AskapError Thrown if there are errors.
+        /// @return Vector of new object IDs.
+        IdListPtr uploadComponents(
+            const ComponentList::iterator& begin,
+            const ComponentList::iterator& end);
+
         /// @brief Ingests a VO table of Continuum Components into the GSM.
         /// @param componentsCatalog The VO table file name for the continuum components.
         /// @param polarisationCatalog The VO table file name for the polarisation data.
