@@ -169,8 +169,8 @@ DO_CONTCUBE_IMAGING=false
 DO_SPECTRAL_IMAGING=false
 DO_SPECTRAL_IMSUB=false
 DO_MOSAIC=true
-DO_SOURCE_FINDING=false
-DO_SOURCE_FINDING_MOSAIC=SETME
+DO_SOURCE_FINDING=true
+DO_SOURCE_FINDING_BEAMWISE=false
 DO_ALT_IMAGER=false
 #
 DO_CONVERT_TO_FITS=false
@@ -180,7 +180,7 @@ DO_STAGE_FOR_CASDA=false
 ####################
 # Input Scheduling Blocks (SBs)
 # Location of the SBs
-DIR_SB=/scratch2/askap/askapops/beta-scheduling-blocks
+DIR_SB=/scratch2/askap/askapops/askap-scheduling-blocks
 # SB with 1934-638 observation
 SB_1934="SET_THIS"
 MS_INPUT_1934=""
@@ -188,10 +188,13 @@ MS_INPUT_1934=""
 SB_SCIENCE="SET_THIS"
 MS_INPUT_SCIENCE=""
 
+# Set to true if the dataset being processed is from BETA observations
+IS_BETA=false
+
 ####################
 # Which beams to use.
 BEAM_MIN=0
-BEAM_MAX=8
+BEAM_MAX=35
 BEAMLIST=""
 
 ####################
@@ -212,6 +215,23 @@ NUM_CPUS_CBPCAL=100
 # Value for the calibrate.scalenoise parameter for applying the
 # bandpass solution
 BANDPASS_SCALENOISE=false
+
+# Smoothing of the bandpass table - this is achieved by the ACES tool
+# plot_caltable.py. This tool also plots the cal solutions
+
+# Whether to smooth the bandpass
+DO_BANDPASS_SMOOTH=true
+# Whether to run plot_caltable.py to produce plots
+DO_BANDPASS_PLOT=true
+# If true, smooth the amplitudes. If false, smooth real & imaginary
+BANDPASS_SMOOTH_AMP=true
+# If true, only smooth outlier points
+BANDPASS_SMOOTH_OUTLIER=true
+# polynomial order (if >= 0) or window size (if <0) to use when smoothing bandpass
+BANDPASS_SMOOTH_FIT=1
+# The threshold level for fitting bandpass
+BANDPASS_SMOOTH_THRESHOLD=1.0
+
 
 # Whether to do dynamic flagging
 FLAG_DO_DYNAMIC_AMPLITUDE_1934=true
@@ -312,6 +332,10 @@ DATACOLUMN=DATA
 NUM_TAYLOR_TERMS=2
 # Number of CPUs to use on each core in the continuum imaging
 CPUS_PER_CORE_CONT_IMAGING=16
+# Total number of cores to use for the continuum imaging. Leave blank
+# to have one core for each of nworkergroups*nchannels (plus a
+# master). 
+NUM_CPUS_CONTIMG_SCI=""
 
 # base name for images: if IMAGE_BASE_CONT=i.blah then we'll get
 # image.i.blah, image.i.blah.restored, psf.i.blah etc
@@ -422,7 +446,12 @@ SELFCAL_SELAVY_WEIGHTSCUT=0.95
 # self-cal solution
 SELFCAL_SCALENOISE=false
 # Flux limit for cmodel
-SELFCAL_MODEL_FLUX_LIMIT=10mJy
+SELFCAL_MODEL_FLUX_LIMIT=10uJy
+# Whether to use the number of Gaussians taken from initial estimate
+SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=true
+# If SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=false, this is how many
+# Gaussians to use
+SELFCAL_SELAVY_NUM_GAUSSIANS=1
 
 # Array-capable self-calibration parameters
 #   These parameters can be given as either a single value (eg. "300")
@@ -521,7 +550,7 @@ CONTSUB_SELAVY_NSUBY=3
 CONTSUB_SELAVY_THRESHOLD=6
 
 # Flux limit for cmodel
-CONTSUB_MODEL_FLUX_LIMIT=10mJy
+CONTSUB_MODEL_FLUX_LIMIT=10uJy
 
 # Number of processors allocated to the spectral-line imaging
 NUM_CPUS_SPECIMG_SCI=2000
@@ -529,7 +558,7 @@ NUM_CPUS_SPECIMG_SCI=2000
 CPUS_PER_CORE_SPEC_IMAGING=20
 # Number of processors for spectral-line mosaicking.
 # Leave blank to fit to number of channels
-NUM_CPUS_SPECTRAL_LINMOS=""
+NUM_CPUS_SPECTRAL_LINMOS=200
 
 # base name for image cubes: if IMAGE_BASE_SPECTRAL=i.blah then we'll
 # get image.i.blah, image.i.blah.restored, psf.i.blah etc

@@ -5,7 +5,7 @@
 # completed. The bandpass calibration is done assuming the special
 # '1934-638' component.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2015 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -34,53 +34,46 @@ ID_CBPCAL=""
 
 DO_IT=$DO_FIND_BANDPASS
 
-if [ "${CLOBBER}" != "true" ] && [ -e "${TABLE_BANDPASS}" ]; then
-    if [ "${DO_IT}" == "true" ]; then
+if [ $CLOBBER == false ] && [ -e ${TABLE_BANDPASS} ]; then
+    if [ $DO_IT == true ]; then
         echo "Bandpass table ${TABLE_BANDPASS} exists, so not running cbpcalibrator"
     fi
     DO_IT=false
 fi
 
-if [ "${DO_IT}" == "true" ]; then
+if [ $DO_IT == true ]; then
 
-    # Optional data selection
-    dataSelectionPars="# Using all the data"
-    if [ "${BANDPASS_MINUV}" -gt 0 ]; then
-        dataSelectionPars="# Minimum UV distance for bandpass calibration:
-Cbpcalibrator.MinUV = ${BANDPASS_MINUV}"
-    fi        
-    
     # Check for bandpass smoothing options
     DO_RUN_PLOT_CALTABLE=false
-    if [ "${DO_BANDPASS_PLOT}" == "true" ] || [ "${DO_BANDPASS_SMOOTH}" == "true" ]; then
+    if [ $DO_BANDPASS_PLOT == true ] || [ $DO_BANDPASS_SMOOTH == true ]; then
         DO_RUN_PLOT_CALTABLE=true
     fi
-    if [ "${DO_RUN_PLOT_CALTABLE}" == "true" ]; then
+    if [ $DO_RUN_PLOT_CALTABLE == true ]; then
         script_location="$ACES/tools"
         script_name="plot_caltable"
-        if [ ! -e "${script_location}/${script_name}.py" ]; then
+        if [ ! -e ${script_location}/${script_name}.py ]; then
             echo "WARNING - ${script_name}.py not found in $script_location - not running bandpass smoothing/plotting."
             DO_RUN_PLOT_CALTABLE=false
         fi
         script_args="-t ${TABLE_BANDPASS} -s B "
-        if [ "${DO_BANDPASS_SMOOTH}" == "true" ]; then
+        if [ $DO_BANDPASS_SMOOTH == true ]; then
             script_args="${script_args} -sm"
-            if [ "${DO_BANDPASS_PLOT}" != "true" ]; then
+            if [ $DO_BANDPASS_PLOT != true ]; then
                 script_args="${script_args} --no_plot"
             fi
         fi
-        if [ "${BANDPASS_SMOOTH_AMP}" == "true" ]; then
+        if [ $BANDPASS_SMOOTH_AMP == true ]; then
             script_args="${script_args} -sa"
         fi
-        if [ "${BANDPASS_SMOOTH_OUTLIER}" == "true" ]; then
+        if [ $BANDPASS_SMOOTH_OUTLIER == true ]; then
             script_args="${script_args} -o"
         fi
         script_args="${script_args} -fit ${BANDPASS_SMOOTH_FIT} -th ${BANDPASS_SMOOTH_THRESHOLD}"
         
     fi
 
-    sbatchfile="$slurms/cbpcalibrator_1934.sbatch"
-    cat > "$sbatchfile" <<EOF
+    sbatchfile=$slurms/cbpcalibrator_1934.sbatch
+    cat > $sbatchfile <<EOF
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -102,13 +95,11 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-thisfile=$sbatchfile
-cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
+cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
 parset=${parsets}/cbpcalibrator_1934_\${SLURM_JOB_ID}.in
-cat > "\$parset" <<EOFINNER
+cat > \$parset <<EOFINNER
 Cbpcalibrator.dataset                         = [${ms1934list}]
-${dataSelectionPars}
 Cbpcalibrator.nAnt                            = ${NUM_ANT}
 Cbpcalibrator.nBeam                           = ${maxbeam}
 Cbpcalibrator.nChan                           = ${NUM_CHAN_1934}
@@ -135,13 +126,13 @@ log=${logs}/cbpcalibrator_1934_\${SLURM_JOB_ID}.log
 
 NCORES=${NUM_CPUS_CBPCAL}
 NPPN=20
-aprun -n \${NCORES} -N \${NPPN} $cbpcalibrator -c "\$parset" > "\$log"
+aprun -n \${NCORES} -N \${NPPN} $cbpcalibrator -c \$parset > \$log
 err=\$?
-for ms in \$(echo $ms1934list | sed -e 's/,/ /g'); do 
-    rejuvenate "\$ms";
+for ms in `echo $ms1934list | sed -e 's/,/ /g'`; do 
+    rejuvenate \$ms;
 done
 rejuvenate ${TABLE_BANDPASS}
-extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} findBandpass "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} findBandpass "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
@@ -155,11 +146,11 @@ if [ \${PLOT_CALTABLE} == true ]; then
     module load casa
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${scriptCommand}" > "\${log}"
+    aprun -n \${NCORES -N \${NPPN} -b casa --nogui --nologger --log2term -c \${scriptCommand} > \${log}
     module unload casa
     err=\$?
     rejuvenate ${TABLE_BANDPASS}*
-    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} smoothBandpass "txt,csv"
+    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} smoothBandpass "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
@@ -167,11 +158,14 @@ if [ \${PLOT_CALTABLE} == true ]; then
 fi
 
 
+
+fi
+
 EOF
 
-    if [ "${SUBMIT_JOBS}" == "true" ]; then
-        ID_CBPCAL=$(sbatch ${FLAG_CBPCAL_DEP} "$sbatchfile" | awk '{print $4}')
-        recordJob "${ID_CBPCAL}" "Finding bandpass calibration with 1934-638, with flags \"$FLAG_CBPCAL_DEP\""
+    if [ $SUBMIT_JOBS == true ]; then
+        ID_CBPCAL=`sbatch ${FLAG_CBPCAL_DEP} $sbatchfile | awk '{print $4}'`
+        recordJob ${ID_CBPCAL} "Finding bandpass calibration with 1934-638, with flags \"$FLAG_CBPCAL_DEP\""
     else
         echo "Would find bandpass calibration with slurm file $sbatchfile"
     fi

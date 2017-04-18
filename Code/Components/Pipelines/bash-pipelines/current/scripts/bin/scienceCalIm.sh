@@ -5,7 +5,7 @@
 # with or without self-calibration, and image the spectral-line
 # data. Finally, mosaic the continuum images.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2015 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -34,21 +34,11 @@ echo "Setting up and calibrating the science observation"
 echo "=================================================="
 
 FIELD_ID=0
-<<<<<<< .working
-<<<<<<< .working
 FULL_LINMOS_CONT_DEP=""
 FULL_LINMOS_CONTCUBE_DEP=""
 FULL_LINMOS_SPEC_DEP=""
-=======
-FULL_LINMOS_DEP=""
-=======
-FULL_LINMOS_CONT_DEP=""
-FULL_LINMOS_CONTCUBE_DEP=""
-FULL_LINMOS_SPEC_DEP=""
->>>>>>> .merge-right.r8042
->>>>>>> .merge-right.r7963
 
-cd "${ORIGINAL_OUTPUT}"
+cd ${ORIGINAL_OUTPUT}
 
 for FIELD in ${FIELD_LIST}; do
 
@@ -59,30 +49,26 @@ for FIELD in ${FIELD_LIST}; do
         doField=false
     fi
 
-    if [ "$doField" == "true" ]; then
+    if [ $doField == true ]; then
 
-        parsets="$parsetsBase/$FIELD"
-        mkdir -p "$parsets"
-        logs="$logsBase/$FIELD"
-        mkdir -p "$logs"
-        slurms="$slurmsBase/$FIELD"
-        mkdir -p "$slurms"
-        slurmOut="$slurmOutBase/$FIELD"
-        mkdir -p "$slurmOut"
+        parsets=$parsetsBase/$FIELD
+        mkdir -p $parsets
+        logs=$logsBase/$FIELD
+        mkdir -p $logs
+        slurms=$slurmsBase/$FIELD
+        mkdir -p $slurms
+        slurmOut=$slurmOutBase/$FIELD
+        mkdir -p $slurmOut
 
-        mkdir -p "${FIELD}"
-        cd "${FIELD}"
+        mkdir -p ${FIELD}
+        cd ${FIELD}
         OUTPUT="${ORIGINAL_OUTPUT}/${FIELD}"
 
-        if [ "${NEED_BEAM_CENTRES}" == "true" ]; then
-            # Get the linmos offsets when we have a common image centre for
-            # all beams - store in $LINMOS_BEAM_OFFSETS
-            getBeamOffsets
-        fi
+        # Get the linmos offsets when we have a common image centre for
+        # all beams - store in $LINMOS_BEAM_OFFSETS
+        getBeamOffsets
 
         FLAG_IMAGING_DEP=""
-        DEP_CONTCUBE=""
-        DEP_SPECIMG=""
         
         for BEAM in ${BEAMS_TO_USE}; do
 
@@ -90,7 +76,7 @@ for FIELD in ${FIELD_LIST}; do
             echo "----------"
 
             
-            mkdir -p "${OUTPUT}/Checkfiles"
+            mkdir -p ${OUTPUT}/Checkfiles
             # an empty file that will indicate that the flagging has been done
             FLAG_CHECK_FILE="${OUTPUT}/Checkfiles/FLAGGING_DONE_BEAM${BEAM}"
             # the same, but for the averaged dataset
@@ -121,91 +107,67 @@ for FIELD in ${FIELD_LIST}; do
 
             
             findScienceMSnames
-            FIELDBEAM=$(echo "$FIELD_ID" "$BEAM" | awk '{printf "F%02d_B%s",$1,$2}')
+            FIELDBEAM=`echo $FIELD_ID $BEAM | awk '{printf "F%02d_B%s",$1,$2}'`
+            FIELDBEAMJOB=`echo $FIELDBEAM | sed -e 's/_//g'`
 
-            . "${PIPELINEDIR}/splitScience.sh"
+            . ${PIPELINEDIR}/splitScience.sh
 
-            . "${PIPELINEDIR}/applyBandpassScience.sh"
+            . ${PIPELINEDIR}/applyBandpassScience.sh
 
-            . "${PIPELINEDIR}/flagScience.sh"
+            . ${PIPELINEDIR}/flagScience.sh
             
-            . "${PIPELINEDIR}/averageScience.sh"
+            . ${PIPELINEDIR}/averageScience.sh
 
-            if [ "${FLAG_AFTER_AVERAGING}" == "true" ]; then
-                . "${PIPELINEDIR}/flagScienceAveraged.sh"
+            if [ $FLAG_AFTER_AVERAGING == true ]; then
+                . ${PIPELINEDIR}/flagScienceAveraged.sh
             fi
             
-            if [ "${DO_SELFCAL}" == "true" ]; then
-                . "${PIPELINEDIR}/continuumImageScienceSelfcal.sh"
+            if [ $DO_SELFCAL == true ]; then
+                . ${PIPELINEDIR}/continuumImageScienceSelfcal.sh
             else
-	        . "${PIPELINEDIR}/continuumImageScience.sh"
+	        . ${PIPELINEDIR}/continuumImageScience.sh
             fi
 
-            . "${PIPELINEDIR}/applyCalContinuumScience.sh"
+            . ${PIPELINEDIR}/applyCalContinuumScience.sh
 
-            . "${PIPELINEDIR}/continuumCubeImagingScience.sh"
-
-            if [ "${DO_SOURCE_FINDING_BEAMWISE}" == "true" ]; then
-                . "${PIPELINEDIR}/sourcefindingCont.sh"
+            if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
+                TTERM=0
+                imageCode=restored
+                setImageProperties cont
+                . ${PIPELINEDIR}/sourcefinding.sh
             fi
 
-            . "${PIPELINEDIR}/prepareSpectralData.sh"
+            . ${PIPELINEDIR}/continuumCubeImagingScience.sh
 
-            . "${PIPELINEDIR}/spectralImageScience.sh"
+            . ${PIPELINEDIR}/prepareSpectralData.sh
 
-            . "${PIPELINEDIR}/spectralImContSub.sh"
+            . ${PIPELINEDIR}/spectralImageScience.sh
+
+            . ${PIPELINEDIR}/spectralImContSub.sh
             
-            if [ "${DO_SOURCE_FINDING_BEAMWISE}" == "true" ]; then
-                . "${PIPELINEDIR}/sourcefindingSpectral.sh"
-            fi
+            FIELDBEAM=`echo $FIELD_ID | awk '{printf "F%02d",$1}'`
+            FIELDBEAMJOB=$FIELDBEAM
 
         done
 
-<<<<<<< .working
-        FIELDBEAM=$(echo "$FIELD_ID" | awk '{printf "F%02d",$1}')
-
-        . "${PIPELINEDIR}/linmosCont.sh"
-        . "${PIPELINEDIR}/linmosContCube.sh"
-        . "${PIPELINEDIR}/linmosSpectral.sh"
-=======
         if [ $DO_ALT_IMAGER == true ]; then
             . ${PIPELINEDIR}/altLinmos.sh
         else
-            #            . ${PIPELINEDIR}/linmos.sh
             . ${PIPELINEDIR}/linmosCont.sh
             . ${PIPELINEDIR}/linmosContCube.sh
             . ${PIPELINEDIR}/linmosSpectral.sh
         fi
->>>>>>> .merge-right.r7963
         
-        # Source-finding on the mosaics created by these jobs
-        . "${PIPELINEDIR}/runMosaicSourcefinding.sh"        
         cd ..
 
     fi
 
-    ((FIELD_ID++))
+    FIELD_ID=`expr $FIELD_ID + 1`
     
 
 done
 
 # Put all these back to the original values
-<<<<<<< .working
-OUTPUT="${ORIGINAL_OUTPUT}"
-parsets="$parsetsBase"
-logs="$logsBase"
-slurms="$slurmsBase"
-slurmOut="$slurmOutBase"
-FIELD="."
-
-# Final linmos, combining fields
-. "${PIPELINEDIR}/linmosFieldsCont.sh"
-. "${PIPELINEDIR}/linmosFieldsContCube.sh"
-. "${PIPELINEDIR}/linmosFieldsSpectral.sh"
-
-# Final source-finding on the mosaics created by these jobs
-. "${PIPELINEDIR}/runMosaicSourcefinding.sh"
-=======
 OUTPUT=${ORIGINAL_OUTPUT}
 parsets=$parsetsBase
 logs=$logsBase
@@ -218,4 +180,3 @@ FIELD="."
 . ${PIPELINEDIR}/linmosFieldsContCube.sh
 . ${PIPELINEDIR}/linmosFieldsSpectral.sh
 
->>>>>>> .merge-right.r7963

@@ -145,7 +145,12 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
     NUM_ANT_SCIENCE=`grep Antennas ${MS_METADATA} | head -1 | awk '{print $6}'`
     NUM_ANT=$NUM_ANT_SCIENCE
 
+    # number of channels
     NUM_CHAN=`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=nChan`
+    # centre frequency - includes units
+    CENTRE_FREQ="`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=Freq`"
+    # bandwidth - includes units
+    BANDWIDTH="`python ${PIPELINEDIR}/parseMSlistOutput.py --file=${MS_METADATA} --val=Bandwidth`"
 
     # Get the requested number of channels from the config, and make sure they are the same for 1934
     # & science observations
@@ -176,25 +181,27 @@ if [ "${MS_INPUT_SCIENCE}" != "" ]; then
 
     # Set the OPAL Project ID
     BACKUP_PROJECT_ID=${PROJECT_ID}
-    # Run schedblock to get parset & variables
-    sbinfo="${metadata}/schedblock-info-${SB_SCIENCE}.txt"
-    module load askapcli
-    if [ "`which schedblock 2> ${tmp}/whchschdblk`" == "" ]; then
-        echo "WARNING - no schedblock executable found - try loading askapcli module."
-    else
+
+    if [ "${IS_BETA}" != "true" ]; then
+        
+        # Run schedblock to get parset & variables
+        sbinfo="${metadata}/schedblock-info-${SB_SCIENCE}.txt"
         if [ -e ${sbinfo} ] && [ `wc -l $sbinfo | awk '{print $1}'` -gt 1 ]; then
             echo "Reusing schedblock info file $sbinfo for SBID ${SB_SCIENCE}"
         else
             if [ -e ${sbinfo} ]; then
                 rm -f $sbinfo
             fi
+            module load askapcli
             schedblock info -v -p ${SB_SCIENCE} > $sbinfo
+            module unload askapcli
         fi
         awkstr="\$1==${SB_SCIENCE}"
         PROJECT_ID=`awk $awkstr $sbinfo | awk '{print $6}'`
         if [ "$PROJECT_ID" == "" ]; then
             PROJECT_ID=$BACKUP_PROJECT_ID
         fi
+
     fi
 
     # Find the beam centre locations    

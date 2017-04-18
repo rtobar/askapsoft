@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -29,55 +29,29 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-ID_LINMOS_CONTCUBE_ALL=""
-
-mosaicImageList="restored image residual"
+ID_LINMOS_FIELD_CONTCUBE=""
 
 DO_IT=$DO_MOSAIC
 if [ "$DO_CONTCUBE_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Don't run if there is only one field
-if [ "${NUM_FIELDS}" -eq 1 ]; then
-    DO_IT=false
-fi
+# Get the name of the mosaicked image
+imageCode=restored
+FIELD="."
+setImageProperties contcube
 
-if [ "${DO_MOSAIC_FIELDS}" != "true" ]; then
-    DO_IT=false
-fi
-
-for imageCode in ${mosaicImageList}; do
-
-    if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
-        BEAM=all
-        FIELD="."
-        tilelistsize=$(echo "${TILE_LIST}" | awk '{print NF}')
-        if [ "${tilelistsize}" -gt 1 ]; then
-            FULL_TILE_LIST="$TILE_LIST ALL"
-        else
-            FULL_TILE_LIST="ALL"
-        fi
-        for TILE in $FULL_TILE_LIST; do
-            for POLN in $POL_LIST; do
-                pol=$(echo "$POLN" | tr '[:upper:]' '[:lower:]')
-                for subband in ${SUBBAND_WRITER_LIST_CONTCUBE}; do
-                    setImageProperties contcube
-                    if [ -e "${OUTPUT}/${imageName}" ]; then
-                        if [ "${DO_IT}" == "true" ]; then
-                            echo "Image ${imageName} exists, so not running ${imageCode} continuum mosaicking"
-                        fi
-                        DO_IT=false
-                    fi
-                done
-            done
-        done
+if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
+    if [ $DO_IT == true ]; then
+        echo "Image ${imageName} exists, so not running continuum mosaicking"
     fi
+    DO_IT=false
+fi
 
-    if [ "${DO_IT}" == "true" ]; then
+if [ $DO_IT == true ]; then
 
-        sbatchfile=$slurms/linmos_all_contcube_${imageCode}.sbatch
-        cat > "$sbatchfile" <<EOFOUTER
+    sbatchfile=$slurms/linmos_all_contcube.sbatch
+    cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -99,10 +73,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-thisfile=$sbatchfile
-cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
+cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
-DO_ALT_IMAGER_CONTCUBE="${DO_ALT_IMAGER_CONTCUBE}"
 IMAGE_BASE_CONTCUBE=${IMAGE_BASE_CONTCUBE}
 SB_SCIENCE=${SB_SCIENCE}
 
@@ -111,11 +83,9 @@ TILE_LIST="$TILE_LIST"
 POL_LIST="${POL_LIST}"
 echo "Tile list = \$TILE_LIST"
 
-imageCode=${imageCode}
-
 # If there is only one tile, only include the "ALL" case, which
 # mosaics together all fields
-if [ "\$(echo \$TILE_LIST | awk '{print NF}')" -gt 1 ]; then
+if [ \`echo \$TILE_LIST | awk '{print NF}'\` -gt 1 ]; then
     FULL_TILE_LIST="\$TILE_LIST ALL"
 else
     FULL_TILE_LIST="ALL"
@@ -130,7 +100,7 @@ for THISTILE in \$FULL_TILE_LIST; do
     TILE_FIELD_LIST=""
     for FIELD in \$FIELD_LIST; do
         getTile
-        if [ "\$THISTILE" == "ALL" ] || [ "\$TILE" == "\$THISTILE" ]; then
+        if [ \$THISTILE == "ALL" ] || [ \$TILE == \$THISTILE ]; then
             TILE_FIELD_LIST="\$TILE_FIELD_LIST \$FIELD"
         fi
     done
@@ -138,16 +108,16 @@ for THISTILE in \$FULL_TILE_LIST; do
 
     for POLN in \$POL_LIST; do
     
-        pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
+        pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
     
-        for subband in ${SUBBAND_WRITER_LIST_CONTCUBE}; do
+        for imageCode in restored image residual; do 
     
             imList=""
             wtList=""
             BEAM=all
             for FIELD in \${TILE_FIELD_LIST}; do
                 setImageProperties contcube
-                if [ -e "\${FIELD}/\${imageName}" ]; then
+                if [ -e \${FIELD}/\${imageName} ]; then
                     if [ "\${imList}" == "" ]; then
                         imList="\${FIELD}/\${imageName}"
                         wtList="\${FIELD}/\${weightsImage}"
@@ -158,10 +128,10 @@ for THISTILE in \$FULL_TILE_LIST; do
                 fi
             done
 
-            if [ "\$THISTILE" == "ALL" ]; then
-                jobCode=linmosCC_Full_\${imageCode}\${subband}
+            if [ \$THISTILE == "ALL" ]; then
+                jobCode=linmosCC_Full_\${imageCode}
             else
-                jobCode=linmosCC_\${THISTILE}_\${imageCode}\${subband}
+                jobCode=linmosCC_\${THISTILE}_\${imageCode}
             fi
 
             if [ "\${imList}" != "" ]; then
@@ -171,10 +141,9 @@ for THISTILE in \$FULL_TILE_LIST; do
                 echo "Mosaicking to form \${imageName}"
                 parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
                 log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
-                cat > "\${parset}" << EOFINNER
+                cat > \${parset} << EOFINNER
 linmos.names            = [\${imList}]
 linmos.weights          = [\${wtList}]
-linmos.imagetype        = ${IMAGETYPE_CONTCUBE}
 linmos.outname          = \$imageName
 linmos.outweight        = \$weightsImage
 linmos.weighttype       = FromWeightImages
@@ -182,12 +151,12 @@ EOFINNER
 
                 NCORES=${NUM_CPUS_CONTCUBE_SCI}
                 NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-                aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
+                aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
                 err=\$?
-                for im in \$(echo "\${imList}" | sed -e 's/,/ /g'); do
-                    rejuvenate "\$im"
+                for im in `echo \${imList} | sed -e 's/,/ /g'`; do
+                    rejuvenate \$im
                 done
-                extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
+                extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then
                     exit \$err
                 fi
@@ -199,17 +168,15 @@ EOFINNER
 done
 EOFOUTER
 
-        if [ "${SUBMIT_JOBS}" == "true" ]; then
-            FULL_LINMOS_CONTCUBE_DEP=$(echo "${FULL_LINMOS_CONTCUBE_DEP}" | sed -e 's/afterok/afterany/g')
-	    ID_LINMOS_CONTCUBE_ALL=$(sbatch ${FULL_LINMOS_CONTCUBE_DEP} "$sbatchfile" | awk '{print $4}')
-	    recordJob "${ID_LINMOS_CONTCUBE_ALL}" "Make a mosaic ${imageCode} continuum cube of the science observation, with flags \"${FULL_LINMOS_CONTCUBE_DEP}\""
-        else
-	    echo "Would make a mosaic ${imageCode} continuum cube of the science observation, with slurm file $sbatchfile"
-        fi
-
+    if [ $SUBMIT_JOBS == true ]; then
+        FULL_LINMOS_CONTCUBE_DEP=`echo $FULL_LINMOS_CONTCUBE_DEP | sed -e 's/afterok/afterany/g'`
+	ID_LINMOS_CONTCUBE_ALL=`sbatch $FULL_LINMOS_CONTCUBE_DEP $sbatchfile | awk '{print $4}'`
+	recordJob ${ID_LINMOS_CONTCUBE_ALL} "Make a mosaic continuum cube of the science observation, with flags \"${FULL_LINMOS_CONTCUBE_DEP}\""
+    else
+	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"
     fi
 
-done
+    echo " "
 
-echo " "
+fi
 

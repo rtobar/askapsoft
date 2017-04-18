@@ -4,7 +4,7 @@
 # continuum is represented by a model image created by cmodel from a
 # Selavy catalogue
 #
-# @copyright (c) 2017 CSIRO
+# @copyright (c) 2016 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -33,18 +33,20 @@
 # cmodel to create the corresponding continuum model image, which
 # is then subtracted from the MS
 
-imageCode=restored
-setImageProperties cont
-selavyImage="${OUTPUT}/${imageName}"
+if [ $NUM_TAYLOR_TERMS == 1 ]; then
+    selavyImage=${OUTPUT}/image.${imageBase}.restored
+else
+    selavyImage=${OUTPUT}/image.${imageBase}.taylor.0.restored
+fi
 
-NPROCS_SELAVY=$(echo "${CONTSUB_SELAVY_NSUBX}" "${CONTSUB_SELAVY_NSUBY}" | awk '{print $1*$2+1}')
-if [ "${NPROCS_SELAVY}" -le 20 ]; then
+NPROCS_SELAVY=`echo $CONTSUB_SELAVY_NSUBX $CONTSUB_SELAVY_NSUBY | awk '{print $1*$2+1}'`
+if [ ${NPROCS_SELAVY} -le 20 ]; then
     CPUS_PER_CORE_CONTSUB=${NPROCS_SELAVY}
 else
     CPUS_PER_CORE_CONTSUB=20
 fi
 NPROCS_CONTSUB=${NPROCS_SELAVY}
-if [ "${NPROCS_CONTSUB}" -eq 1 ]; then
+if [ ${NPROCS_CONTSUB} -eq 1 ]; then
     # If Selavy is just serial, increase nprocs to 2 for cmodel
     NPROCS_CONTSUB=2
 fi
@@ -56,18 +58,18 @@ CContsubtract.sources.names                       = [lsm]
 CContsubtract.sources.lsm.direction               = \${modelDirection}
 CContsubtract.sources.lsm.model                   = \${contsubdir}/${modelImage}
 CContsubtract.sources.lsm.nterms                  = ${NUM_TAYLOR_TERMS}"
-if [ "${NUM_TAYLOR_TERMS}" -gt 1 ]; then
+if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
     if [ "$MFS_REF_FREQ" == "" ]; then
         freq=$CENTRE_FREQ
     else
         freq=${MFS_REF_FREQ}
     fi
-    ContsubModelDefinition="$ContsubModelDefinition
+    CalibratorModelDefinition="$CalibratorModelDefinition
 CContsubtract.visweights                          = MFS
 CContsubtract.visweights.MFS.reffreq              = ${freq}"
 fi
 
-cat > "$sbatchfile" <<EOFOUTER
+cat > $sbatchfile <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -89,8 +91,7 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-thisfile=$sbatchfile
-cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
+cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
 
 log=${logs}/mslist_for_ccontsub_\${SLURM_JOB_ID}.log
 NCORES=1
@@ -99,10 +100,10 @@ DIRECTION="$DIRECTION"
 if [ "\${DIRECTION}" != "" ]; then
     modelDirection="\${DIRECTION}"
 else
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSciSL}" 1>& "\${log}"
-    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
-    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
-    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSciSL} 2>&1 1> \${log}
+    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
+    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
+    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
     modelDirection="[\${ra}, \${dec}, \${epoch}]"
 fi
 
@@ -115,7 +116,7 @@ cd \${contsubdir}
 
 parset=${parsets}/selavy_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 log=${logs}/selavy_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-cat >> "\$parset" <<EOFINNER
+cat >> \$parset <<EOFINNER
 ##########
 ## Source-finding with selavy
 ##
@@ -172,16 +173,16 @@ EOFINNER
 
 NCORES=${NPROCS_SELAVY}
 NPPN=${CPUS_PER_CORE_CONTSUB}
-aprun -n \${NCORES} -N \${NPPN} ${selavy} -c "\${parset}" > "\${log}"
+aprun -n \${NCORES} -N \${NPPN} ${selavy} -c \${parset} > \${log}
 err=\$?
-extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_selavy "txt,csv"
+extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_selavy "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 fi
 
 componentsCatalogue=selavy-results.components.xml
-numComp=\$(grep -c "<TR>" "\${componentsCatalogue}")
-if [ "\${numComp}" -eq 0 ]; then
+numComp=\`grep "<TR>" \${componentsCatalogue} | wc -l\`
+if [ \${numComp} -eq 0 ]; then
     # Nothing detected 
     echo "Continuum subtraction : No continuum components found!"
 else
@@ -191,7 +192,7 @@ else
     
     parset=${parsets}/cmodel_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/cmodel_for_contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-    cat > "\$parset" <<EOFINNER
+    cat > \$parset <<EOFINNER
 # The below specifies the GSM source is a selavy output file
 Cmodel.gsm.database       = votable
 Cmodel.gsm.file           = \${componentsCatalogue}
@@ -215,9 +216,9 @@ EOFINNER
     
     NCORES=2
     NPPN=2
-    aprun -n \${NCORES} -N \${NPPN} ${cmodel} -c "\${parset}" > "\${log}"
+    aprun -n \${NCORES} -N \${NPPN} ${cmodel} -c \${parset} > \${log}
     err=\$?
-    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname}_cmodel "txt,csv"
+    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname}_cmodel "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
@@ -229,7 +230,7 @@ EOFINNER
     
     parset=${parsets}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-    cat > "\$parset" <<EOFINNER
+    cat > \$parset <<EOFINNER
 # The measurement set name - this will be overwritten
 CContSubtract.dataset                             = ${msSciSL}
 ${ContsubModelDefinition}
@@ -251,10 +252,10 @@ EOFINNER
     
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c "\${parset}" > "\${log}"
+    aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c \${parset} > \${log}
     err=\$?
     rejuvenate ${msSciSL}
-    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
+    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     else

@@ -58,7 +58,7 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         DO_SPECTRAL_IMSUB=false
         DO_MOSAIC=true
         DO_SOURCE_FINDING=false
-        DO_SOURCE_FINDING_MOSAIC=false
+        DO_SOURCE_FINDING_BEAMWISE=false
         DO_ALT_IMAGER=false
         #
         DO_CONVERT_TO_FITS=false
@@ -294,9 +294,12 @@ module load askappipeline/${askappipelineVersion}"
         # nworkergroupsSci = number of worker groups, used for MFS imaging. 
         nworkergroupsSci=`echo $NUM_TAYLOR_TERMS | awk '{print 2*$1-1}'`
 
-        # total number of CPUs required for MFS continuum imaging, including
-        # the master
-        NUM_CPUS_CONTIMG_SCI=`echo $nchanContSci $nworkergroupsSci | awk '{print $1*$2+1}'`
+        # total number of CPUs required for MFS continuum imaging, including the master
+        #  Use the number given in the config file, unless it has been left blank
+        if [ "${NUM_CPUS_CONTIMG_SCI}" == "" ]; then
+            NUM_CPUS_CONTIMG_SCI=`echo $nchanContSci $nworkergroupsSci | awk '{print $1*$2+1}'`
+        fi
+        
         # if we are using the new imager we need to tweak this
         if [ $DO_ALT_IMAGER == true ]; then
             NUM_CPUS_CONTIMG_SCI=`echo $nchanContSci $nworkergroupsSci $NCHAN_PER_CORE | awk '{print ($1/$3)*$2+1}'`
@@ -411,12 +414,10 @@ module load askappipeline/${askappipelineVersion}"
             CPUS_PER_CORE_SELAVY=20
         fi
 
-        # If the linmos sourcefinding flag has not been set, then set it to
-        # true only if both source-finding and linmos are requested.
-        if [ ${DO_SOURCE_FINDING_MOSAIC} == SETME ]; then
-            if [ ${DO_SOURCE_FINDING} == true ] && [ ${DO_MOSAIC} == true ]; then
-                DO_SOURCE_FINDING_MOSAIC=true
-            fi
+        # If the sourcefinding flag has been set, but we aren't
+        # mosaicking, turn on the beam-wise sourcefinding flag
+        if [ ${DO_SOURCE_FINDING} == true ] && [ ${DO_MOSAIC} != true ]; then
+            DO_SOURCE_FINDING_BEAMWISE=true
         fi
 
         ####################
@@ -428,11 +429,20 @@ module load askappipeline/${askappipelineVersion}"
         #  source-finding threshold, and whether normalise gains is on
         #  or not
         if [ $DO_SELFCAL != true ]; then
+            if [ $SELFCAL_NUM_LOOPS -ne 0 ]; then
+                echo "WARNING - Self-cal not selected, so setting SELFCAL_NUM_LOOPS=0"
+            fi
             SELFCAL_NUM_LOOPS=0
         fi
+        expectedArrSize=`expr $SELFCAL_NUM_LOOPS + 1`
         
         if [ "`echo $SELFCAL_INTERVAL | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - SELFCAL_INTERVAL ($SELFCAL_INTERVAL) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             SELFCAL_INTERVAL_ARRAY=()
             for a in `echo $SELFCAL_INTERVAL | sed -e 's/[][,]/ /g'`; do
                 SELFCAL_INTERVAL_ARRAY+=($a)
@@ -446,6 +456,11 @@ module load askappipeline/${askappipelineVersion}"
         
         if [ "`echo $SELFCAL_SELAVY_THRESHOLD | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - SELFCAL_SELAVY_THRESHOLD ($SELFCAL_SELAVY_THRESHOLD) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             SELFCAL_SELAVY_THRESHOLD_ARRAY=()
             for a in `echo $SELFCAL_SELAVY_THRESHOLD | sed -e 's/[][,]/ /g'`; do
                 SELFCAL_SELAVY_THRESHOLD_ARRAY+=($a)
@@ -459,6 +474,11 @@ module load askappipeline/${askappipelineVersion}"
         
         if [ "`echo $SELFCAL_NORMALISE_GAINS | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - SELFCAL_NORMALISE_GAINS ($SELFCAL_NORMALISE_GAINS) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             SELFCAL_NORMALISE_GAINS_ARRAY=()
             for a in `echo $SELFCAL_NORMALISE_GAINS | sed -e 's/[][,]/ /g'`; do
                 SELFCAL_NORMALISE_GAINS_ARRAY+=($a)
@@ -472,6 +492,11 @@ module load askappipeline/${askappipelineVersion}"
 
         if [ "`echo $CLEAN_NUM_MAJORCYCLES | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - CLEAN_NUM_MAJORCYCLES ($CLEAN_NUM_MAJORCYCLES) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             CLEAN_NUM_MAJORCYCLES_ARRAY=()
             for a in `echo $CLEAN_NUM_MAJORCYCLES | sed -e 's/[][,]/ /g'`; do
                 CLEAN_NUM_MAJORCYCLES_ARRAY+=($a)
@@ -485,6 +510,11 @@ module load askappipeline/${askappipelineVersion}"
 
         if [ "`echo $CLEAN_THRESHOLD_MAJORCYCLE | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - CLEAN_THRESHOLD_MAJORCYCLE ($CLEAN_THRESHOLD_MAJORCYCLE) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             CLEAN_THRESHOLD_MAJORCYCLE_ARRAY=()
             for a in `echo $CLEAN_THRESHOLD_MAJORCYCLE | sed -e 's/[][,]/ /g'`; do
                 CLEAN_THRESHOLD_MAJORCYCLE_ARRAY+=($a)
@@ -498,6 +528,11 @@ module load askappipeline/${askappipelineVersion}"
 
         if [ "`echo $CIMAGER_MINUV | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - CIMAGER_MINUV ($CIMAGER_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             CIMAGER_MINUV_ARRAY=()
             for a in `echo $CIMAGER_MINUV | sed -e 's/[][,]/ /g'`; do
                 CIMAGER_MINUV_ARRAY+=($a)
@@ -511,6 +546,11 @@ module load askappipeline/${askappipelineVersion}"
 
         if [ "`echo $CCALIBRATOR_MINUV | grep "\["`" != "" ]; then
             # Have entered a comma-separate array in square brackets
+            arrSize=`echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g' | wc -w`
+            if [ $arrSize -ne $expectedArrSize ]; then
+                echo "ERROR - CCALIBRATOR_MINUV ($CCALIBRATOR_MINUV) needs to be of size $expectedArrSize (since SELFCAL_NUM_LOOPS=$SELFCAL_NUM_LOOPS)"
+                exit 1
+            fi
             CCALIBRATOR_MINUV_ARRAY=()
             for a in `echo $CCALIBRATOR_MINUV | sed -e 's/[][,]/ /g'`; do
                 CCALIBRATOR_MINUV_ARRAY+=($a)
