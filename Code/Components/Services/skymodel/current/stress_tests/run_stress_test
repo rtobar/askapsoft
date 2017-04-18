@@ -1,0 +1,6 @@
+#!/bin/bash
+echo Setting up the database
+../apps/sms_tools.sh --create-schema --config ./sqlite.cfg --log-config ./sms.log_cfg
+
+echo Generating $1 components
+../apps/sms_tools.sh --gen-random-components $1 --config ./sqlite.cfg --log-config ./sms.log_cfg

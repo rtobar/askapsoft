@@ -99,6 +99,8 @@ class SmsToolsApp : public askap::Application {
             return 0;
         }
 
+    private:
+
         int createSchema() {
             const LOFAR::ParameterSet& parset = config();
             bool dropTables = parset.getBool("database.create_schema.droptables", true);
@@ -128,9 +130,37 @@ class SmsToolsApp : public askap::Application {
         int generateRandomComponents(int64_t componentCount) {
 
             if (componentCount > 0) {
+
+                const int64_t BLOCK_SIZE = 1000;
+                int64_t numBlocks = componentCount / BLOCK_SIZE + 1;
+                int64_t remainder = componentCount % BLOCK_SIZE;
+                boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+
+                for (int64_t n = 0; n < numBlocks; n++) {
+                    int64_t componentsInBlock = n == numBlocks - 1 ? remainder : BLOCK_SIZE;
+                    ASKAPLOG_DEBUG_STR(
+                        logger,
+                        "Generating components " <<
+                        n * BLOCK_SIZE <<
+                        " to " <<
+                        n * BLOCK_SIZE + componentsInBlock);
+
+                    GlobalSkyModel::ComponentList components(componentsInBlock);
+                    generateRandomComponents(components);
+                    pGsm->uploadComponents(components.begin(), components.end());
+                }
             }
 
             return 0;
+        }
+
+        void generateRandomComponents(GlobalSkyModel::ComponentList& components) {
+            for (GlobalSkyModel::ComponentList::iterator it = components.begin(); 
+                 it != components.end();
+                 it++) {
+
+                it->
+            }
         }
 };
 
