@@ -50,6 +50,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent-odb.h"
+#include "datamodel/ComponentStatsView-odb.h"
 #include "Utility.h"
 #include "VOTableData.h"
 
@@ -160,6 +161,14 @@ GlobalSkyModel::~GlobalSkyModel()
 {
     ASKAPLOG_DEBUG_STR(logger, "GSM shutting down");
     // shutdown the database
+}
+
+ComponentStatsView GlobalSkyModel::getComponentStats() const
+{
+    transaction t(itsDb->begin());
+    ComponentStatsView stats(itsDb->query_value<ComponentStatsView>());
+    t.commit();
+    return stats;
 }
 
 bool GlobalSkyModel::createSchema(bool dropTables)

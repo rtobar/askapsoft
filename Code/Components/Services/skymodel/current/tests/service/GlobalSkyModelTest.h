@@ -40,6 +40,7 @@
 // Classes to test
 #include "datamodel/Common.h"
 #include "datamodel/ContinuumComponent.h"
+#include "datamodel/ComponentStatsView.h"
 #include "service/GlobalSkyModel.h"
 
 using namespace std;
@@ -56,7 +57,7 @@ using namespace datamodel;
 class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
-        CPPUNIT_TEST(testParsetAssumptions);
+        CPPUNIT_TEST(testGsmStatsEmpty);
         CPPUNIT_TEST(testCreateFromParsetFile);
         CPPUNIT_TEST(testNside);
         CPPUNIT_TEST(testHealpixOrder);
@@ -100,13 +101,10 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             gsm->createSchema();
         }
 
-        void testParsetAssumptions() {
-            //CPPUNIT_ASSERT_EQUAL(
-                //string("sqlite"),
-                //parset.get("database.backend").get());
-            //CPPUNIT_ASSERT_EQUAL(
-                //string("./tests/service/gsm_unit_tests.dbtmp"),
-                //parset.get("sqlite.name").get());
+        void testGsmStatsEmpty() {
+            initEmptyDatabase();
+            ComponentStatsView stats = gsm->getComponentStats();
+            CPPUNIT_ASSERT_EQUAL(std::size_t(0), stats.count);
         }
 
         void testCreateFromParsetFile() {
