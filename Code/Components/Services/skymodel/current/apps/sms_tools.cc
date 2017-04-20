@@ -35,6 +35,9 @@
 
 // Boost includes
 #include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/random/uniform_real.hpp"
+#include "boost/random/variate_generator.hpp"
+#include "boost/random/linear_congruential.hpp"
 
 // ASKAPsoft includes
 #include <askap/Application.h>
@@ -101,7 +104,8 @@ class SmsToolsApp : public askap::Application {
 
     private:
 
-        int createSchema() {
+        int createSchema()
+        {
             const LOFAR::ParameterSet& parset = config();
             bool dropTables = parset.getBool("database.create_schema.droptables", true);
 
@@ -109,7 +113,8 @@ class SmsToolsApp : public askap::Application {
             return pGsm->createSchema(dropTables) ? 0 : 4;
         }
 
-        int ingestVoTable() {
+        int ingestVoTable()
+        {
             ASKAPASSERT(parameterExists(INGEST_COMPONENTS));
             ASKAPASSERT(parameterExists(SB_ID));
             ASKAPASSERT(parameterExists(OBS_DATE));
@@ -127,39 +132,45 @@ class SmsToolsApp : public askap::Application {
             return 0;
         }
 
-        int generateRandomComponents(int64_t componentCount) {
-
+        int generateRandomComponents(int64_t componentCount)
+        {
+            ASKAPLOG_DEBUG_STR(logger, "Generating " << componentCount << " components");
             if (componentCount > 0) {
-
-                const int64_t BLOCK_SIZE = 1000;
-                int64_t numBlocks = componentCount / BLOCK_SIZE + 1;
-                int64_t remainder = componentCount % BLOCK_SIZE;
                 boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+                int64_t sbid = parameterExists(SB_ID) ? lexical_cast<int64_t>(parameter(SB_ID)) : -1;
 
-                for (int64_t n = 0; n < numBlocks; n++) {
-                    int64_t componentsInBlock = n == numBlocks - 1 ? remainder : BLOCK_SIZE;
-                    ASKAPLOG_DEBUG_STR(
-                        logger,
-                        "Generating components " <<
-                        n * BLOCK_SIZE <<
-                        " to " <<
-                        n * BLOCK_SIZE + componentsInBlock);
-
-                    GlobalSkyModel::ComponentList components(componentsInBlock);
-                    generateRandomComponents(components);
-                    pGsm->uploadComponents(components.begin(), components.end());
-                }
+                GlobalSkyModel::ComponentList components(componentCount);
+                populateRandomComponents(components, sbid);
+                pGsm->uploadComponents(components.begin(), components.end());
             }
 
             return 0;
         }
 
-        void generateRandomComponents(GlobalSkyModel::ComponentList& components) {
-            for (GlobalSkyModel::ComponentList::iterator it = components.begin(); 
-                 it != components.end();
-                 it++) {
+        void populateRandomComponents(
+            GlobalSkyModel::ComponentList& components,
+            int64_t sbid)
+        {
+            // Set up (painfully!) the boost PRNGs
+            // I am not worried about repeating number cycles, so reusing the underlying generator should be fine
+            boost::minstd_rand generator(42u);
 
-                it->
+            // RA over [0..360)
+            boost::uniform_real<double> ra_dist(0, 360);
+            boost::variate_generator<boost::minstd_rand&, boost::uniform_real<double> > ra_rng(generator, ra_dist);
+
+            // Dec over [-90..90)
+            boost::uniform_real<double> dec_dist(-90, 90);
+            boost::variate_generator<boost::minstd_rand&, boost::uniform_real<double> > dec_rng(generator, dec_dist);
+
+            int i = 0;
+            for (GlobalSkyModel::ComponentList::iterator it = components.begin();
+                 it != components.end();
+                 it++, i++) {
+                it->component_id = boost::str(boost::format("randomly generated component %d") % i);
+                it->ra = ra_rng();
+                it->dec = dec_rng();
+                it->sb_id = sbid;
             }
         }
 };

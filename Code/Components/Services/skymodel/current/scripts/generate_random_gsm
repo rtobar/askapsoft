@@ -1,4 +1,7 @@
 #!/bin/bash
+echo Removing old file
+rm ./stress_test.db
+
 echo Setting up the database
 ../apps/sms_tools.sh --create-schema --config ./sqlite.cfg --log-config ./sms.log_cfg
 

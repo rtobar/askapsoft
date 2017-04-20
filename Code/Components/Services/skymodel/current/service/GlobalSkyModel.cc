@@ -74,7 +74,7 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
         const LOFAR::ParameterSet& dbParset = parset.makeSubset("sqlite.");
         const string dbName = dbParset.get("name");
 
-        ASKAPLOG_INFO_STR(logger, "Instantiating sqlite backend into " << dbName);
+        ASKAPLOG_INFO_STR(logger, "Instantiating sqlite file " << dbName);
 
         // TODO Parset flag for db creation control
         shared_ptr<odb::database> pDb(
@@ -158,7 +158,7 @@ GlobalSkyModel::GlobalSkyModel(boost::shared_ptr<odb::database> database)
 
 GlobalSkyModel::~GlobalSkyModel()
 {
-    ASKAPLOG_DEBUG_STR(logger, "dtor");
+    ASKAPLOG_DEBUG_STR(logger, "GSM shutting down");
     // shutdown the database
 }
 
@@ -357,6 +357,20 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::uploadComponents(
     const ComponentList::iterator& end)
 {
     IdListPtr results(new std::vector<datamodel::id_type>());
+
+    // OK, first we need to index the components
+    // It would be arguably faster if the coordinates were in a contiguous
+    // array, but to achieve that we would have to copy the values out of the
+    // Components anyway (or ask the caller to do it). So since this is only 
+    // used for generating test data, I think this non-cache friendly approach
+    // is fine.
+    // Could experiment with doing this inside the transaction to reduce the
+    // number of component vector traversals (as an alternative to threading).
+    HealPixFacade hp(getHealpixOrder());
+    #pragma omp parallel for
+    for (ComponentList::iterator it = begin; it != end; it++) {
+        it->healpix_index = hp.calcHealPixIndex(Coordinate(it->ra, it->dec));
+    }
 
     ASKAPLOG_DEBUG_STR(logger, "Starting upload");
     transaction t(itsDb->begin());
