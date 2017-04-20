@@ -67,6 +67,10 @@ ASKAP_LOGGER(logger, ".sms_tools");
 #define SB_ID "sbid"
 #define OBS_DATE "observation-date"
 #define RANDOMISE "gen-random-components"
+#define CONE_SEARCH "cone-search"
+#define RA "ra"
+#define DEC "dec"
+#define RADIUS "radius"
 
 class SmsToolsApp : public askap::Application {
     public:
@@ -85,6 +89,9 @@ class SmsToolsApp : public askap::Application {
                 else if (parameterExists(RANDOMISE)) {
                     int64_t count = lexical_cast<int64_t>(parameter(RANDOMISE));
                     return generateRandomComponents(count);
+                }
+                else if (parameterExists(CONE_SEARCH)) {
+                    coneSearchTest();
                 }
             } catch (const AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
@@ -123,6 +130,14 @@ class SmsToolsApp : public askap::Application {
             string polarisation = parameterExists(INGEST_POLARISATION) ? parameter(INGEST_POLARISATION) : "";
             int64_t sbid = lexical_cast<int64_t>(parameter(SB_ID));
             posix_time::ptime obsDate = date_time::parse_delimited_time<posix_time::ptime>(parameter(OBS_DATE), 'T');
+
+            ASKAPLOG_INFO_STR(
+                logger,
+                "Ingesting catalogs. Components: '" << components << "', " <<
+                "Polarisation: '" << polarisation << "', " <<
+                "Scheduling block: " << sbid << ", " <<
+                "Observation date: " << obsDate);
+
             boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
             pGsm->ingestVOTable(
                 components,
@@ -134,7 +149,7 @@ class SmsToolsApp : public askap::Application {
 
         int generateRandomComponents(int64_t componentCount)
         {
-            ASKAPLOG_DEBUG_STR(logger, "Generating " << componentCount << " components");
+            ASKAPLOG_INFO_STR(logger, "Generating " << componentCount << " components");
             if (componentCount > 0) {
                 boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
                 int64_t sbid = parameterExists(SB_ID) ? lexical_cast<int64_t>(parameter(SB_ID)) : -1;
@@ -173,6 +188,31 @@ class SmsToolsApp : public askap::Application {
                 it->sb_id = sbid;
             }
         }
+        void coneSearchTest()
+        {
+            ASKAPASSERT(parameterExists(RA));
+            ASKAPASSERT(parameterExists(DEC));
+            ASKAPASSERT(parameterExists(RADIUS));
+
+            double ra = lexical_cast<double>(parameter(RA));
+            double dec = lexical_cast<double>(parameter(DEC));
+            double radius = lexical_cast<double>(parameter(RADIUS));
+            boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+
+            ASKAPLOG_INFO_STR(
+                logger,
+                "Cone search test. RA: " << ra << ", " <<
+                "Dec: " << dec << ", " <<
+                "Radius: " << radius);
+
+            GlobalSkyModel::ComponentListPtr pComponents = pGsm->coneSearch(
+                Coordinate(ra, dec),
+                radius);
+
+            ASKAPLOG_INFO_STR(
+                logger,
+                "Retrieved " << pComponents->size() << " components");
+        }
 };
 
 int main(int argc, char *argv[])
@@ -184,5 +224,9 @@ int main(int argc, char *argv[])
     app.addParameter(SB_ID, "i", "Scheduling block ID for ingested catalog", true);
     app.addParameter(OBS_DATE, "d", "Observation date for ingested catalog, in form YYYY-MM-DDTHH:MM:SS", true);
     app.addParameter(RANDOMISE, "t", "Populate the database by randomly generating the specified number of components", "0");
+    app.addParameter(CONE_SEARCH, "w", "Test cone search (does not output any results, just for testing)", false);
+    app.addParameter(RA, "x", "Right-ascension for cone search tests", "0");
+    app.addParameter(DEC, "y", "Declination for cone search tests", "0");
+    app.addParameter(RADIUS, "z", "Radius for cone search tests", "0.1");
     return app.main(argc, argv);
 }
