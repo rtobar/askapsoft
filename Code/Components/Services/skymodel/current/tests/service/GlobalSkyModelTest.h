@@ -58,6 +58,7 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
         CPPUNIT_TEST(testGsmStatsEmpty);
+        CPPUNIT_TEST(testGsmStatsSmall);
         CPPUNIT_TEST(testCreateFromParsetFile);
         CPPUNIT_TEST(testNside);
         CPPUNIT_TEST(testHealpixOrder);
@@ -105,6 +106,12 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
             initEmptyDatabase();
             ComponentStatsView stats = gsm->getComponentStats();
             CPPUNIT_ASSERT_EQUAL(std::size_t(0), stats.count);
+        }
+
+        void testGsmStatsSmall() {
+            initSearch();
+            ComponentStatsView stats = gsm->getComponentStats();
+            CPPUNIT_ASSERT_EQUAL(std::size_t(10), stats.count);
         }
 
         void testCreateFromParsetFile() {
