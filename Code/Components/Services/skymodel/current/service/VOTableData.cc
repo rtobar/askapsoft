@@ -149,7 +149,6 @@ boost::shared_ptr<VOTableData> VOTableData::create(
 
 VOTableData::VOTableData(unsigned long num_components) :
     itsComponents(num_components),
-    itsHealpixIndicies(num_components),
     itsCoordinates(num_components)
 {
 }

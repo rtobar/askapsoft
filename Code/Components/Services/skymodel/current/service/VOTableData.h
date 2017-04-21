@@ -63,7 +63,7 @@ class VOTableData :
         /// @throw AskapError   If the implementation cannot be constructed.
         static boost::shared_ptr<VOTableData> create(
             std::string components_file,
-            std::string polarisation_file, 
+            std::string polarisation_file,
             boost::int64_t healpix_order);
 
         /// @brief Destructor.
@@ -100,7 +100,6 @@ class VOTableData :
         void calcHealpixIndicies(boost::int64_t healpix_order);
 
         ComponentList itsComponents;
-        std::vector<HealPixFacade::Index> itsHealpixIndicies;
         std::vector<Coordinate> itsCoordinates;
 };
 
