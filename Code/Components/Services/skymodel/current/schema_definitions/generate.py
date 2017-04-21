@@ -588,18 +588,6 @@ def write_field_parsing_code(
             if count:
                 out.write('\n    else ')
             out.write(statement)
-
-            # special case for RA and declination
-            # if special_case_ra_dec:
-                # if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
-                    # out.write(
-                        # Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
-                            # fieldname=field.name))
-                # elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
-                    # out.write(
-                        # Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
-                            # fieldname=field.name))
-
             out.write('    }')
             count += 1
         elif field.ucd == 'meta.code':
