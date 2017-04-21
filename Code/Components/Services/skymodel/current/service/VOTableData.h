@@ -100,7 +100,6 @@ class VOTableData :
         void calcHealpixIndicies(boost::int64_t healpix_order);
 
         ComponentList itsComponents;
-        std::vector<Coordinate> itsCoordinates;
 };
 
 }

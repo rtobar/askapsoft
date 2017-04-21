@@ -193,12 +193,10 @@ void parseComponentRowField(
     const std::string& type,
     const std::string& unit,
     const std::string& value,
-    std::vector<datamodel::ContinuumComponent>& components,
-    std::vector<Coordinate>& coord_buffer) {
+    std::vector<datamodel::ContinuumComponent>& components) {
 
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
-    ASKAPASSERT(row_index < coord_buffer.size());
 '''
 
 COMPONENT_UCD_FIELD_PARSE_PATTERN = '''
@@ -592,15 +590,15 @@ def write_field_parsing_code(
             out.write(statement)
 
             # special case for RA and declination
-            if special_case_ra_dec:
-                if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
-                    out.write(
-                        Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
-                elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
-                    out.write(
-                        Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
-                            fieldname=field.name))
+            # if special_case_ra_dec:
+                # if field.ucd.casefold() == 'pos.eq.ra;meta.main'.casefold():
+                    # out.write(
+                        # Template('        coord_buffer[row_index].ra = components[row_index].$fieldname;\n').substitute(
+                            # fieldname=field.name))
+                # elif field.ucd.casefold() == 'pos.eq.dec;meta.main'.casefold():
+                    # out.write(
+                        # Template('        coord_buffer[row_index].dec = components[row_index].$fieldname;\n').substitute(
+                            # fieldname=field.name))
 
             out.write('    }')
             count += 1

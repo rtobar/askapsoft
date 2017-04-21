@@ -55,12 +55,10 @@ void parseComponentRowField(
     const std::string& type,
     const std::string& unit,
     const std::string& value,
-    std::vector<datamodel::ContinuumComponent>& components,
-    std::vector<Coordinate>& coord_buffer) {
+    std::vector<datamodel::ContinuumComponent>& components) {
 
     ASKAPASSERT(row_index >= 0);
     ASKAPASSERT(row_index < components.size());
-    ASKAPASSERT(row_index < coord_buffer.size());
 
     if (boost::iequals(ucd, "meta.id;meta.main")) {
         ASKAPASSERT(unit.empty() || unit == "--" || unit == "none");
@@ -72,14 +70,12 @@ void parseComponentRowField(
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].ra = boost::lexical_cast<double>(value);
-        coord_buffer[row_index].ra = components[row_index].ra;
     }
     else 
     if (boost::iequals(ucd, "pos.eq.dec;meta.main")) {
         ASKAPASSERT(boost::iequals(unit, "deg"));
         ASKAPASSERT(boost::iequals(type, "double"));
         components[row_index].dec = boost::lexical_cast<double>(value);
-        coord_buffer[row_index].dec = components[row_index].dec;
     }
     else 
     if (boost::iequals(ucd, "stat.error;pos.eq.ra")) {

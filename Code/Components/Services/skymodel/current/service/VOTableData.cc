@@ -94,8 +94,7 @@ boost::shared_ptr<VOTableData> VOTableData::create(
                 fit->getDatatype(),
                 fit->getUnit(),
                 rowData[field_index],
-                data->itsComponents,
-                data->itsCoordinates);
+                data->itsComponents);
         }
 
         componentsById.insert(pair<string, size_t>(
@@ -148,8 +147,7 @@ boost::shared_ptr<VOTableData> VOTableData::create(
 }
 
 VOTableData::VOTableData(unsigned long num_components) :
-    itsComponents(num_components),
-    itsCoordinates(num_components)
+    itsComponents(num_components)
 {
 }
 
@@ -159,12 +157,10 @@ VOTableData::~VOTableData()
 }
 
 void VOTableData::calcHealpixIndicies(boost::int64_t healpix_order) {
-    ASKAPASSERT(itsComponents.size() == itsCoordinates.size());
-    ASKAPASSERT(itsComponents.size() == itsCoordinates.size());
     ASKAPLOG_DEBUG_STR(logger, "Starting HEALPix indexation");
     HealPixFacade hp(healpix_order);
-    for (size_t i = 0; i < itsComponents.size(); ++i) {
-        itsComponents[i].healpix_index = hp.calcHealPixIndex(itsCoordinates[i]);
+    for (ComponentList::iterator it = itsComponents.begin(); it != itsComponents.end(); it++) {
+        it->healpix_index = hp.calcHealPixIndex(Coordinate(it->ra, it->dec));
     }
     ASKAPLOG_DEBUG_STR(logger, "HEALPix indexation complete");
 }
