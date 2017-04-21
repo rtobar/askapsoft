@@ -40,7 +40,7 @@
 // Classes to test
 #include "datamodel/Common.h"
 #include "datamodel/ContinuumComponent.h"
-#include "datamodel/ComponentStatsView.h"
+#include "datamodel/ComponentStats.h"
 #include "service/GlobalSkyModel.h"
 
 using namespace std;
@@ -104,13 +104,13 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         void testGsmStatsEmpty() {
             initEmptyDatabase();
-            ComponentStatsView stats = gsm->getComponentStats();
+            ComponentStats stats = gsm->getComponentStats();
             CPPUNIT_ASSERT_EQUAL(std::size_t(0), stats.count);
         }
 
         void testGsmStatsSmall() {
             initSearch();
-            ComponentStatsView stats = gsm->getComponentStats();
+            ComponentStats stats = gsm->getComponentStats();
             CPPUNIT_ASSERT_EQUAL(std::size_t(10), stats.count);
         }
 

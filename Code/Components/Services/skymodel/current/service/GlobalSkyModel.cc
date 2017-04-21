@@ -50,7 +50,7 @@
 
 // Local package includes
 #include "datamodel/ContinuumComponent-odb.h"
-#include "datamodel/ComponentStatsView-odb.h"
+#include "datamodel/ComponentStats-odb.h"
 #include "Utility.h"
 #include "VOTableData.h"
 
@@ -163,10 +163,10 @@ GlobalSkyModel::~GlobalSkyModel()
     // shutdown the database
 }
 
-ComponentStatsView GlobalSkyModel::getComponentStats() const
+ComponentStats GlobalSkyModel::getComponentStats() const
 {
     transaction t(itsDb->begin());
-    ComponentStatsView stats(itsDb->query_value<ComponentStatsView>());
+    ComponentStats stats(itsDb->query_value<ComponentStats>());
     t.commit();
     return stats;
 }

@@ -42,7 +42,7 @@
 #include <odb/database.hxx>
 
 // Local package includes
-#include "datamodel/ComponentStatsView.h"
+#include "datamodel/ComponentStats.h"
 #include "datamodel/ContinuumComponent.h"
 #include "datamodel/ContinuumComponent-odb.h"
 #include "datamodel/DataSource.h"
@@ -80,7 +80,7 @@ class GlobalSkyModel :
 
         /// @brief Get statistics about the components in the database.
         /// @return The component statistics
-        datamodel::ComponentStatsView getComponentStats() const;
+        datamodel::ComponentStats getComponentStats() const;
 
         /// @brief Initialises an empty database with the schema
         /// @param dropTables Should existing tables be dropped or not.

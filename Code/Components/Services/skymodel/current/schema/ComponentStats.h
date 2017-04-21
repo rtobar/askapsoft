@@ -1,4 +1,4 @@
-/// @file ComponentStatsView.h
+/// @file ComponentStats.h
 ///
 /// @copyright (c) 2016 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -46,7 +46,7 @@ namespace sms {
 namespace datamodel {
 
 #pragma db view object(ContinuumComponent)
-struct ComponentStatsView {
+struct ComponentStats {
     #pragma db column("count(" + ContinuumComponent::continuum_component_id + ")")
     std::size_t count;
 };

@@ -220,7 +220,7 @@ class SmsToolsApp : public askap::Application {
         void printGsmStats()
         {
             boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
-            datamodel::ComponentStatsView stats = pGsm->getComponentStats();
+            datamodel::ComponentStats stats = pGsm->getComponentStats();
             std::cout << H_LINE <<
                 "GSM stats:" << std::endl <<
                 "\tComponents: " << stats.count <<
