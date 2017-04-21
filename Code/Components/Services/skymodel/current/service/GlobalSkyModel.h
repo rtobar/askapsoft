@@ -137,7 +137,7 @@ class GlobalSkyModel :
         ///
         /// @return The maximum number of pixels
         inline size_t MaxSearchPixels() const {
-            return size_t(50000);
+            return size_t(100000);
         }
 
         /// @brief Get a component by ID.
