@@ -72,12 +72,10 @@ ice_interfaces::ComponentSeq marshallComponentsToDTO(
     // too bad though due to the code generation.
     //return ice_interfaces::ComponentSeq(components->begin(), components->end());
 
-    // preallocate space so I can try OpenMP loop parallelism
+    // preallocate space for more efficient allocation
     ice_interfaces::ComponentSeq dst(components->size());
-    //ice_interfaces::ComponentSeq dst();
 
     int i = 0;
-    #pragma parallel for
     for (std::vector<datamodel::ContinuumComponent>::const_iterator it = components->begin();
         it != components->end();
         it++, i++) {
