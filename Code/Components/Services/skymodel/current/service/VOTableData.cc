@@ -160,9 +160,12 @@ VOTableData::~VOTableData()
 }
 
 void VOTableData::calcHealpixIndicies(boost::int64_t healpix_order) {
+    ASKAPASSERT(itsComponents.size() == itsCoordinates.size());
+    ASKAPASSERT(itsComponents.size() == itsCoordinates.size());
+    ASKAPLOG_DEBUG_STR(logger, "Starting HEALPix indexation");
     HealPixFacade hp(healpix_order);
-    #pragma omp parallel for
     for (size_t i = 0; i < itsComponents.size(); ++i) {
         itsComponents[i].healpix_index = hp.calcHealPixIndex(itsCoordinates[i]);
     }
+    ASKAPLOG_DEBUG_STR(logger, "HEALPix indexation complete");
 }

@@ -361,25 +361,17 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
     return results;
 }
 
-GlobalSkyModel::IdListPtr GlobalSkyModel::uploadComponents(
-    const ComponentList::iterator& begin,
-    const ComponentList::iterator& end)
+GlobalSkyModel::IdListPtr GlobalSkyModel::uploadComponents(ComponentList& components)
 {
     IdListPtr results(new std::vector<datamodel::id_type>());
 
     // OK, first we need to index the components
-    // It would be arguably faster if the coordinates were in a contiguous
-    // array, but to achieve that we would have to copy the values out of the
-    // Components anyway (or ask the caller to do it). So since this is only 
-    // used for generating test data, I think this non-cache friendly approach
-    // is fine.
-    // Could experiment with doing this inside the transaction to reduce the
-    // number of component vector traversals (as an alternative to threading).
+    ASKAPLOG_DEBUG_STR(logger, "Starting HEALPix indexation");
     HealPixFacade hp(getHealpixOrder());
-    #pragma omp parallel for
-    for (ComponentList::iterator it = begin; it != end; it++) {
+    for (ComponentList::iterator it = components.begin(); it != components.end(); it++) {
         it->healpix_index = hp.calcHealPixIndex(Coordinate(it->ra, it->dec));
     }
+    ASKAPLOG_DEBUG_STR(logger, "HEALPix indexation complete");
 
     ASKAPLOG_DEBUG_STR(logger, "Starting upload");
     transaction t(itsDb->begin());
@@ -387,7 +379,7 @@ GlobalSkyModel::IdListPtr GlobalSkyModel::uploadComponents(
     // bulk persist is only supported for SQLServer and Oracle.
     // So we have to fall back to a manual loop persisting one component at
     // a time...
-    for (ComponentList::iterator it = begin; it != end; it++) {
+    for (ComponentList::iterator it = components.begin(); it != components.end(); it++) {
         if (it->polarisation.get())
             itsDb->persist(it->polarisation);
         results->push_back(itsDb->persist(*it));

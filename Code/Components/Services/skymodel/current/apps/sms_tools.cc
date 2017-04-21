@@ -64,6 +64,7 @@ ASKAP_LOGGER(logger, ".sms_tools");
 #define CREATE_SCHEMA "create-schema"
 #define INGEST_COMPONENTS "ingest-components"
 #define INGEST_POLARISATION "ingest-polarisation"
+#define STATS "gsm-stats"
 #define SB_ID "sbid"
 #define OBS_DATE "observation-date"
 #define RANDOMISE "gen-random-components"
@@ -71,42 +72,47 @@ ASKAP_LOGGER(logger, ".sms_tools");
 #define RA "ra"
 #define DEC "dec"
 #define RADIUS "radius"
+#define H_LINE "\n------------------------------------------------------------\n"
 
 class SmsToolsApp : public askap::Application {
     public:
         virtual int run(int argc, char* argv[])
         {
             StatReporter stats;
+            int exit_code = 0;
 
             try {
                 // Dispatch to the requested utility function
                 if (parameterExists(CREATE_SCHEMA)) {
-                    return createSchema();
+                    exit_code = createSchema();
                 }
                 else if (parameterExists(INGEST_COMPONENTS)) {
-                    return ingestVoTable();
+                    exit_code = ingestVoTable();
                 }
                 else if (parameterExists(RANDOMISE)) {
                     int64_t count = lexical_cast<int64_t>(parameter(RANDOMISE));
-                    return generateRandomComponents(count);
+                    exit_code = generateRandomComponents(count);
                 }
                 else if (parameterExists(CONE_SEARCH)) {
                     coneSearchTest();
                 }
+                else if (parameterExists(STATS)) {
+                    printGsmStats();
+                }
             } catch (const AskapError& e) {
                 ASKAPLOG_FATAL_STR(logger, "Askap error in " << argv[0] << ": " << e.what());
-                return 1;
+                exit_code = 1;
             } catch (const odb::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Database exception in " << argv[0] << ": " << e.what());
-                return 2;
+                exit_code = 2;
             } catch (const std::exception& e) {
                 ASKAPLOG_FATAL_STR(logger, "Unexpected exception in " << argv[0] << ": " << e.what());
-                return 3;
+                exit_code = 3;
             }
 
             stats.logSummary();
 
-            return 0;
+            return exit_code;
         }
 
     private:
@@ -156,7 +162,7 @@ class SmsToolsApp : public askap::Application {
 
                 GlobalSkyModel::ComponentList components(componentCount);
                 populateRandomComponents(components, sbid);
-                pGsm->uploadComponents(components.begin(), components.end());
+                pGsm->uploadComponents(components);
             }
 
             return 0;
@@ -199,25 +205,33 @@ class SmsToolsApp : public askap::Application {
             double radius = lexical_cast<double>(parameter(RADIUS));
             boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
 
-            ASKAPLOG_INFO_STR(
-                logger,
+            std::cout <<
                 "Cone search test. RA: " << ra << ", " <<
                 "Dec: " << dec << ", " <<
-                "Radius: " << radius);
+                "Radius: " << radius << std::endl;
 
             GlobalSkyModel::ComponentListPtr pComponents = pGsm->coneSearch(
                 Coordinate(ra, dec),
                 radius);
 
-            ASKAPLOG_INFO_STR(
-                logger,
-                "Retrieved " << pComponents->size() << " components");
+            std::cout << "Retrieved " << pComponents->size() << " components" << std::endl;
+        }
+
+        void printGsmStats()
+        {
+            boost::shared_ptr<GlobalSkyModel> pGsm(GlobalSkyModel::create(config()));
+            datamodel::ComponentStatsView stats = pGsm->getComponentStats();
+            std::cout << H_LINE <<
+                "GSM stats:" << std::endl <<
+                "\tComponents: " << stats.count <<
+                H_LINE;
         }
 };
 
 int main(int argc, char *argv[])
 {
     SmsToolsApp app;
+    app.addParameter(STATS, "v", "Output some database statistics", false);
     app.addParameter(CREATE_SCHEMA, "s", "Initialises an empty database", false);
     app.addParameter(INGEST_COMPONENTS, "c", "Ingest/upload a VO Table of components to the global sky model", true);
     app.addParameter(INGEST_POLARISATION, "p", "Optional polarisation data catalog", true);

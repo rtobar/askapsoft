@@ -7,3 +7,6 @@ echo Setting up the database
 
 echo Generating $1 components
 ../apps/sms_tools.sh --gen-random-components $1 --config ./sqlite.cfg --log-config ./sms.log_cfg
+
+echo Check db
+../apps/sms_tools.sh --gsm-stats --config ./sqlite.cfg --log-config ./sms.log_cfg

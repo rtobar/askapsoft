@@ -9,10 +9,10 @@ if 'AIPSPATH' not in os.environ:
    os.environ['AIPSPATH']=os.environ['ASKAP_ROOT']+'/Code/Base/accessors/current'
 env["ENV"]["AIPSPATH"] = os.environ['AIPSPATH']
 
-#env.Append(CCFLAGS=['-O2', '-DASKAP_DEBUG', '-g'])
-env.AppendUnique(CCFLAGS=['-DASKAP_DEBUG'])
-
-env.Append(CCFLAGS=['-Wno-unknown-pragmas'])
+env.AppendUnique(CCFLAGS=[
+    '-O2',
+    '-DASKAP_DEBUG',
+    '-Wno-unknown-pragmas'])
 
 pkg = env.AskapPackage("skymodel")
 pkg.AddSubPackage("service")

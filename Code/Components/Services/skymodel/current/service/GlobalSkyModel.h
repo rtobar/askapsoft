@@ -88,13 +88,10 @@ class GlobalSkyModel :
         bool createSchema(bool dropTables=true);
 
         /// @brief Upload components to the database. This function is only intended for system testing.
-        /// @param begin A ComponentList iterator to the first item to upload. 
-        /// @param end A ComponentList iterator to the item one past the last item to upload.
+        /// @param components The ComponentList to upload.
         /// @throw AskapError Thrown if there are errors.
         /// @return Vector of new object IDs.
-        IdListPtr uploadComponents(
-            const ComponentList::iterator& begin,
-            const ComponentList::iterator& end);
+        IdListPtr uploadComponents(ComponentList& components);
 
         /// @brief Ingests a VO table of Continuum Components into the GSM.
         /// @param componentsCatalog The VO table file name for the continuum components.
@@ -220,9 +217,9 @@ class GlobalSkyModel :
         /// @param pixels The set of pixels to query against
         /// @param query The additional component query.
         ///
-        /// @return 
+        /// @return
         ComponentListPtr queryComponentsByPixel(
-            HealPixFacade::IndexListPtr pixels, 
+            HealPixFacade::IndexListPtr pixels,
             ComponentQuery query) const;
 
         /// @brief The odb database
