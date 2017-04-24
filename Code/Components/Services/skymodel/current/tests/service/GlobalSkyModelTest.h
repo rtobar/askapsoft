@@ -57,22 +57,24 @@ using namespace datamodel;
 class GlobalSkyModelTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(GlobalSkyModelTest);
-        CPPUNIT_TEST(testGsmStatsEmpty);
-        CPPUNIT_TEST(testGsmStatsSmall);
-        CPPUNIT_TEST(testCreateFromParsetFile);
-        CPPUNIT_TEST(testNside);
-        CPPUNIT_TEST(testHealpixOrder);
-        CPPUNIT_TEST(testGetMissingComponentById);
-        CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
-        CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
-        CPPUNIT_TEST(testIngestPolarisation);
-        CPPUNIT_TEST(testMetadata);
-        CPPUNIT_TEST(testNonAskapDataIngest);
-        CPPUNIT_TEST(testSimpleConeSearch);
-        CPPUNIT_TEST(testConeSearch_frequency_criteria);
-        CPPUNIT_TEST(testConeSearch_flux_int);
-        CPPUNIT_TEST(testSimpleRectSearch);
-        CPPUNIT_TEST(testRectSearch_freq_range);
+        //CPPUNIT_TEST(testGsmStatsEmpty);
+        //CPPUNIT_TEST(testGsmStatsSmall);
+        //CPPUNIT_TEST(testCreateFromParsetFile);
+        //CPPUNIT_TEST(testNside);
+        //CPPUNIT_TEST(testHealpixOrder);
+        //CPPUNIT_TEST(testGetMissingComponentById);
+        //CPPUNIT_TEST(testIngestVOTableToEmptyDatabase);
+        //CPPUNIT_TEST(testIngestVOTableFailsForBadCatalog);
+        //CPPUNIT_TEST(testIngestPolarisation);
+        //CPPUNIT_TEST(testMetadata);
+        //CPPUNIT_TEST(testNonAskapDataIngest);
+        //CPPUNIT_TEST(testSimpleConeSearch);
+        //CPPUNIT_TEST(testConeSearch_frequency_criteria);
+        //CPPUNIT_TEST(testConeSearch_flux_int);
+        //CPPUNIT_TEST(testSimpleRectSearch);
+        //CPPUNIT_TEST(testRectSearch_freq_range);
+        //CPPUNIT_TEST(testLargeAreaSearch);
+        CPPUNIT_TEST(testPixelsPerDatabaseSearchIsMultipleOfPixelsInSearch);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -345,6 +347,28 @@ class GlobalSkyModelTest : public CppUnit::TestFixture {
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4a"))));
             CPPUNIT_ASSERT_EQUAL(1l, std::count_if(results->begin(), results->end(),
                 ComponentIdMatch(string("SB1958_image.i.LMC.cont.sb1958.taylor.0.restored_4c"))));
+        }
+
+        void testLargeAreaSearch() {
+            initSearch();
+            GlobalSkyModel::ComponentListPtr results = gsm->coneSearch(Coordinate(70.2, -61.8), 20.0);
+            CPPUNIT_ASSERT_EQUAL(size_t(10), results->size());
+        }
+
+        void testPixelsPerDatabaseSearchIsMultipleOfPixelsInSearch() {
+            // With the initial implementation of search chunking, I was getting
+            // a fencepost error when the total number of pixels in the query
+            // region was evenly divisible by the database query chunk size.
+            // The values chosen here have been selected by trial and error to
+            // reproduce the bug (in order to fix it).
+            parset.replace("database.max_pixels_per_query", "15");
+            initSearch();
+
+            // The search parameters map to 60 pixels at order 9, but if the GSM
+            // NSide/Order is ever changed, then this test may be invalidated
+            CPPUNIT_ASSERT_EQUAL(9l, gsm->getHealpixOrder());
+
+            CPPUNIT_ASSERT_NO_THROW(gsm->coneSearch(Coordinate(70.2, -61.8), 0.21));
         }
 
     private:

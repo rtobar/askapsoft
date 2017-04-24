@@ -70,6 +70,18 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
     const string dbType = parset.get("database.backend");
     ASKAPLOG_DEBUG_STR(logger, "database backend: " << dbType);
 
+    // Get the max number of HEALPix pixels per database query from the parset,
+    // with clamping to a reasonable range
+    const size_t DEFAULT_PIXELS_PER_QUERY = 2000;
+    const size_t MAX_MAX_PIXELS_PER_QUERY = 40000;
+    size_t maxPixelsPerQuery = parset.getUint("database.max_pixels_per_query", DEFAULT_PIXELS_PER_QUERY);
+    if (maxPixelsPerQuery < 1)
+        maxPixelsPerQuery = DEFAULT_PIXELS_PER_QUERY;
+    else if (maxPixelsPerQuery >= MAX_MAX_PIXELS_PER_QUERY)
+        maxPixelsPerQuery = MAX_MAX_PIXELS_PER_QUERY;
+
+    ASKAPLOG_INFO_STR(logger, "Using " << maxPixelsPerQuery << " pixels per database query");
+
     if (dbType.compare("sqlite") == 0) {
         // get parameters
         const LOFAR::ParameterSet& dbParset = parset.makeSubset("sqlite.");
@@ -85,7 +97,7 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
         ASKAPCHECK(pDb.get(), "GlobalSkyModel creation failed");
 
         // create the implementation
-        pImpl.reset(new GlobalSkyModel(pDb));
+        pImpl.reset(new GlobalSkyModel(pDb, maxPixelsPerQuery));
     }
     else if (dbType.compare("mysql") == 0) {
         ASKAPLOG_INFO_STR(logger, "connecting to msql");
@@ -114,7 +126,7 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
 
         // create the implementation
         ASKAPLOG_DEBUG_STR(logger, "creating GlobalSkyModel");
-        pImpl.reset(new GlobalSkyModel(pDb));
+        pImpl.reset(new GlobalSkyModel(pDb, maxPixelsPerQuery));
     }
     else if (dbType.compare("pgsql") == 0) {
         ASKAPLOG_INFO_STR(logger, "connecting to pgsql");
@@ -140,7 +152,7 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
 
         // create the implementation
         ASKAPLOG_DEBUG_STR(logger, "creating GlobalSkyModel");
-        pImpl.reset(new GlobalSkyModel(pDb));
+        pImpl.reset(new GlobalSkyModel(pDb, maxPixelsPerQuery));
     }
     else {
         ASKAPTHROW(AskapError, "Unsupported database backend: " << dbType);
@@ -150,10 +162,13 @@ shared_ptr<GlobalSkyModel> GlobalSkyModel::create(const LOFAR::ParameterSet& par
     return pImpl;
 }
 
-GlobalSkyModel::GlobalSkyModel(boost::shared_ptr<odb::database> database)
+GlobalSkyModel::GlobalSkyModel(
+    boost::shared_ptr<odb::database> database,
+    size_t maxPixelsPerQuery)
     :
     itsDb(database),
-    itsHealPix(getHealpixOrder())
+    itsHealPix(getHealpixOrder()),
+    itsMaxPixelsPerQuery(maxPixelsPerQuery)
 {
 }
 
@@ -337,24 +352,33 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
     ComponentQuery query) const
 {
     ASKAPASSERT(pixels.get());
-    ASKAPASSERT(pixels->size() <= MaxSearchPixels());
     ASKAPLOG_DEBUG_STR(logger, "healpixQuery against : " << pixels->size() << " pixels");
 
     // We need somewhere to store the results
     ComponentListPtr results(new ComponentList());
 
     if (pixels->size() > 0) {
+        // Break the query into multiple database hits, so we don't overwhelm the
+        // database with too many pixels per query
+        const ldiv_t chunks = std::ldiv(pixels->size(), getMaxPixelsPerQuery());
+        size_t cumulative = 0;  // track the total number of pixels searched so far
+        HealPixFacade::IndexList::iterator it = pixels->begin();
+
         transaction t(itsDb->begin());
 
-        Result r = itsDb->query<ContinuumComponent>(
-                ComponentQuery::healpix_index.in_range(pixels->begin(), pixels->end())
-                && query);
-
-        // iterate the query result and store the component ID
-        for (Result::iterator i = r.begin(); i != r.end(); ++i)
-            results->push_back(*i);
+        for (long i = 0; i < chunks.quot + 1; i++) {
+            size_t size = i == chunks.quot ? chunks.rem : getMaxPixelsPerQuery();
+            cumulative += size;
+            cout << "i: " << i << " size: " << size << " cumulative: " << cumulative << endl;
+            Result r = itsDb->query<ContinuumComponent>(
+                    ComponentQuery::healpix_index.in_range(it, it + size)
+                    && query);
+            results->insert(results->end(), r.begin(), r.end());
+            it += size;
+        }
 
         t.commit();
+        ASKAPASSERT(cumulative == pixels->size());  // loop post-condition
     }
 
     ASKAPLOG_DEBUG_STR(logger, results->size() << " results");

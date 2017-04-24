@@ -49,6 +49,7 @@ class HealpixTest : public CppUnit::TestFixture {
         CPPUNIT_TEST(testQueryRect_Small);
         CPPUNIT_TEST(testQueryRect_Large);
         CPPUNIT_TEST(testJ2000ToPointing_valid_values);
+        CPPUNIT_TEST(testLargeAreaSearch);
         CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -84,7 +85,7 @@ class HealpixTest : public CppUnit::TestFixture {
             HealPixFacade::IndexListPtr actual = hp.queryRect(
                 Rect(Coordinate(75.92, -63.125), Extents(0.04, 0.05)),
                 8);             // oversampling factor
-                
+
             CPPUNIT_ASSERT_EQUAL(size_t(5), actual->size());
         }
 
@@ -94,7 +95,7 @@ class HealpixTest : public CppUnit::TestFixture {
             HealPixFacade::IndexListPtr actual = hp.queryRect(
                 Rect(Coordinate(73.4, -66.1), Extents(5.0, 6.0)),
                 8);           // oversampling factor
-                
+
             CPPUNIT_ASSERT_EQUAL(size_t(15201), actual->size());
         }
 
@@ -105,6 +106,12 @@ class HealpixTest : public CppUnit::TestFixture {
             pointing actual = HealPixFacade::J2000ToPointing(coord);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.theta, actual.theta, 0.000001);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.phi, actual.phi, 0.000001);
+        }
+
+        void testLargeAreaSearch() {
+            HealPixFacade hp(9);
+            HealPixFacade::IndexListPtr actual = hp.queryDisk(Coordinate(7, 3), 15);
+            CPPUNIT_ASSERT_EQUAL(size_t(215514), actual->size());
         }
 };
 

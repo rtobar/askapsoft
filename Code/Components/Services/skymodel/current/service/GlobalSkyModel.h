@@ -133,13 +133,6 @@ class GlobalSkyModel :
             return 9l;
         }
 
-        /// @brief The upper limit on the number of HEALPix pixels that can be specified in a single search.
-        ///
-        /// @return The maximum number of pixels
-        inline size_t MaxSearchPixels() const {
-            return size_t(100000);
-        }
-
         /// @brief Get a component by ID.
         ///
         /// @return The component, or null if not found.
@@ -187,10 +180,18 @@ class GlobalSkyModel :
     private:
         typedef odb::result<datamodel::ContinuumComponent> Result;
 
+        /// @brief The upper limit on the number of HEALPix pixels that can be specified in a single database query
+        inline size_t getMaxPixelsPerQuery() const {
+            return itsMaxPixelsPerQuery;
+        }
+
         /// @brief Constructor.
         /// Private. Use the factory method to create.
-        /// @param itsDb The odb::database instance.
-        GlobalSkyModel(boost::shared_ptr<odb::database> database);
+        /// @param database The odb::database instance.
+        /// @param maxPixelsPerQuery The maximum number of healpix pixels per database query
+        GlobalSkyModel(
+            boost::shared_ptr<odb::database> database,
+            size_t maxPixelsPerQuery);
 
         /// @brief SQLite-specific schema creation method
         ///
@@ -227,6 +228,9 @@ class GlobalSkyModel :
 
         /// @brief The HEALPix facade
         HealPixFacade itsHealPix;
+
+        /// @brief The max number of HEALPix pixels per database query
+        size_t itsMaxPixelsPerQuery;
 };
 
 }
