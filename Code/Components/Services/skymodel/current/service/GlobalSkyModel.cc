@@ -366,10 +366,12 @@ GlobalSkyModel::ComponentListPtr GlobalSkyModel::queryComponentsByPixel(
 
         transaction t(itsDb->begin());
 
-        for (long i = 0; i < chunks.quot + 1; i++) {
+        // We don't require the final iteration if the remainder is 0
+        long requiredIterations = chunks.rem ? chunks.quot + 1 : chunks.quot;
+        for (long i = 0; i < requiredIterations; i++) {
             size_t size = i == chunks.quot ? chunks.rem : getMaxPixelsPerQuery();
             cumulative += size;
-            cout << "i: " << i << " size: " << size << " cumulative: " << cumulative << endl;
+            //cout << "i: " << i << " size: " << size << " cumulative: " << cumulative << endl;
             Result r = itsDb->query<ContinuumComponent>(
                     ComponentQuery::healpix_index.in_range(it, it + size)
                     && query);
