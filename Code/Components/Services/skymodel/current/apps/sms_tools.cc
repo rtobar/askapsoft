@@ -174,7 +174,7 @@ class SmsToolsApp : public askap::Application {
         {
             // Set up (painfully!) the boost PRNGs
             // I am not worried about repeating number cycles, so reusing the underlying generator should be fine
-            boost::minstd_rand generator(42u);
+            boost::minstd_rand generator(147u);
 
             // RA over [0..360)
             boost::uniform_real<double> ra_dist(0, 360);

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#DB="./sqlite.cfg"
+DB="./sqlite.cfg"
 #DB="./mysql.cfg"
-DB="./pgsql.cfg"
+#DB="./pgsql.cfg"
 COMMON_ARGS="--config "$DB" --log-config ./sms.log_cfg"
 
 if [ $DB = "./sqlite.cfg" ]; then
