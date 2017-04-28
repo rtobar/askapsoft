@@ -71,6 +71,8 @@ for FIELD in ${FIELD_LIST}; do
         fi
 
         FLAG_IMAGING_DEP=""
+        DEP_CONTCUBE=""
+        DEP_SPECIMG=""
         
         for BEAM in ${BEAMS_TO_USE}; do
 
@@ -133,7 +135,6 @@ for FIELD in ${FIELD_LIST}; do
             . ${PIPELINEDIR}/applyCalContinuumScience.sh
 
             if [ $DO_SOURCE_FINDING_BEAMWISE == true ]; then
-                TTERM=0
                 imageCode=restored
                 setImageProperties cont
                 . ${PIPELINEDIR}/sourcefinding.sh

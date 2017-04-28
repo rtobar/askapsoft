@@ -30,7 +30,6 @@
 #
 
 ID_SPECIMG_SCI=""
-DEP_SPECIMG=""
 
 <<<<<<< .working
 =======
