@@ -123,6 +123,12 @@ struct IImageAccess {
     virtual void write(const std::string &name, const casa::Array<float> &arr,
                        const casa::IPosition &where) = 0;
 
+    /// @brief write a slice of an image pixel mask
+    /// @param[in] name image name
+    /// @param[in] arr array with pixels
+    /// @param[in] where bottom left corner where to put the slice to (trc is deduced from the array shape)
+    virtual void writeMask(const std::string &name, const casa::Array<bool> &mask,
+                                                   const casa::IPosition &where) = 0;
     /// @brief set brightness units of the image
     /// @details
     /// @param[in] name image name

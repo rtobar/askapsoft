@@ -158,6 +158,8 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         // set up the output pixel arrays
         Array<float> outPix(accumulator.outShape(),0.);
         Array<float> outWgtPix(accumulator.outShape(),0.);
+        Array<bool> outMask(accumulator.outShape(),0.);
+
         Array<float> outSenPix;
         if (accumulator.doSensitivity()) {
             outSenPix = Array<float>(accumulator.outShape(),0.);
@@ -215,6 +217,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
             Array<float> inWgtPix;
             Array<float> inSenPix;
+
 
             if (accumulator.weightType() == FROM_WEIGHT_IMAGES) {
 
@@ -349,6 +352,27 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         ASKAPLOG_INFO_STR(logger, "Writing accumulated image to " << outImgName);
         casa::IPosition outShape = accumulator.outShape();
 
+        //build the mask
+        //use the outWgtPix to define the mask
+        //i dont care about planes etc ... just going to run through
+        float itsCutoff = 0.01;
+        if (parset.isDefined("cutoff")) itsCutoff = parset.getFloat("cutoff");
+        Array<bool>::iterator iterMask = outMask.begin();
+        Array<float>::iterator iterWgt = outWgtPix.begin();
+        float minVal, maxVal;
+        IPosition minPos, maxPos;
+        minMax(minVal,maxVal,minPos,maxPos,outWgtPix);
+
+        float wgtCutoff = itsCutoff * itsCutoff;
+        for( ; iterWgt != outWgtPix.end() ; iterWgt++ ) {
+            if (*iterWgt > wgtCutoff) {
+                *iterMask = casa::True;
+            } else {
+                *iterMask = casa::False;
+            }
+            iterMask++;
+        }
+
 
 
         if (comms.isMaster()) {
@@ -368,6 +392,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         loc[3] = myAllocationStart;
         ASKAPLOG_INFO_STR(logger, " - location " << loc);
         iacc.write(outImgName,outPix,loc);
+        iacc.writeMask(outImgName,outMask,loc);
         iacc.setUnits(outImgName,units);
 
         if (psf.nelements()>=3)
@@ -382,6 +407,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 iacc.makeDefaultMask(outWgtName);
             }
             iacc.write(outWgtName,outWgtPix,loc);
+            // iacc.writeMask(outWgtName,outMask,loc);
             iacc.setUnits(outWgtName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outWgtName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
@@ -394,6 +420,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 iacc.makeDefaultMask(outSenName);
             }
             iacc.write(outSenName,outSenPix,loc);
+            // iacc.writeMask(outSenName,outMask,loc);
             iacc.setUnits(outSenName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outSenName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
