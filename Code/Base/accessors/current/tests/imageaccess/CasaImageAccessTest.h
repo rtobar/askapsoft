@@ -112,9 +112,8 @@ public:
       itsImageAccessor->setUnits(name,"Jy/pixel");
       itsImageAccessor->setBeamInfo(name,0.02,0.01,1.0);
       // mask tests
-      casa::Array<casa::Bool> mask(shape);
-      mask = casa::True;
-      itsImageAccessor->applyMask(name,mask);
+
+      itsImageAccessor->makeDefaultMask(name);
 
 
 

@@ -263,13 +263,13 @@ void FitsImageAccess::setBeamInfo(const std::string &name, double maj, double mi
 /// but FITS images will have it applied to the pixels ... which is an irreversible process
 /// In this mode we would either have to apply it to the array - or readback the array - mask
 /// then write ...
-/// @param[in] name image name
-/// @param[in] the mask
 
-void FitsImageAccess::applyMask(const std::string &name,casa::Array<casa::Bool> mask){
 
-    casa::String error = casa::String("Masking existant FITS Image Not Yet Supported");
-    ASKAPTHROW(AskapError,error);
+
+void FitsImageAccess::makeDefaultMask(const std::string &name){
+
+    casa::String error = casa::String("A default mask in FITS makes no sense");
+    ASKAPLOG_INFO_STR(logger,error);
 
 
 

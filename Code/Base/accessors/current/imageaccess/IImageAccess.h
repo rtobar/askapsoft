@@ -142,9 +142,8 @@ struct IImageAccess {
     /// @details Deteails depend upon the implemenation - CASA images will have the pixel mask assigned
     /// but FITS images will have it applied to the pixels ... which is an irreversible process
     /// @param[in] name image name
-    /// @param[in] the mask
 
-    virtual void applyMask(const std::string &name,casa::Array<casa::Bool> mask) = 0;
+    virtual void makeDefaultMask(const std::string &name) = 0;
 
 
 

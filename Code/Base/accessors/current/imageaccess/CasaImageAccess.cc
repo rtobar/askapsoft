@@ -181,12 +181,14 @@ void CasaImageAccess::setBeamInfo(const std::string &name, double maj, double mi
 /// @param[in] name image name
 /// @param[in] the mask
 
-void CasaImageAccess::applyMask(const std::string &name,casa::Array<casa::Bool> mask){
+void CasaImageAccess::makeDefaultMask(const std::string &name){
     casa::PagedImage<float> img(name);
 
     // Create a mask and make it default region.
     // need to assert sizes etc ...
     img.makeMask ("mask", casa::True, casa::True);
+    casa::Array<casa::Bool> mask(img.shape());
+    mask = casa::True;
     img.pixelMask().put(mask);
 
 

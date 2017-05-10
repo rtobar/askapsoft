@@ -130,7 +130,7 @@ struct CasaImageAccess : public IImageAccess {
     /// @param[in] name image name
     /// @param[in] the mask
 
-    virtual void applyMask(const std::string &name,casa::Array<casa::Bool> mask);
+    virtual void makeDefaultMask(const std::string &name);
 };
 
 

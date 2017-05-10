@@ -320,7 +320,6 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             curpos = deweightIter.position();
             accumulator.deweightPlane(outPix, outWgtPix, outSenPix, curpos);
         }
-
         // set one of the input images as a reference for metadata (the first by default)
         uint psfref = 0;
         if (parset.isDefined("psfref")) psfref = parset.getUint("psfref");
@@ -354,8 +353,11 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
         if (comms.isMaster()) {
             outShape[3] = originalNchan;
+
             ASKAPLOG_INFO_STR(logger, " Creating output file - Shape " << outShape << " OriginalNchan " << originalNchan);
             iacc.create(outImgName, outShape, accumulator.outCoordSys());
+            iacc.makeDefaultMask(outImgName);
+
         }
         else {
             int buf;
@@ -377,6 +379,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             if (comms.isMaster()) {
                 ASKAPLOG_INFO_STR(logger, "Writing accumulated weight image to " << outWgtName);
                 iacc.create(outWgtName, outShape, accumulator.outCoordSys());
+                iacc.makeDefaultMask(outWgtName);
             }
             iacc.write(outWgtName,outWgtPix,loc);
             iacc.setUnits(outWgtName,units);
@@ -388,6 +391,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
             if (comms.isMaster()) {
                 ASKAPLOG_INFO_STR(logger, "Writing accumulated sensitivity image to " << outSenName);
                 iacc.create(outSenName, outShape, accumulator.outCoordSys());
+                iacc.makeDefaultMask(outSenName);
             }
             iacc.write(outSenName,outSenPix,loc);
             iacc.setUnits(outSenName,units);
