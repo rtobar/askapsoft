@@ -95,7 +95,7 @@ struct IImageAccess {
     /// @param[in] name image name
     /// @return units string
     virtual std::string getUnits(const std::string &name) const = 0;
-    
+
 
     //////////////////
     // Writing methods
@@ -137,6 +137,14 @@ struct IImageAccess {
     /// @param[in] min minor axis in radians
     /// @param[in] pa position angle in radians
     virtual void setBeamInfo(const std::string &name, double maj, double min, double pa) = 0;
+
+    /// @brief apply mask to image
+    /// @details Deteails depend upon the implemenation - CASA images will have the pixel mask assigned
+    /// but FITS images will have it applied to the pixels ... which is an irreversible process
+    /// @param[in] name image name
+    /// @param[in] the mask
+
+    virtual void applyMask(const std::string &name,casa::Array<casa::Bool> mask) = 0;
 
 
 

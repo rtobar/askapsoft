@@ -140,6 +140,14 @@ public:
     /// @param[in] pa position angle in radians
     virtual void setBeamInfo(const std::string &name, double maj, double min, double pa);
 
+    /// @brief apply mask to image
+    /// @details Deteails depend upon the implemenation - CASA images will have the pixel mask assigned
+    /// but FITS images will have it applied to the pixels ... which is an irreversible process
+    /// @param[in] name image name
+    /// @param[in] the mask
+
+    virtual void applyMask(const std::string &name,casa::Array<casa::Bool> mask);
+
 
 private:
 

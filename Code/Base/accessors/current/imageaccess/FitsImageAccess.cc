@@ -34,7 +34,7 @@
 
 
 #include <askap/AskapLogging.h>
-
+#include <casacore/casa/System/ProgressMeter.h>
 #include <casacore/images/Images/FITSImage.h>
 #include <casacore/images/Images/TempImage.h>
 #include <casacore/images/Images/SubImage.h>
@@ -104,7 +104,7 @@ casa::Array<float> FitsImageAccess::read(const std::string &name, const casa::IP
     casa::FITSImage img(fullname);
     casa::Array<float> buffer;
     casa::Slicer slc(blc,trc,casa::Slicer::endIsLast);
-    // std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
+    std::cout << "Reading a slice of the FITS image " << name << " slice " << slc << std::endl;
     ASKAPCHECK(img.doGetSlice(buffer,slc) == casa::False, "Cannot read image");
     return buffer;
 
@@ -256,5 +256,24 @@ void FitsImageAccess::setBeamInfo(const std::string &name, double maj, double mi
 {
     connect(name);
     itsFITSImage->setRestoringBeam(maj, min, pa);
+
+}
+/// @brief apply mask to image
+/// @details Details depend upon the implemenation - CASA images will have the pixel mask assigned
+/// but FITS images will have it applied to the pixels ... which is an irreversible process
+/// In this mode we would either have to apply it to the array - or readback the array - mask
+/// then write ...
+/// @param[in] name image name
+/// @param[in] the mask
+
+void FitsImageAccess::applyMask(const std::string &name,casa::Array<casa::Bool> mask){
+
+    casa::String error = casa::String("Masking existant FITS Image Not Yet Supported");
+    ASKAPTHROW(AskapError,error);
+
+
+
+
+
 
 }

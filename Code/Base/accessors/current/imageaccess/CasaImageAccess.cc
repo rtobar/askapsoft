@@ -34,6 +34,8 @@
 #include <askap/AskapLogging.h>
 #include <casacore/images/Images/PagedImage.h>
 #include <casacore/images/Images/SubImage.h>
+#include <casacore/images/Regions/ImageRegion.h>
+#include <casacore/images/Regions/RegionHandler.h>
 
 ASKAP_LOGGER(logger, ".casaImageAccessor");
 
@@ -171,4 +173,22 @@ void CasaImageAccess::setBeamInfo(const std::string &name, double maj, double mi
     casa::ImageInfo ii = img.imageInfo();
     ii.setRestoringBeam(casa::Quantity(maj, "rad"), casa::Quantity(min, "rad"), casa::Quantity(pa, "rad"));
     img.setImageInfo(ii);
+}
+
+/// @brief apply mask to image
+/// @details Deteails depend upon the implemenation - CASA images will have the pixel mask assigned
+/// but FITS images will have it applied to the pixels ... which is an irreversible process
+/// @param[in] name image name
+/// @param[in] the mask
+
+void CasaImageAccess::applyMask(const std::string &name,casa::Array<casa::Bool> mask){
+    casa::PagedImage<float> img(name);
+
+    // Create a mask and make it default region.
+    // need to assert sizes etc ...
+    img.makeMask ("mask", casa::True, casa::True);
+    img.pixelMask().put(mask);
+
+
+
 }
