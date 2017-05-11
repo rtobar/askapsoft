@@ -314,6 +314,41 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
             }
         }
+        //build the mask
+        //use the outWgtPix to define the mask
+        //i dont care about planes etc ... just going to run through
+
+        float itsCutoff = 0.01;
+
+        if (parset.isDefined("cutoff")) itsCutoff = parset.getFloat("cutoff");
+        Array<bool>::iterator iterMask = outMask.begin();
+        Array<float>::iterator iterWgt = outWgtPix.begin();
+
+
+
+        /// This logic is in addition to the mask in the accumulator
+        /// which works on an individual beam weight
+        /// this is masking the output mosaick - it therefore has slightly
+        /// different criteria. In this case the final weight has to be equal to
+        /// or bigger than the cutoff.
+        /// There is a possible failure mode where due to rounding a pixel maybe
+        /// have been masked by the accumulator but missed here.
+        /// The first time I implemented this I just used a looser conditional:
+        /// > instead of >= - but in the second attempt I decided to replace all
+        /// masked pixels by NaN - which has the nice secondary effect of implementing
+        /// the FITS mask.
+
+        float wgtCutoff = itsCutoff * itsCutoff;
+        for( ; iterWgt != outWgtPix.end() ; iterWgt++ ) {
+            if (*iterWgt >= wgtCutoff) {
+                *iterMask = casa::True;
+            } else {
+                *iterMask = casa::False;
+                setNaN(*iterWgt);
+            }
+            iterMask++;
+        }
+
 
         // deweight the image pixels
         // use another iterator to loop over planes
@@ -352,27 +387,6 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         ASKAPLOG_INFO_STR(logger, "Writing accumulated image to " << outImgName);
         casa::IPosition outShape = accumulator.outShape();
 
-        //build the mask
-        //use the outWgtPix to define the mask
-        //i dont care about planes etc ... just going to run through
-        float itsCutoff = 0.01;
-        if (parset.isDefined("cutoff")) itsCutoff = parset.getFloat("cutoff");
-        Array<bool>::iterator iterMask = outMask.begin();
-        Array<float>::iterator iterWgt = outWgtPix.begin();
-        float minVal, maxVal;
-        IPosition minPos, maxPos;
-        minMax(minVal,maxVal,minPos,maxPos,outWgtPix);
-
-        float wgtCutoff = itsCutoff * itsCutoff;
-        for( ; iterWgt != outWgtPix.end() ; iterWgt++ ) {
-            if (*iterWgt > wgtCutoff) {
-                *iterMask = casa::True;
-            } else {
-                *iterMask = casa::False;
-            }
-            iterMask++;
-        }
-
 
 
         if (comms.isMaster()) {
@@ -407,7 +421,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 iacc.makeDefaultMask(outWgtName);
             }
             iacc.write(outWgtName,outWgtPix,loc);
-            // iacc.writeMask(outWgtName,outMask,loc);
+            iacc.writeMask(outWgtName,outMask,loc);
             iacc.setUnits(outWgtName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outWgtName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
@@ -420,7 +434,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
                 iacc.makeDefaultMask(outSenName);
             }
             iacc.write(outSenName,outSenPix,loc);
-            // iacc.writeMask(outSenName,outMask,loc);
+            iacc.writeMask(outSenName,outMask,loc);
             iacc.setUnits(outSenName,units);
             if (psf.nelements()>=3)
                 iacc.setBeamInfo(outSenName, psf[0].getValue("rad"), psf[1].getValue("rad"), psf[2].getValue("rad"));
