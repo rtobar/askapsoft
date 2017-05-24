@@ -72,7 +72,7 @@ using namespace LOFAR::TYPES;
 #include <parallelanalysis/DuchampParallel.h>
 #include <parallelanalysis/Weighter.h>
 #include <parallelanalysis/ParallelStats.h>
-#include <parallelanalysis/ObjectParameteriser.h>
+#include <parallelanalysis/DistributedFitter.h>
 #include <preprocessing/VariableThresholder.h>
 #include <extraction/ExtractionFactory.h>
 #include <duchampinterface/DuchampInterface.h>
@@ -1068,14 +1068,14 @@ void DuchampParallel::cleanup()
 {
 
     if (itsComms.isParallel() && itsComms.isWorker()) {
-        // need to call ObjectParameteriser only, so that the distributed calculation works
+        // need to call DistributedFitter only, so that the distributed calculation works
 
         ASKAPLOG_DEBUG_STR(logger, "Parameterising edge objects in distributed manner");
-        ObjectParameteriser objParam(itsComms);
-        objParam.initialise(this);
-        objParam.distribute();
-        objParam.parameterise();
-        objParam.gather();
+        DistributedFitter distribFitter(itsComms);
+        distribFitter.initialise(this);
+        distribFitter.distribute();
+        distribFitter.parameterise();
+        distribFitter.gather();
 
     }
 
@@ -1125,12 +1125,12 @@ void DuchampParallel::cleanup()
 
         }
 
-        ObjectParameteriser objParam(itsComms);
-        objParam.initialise(this);
-        objParam.distribute();
-        objParam.parameterise();
-        objParam.gather();
-        itsEdgeSourceList = objParam.finalList();
+        DistributedFitter distribFitter(itsComms);
+        distribFitter.initialise(this);
+        distribFitter.distribute();
+        distribFitter.parameterise();
+        distribFitter.gather();
+        itsEdgeSourceList = distribFitter.finalList();
 
         ASKAPLOG_INFO_STR(logger, "Finished parameterising " << itsEdgeSourceList.size()
                           << " edge sources");

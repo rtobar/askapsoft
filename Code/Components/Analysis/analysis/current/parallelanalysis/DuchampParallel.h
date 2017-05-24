@@ -289,7 +289,7 @@ class DuchampParallel {
         /// combines them via the duchamp::Cubes::ObjectMerger()
         /// function. The resulting sources are then fitted (if so
         /// required) and have their WCS parameters calculated by the
-        /// ObjectParameteriser class
+        /// DistributedFitter class
         ///
         /// Once this is done, these sources are added to the cube
         /// detection list, along with the non-boundary objects. The

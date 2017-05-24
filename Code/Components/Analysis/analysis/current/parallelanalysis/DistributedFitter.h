@@ -26,8 +26,8 @@
 ///
 /// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
-#ifndef ASKAP_OBJECT_PARAMER_H_
-#define ASKAP_OBJECT_PARAMER_H_
+#ifndef ASKAP_DISTRIB_FITTER_H_
+#define ASKAP_DISTRIB_FITTER_H_
 
 #include <parallelanalysis/DistributedParameteriserBase.h>
 #include <askapparallel/AskapParallel.h>
@@ -44,10 +44,10 @@ namespace analysis {
 /// Gaussian fitting on their local list of objects, and then return
 /// them to the master. The master then has the full list with fitted
 /// Gaussians added.
-class ObjectParameteriser : public DistributedParameteriserBase {
+class DistributedFitter : public DistributedParameteriserBase {
     public:
-        ObjectParameteriser(askap::askapparallel::AskapParallel& comms);
-        virtual ~ObjectParameteriser();
+        DistributedFitter(askap::askapparallel::AskapParallel& comms);
+        virtual ~DistributedFitter();
 
         /// @brief Each object on a worker is parameterised, and
         /// fitted (if requested).

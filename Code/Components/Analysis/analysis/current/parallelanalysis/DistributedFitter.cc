@@ -26,7 +26,7 @@
 ///
 /// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
-#include <parallelanalysis/ObjectParameteriser.h>
+#include <parallelanalysis/DistributedFitter.h>
 
 #include <askap_analysis.h>
 
@@ -51,17 +51,17 @@ ASKAP_LOGGER(logger, ".objectparam");
 namespace askap {
 namespace analysis {
 
-ObjectParameteriser::ObjectParameteriser(askap::askapparallel::AskapParallel& comms):
+DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms):
     DistributedParameteriserBase(comms)
 {
 }
 
-ObjectParameteriser::~ObjectParameteriser()
+DistributedFitter::~DistributedFitter()
 {
 }
 
 
-void ObjectParameteriser::parameterise()
+void DistributedFitter::parameterise()
 {
     if (itsComms->isWorker()) {
         // For each object, get the bounding subsection for that object
@@ -155,7 +155,7 @@ void ObjectParameteriser::parameterise()
 
 }
 
-void ObjectParameteriser::gather()
+void DistributedFitter::gather()
 {
     if (itsComms->isParallel()) {
 
