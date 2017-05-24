@@ -29,6 +29,7 @@
 #ifndef ASKAP_OBJECT_PARAMER_H_
 #define ASKAP_OBJECT_PARAMER_H_
 
+#include <parallelanalysis/DistributedParameteriserBase.h>
 #include <askapparallel/AskapParallel.h>
 #include <parallelanalysis/DuchampParallel.h>
 #include <vector>
@@ -37,17 +38,16 @@ namespace askap {
 
 namespace analysis {
 
-class ObjectParameteriser {
+/// @brief Distributed handling of the Gaussian fitting.  @details
+/// This distributes a list of RadioSource objects from the master to
+/// the workers, in a round-robin fashion. The workers then do the
+/// Gaussian fitting on their local list of objects, and then return
+/// them to the master. The master then has the full list with fitted
+/// Gaussians added.
+class ObjectParameteriser : public DistributedParameteriserBase {
     public:
         ObjectParameteriser(askap::askapparallel::AskapParallel& comms);
         virtual ~ObjectParameteriser();
-
-        /// @brief Initialise members - parameters, header and input object list.
-        void initialise(DuchampParallel *dp);
-
-        /// @brief Master sends list to workers, who fill out
-        /// itsInputList
-        void distribute();
 
         /// @brief Each object on a worker is parameterised, and
         /// fitted (if requested).
@@ -61,28 +61,9 @@ class ObjectParameteriser {
 
     protected:
 
-        /// The communication class
-        askap::askapparallel::AskapParallel *itsComms;
-
-        /// The image header information. The WCS is the key element
-        /// used in this.
-        duchamp::FitsHeader itsHeader;
-
-        /// The set of Duchamp parameters. The subsection and offsets
-        /// are the key elements here.
-        duchamp::Param itsReferenceParams;
-
-        /// The input parset. Used for fitting purposes.
-        LOFAR::ParameterSet itsReferenceParset;
-
-        /// The initial set of objects, before parameterisation
-        std::vector<sourcefitting::RadioSource> itsInputList;
-
         /// The list of parameterised objects.
         std::vector<sourcefitting::RadioSource> itsOutputList;
 
-        /// The total number of objects that are to be parameterised.
-        unsigned int itsTotalListSize;
 
 };
 
