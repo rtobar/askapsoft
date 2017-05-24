@@ -26,29 +26,30 @@
 ///
 /// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
-#ifndef ASKAP_DISTRIB_FITTER_H_
-#define ASKAP_DISTRIB_FITTER_H_
+#ifndef ASKAP_DISTRIB_RMSYNTH_H_
+#define ASKAP_DISTRIB_RMSYNTH_H_
 
 #include <parallelanalysis/DistributedParameteriserBase.h>
 #include <askapparallel/AskapParallel.h>
-#include <parallelanalysis/DuchampParallel.h>
-#include <sourcefitting/RadioSource.h>
+#include <catalogues/CasdaPolarisationEntry.h>
+#include <catalogues/CasdaComponent.h>
 #include <vector>
 
 namespace askap {
 
 namespace analysis {
 
-/// @brief Distributed handling of the Gaussian fitting.  @details
-/// This distributes a list of RadioSource objects from the master to
-/// the workers, in a round-robin fashion. The workers then do the
-/// Gaussian fitting on their local list of objects, and then return
-/// them to the master. The master then has the full list with fitted
-/// Gaussians added.
-class DistributedFitter : public DistributedParameteriserBase {
+/// @brief Distributed handling of the RM Synthesis.  @details This
+/// distributes a list of RadioSource objects - that have had the
+/// Gaussian fitting done to them - from the master to the workers, in
+/// a round-robin fashion. The workers then do the RM Synthesis and
+/// related processing on their local list of objects, and then return
+/// the list of Polarisation catalogue entries to the master. The
+/// master can then access this for writing out.
+class DistributedRMsynthesis : public DistributedParameteriserBase {
     public:
-        DistributedFitter(askap::askapparallel::AskapParallel& comms);
-        virtual ~DistributedFitter();
+        DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms);
+        virtual ~DistributedRMsynthesis();
 
         /// @brief Each object on a worker is parameterised, and
         /// fitted (if requested).
@@ -58,13 +59,15 @@ class DistributedFitter : public DistributedParameteriserBase {
         void gather();
 
         /// @brief The final list of objects is returned
-        const std::vector<sourcefitting::RadioSource> finalList() {return itsOutputList;};
+        const std::vector<CasdaPolarisationEntry> finalList() {return itsOutputList;};
 
     protected:
 
-        /// The list of parameterised objects.
-        std::vector<sourcefitting::RadioSource> itsOutputList;
+        /// The list of polarisation catalogue entries
+    std::vector<CasdaPolarisationEntry> itsOutputList;
 
+    /// The list of continuum components. Only used by the master as a check that we have the correct number at the end
+    std::vector<CasdaComponent> itsComponentList;
 
 };
 

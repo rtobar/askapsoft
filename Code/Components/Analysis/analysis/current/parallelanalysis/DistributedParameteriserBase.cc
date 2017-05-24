@@ -68,21 +68,23 @@ DistributedParameteriserBase::~DistributedParameteriserBase()
 
 void DistributedParameteriserBase::initialise(DuchampParallel *dp)
 {
-    itsHeader = dp->cube().header();
+    itsDP = dp;
+    
+    itsHeader = itsDP->cube().header();
 
-    itsReferenceParams = dp->cube().pars();
-    itsReferenceParams.setSubsection(dp->baseSubsection());
+    itsReferenceParams = itsDP->cube().pars();
+    itsReferenceParams.setSubsection(itsDP->baseSubsection());
     std::vector<size_t> dim =
         analysisutilities::getCASAdimensions(itsReferenceParams.getImageFile());
     itsReferenceParams.parseSubsections(dim);
     itsReferenceParams.setOffsets(itsHeader.getWCS());
 
-    itsReferenceParset = dp->parset();
+    itsReferenceParset = itsDP->parset();
 
     if (itsComms->isMaster()) {
         std::vector<sourcefitting::RadioSource>::iterator src;
-        for (src = dp->pEdgeList()->begin();
-             src != dp->pEdgeList()->end();
+        for (src = itsDP->pEdgeList()->begin();
+             src != itsDP->pEdgeList()->end();
              src++) {
             itsInputList.push_back(*src);
         }

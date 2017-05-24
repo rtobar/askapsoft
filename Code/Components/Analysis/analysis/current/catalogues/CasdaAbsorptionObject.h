@@ -29,7 +29,7 @@
 #ifndef ASKAP_ANALYSIS_CASDA_ABSORPTION_H_
 #define ASKAP_ANALYSIS_CASDA_ABSORPTION_H_
 
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <catalogues/CatalogueEntry.h>
 #include <catalogues/CasdaComponent.h>
 #include <sourcefitting/RadioSource.h>
@@ -119,29 +119,29 @@ class CasdaAbsorptionObject : public CatalogueEntry {
         /// The Declination in string format: 12:34:56.7
         std::string itsDECs;
         /// The RA in decimal degrees
-        casda::ValueError<double> itsRA;
+        casda::ValueError itsRA;
         /// The Declination in decimal degrees
-        casda::ValueError<double> itsDEC;
+        casda::ValueError itsDEC;
         /// The frequency of the object, unweighted average
-        casda::ValueError<double> itsFreqUW;
+        casda::ValueError itsFreqUW;
         /// The frequency of the object, weighted average
-        casda::ValueError<double> itsFreqW;
+        casda::ValueError itsFreqW;
         /// The HI redshift for the unweighted average frequency of the object
-        casda::ValueError<double> itsZHI_UW;
+        casda::ValueError itsZHI_UW;
         /// The HI redshift for the weighted average frequency of the object
-        casda::ValueError<double> itsZHI_W;
+        casda::ValueError itsZHI_W;
         /// The HI redshift for the frequency of the peak optical depth
-        casda::ValueError<double> itsZHI_peak;
+        casda::ValueError itsZHI_peak;
         /// The velocity width of the object at 50% of the peak optical depth
-        casda::ValueError<double> itsW50;
+        casda::ValueError itsW50;
         /// The velocity width of the object at 20% of the peak optical depth
-        casda::ValueError<double> itsW20;
+        casda::ValueError itsW20;
         /// The local RMS noise of the image cube surrounding the object
         double itsRMSimagecube;
         // The peak optical depth of the object
-        casda::ValueError<double> itsOpticalDepth_peak;
+        casda::ValueError itsOpticalDepth_peak;
         /// The integrated optical depth of the object
-        casda::ValueError<double> itsOpticalDepth_int;
+        casda::ValueError itsOpticalDepth_int;
 
         /// A flag indicating whether the object's continuum component is resolved spatially
         unsigned int itsFlagResolved;

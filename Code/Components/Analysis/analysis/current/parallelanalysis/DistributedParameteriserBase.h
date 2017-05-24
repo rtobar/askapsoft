@@ -70,6 +70,9 @@ class DistributedParameteriserBase {
         /// The communication class
         askap::askapparallel::AskapParallel *itsComms;
 
+    /// The reference DuchampParallel object that holds everything
+    DuchampParallel *itsDP;
+
         /// The image header information. The WCS is the key element
         /// used in this.
         duchamp::FitsHeader itsHeader;

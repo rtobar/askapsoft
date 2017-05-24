@@ -46,7 +46,7 @@
 using namespace LOFAR::TYPES;
 
 ///@brief Where the log messages go.
-ASKAP_LOGGER(logger, ".objectparam");
+ASKAP_LOGGER(logger, ".distribfitter");
 
 namespace askap {
 namespace analysis {

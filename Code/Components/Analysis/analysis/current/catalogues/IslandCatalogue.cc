@@ -32,7 +32,7 @@
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
 
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <catalogues/CasdaIsland.h>
 #include <sourcefitting/RadioSource.h>
 #include <outputs/AskapVOTableCatalogueWriter.h>
