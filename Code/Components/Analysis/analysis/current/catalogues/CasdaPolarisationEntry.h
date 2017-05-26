@@ -121,6 +121,12 @@ class CasdaPolarisationEntry : public CatalogueEntry {
 
         /// @}
 
+    /// @brief Comparison operator, using the component ID
+        friend bool operator< (CasdaPolarisationEntry lhs, CasdaPolarisationEntry rhs)
+        {
+            return (lhs.id() < rhs.id());
+        }
+
 
     protected:
 

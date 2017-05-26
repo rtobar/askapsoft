@@ -124,6 +124,10 @@ void DistributedRMsynthesis::gather()
                 // Make sure we have the correct amount of sources
                 ASKAPASSERT(itsComponentList.size() == itsOutputList.size());
 
+                // sort by id:
+                std::sort(itsOutputList.begin(),itsOutputList.end());
+                
+
             } else { // WORKER
                 // for each object in itsOutputList, send to master
                 ASKAPLOG_INFO_STR(logger, "Have run RM synthesis on " << itsInputList.size() <<
