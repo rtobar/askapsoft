@@ -241,7 +241,7 @@ void RMCatalogue::writeVOT()
 {
     AskapVOTableCatalogueWriter vowriter(itsVotableFilename);
     vowriter.setup(&itsCube);
-    ASKAPLOG_DEBUG_STR(logger, "Writing component table to the VOTable " <<
+    ASKAPLOG_DEBUG_STR(logger, "Writing polarisation catalogue to the VOTable " <<
                        itsVotableFilename);
     vowriter.setColumnSpec(&itsSpec);
     vowriter.openCatalogue();
@@ -261,7 +261,7 @@ void RMCatalogue::writeASCII()
 {
 
     AskapAsciiCatalogueWriter writer(itsAsciiFilename);
-    ASKAPLOG_DEBUG_STR(logger, "Writing Fit results to " << itsAsciiFilename);
+    ASKAPLOG_DEBUG_STR(logger, "Writing polarisation catalogue to text file " << itsAsciiFilename);
     writer.setup(&itsCube);
     writer.setColumnSpec(&itsSpec);
     writer.openCatalogue();

@@ -50,7 +50,6 @@ class DistributedRMsynthesis : public DistributedParameteriserBase {
     public:
         DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms,
                                const LOFAR::ParameterSet &parset,
-                               // duchamp::Cube &cube,
                                std::vector<sourcefitting::RadioSource> sourcelist);
         virtual ~DistributedRMsynthesis();
 

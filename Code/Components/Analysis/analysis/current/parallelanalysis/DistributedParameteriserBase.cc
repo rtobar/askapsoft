@@ -54,17 +54,11 @@ namespace analysis {
 
 DistributedParameteriserBase::DistributedParameteriserBase(askap::askapparallel::AskapParallel& comms,
                                                            const LOFAR::ParameterSet &parset,
-                                                           // duchamp::Cube &cube,
                                                            std::vector<sourcefitting::RadioSource> sourcelist):
     itsComms(&comms),
-//    itsReferenceParset(parset),
     itsInputList(sourcelist),
-    itsTotalListSize(sourcelist.size())// ,
-    // itsCube(cube)
+    itsTotalListSize(sourcelist.size())
 {
-    //   itsTotalListSize = itsInputList.size();
-    ASKAPLOG_INFO_STR(logger, "Have initialised with input list of size " << itsTotalListSize);
-
     // Make a copy via makeSubset, as simple copy actually keeps a
     // pointer to the original ParameterSetImpl, so changing the new
     // one would change the original.
@@ -73,7 +67,6 @@ DistributedParameteriserBase::DistributedParameteriserBase(askap::askapparallel:
     itsReferenceParset.replace("nsubx", "1");
     itsReferenceParset.replace("nsuby", "1");
     itsReferenceParset.replace("nsubz", "1");
-    ASKAPLOG_DEBUG_STR(logger, "DistribParam - subsection in parset = " <<  itsReferenceParset.getString("subsection",""));
     itsDP = boost::shared_ptr<DuchampParallel>(new DuchampParallel(comms,itsReferenceParset));
     itsDP->cube().setReconFlag(false);
     itsDP->readData();
@@ -82,9 +75,7 @@ DistributedParameteriserBase::DistributedParameteriserBase(askap::askapparallel:
 
 DistributedParameteriserBase::~DistributedParameteriserBase()
 {
-    ASKAPLOG_DEBUG_STR(logger, "Destroying the DuchampParallel object");
     itsDP.reset();
-    ASKAPLOG_DEBUG_STR(logger, "Done");
 }
 
 void DistributedParameteriserBase::distribute()
@@ -102,7 +93,6 @@ void DistributedParameteriserBase::distribute()
             bs.resize(0);
             bob = LOFAR::BlobOBufString(bs);
             out = LOFAR::BlobOStream(bob);
-            ASKAPLOG_DEBUG_STR(logger, "Broadcasting size of list (" << itsTotalListSize <<") to all workers");
             out.putStart("DP", 1);
             out << itsTotalListSize;
             out.putEnd();
@@ -123,13 +113,8 @@ void DistributedParameteriserBase::distribute()
                     } 
                     out.putEnd();
                     if (i<itsInputList.size()){
-                        ASKAPLOG_DEBUG_STR(logger, "Sending source #" << i + 1 <<
-                                           ", ID=" << itsInputList[i].getID() <<
-                                           " to worker " << rank + 1 <<
-                                           " for parameterisation");
                         itsComms->sendBlob(bs, rank + 1);
                     } else {
-                        ASKAPLOG_DEBUG_STR(logger, "Broadcasting 'finished' signal to all workers");
                         for (int i = 1; i < itsComms->nProcs(); ++i) {
                             itsComms->sendBlob(bs, i);
                         }
@@ -150,7 +135,6 @@ void DistributedParameteriserBase::distribute()
             ASKAPASSERT(version == 1);
             in >> itsTotalListSize;
             in.getEnd();
-            ASKAPLOG_DEBUG_STR(logger, "Received total size = " << itsTotalListSize << " from master");
 
             if (itsTotalListSize > 0) {
                 // now read individual sources
@@ -169,9 +153,6 @@ void DistributedParameteriserBase::distribute()
                         src.haveNoParams();
                         src.setHeader(itsCube->header());
                         itsInputList.push_back(src);
-                        ASKAPLOG_DEBUG_STR(logger, "Worker " << itsComms->rank() <<
-                                           " received object ID " <<
-                                           itsInputList.back().getID());
                     }
                     in.getEnd();
                 }

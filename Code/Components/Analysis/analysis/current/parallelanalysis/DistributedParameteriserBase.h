@@ -51,7 +51,6 @@ class DistributedParameteriserBase {
     public:
         DistributedParameteriserBase(askap::askapparallel::AskapParallel& comms,
                                      const LOFAR::ParameterSet &parset,
-                                     // duchamp::Cube &cube,
                                      std::vector<sourcefitting::RadioSource> sourcelist);
         virtual ~DistributedParameteriserBase();
 

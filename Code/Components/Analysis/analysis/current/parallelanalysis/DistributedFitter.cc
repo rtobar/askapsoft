@@ -53,12 +53,9 @@ namespace analysis {
 
 DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms,
                                      const LOFAR::ParameterSet &parset,
-                                     // duchamp::Cube &cube,
                                      std::vector<sourcefitting::RadioSource> sourcelist):
-//    DistributedParameteriserBase(comms,parset,cube,sourcelist)
         DistributedParameteriserBase(comms,parset,sourcelist)
 {
-    ASKAPLOG_DEBUG_STR(logger,"Setting up DistributedFitter");
     itsHeader=itsCube->header();
     itsReferenceParams = itsCube->pars();
     std::vector<size_t> dim =
@@ -74,7 +71,6 @@ DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms,
 
 DistributedFitter::~DistributedFitter()
 {
-    ASKAPLOG_DEBUG_STR(logger, "Destroying the DistributedFitter");
 }
 
 
@@ -94,27 +90,15 @@ void DistributedFitter::parameterise()
 
             for (size_t i = 0; i < itsInputList.size(); i++) {
 
-                ASKAPLOG_DEBUG_STR(logger, "Parameterising object #" << i + 1 <<
-                                   " out of " << itsInputList.size());
-
-                // get bounding subsection & transform into a Subsection string
-                // itsInputList[i].setHeader(itsHeader);
-
                 // add the offsets, so that we are in global-pixel-coordinates
                 itsInputList[i].addOffsets();
                 std::string subsection = itsInputList[i].boundingSubsection(dim, true);
 
                 itsReferenceParset.replace("subsection", subsection);
-                // // turn off the subimaging, so we read the whole lot.
-                // itsReferenceParset.replace("nsubx", "1");
-                // itsReferenceParset.replace("nsuby", "1");
-                // itsReferenceParset.replace("nsubz", "1");
 
-                // define a duchamp Cube using the filename from the
-                // itsReferenceParams
-
-                // set the subsection
+                // define a duchamp Cube using the filename from the itsReferenceParams
                 DuchampParallel tempDP(*itsComms, itsReferenceParset);
+
                 // set this to false to stop anything trying to access
                 // the recon array
                 tempDP.cube().setReconFlag(false);
@@ -186,20 +170,15 @@ void DistributedFitter::gather()
                 LOFAR::BlobString bs;
                 for (int n = 0; n < itsComms->nProcs() - 1; n++) {
                     int numSrc;
-                    ASKAPLOG_INFO_STR(logger, "Master about to read from worker #" << n + 1);
                     itsComms->receiveBlob(bs, n + 1);
                     LOFAR::BlobIBufString bib(bs);
                     LOFAR::BlobIStream in(bib);
                     int version = in.getStart("OPfinal");
                     ASKAPASSERT(version == 1);
                     in >> numSrc;
-                    ASKAPLOG_DEBUG_STR(logger, "Reading " << numSrc <<
-                                       " objects from worker #" << n + 1);
                     for (int i = 0; i < numSrc; i++) {
                         sourcefitting::RadioSource src;
                         in >> src;
-                        ASKAPLOG_DEBUG_STR(logger, "Read parameterised object " <<
-                                           src.getName() << ", ID=" << src.getID());
                         // make sure we have the right WCS etc information
                         src.setHeader(itsHeader);
                         src.setOffsets(itsReferenceParams);

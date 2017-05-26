@@ -49,7 +49,6 @@ class DistributedFitter : public DistributedParameteriserBase {
     public:
     DistributedFitter(askap::askapparallel::AskapParallel& comms,
                       const LOFAR::ParameterSet &parset,
-                      // duchamp::Cube &cube,
                       std::vector<sourcefitting::RadioSource> sourcelist);
         ~DistributedFitter();
 

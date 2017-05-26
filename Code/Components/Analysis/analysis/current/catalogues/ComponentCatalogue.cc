@@ -92,13 +92,10 @@ ComponentCatalogue::ComponentCatalogue(std::vector<sourcefitting::RadioSource> &
 void ComponentCatalogue::defineComponents(std::vector<sourcefitting::RadioSource> &srclist,
         const LOFAR::ParameterSet &parset)
 {
-    ASKAPLOG_INFO_STR(logger, "Defining components");
     std::vector<sourcefitting::RadioSource>::iterator src;
     for (src = srclist.begin(); src != srclist.end(); src++) {
         for (size_t i = 0; i < src->numFits(); i++) {
-            ASKAPLOG_DEBUG_STR(logger, "input source #"<<i << " ID="<<src->getID());
             CasdaComponent component(*src, parset, i, itsFitType);
-            ASKAPLOG_DEBUG_STR(logger, "done");
             itsComponents.push_back(component);
         }
     }

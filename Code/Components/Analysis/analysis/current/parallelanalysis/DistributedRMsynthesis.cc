@@ -54,9 +54,7 @@ namespace analysis {
 
 DistributedRMsynthesis::DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms,
                                                const LOFAR::ParameterSet &parset,
-                                               // duchamp::Cube &cube,
                                                std::vector<sourcefitting::RadioSource> sourcelist):
-//    DistributedParameteriserBase(comms,parset,cube,sourcelist)
         DistributedParameteriserBase(comms,parset,sourcelist)
 {
 }
@@ -69,16 +67,14 @@ DistributedRMsynthesis::~DistributedRMsynthesis()
 void DistributedRMsynthesis::parameterise()
 {
 
-    ASKAPLOG_INFO_STR(logger, "Defining the component catalogue to start RM synthesis");
+    // Master needs to do this, so that we can ensure we have all the
+    // polarisation entries at the end
     ComponentCatalogue compCat(itsInputList,itsReferenceParset,itsCube,"best");
     itsComponentList = compCat.components();
-    ASKAPLOG_INFO_STR(logger, "Component catalogue defined with " << itsComponentList.size()<< " components");
     
     if (itsComms->isWorker()) {
 
         for(unsigned int i=0;i<itsComponentList.size();i++){
-            ASKAPLOG_DEBUG_STR(logger, "Running RM Synthesis on component " << itsComponentList[i].componentID() <<
-                               " with location RA=" << itsComponentList[i].ra() << " dec="<<itsComponentList[i].dec());
             CasdaPolarisationEntry pol(&itsComponentList[i],itsReferenceParset);
             itsOutputList.push_back(pol);
         }
@@ -89,9 +85,7 @@ void DistributedRMsynthesis::parameterise()
 }
 
 void DistributedRMsynthesis::gather()
-{
-    ASKAPLOG_DEBUG_STR(logger, "in DistributedRMsynthesis::gather()");
-    
+{    
     if (itsComms->isParallel()) {
 
         if (itsTotalListSize > 0) {
@@ -103,19 +97,15 @@ void DistributedRMsynthesis::gather()
                 LOFAR::BlobString bs;
                 for (int n = 0; n < itsComms->nProcs() - 1; n++) {
                     int numSrc;
-                    ASKAPLOG_INFO_STR(logger, "Master about to read from worker #" << n + 1);
                     itsComms->receiveBlob(bs, n + 1);
                     LOFAR::BlobIBufString bib(bs);
                     LOFAR::BlobIStream in(bib);
                     int version = in.getStart("RMfinal");
                     ASKAPASSERT(version == 1);
                     in >> numSrc;
-                    ASKAPLOG_DEBUG_STR(logger, "Reading " << numSrc <<
-                                       " objects from worker #" << n + 1);
                     for (int i = 0; i < numSrc; i++) {
                         CasdaPolarisationEntry src;
                         in >> src;
-                        ASKAPLOG_DEBUG_STR(logger, "Read parameterised object with component ID=" << src.id());
                         itsOutputList.push_back(src);
                     }
                     in.getEnd();
@@ -130,8 +120,6 @@ void DistributedRMsynthesis::gather()
 
             } else { // WORKER
                 // for each object in itsOutputList, send to master
-                ASKAPLOG_INFO_STR(logger, "Have run RM synthesis on " << itsInputList.size() <<
-                                  " sources. Returning results to master.");
                 LOFAR::BlobString bs;
                 bs.resize(0);
                 LOFAR::BlobOBufString bob(bs);
@@ -139,7 +127,6 @@ void DistributedRMsynthesis::gather()
                 out.putStart("RMfinal", 1);
                 out << int(itsOutputList.size());
                 for (size_t i = 0; i < itsOutputList.size(); i++) {
-                    ASKAPLOG_DEBUG_STR(logger, "Sending parameterised object with component ID=" << itsOutputList[i].id());
                     out << itsOutputList[i];
                 }
                 out.putEnd();

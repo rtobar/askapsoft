@@ -67,34 +67,26 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
                "fitNumber=" << fitNumber << ", but source " << obj.getID() <<
                " only has " << obj.numFits(fitType));
 
-    ASKAPLOG_DEBUG_STR(logger, "Defining component for object " << obj.getID());
-    
     sourcefitting::FitResults results = obj.fitResults(fitType);
 
     // Define local variables that will get printed
     casa::Gaussian2D<Double> gauss = obj.gaussFitSet(fitType)[fitNumber];
     casa::Vector<Double> errors = obj.fitResults(fitType).errors(fitNumber);
     CasdaIsland theIsland(obj, parset);
-    ASKAPLOG_DEBUG_STR(logger, "Have defined the island");
     
     itsIslandID = theIsland.id();
     std::stringstream id;
     id << itsIDbase << obj.getID() << getSuffix(fitNumber);
     itsComponentID = id.str();
-    ASKAPLOG_DEBUG_STR(logger, "Now have itsComponentID="<<itsComponentID);
     
     duchamp::FitsHeader newHead_freq = changeSpectralAxis(obj.header(), "FREQ", casda::freqUnit);
-    ASKAPLOG_DEBUG_STR(logger, "Defined newHead_freq OK");
         
     double thisRA, thisDec, zworld;
     newHead_freq.pixToWCS(gauss.xCenter(), gauss.yCenter(), obj.getZcentre(),
                           thisRA, thisDec, zworld);
-    ASKAPLOG_DEBUG_STR(logger, "Calculated positions");
     itsRA.value() = thisRA;
     itsDEC.value() = thisDec;
 
-    ASKAPLOG_DEBUG_STR(logger, "Have defined RA="<<thisRA << " and Dec="<<thisDec);
-    
     double freqScale = 0.;
     if (newHead_freq.WCS().spec >= 0) {
         casa::Unit imageFreqUnits(newHead_freq.WCS().cunit[newHead_freq.WCS().spec]);
@@ -111,12 +103,10 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
     itsRA.error() = errors[1] * pixscale;
     itsDEC.error() = errors[2] * pixscale;
     itsName = newHead_freq.getIAUName(itsRA.value(), itsDEC.value());
-    ASKAPLOG_DEBUG_STR(logger, "Have defined its name as " << itsName);
 
     double peakFluxscale = getPeakFluxConversionScale(newHead_freq, casda::fluxUnit);
     itsFluxPeak.value() = gauss.height() * peakFluxscale;
     itsFluxPeak.error() = errors[0] * peakFluxscale;
-    ASKAPLOG_DEBUG_STR(logger, "peak flux = " << itsFluxPeak.value());
 
     itsMaj.value() = gauss.majorAxis() * pixscale;
     itsMaj.error() = errors[3] * pixscale;
@@ -127,7 +117,6 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
 
     double intFluxscale = getIntFluxConversionScale(newHead_freq, casda::intFluxUnitContinuum);
     itsFluxInt.value() = gauss.flux() * intFluxscale;
-    ASKAPLOG_DEBUG_STR(logger, "int flux = " << itsFluxInt.value());
     // To calculate error on integrated flux of Gaussian, use Eq.42 from Condon (1997, PASP 109, 166).
     double beamScaling = newHead_freq.getBeam().maj() * newHead_freq.getBeam().min() * pixscale * pixscale /
                          (itsMaj.value() * itsMin.value());
@@ -166,8 +155,6 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
     itsNDoF_fit = results.ndof();
     itsNpix_fit = results.numPix();
     itsNpix_island = obj.getSize();
-
-    ASKAPLOG_DEBUG_STR(logger, "all done");
 
 }
 
