@@ -54,7 +54,7 @@ class ComponentCatalogue {
         /// based on the output file given in the parset.
         ComponentCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                            const LOFAR::ParameterSet &parset,
-                           duchamp::Cube &cube,
+                           duchamp::Cube *cube,
                            const std::string fitType = casda::componentFitType);
 
         /// Default destructor
@@ -124,7 +124,7 @@ class ComponentCatalogue {
 
         /// The duchamp::Cube, used to help instantiate the classes to
         /// write out the ASCII and VOTable files.
-        duchamp::Cube &itsCube;
+        duchamp::Cube *itsCube;
 
         /// The filename of the VOTable output file
         std::string itsVotableFilename;

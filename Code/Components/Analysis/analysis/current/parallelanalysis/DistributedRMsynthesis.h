@@ -48,7 +48,10 @@ namespace analysis {
 /// master can then access this for writing out.
 class DistributedRMsynthesis : public DistributedParameteriserBase {
     public:
-        DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms);
+        DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms,
+                               const LOFAR::ParameterSet &parset,
+                               // duchamp::Cube &cube,
+                               std::vector<sourcefitting::RadioSource> sourcelist);
         virtual ~DistributedRMsynthesis();
 
         /// @brief Each object on a worker is parameterised, and

@@ -225,7 +225,6 @@ DuchampParallel::DuchampParallel(askap::askapparallel::AskapParallel& comms,
 
     LOFAR::ParameterSet fitParset = itsParset.makeSubset("Fitter.");
     itsFitParams = sourcefitting::FittingParameters(fitParset);
-    itsFlagDistribFit = itsParset.getBool("distribFit", true);
 
     itsFlagFindSpectralTerms = itsParset.getBoolVector("findSpectralTerms",
                                std::vector<bool>(2, itsFitParams.doFit()));
@@ -1066,20 +1065,8 @@ void DuchampParallel::receiveObjects()
 
 void DuchampParallel::cleanup()
 {
-
-    if (itsComms.isParallel() && itsComms.isWorker()) {
-        // need to call DistributedFitter only, so that the distributed calculation works
-
-        ASKAPLOG_DEBUG_STR(logger, "Parameterising edge objects in distributed manner");
-        DistributedFitter distribFitter(itsComms);
-        distribFitter.initialise(this);
-        distribFitter.distribute();
-        distribFitter.parameterise();
-        distribFitter.gather();
-
-    }
-
-
+    ASKAPLOG_DEBUG_STR(logger, "In cleanup");
+    
     if (!itsComms.isParallel() || itsComms.isMaster()) {
         ASKAPLOG_INFO_STR(logger, "Beginning the cleanup");
 
@@ -1124,17 +1111,33 @@ void DuchampParallel::cleanup()
             }
 
         }
+    }
 
-        DistributedFitter distribFitter(itsComms);
-        distribFitter.initialise(this);
-        distribFitter.distribute();
-        distribFitter.parameterise();
-        distribFitter.gather();
-        itsEdgeSourceList = distribFitter.finalList();
+    // Run this on both workers and master
+    ASKAPLOG_DEBUG_STR(logger, "Launching the distributed fitting for the edge sources");
+    ASKAPLOG_DEBUG_STR(logger, "CHECK - parset subsection = " << itsParset.getString("subsection"));
+// //    DistributedFitter distribFitter(itsComms,itsParset,itsCube,itsEdgeSourceList);
+//         DistributedFitter distribFitter(itsComms,itsParset,itsEdgeSourceList);
+//     distribFitter.distribute();
+//     distribFitter.parameterise();
+//     distribFitter.gather();
+    boost::shared_ptr<DistributedFitter> distribFitter(new DistributedFitter(itsComms,itsParset,itsEdgeSourceList));
+    distribFitter->distribute();
+    distribFitter->parameterise();
+    distribFitter->gather();
+    
+    ASKAPLOG_DEBUG_STR(logger, "CHECK - parset subsection #2 = " << itsParset.getString("subsection"));
+
+    // Back to just the master
+    if (!itsComms.isParallel() || itsComms.isMaster()) {
+
+        // itsEdgeSourceList = distribFitter.finalList();
+        itsEdgeSourceList = distribFitter->finalList();
 
         ASKAPLOG_INFO_STR(logger, "Finished parameterising " << itsEdgeSourceList.size()
                           << " edge sources");
 
+        std::vector<sourcefitting::RadioSource>::iterator src;
         for (src = itsEdgeSourceList.begin(); src < itsEdgeSourceList.end(); src++) {
             ASKAPLOG_DEBUG_STR(logger, "'Edge' source, name " << src->getName());
             itsSourceList.push_back(*src);
@@ -1162,12 +1165,17 @@ void DuchampParallel::cleanup()
 
     }
 
+    distribFitter.reset();
+
+    ASKAPLOG_DEBUG_STR(logger, "End of cleanup");
+
 }
 
 //**************************************************************//
 
 void DuchampParallel::printResults()
 {
+    ASKAPLOG_DEBUG_STR(logger, "In printResults()");
     if (itsComms.isMaster()) {
 
         itsCube.sortDetections();
@@ -1191,18 +1199,23 @@ void DuchampParallel::printResults()
         }
         ASKAPLOG_INFO_STR(logger, "Found " << itsCube.getNumObj() << " sources.");
 
-        ResultsWriter writer(this);
-        writer.duchampOutput();
-        writer.writeIslandCatalogue();
-        writer.writeComponentCatalogue();
-        writer.writeHiEmissionCatalogue();
-        writer.writePolarisationCatalogue();
-        writer.writeFitResults();
-        writer.writeFitAnnotations();
-        writer.writeComponentParset();
+    }
+
+    // Do this for all workers as well as master
+    ASKAPLOG_DEBUG_STR(logger, "Preparing the ResultsWriter");
+    ResultsWriter writer(this,itsComms);
+    writer.duchampOutput();
+    writer.writeIslandCatalogue();
+    writer.writeComponentCatalogue();
+    writer.writeHiEmissionCatalogue();
+    ASKAPLOG_DEBUG_STR(logger, "Polarisation output");
+    writer.writePolarisationCatalogue();
+    ASKAPLOG_DEBUG_STR(logger ," Pol output done");
+    writer.writeFitResults();
+    writer.writeFitAnnotations();
+    writer.writeComponentParset();
 
 
-    } // end of 'if isMaster'
 }
 
 //**************************************************************//

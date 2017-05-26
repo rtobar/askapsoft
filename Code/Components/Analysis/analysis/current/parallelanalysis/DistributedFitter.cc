@@ -51,13 +51,30 @@ ASKAP_LOGGER(logger, ".distribfitter");
 namespace askap {
 namespace analysis {
 
-DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms):
-    DistributedParameteriserBase(comms)
+DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms,
+                                     const LOFAR::ParameterSet &parset,
+                                     // duchamp::Cube &cube,
+                                     std::vector<sourcefitting::RadioSource> sourcelist):
+//    DistributedParameteriserBase(comms,parset,cube,sourcelist)
+        DistributedParameteriserBase(comms,parset,sourcelist)
 {
+    ASKAPLOG_DEBUG_STR(logger,"Setting up DistributedFitter");
+    itsHeader=itsCube->header();
+    itsReferenceParams = itsCube->pars();
+    std::vector<size_t> dim =
+        analysisutilities::getCASAdimensions(itsReferenceParams.getImageFile());
+    std::string subsection = itsReferenceParset.getString("subsection","");
+    if (! itsReferenceParams.getFlagSubsection() || subsection==""){
+        subsection=duchamp::nullSection(dim.size());
+    }
+    itsReferenceParams.setSubsection(subsection);
+    itsReferenceParams.parseSubsections(dim);
+    itsReferenceParams.setOffsets(itsHeader.getWCS());
 }
 
 DistributedFitter::~DistributedFitter()
 {
+    ASKAPLOG_DEBUG_STR(logger, "Destroying the DistributedFitter");
 }
 
 
@@ -67,7 +84,8 @@ void DistributedFitter::parameterise()
         // For each object, get the bounding subsection for that object
         // Define a DuchampParallel and use it to do the parameterisation
         // put parameterised objects into itsOutputList
-
+        
+        
         if (itsInputList.size() > 0) {
 
             std::string image = itsReferenceParams.getImageFile();
@@ -80,17 +98,17 @@ void DistributedFitter::parameterise()
                                    " out of " << itsInputList.size());
 
                 // get bounding subsection & transform into a Subsection string
-                itsInputList[i].setHeader(itsHeader);
+                // itsInputList[i].setHeader(itsHeader);
 
                 // add the offsets, so that we are in global-pixel-coordinates
                 itsInputList[i].addOffsets();
                 std::string subsection = itsInputList[i].boundingSubsection(dim, true);
 
                 itsReferenceParset.replace("subsection", subsection);
-                // turn off the subimaging, so we read the whole lot.
-                itsReferenceParset.replace("nsubx", "1");
-                itsReferenceParset.replace("nsuby", "1");
-                itsReferenceParset.replace("nsubz", "1");
+                // // turn off the subimaging, so we read the whole lot.
+                // itsReferenceParset.replace("nsubx", "1");
+                // itsReferenceParset.replace("nsuby", "1");
+                // itsReferenceParset.replace("nsubz", "1");
 
                 // define a duchamp Cube using the filename from the
                 // itsReferenceParams

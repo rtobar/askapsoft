@@ -31,6 +31,7 @@
 
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
+#include <askapparallel/AskapParallel.h>
 
 #include <parallelanalysis/DuchampParallel.h>
 #include <sourcefitting/RadioSource.h>
@@ -60,8 +61,9 @@ namespace askap {
 
 namespace analysis {
 
-ResultsWriter::ResultsWriter(DuchampParallel *finder):
+ResultsWriter::ResultsWriter(DuchampParallel *finder, askap::askapparallel::AskapParallel &comms):
     itsParset(finder->parset()),
+    itsComms(comms),
     itsCube(finder->cube()),
     itsSourceList(finder->rSourceList()),
     itsFitParams(finder->fitParams()),
@@ -78,6 +80,8 @@ void ResultsWriter::setFlag2D(bool flag2D)
 void ResultsWriter::duchampOutput()
 {
 
+    if (itsComms.isMaster()){
+        
     if (itsParset.getBool("writeDuchampFiles", true)) {
 
         // Write standard Duchamp results file
@@ -117,41 +121,43 @@ void ResultsWriter::duchampOutput()
         }
 
     }
-
+    }
 }
 
 void ResultsWriter::writeIslandCatalogue()
 {
+    if (itsComms.isMaster()) {
     if (itsFlag2D) {
 
         IslandCatalogue cat(itsSourceList, itsParset, itsCube);
         cat.write();
 
     }
-
+    }
 }
 
 void ResultsWriter::writeComponentCatalogue()
 {
+    if (itsComms.isMaster()){
     if (itsFitParams.doFit()) {
 
-        ComponentCatalogue cat(itsSourceList, itsParset, itsCube);
+        ComponentCatalogue cat(itsSourceList, itsParset, &itsCube);
         cat.write();
 
     }
-
+    }
 }
 
 void ResultsWriter::writeHiEmissionCatalogue()
 {
-
+    if (itsComms.isMaster()) {
     if (itsParset.getBool("HiEmissionCatalogue", false)) {
 
         HiEmissionCatalogue cat(itsSourceList, itsParset, itsCube);
         cat.write();
 
     }
-
+    }
 }
 
 
@@ -160,9 +166,10 @@ void ResultsWriter::writePolarisationCatalogue()
 
     if (itsParset.getBool("RMSynthesis", false)) {
 
-        RMCatalogue cat(itsSourceList, itsParset, itsCube);
+        RMCatalogue cat(itsSourceList, itsParset, itsCube, itsComms);
+        if(itsComms.isMaster()){
         cat.write();
-
+        }
     }
 
 }
@@ -170,6 +177,7 @@ void ResultsWriter::writePolarisationCatalogue()
 
 void ResultsWriter::writeFitResults()
 {
+    if (itsComms.isMaster()) {
     if (itsFitParams.doFit()) {
 
         if (itsParset.getBool("writeFitResults", false)) {
@@ -179,7 +187,7 @@ void ResultsWriter::writeFitResults()
 
             for (size_t t = 0; t < outtypes.size(); t++) {
 
-                FitCatalogue cat(itsSourceList, itsParset, itsCube, outtypes[t]);
+                FitCatalogue cat(itsSourceList, itsParset, &itsCube, outtypes[t]);
                 cat.write();
 
             }
@@ -187,11 +195,12 @@ void ResultsWriter::writeFitResults()
         }
 
     }
-
+    }
 }
 
 void ResultsWriter::writeFitAnnotations()
 {
+    if (itsComms.isMaster()){
     if (itsFitParams.doFit()) {
 
         std::string fitBoxAnnotationFile = itsParset.getString("fitBoxAnnotationFile",
@@ -257,10 +266,12 @@ void ResultsWriter::writeFitAnnotations()
         }
 
     }
+    }
 }
 
 void ResultsWriter::writeComponentParset()
 {
+    if (itsComms.isMaster()) {
     if (itsFitParams.doFit()) {
         if (itsParset.getBool("outputComponentParset", false)) {
             /// @todo Instantiate the writer from a parset - then don't have to find the flags etc
@@ -276,6 +287,7 @@ void ResultsWriter::writeComponentParset()
             pwriter.writeFooter();
             pwriter.closeCatalogue();
         }
+    }
     }
 }
 

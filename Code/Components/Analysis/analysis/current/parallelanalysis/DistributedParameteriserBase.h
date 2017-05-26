@@ -32,6 +32,7 @@
 #include <askapparallel/AskapParallel.h>
 #include <parallelanalysis/DuchampParallel.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace askap {
 
@@ -48,11 +49,11 @@ namespace analysis {
 /// returned.
 class DistributedParameteriserBase {
     public:
-        DistributedParameteriserBase(askap::askapparallel::AskapParallel& comms);
+        DistributedParameteriserBase(askap::askapparallel::AskapParallel& comms,
+                                     const LOFAR::ParameterSet &parset,
+                                     // duchamp::Cube &cube,
+                                     std::vector<sourcefitting::RadioSource> sourcelist);
         virtual ~DistributedParameteriserBase();
-
-        /// @brief Initialise members - parameters, header and input object list.
-    virtual void initialise(DuchampParallel *dp);
 
         /// @brief Master sends list to workers, who fill out
         /// itsInputList
@@ -70,17 +71,6 @@ class DistributedParameteriserBase {
         /// The communication class
         askap::askapparallel::AskapParallel *itsComms;
 
-    /// The reference DuchampParallel object that holds everything
-    DuchampParallel *itsDP;
-
-        /// The image header information. The WCS is the key element
-        /// used in this.
-        duchamp::FitsHeader itsHeader;
-
-        /// The set of Duchamp parameters. The subsection and offsets
-        /// are the key elements here.
-        duchamp::Param itsReferenceParams;
-
         /// The input parset. Used for fitting purposes.
         LOFAR::ParameterSet itsReferenceParset;
 
@@ -89,6 +79,11 @@ class DistributedParameteriserBase {
 
         /// The total number of objects that are to be parameterised.
         unsigned int itsTotalListSize;
+
+    boost::shared_ptr<DuchampParallel> itsDP;
+
+/// The reference Duchamp cube 
+    duchamp::Cube *itsCube;
 
 };
 

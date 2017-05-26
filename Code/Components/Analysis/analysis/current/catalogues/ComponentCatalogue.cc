@@ -55,7 +55,7 @@ namespace analysis {
 
 ComponentCatalogue::ComponentCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                                        const LOFAR::ParameterSet &parset,
-                                       duchamp::Cube &cube,
+                                       duchamp::Cube *cube,
                                        const std::string fitType):
     itsFitType(casda::componentFitType),
     itsComponents(),
@@ -92,10 +92,13 @@ ComponentCatalogue::ComponentCatalogue(std::vector<sourcefitting::RadioSource> &
 void ComponentCatalogue::defineComponents(std::vector<sourcefitting::RadioSource> &srclist,
         const LOFAR::ParameterSet &parset)
 {
+    ASKAPLOG_INFO_STR(logger, "Defining components");
     std::vector<sourcefitting::RadioSource>::iterator src;
     for (src = srclist.begin(); src != srclist.end(); src++) {
         for (size_t i = 0; i < src->numFits(); i++) {
+            ASKAPLOG_DEBUG_STR(logger, "input source #"<<i << " ID="<<src->getID());
             CasdaComponent component(*src, parset, i, itsFitType);
+            ASKAPLOG_DEBUG_STR(logger, "done");
             itsComponents.push_back(component);
         }
     }
@@ -218,7 +221,7 @@ void ComponentCatalogue::write()
 void ComponentCatalogue::writeVOT()
 {
     AskapVOTableCatalogueWriter vowriter(itsVotableFilename);
-    vowriter.setup(&itsCube);
+    vowriter.setup(itsCube);
     ASKAPLOG_DEBUG_STR(logger, "Writing component table to the VOTable " <<
                        itsVotableFilename);
     vowriter.setColumnSpec(&itsSpec);
@@ -247,7 +250,7 @@ void ComponentCatalogue::writeASCII()
 
     AskapAsciiCatalogueWriter writer(itsAsciiFilename);
     ASKAPLOG_DEBUG_STR(logger, "Writing Fitted components to " << itsAsciiFilename);
-    writer.setup(&itsCube);
+    writer.setup(itsCube);
     writer.setColumnSpec(&itsSpec);
     writer.openCatalogue();
     writer.writeTableHeader();
@@ -289,7 +292,7 @@ void ComponentCatalogue::writeAnnotations()
         }
 
         if (writer.get() != 0) {
-            writer->setup(&itsCube);
+            writer->setup(itsCube);
             writer->openCatalogue();
             writer->setColourString("BLUE");
             writer->writeHeader();

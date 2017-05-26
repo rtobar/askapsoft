@@ -52,8 +52,12 @@ ASKAP_LOGGER(logger, ".distribrmsynth");
 namespace askap {
 namespace analysis {
 
-DistributedRMsynthesis::DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms):
-    DistributedParameteriserBase(comms)
+DistributedRMsynthesis::DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms,
+                                               const LOFAR::ParameterSet &parset,
+                                               // duchamp::Cube &cube,
+                                               std::vector<sourcefitting::RadioSource> sourcelist):
+//    DistributedParameteriserBase(comms,parset,cube,sourcelist)
+        DistributedParameteriserBase(comms,parset,sourcelist)
 {
 }
 
@@ -65,12 +69,16 @@ DistributedRMsynthesis::~DistributedRMsynthesis()
 void DistributedRMsynthesis::parameterise()
 {
 
-    ComponentCatalogue compCat(itsInputList,itsReferenceParset,itsDP->cube(),"best");
+    ASKAPLOG_INFO_STR(logger, "Defining the component catalogue to start RM synthesis");
+    ComponentCatalogue compCat(itsInputList,itsReferenceParset,itsCube,"best");
     itsComponentList = compCat.components();
+    ASKAPLOG_INFO_STR(logger, "Component catalogue defined with " << itsComponentList.size()<< " components");
     
     if (itsComms->isWorker()) {
 
         for(unsigned int i=0;i<itsComponentList.size();i++){
+            ASKAPLOG_DEBUG_STR(logger, "Running RM Synthesis on component " << itsComponentList[i].componentID() <<
+                               " with location RA=" << itsComponentList[i].ra() << " dec="<<itsComponentList[i].dec());
             CasdaPolarisationEntry pol(&itsComponentList[i],itsReferenceParset);
             itsOutputList.push_back(pol);
         }
@@ -82,6 +90,8 @@ void DistributedRMsynthesis::parameterise()
 
 void DistributedRMsynthesis::gather()
 {
+    ASKAPLOG_DEBUG_STR(logger, "in DistributedRMsynthesis::gather()");
+    
     if (itsComms->isParallel()) {
 
         if (itsTotalListSize > 0) {

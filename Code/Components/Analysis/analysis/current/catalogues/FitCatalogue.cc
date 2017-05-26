@@ -52,7 +52,7 @@ namespace analysis {
 
 FitCatalogue::FitCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                            const LOFAR::ParameterSet &parset,
-                           duchamp::Cube &cube,
+                           duchamp::Cube *cube,
                            const std::string fitType):
     ComponentCatalogue(srclist, parset, cube, fitType)
 {

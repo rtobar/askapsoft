@@ -35,6 +35,7 @@
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FittingParameters.h>
 #include <outputs/AskapVOTableCatalogueWriter.h>
+#include <askapparallel/AskapParallel.h>
 
 namespace askap {
 
@@ -50,7 +51,7 @@ class ResultsWriter {
     public:
         /// Initialise with the parset, used to access parameters
         /// defining aspects of the output
-        ResultsWriter(DuchampParallel *finder);
+    ResultsWriter(DuchampParallel *finder, askap::askapparallel::AskapParallel &itsComms);
 
         /// Default destructor
         virtual ~ResultsWriter() {};
@@ -81,7 +82,7 @@ class ResultsWriter {
         /// create VOTable and ASCII text versions of the catalogue).
         void writeHiEmissionCatalogue();
 
-    /// Writes out the CASDA Polarisatoin catalogue, using the
+    /// Writes out the CASDA Polarisation catalogue, using the
     /// RMCatalogue class to handle the calculations and the writing
     /// (which will create VOTable and ASCII text versions of the
     /// catalogue), as well as the writing to disk of extracted
@@ -112,7 +113,10 @@ class ResultsWriter {
     protected:
 
         /// The input parset
-        LOFAR::ParameterSet &itsParset;
+        LOFAR::ParameterSet itsParset;
+
+    /// Communications
+    askap::askapparallel::AskapParallel& itsComms;
 
         /// The Duchamp cube structure
         duchamp::Cube &itsCube;

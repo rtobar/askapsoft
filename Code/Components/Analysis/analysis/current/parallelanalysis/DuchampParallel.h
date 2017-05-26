@@ -409,9 +409,6 @@ class DuchampParallel {
         /// The Gaussian Fitting parameter class
         sourcefitting::FittingParameters itsFitParams;
 
-        /// Shall the fitting be delegated to the workers?
-        bool itsFlagDistribFit;
-
         /// Shall we find spectral index/curvature information?
         std::vector<bool> itsFlagFindSpectralTerms;
         /// Where shall we find spectral index/curvature information?

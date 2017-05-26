@@ -47,11 +47,14 @@ namespace analysis {
 /// Gaussians added.
 class DistributedFitter : public DistributedParameteriserBase {
     public:
-        DistributedFitter(askap::askapparallel::AskapParallel& comms);
-        virtual ~DistributedFitter();
+    DistributedFitter(askap::askapparallel::AskapParallel& comms,
+                      const LOFAR::ParameterSet &parset,
+                      // duchamp::Cube &cube,
+                      std::vector<sourcefitting::RadioSource> sourcelist);
+        ~DistributedFitter();
 
-        /// @brief Each object on a worker is parameterised, and
-        /// fitted (if requested).
+    /// @brief Each object on a worker is parameterised, and
+    /// fitted (if requested).
         void parameterise();
 
         /// @brief The workers' objects are returned to the master
@@ -65,6 +68,13 @@ class DistributedFitter : public DistributedParameteriserBase {
         /// The list of parameterised objects.
         std::vector<sourcefitting::RadioSource> itsOutputList;
 
+        /// The image header information. The WCS is the key element
+        /// used in this.
+        duchamp::FitsHeader itsHeader;
+
+        /// The set of Duchamp parameters. The subsection and offsets
+        /// are the key elements here.
+        duchamp::Param itsReferenceParams;
 
 };
 

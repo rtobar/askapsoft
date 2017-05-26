@@ -54,7 +54,8 @@ class RMCatalogue {
         /// based on the output file given in the parset.
         RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                     const LOFAR::ParameterSet &parset,
-                    duchamp::Cube &cube);
+                    duchamp::Cube &cube,
+                    askap::askapparallel::AskapParallel &itsComms);
 
         /// Default destructor
         virtual ~RMCatalogue() {};
