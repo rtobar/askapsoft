@@ -67,7 +67,7 @@ ComponentCatalogue::ComponentCatalogue(std::vector<sourcefitting::RadioSource> &
     itsVersion("casda.continuum_component_description_v1.7")
 {
     ASKAPLOG_DEBUG_STR(logger, "Defining component catalogue, version " << itsVersion);
-    
+
     this->defineComponents(srclist, parset);
     this->defineSpec();
 
@@ -225,7 +225,7 @@ void ComponentCatalogue::writeVOT()
     vowriter.openCatalogue();
     writeVOTinformation(vowriter);
     vowriter.writeHeader();
-    duchamp::VOParam version("table_version", "meta.version", "char", itsVersion, itsVersion.size()+1, "");
+    duchamp::VOParam version("table_version", "meta.version", "char", itsVersion, itsVersion.size() + 1, "");
     vowriter.writeParameter(version);
     vowriter.writeParameters();
     vowriter.writeFrequencyParam();

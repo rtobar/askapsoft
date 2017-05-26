@@ -1065,7 +1065,7 @@ void DuchampParallel::receiveObjects()
 
 void DuchampParallel::cleanup()
 {
-    
+
     if (!itsComms.isParallel() || itsComms.isMaster()) {
         ASKAPLOG_INFO_STR(logger, "Beginning the cleanup");
 
@@ -1113,11 +1113,11 @@ void DuchampParallel::cleanup()
     }
 
     // Run this on both workers and master
-    DistributedFitter distribFitter(itsComms,itsParset,itsEdgeSourceList);
+    DistributedFitter distribFitter(itsComms, itsParset, itsEdgeSourceList);
     distribFitter.distribute();
     distribFitter.parameterise();
     distribFitter.gather();
-    
+
     // Back to just the master
     if (!itsComms.isParallel() || itsComms.isMaster()) {
 
@@ -1185,7 +1185,7 @@ void DuchampParallel::printResults()
     }
 
     // Do this for all workers as well as master
-    ResultsWriter writer(this,itsComms);
+    ResultsWriter writer(this, itsComms);
     writer.duchampOutput();
     writer.writeIslandCatalogue();
     writer.writeComponentCatalogue();

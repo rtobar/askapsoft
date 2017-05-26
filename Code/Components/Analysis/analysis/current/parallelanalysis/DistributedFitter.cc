@@ -54,15 +54,15 @@ namespace analysis {
 DistributedFitter::DistributedFitter(askap::askapparallel::AskapParallel& comms,
                                      const LOFAR::ParameterSet &parset,
                                      std::vector<sourcefitting::RadioSource> sourcelist):
-        DistributedParameteriserBase(comms,parset,sourcelist)
+    DistributedParameteriserBase(comms, parset, sourcelist)
 {
-    itsHeader=itsCube->header();
+    itsHeader = itsCube->header();
     itsReferenceParams = itsCube->pars();
     std::vector<size_t> dim =
         analysisutilities::getCASAdimensions(itsReferenceParams.getImageFile());
-    std::string subsection = itsReferenceParset.getString("subsection","");
-    if (! itsReferenceParams.getFlagSubsection() || subsection==""){
-        subsection=duchamp::nullSection(dim.size());
+    std::string subsection = itsReferenceParset.getString("subsection", "");
+    if (! itsReferenceParams.getFlagSubsection() || subsection == "") {
+        subsection = duchamp::nullSection(dim.size());
     }
     itsReferenceParams.setSubsection(subsection);
     itsReferenceParams.parseSubsections(dim);
@@ -80,8 +80,8 @@ void DistributedFitter::parameterise()
         // For each object, get the bounding subsection for that object
         // Define a DuchampParallel and use it to do the parameterisation
         // put parameterised objects into itsOutputList
-        
-        
+
+
         if (itsInputList.size() > 0) {
 
             std::string image = itsReferenceParams.getImageFile();

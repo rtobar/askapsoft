@@ -53,8 +53,8 @@ namespace analysis {
 /// file.
 class CasdaPolarisationEntry : public CatalogueEntry {
     public:
-    /// Default constructor that does nothing.
-    CasdaPolarisationEntry();
+        /// Default constructor that does nothing.
+        CasdaPolarisationEntry();
 
 /// Constructor that builds the Polarisation object from a
         /// RadioSource. It takes a single fitted component and runs
@@ -72,8 +72,8 @@ class CasdaPolarisationEntry : public CatalogueEntry {
         const float ra();
         /// Return the Declination (in decimal degrees)
         const float dec();
-    // Return the component ID
-    const std::string id();
+        // Return the component ID
+        const std::string id();
 
         ///  Print a row of values for the Component into an
         ///  output table. Each column from the catalogue
@@ -102,7 +102,7 @@ class CasdaPolarisationEntry : public CatalogueEntry {
         /// Perform the column check for all colums in specification.
         void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec);
 
-    /// @brief Functions allowing CasdaPolarisationEntry objects to be passed
+        /// @brief Functions allowing CasdaPolarisationEntry objects to be passed
         /// over LOFAR Blobs
         /// @name
         /// @{
@@ -121,7 +121,7 @@ class CasdaPolarisationEntry : public CatalogueEntry {
 
         /// @}
 
-    /// @brief Comparison operator, using the component ID
+        /// @brief Comparison operator, using the component ID
         friend bool operator< (CasdaPolarisationEntry lhs, CasdaPolarisationEntry rhs)
         {
             return (lhs.id() < rhs.id());

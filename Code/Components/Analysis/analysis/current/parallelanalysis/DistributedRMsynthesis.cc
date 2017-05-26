@@ -53,9 +53,9 @@ namespace askap {
 namespace analysis {
 
 DistributedRMsynthesis::DistributedRMsynthesis(askap::askapparallel::AskapParallel& comms,
-                                               const LOFAR::ParameterSet &parset,
-                                               std::vector<sourcefitting::RadioSource> sourcelist):
-        DistributedParameteriserBase(comms,parset,sourcelist)
+        const LOFAR::ParameterSet &parset,
+        std::vector<sourcefitting::RadioSource> sourcelist):
+    DistributedParameteriserBase(comms, parset, sourcelist)
 {
 }
 
@@ -69,23 +69,23 @@ void DistributedRMsynthesis::parameterise()
 
     // Master needs to do this, so that we can ensure we have all the
     // polarisation entries at the end
-    ComponentCatalogue compCat(itsInputList,itsReferenceParset,itsCube,"best");
+    ComponentCatalogue compCat(itsInputList, itsReferenceParset, itsCube, "best");
     itsComponentList = compCat.components();
-    
+
     if (itsComms->isWorker()) {
 
-        for(unsigned int i=0;i<itsComponentList.size();i++){
-            CasdaPolarisationEntry pol(&itsComponentList[i],itsReferenceParset);
+        for (unsigned int i = 0; i < itsComponentList.size(); i++) {
+            CasdaPolarisationEntry pol(&itsComponentList[i], itsReferenceParset);
             itsOutputList.push_back(pol);
         }
 
 
-    } 
+    }
 
 }
 
 void DistributedRMsynthesis::gather()
-{    
+{
     if (itsComms->isParallel()) {
 
         if (itsTotalListSize > 0) {
@@ -115,8 +115,8 @@ void DistributedRMsynthesis::gather()
                 ASKAPASSERT(itsComponentList.size() == itsOutputList.size());
 
                 // sort by id:
-                std::sort(itsOutputList.begin(),itsOutputList.end());
-                
+                std::sort(itsOutputList.begin(), itsOutputList.end());
+
 
             } else { // WORKER
                 // for each object in itsOutputList, send to master

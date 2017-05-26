@@ -66,10 +66,10 @@ class DistributedRMsynthesis : public DistributedParameteriserBase {
     protected:
 
         /// The list of polarisation catalogue entries
-    std::vector<CasdaPolarisationEntry> itsOutputList;
+        std::vector<CasdaPolarisationEntry> itsOutputList;
 
-    /// The list of continuum components. Only used by the master as a check that we have the correct number at the end
-    std::vector<CasdaComponent> itsComponentList;
+        /// The list of continuum components. Only used by the master as a check that we have the correct number at the end
+        std::vector<CasdaComponent> itsComponentList;
 
 };
 

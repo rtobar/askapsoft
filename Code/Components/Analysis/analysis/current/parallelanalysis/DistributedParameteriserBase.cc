@@ -53,8 +53,8 @@ namespace askap {
 namespace analysis {
 
 DistributedParameteriserBase::DistributedParameteriserBase(askap::askapparallel::AskapParallel& comms,
-                                                           const LOFAR::ParameterSet &parset,
-                                                           std::vector<sourcefitting::RadioSource> sourcelist):
+        const LOFAR::ParameterSet &parset,
+        std::vector<sourcefitting::RadioSource> sourcelist):
     itsComms(&comms),
     itsInputList(sourcelist),
     itsTotalListSize(sourcelist.size())
@@ -63,14 +63,14 @@ DistributedParameteriserBase::DistributedParameteriserBase(askap::askapparallel:
     // pointer to the original ParameterSetImpl, so changing the new
     // one would change the original.
     itsReferenceParset = parset.makeSubset("");
-    
+
     itsReferenceParset.replace("nsubx", "1");
     itsReferenceParset.replace("nsuby", "1");
     itsReferenceParset.replace("nsubz", "1");
-    itsDP = boost::shared_ptr<DuchampParallel>(new DuchampParallel(comms,itsReferenceParset));
+    itsDP = boost::shared_ptr<DuchampParallel>(new DuchampParallel(comms, itsReferenceParset));
     itsDP->cube().setReconFlag(false);
     itsDP->readData();
-    itsCube=itsDP->pCube();
+    itsCube = itsDP->pCube();
 }
 
 DistributedParameteriserBase::~DistributedParameteriserBase()
@@ -107,12 +107,12 @@ void DistributedParameteriserBase::distribute()
                     LOFAR::BlobOBufString bob(bs);
                     LOFAR::BlobOStream out(bob);
                     out.putStart("DP", 1);
-                    out << (i<itsInputList.size());
-                    if (i<itsInputList.size()) {
+                    out << (i < itsInputList.size());
+                    if (i < itsInputList.size()) {
                         out << itsInputList[i];
-                    } 
+                    }
                     out.putEnd();
-                    if (i<itsInputList.size()){
+                    if (i < itsInputList.size()) {
                         itsComms->sendBlob(bs, rank + 1);
                     } else {
                         for (int i = 1; i < itsComms->nProcs(); ++i) {

@@ -47,13 +47,13 @@ namespace analysis {
 /// Gaussians added.
 class DistributedFitter : public DistributedParameteriserBase {
     public:
-    DistributedFitter(askap::askapparallel::AskapParallel& comms,
-                      const LOFAR::ParameterSet &parset,
-                      std::vector<sourcefitting::RadioSource> sourcelist);
+        DistributedFitter(askap::askapparallel::AskapParallel& comms,
+                          const LOFAR::ParameterSet &parset,
+                          std::vector<sourcefitting::RadioSource> sourcelist);
         ~DistributedFitter();
 
-    /// @brief Each object on a worker is parameterised, and
-    /// fitted (if requested).
+        /// @brief Each object on a worker is parameterised, and
+        /// fitted (if requested).
         void parameterise();
 
         /// @brief The workers' objects are returned to the master

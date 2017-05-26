@@ -73,14 +73,14 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
     casa::Gaussian2D<Double> gauss = obj.gaussFitSet(fitType)[fitNumber];
     casa::Vector<Double> errors = obj.fitResults(fitType).errors(fitNumber);
     CasdaIsland theIsland(obj, parset);
-    
+
     itsIslandID = theIsland.id();
     std::stringstream id;
     id << itsIDbase << obj.getID() << getSuffix(fitNumber);
     itsComponentID = id.str();
-    
+
     duchamp::FitsHeader newHead_freq = changeSpectralAxis(obj.header(), "FREQ", casda::freqUnit);
-        
+
     double thisRA, thisDec, zworld;
     newHead_freq.pixToWCS(gauss.xCenter(), gauss.yCenter(), obj.getZcentre(),
                           thisRA, thisDec, zworld);

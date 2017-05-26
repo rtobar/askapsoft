@@ -63,18 +63,18 @@ RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
     itsVersion("casda.polarisation_v0.7")
 {
 
-    ASKAPLOG_INFO_STR(logger,"Defining the RM Catalogue");
+    ASKAPLOG_INFO_STR(logger, "Defining the RM Catalogue");
 //    this->defineComponents(srclist, parset);
     this->defineSpec();
 
 //    DistributedRMsynthesis distribRM(comms,parset,cube,srclist);
-    DistributedRMsynthesis distribRM(comms,parset,srclist);
+    DistributedRMsynthesis distribRM(comms, parset, srclist);
     distribRM.distribute();
     distribRM.parameterise();
     distribRM.gather();
     itsComponents = distribRM.finalList();
 
-    if (comms.isMaster()){
+    if (comms.isMaster()) {
         ASKAPLOG_INFO_STR(logger, "Defined list of " << itsComponents.size() << " polarisation components");
     }
 
@@ -90,10 +90,10 @@ RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
 void RMCatalogue::defineComponents(std::vector<sourcefitting::RadioSource> &srclist,
                                    const LOFAR::ParameterSet &parset)
 {
-    ComponentCatalogue compCat(srclist,parset,&itsCube,"best");
-    std::vector<CasdaComponent> comps=compCat.components();
-    for(unsigned int i=0;i<comps.size();i++){
-        CasdaPolarisationEntry pol(&comps[i],parset);
+    ComponentCatalogue compCat(srclist, parset, &itsCube, "best");
+    std::vector<CasdaComponent> comps = compCat.components();
+    for (unsigned int i = 0; i < comps.size(); i++) {
+        CasdaPolarisationEntry pol(&comps[i], parset);
         itsComponents.push_back(pol);
     }
 
@@ -246,7 +246,7 @@ void RMCatalogue::writeVOT()
     vowriter.setColumnSpec(&itsSpec);
     vowriter.openCatalogue();
     vowriter.writeHeader();
-    duchamp::VOParam version("table_version", "meta.version", "char", itsVersion, itsVersion.size()+1, "");
+    duchamp::VOParam version("table_version", "meta.version", "char", itsVersion, itsVersion.size() + 1, "");
     vowriter.writeParameter(version);
     vowriter.writeParameters();
     vowriter.writeFrequencyParam();

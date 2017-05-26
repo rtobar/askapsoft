@@ -56,14 +56,14 @@ class DistributedParameteriserBase {
 
         /// @brief Master sends list to workers, who fill out
         /// itsInputList
-    virtual void distribute();
+        virtual void distribute();
 
         /// @brief Each object on a worker is parameterised, and
         /// fitted (if requested).
-    virtual void parameterise()=0;
+        virtual void parameterise() = 0;
 
         /// @brief The workers' objects are returned to the master
-    virtual void gather()=0;
+        virtual void gather() = 0;
 
     protected:
 
@@ -79,10 +79,10 @@ class DistributedParameteriserBase {
         /// The total number of objects that are to be parameterised.
         unsigned int itsTotalListSize;
 
-    boost::shared_ptr<DuchampParallel> itsDP;
+        boost::shared_ptr<DuchampParallel> itsDP;
 
-/// The reference Duchamp cube 
-    duchamp::Cube *itsCube;
+/// The reference Duchamp cube
+        duchamp::Cube *itsCube;
 
 };
 
