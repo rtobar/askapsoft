@@ -129,7 +129,7 @@ void ResultsWriter::writeIslandCatalogue()
     if (itsComms.isMaster()) {
         if (itsFlag2D) {
 
-            IslandCatalogue cat(itsSourceList, itsParset, itsCube);
+            IslandCatalogue cat(itsSourceList, itsParset, &itsCube);
             cat.write();
 
         }
@@ -153,7 +153,7 @@ void ResultsWriter::writeHiEmissionCatalogue()
     if (itsComms.isMaster()) {
         if (itsParset.getBool("HiEmissionCatalogue", false)) {
 
-            HiEmissionCatalogue cat(itsSourceList, itsParset, itsCube);
+            HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube);
             cat.write();
 
         }
@@ -166,7 +166,7 @@ void ResultsWriter::writePolarisationCatalogue()
 
     if (itsParset.getBool("RMSynthesis", false)) {
 
-        RMCatalogue cat(itsSourceList, itsParset, itsCube, itsComms);
+        RMCatalogue cat(itsSourceList, itsParset, &itsCube, itsComms);
         if (itsComms.isMaster()) {
             cat.write();
         }

@@ -55,7 +55,7 @@ namespace analysis {
 
 RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                          const LOFAR::ParameterSet &parset,
-                         duchamp::Cube &cube,
+                         duchamp::Cube *cube,
                          askap::askapparallel::AskapParallel &comms):
     itsComponents(),
     itsSpec(),
@@ -90,7 +90,7 @@ RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
 void RMCatalogue::defineComponents(std::vector<sourcefitting::RadioSource> &srclist,
                                    const LOFAR::ParameterSet &parset)
 {
-    ComponentCatalogue compCat(srclist, parset, &itsCube, "best");
+    ComponentCatalogue compCat(srclist, parset, itsCube, "best");
     std::vector<CasdaComponent> comps = compCat.components();
     for (unsigned int i = 0; i < comps.size(); i++) {
         CasdaPolarisationEntry pol(&comps[i], parset);
@@ -240,7 +240,7 @@ void RMCatalogue::write()
 void RMCatalogue::writeVOT()
 {
     AskapVOTableCatalogueWriter vowriter(itsVotableFilename);
-    vowriter.setup(&itsCube);
+    vowriter.setup(itsCube);
     ASKAPLOG_DEBUG_STR(logger, "Writing polarisation catalogue to the VOTable " <<
                        itsVotableFilename);
     vowriter.setColumnSpec(&itsSpec);
@@ -262,7 +262,7 @@ void RMCatalogue::writeASCII()
 
     AskapAsciiCatalogueWriter writer(itsAsciiFilename);
     ASKAPLOG_DEBUG_STR(logger, "Writing polarisation catalogue to text file " << itsAsciiFilename);
-    writer.setup(&itsCube);
+    writer.setup(itsCube);
     writer.setColumnSpec(&itsSpec);
     writer.openCatalogue();
     writer.writeTableHeader();

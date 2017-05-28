@@ -51,7 +51,7 @@ namespace analysis {
 
 IslandCatalogue::IslandCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                                  const LOFAR::ParameterSet &parset,
-                                 duchamp::Cube &cube):
+                                 duchamp::Cube *cube):
     itsIslands(),
     itsSpec(),
     itsCube(cube),
@@ -162,7 +162,7 @@ void IslandCatalogue::write()
 void IslandCatalogue::writeVOT()
 {
     AskapVOTableCatalogueWriter vowriter(itsVotableFilename);
-    vowriter.setup(&itsCube);
+    vowriter.setup(itsCube);
     ASKAPLOG_DEBUG_STR(logger, "Writing island table to the VOTable " <<
                        itsVotableFilename);
     vowriter.setColumnSpec(&itsSpec);
@@ -185,7 +185,7 @@ void IslandCatalogue::writeASCII()
 
     AskapAsciiCatalogueWriter writer(itsAsciiFilename);
     ASKAPLOG_DEBUG_STR(logger, "Writing islands results to " << itsAsciiFilename);
-    writer.setup(&itsCube);
+    writer.setup(itsCube);
     writer.setColumnSpec(&itsSpec);
     writer.openCatalogue();
     writer.writeTableHeader();

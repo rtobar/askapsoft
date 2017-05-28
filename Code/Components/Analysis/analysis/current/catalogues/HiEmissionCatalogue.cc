@@ -53,8 +53,8 @@ namespace askap {
 namespace analysis {
 
 HiEmissionCatalogue::HiEmissionCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
-        const LOFAR::ParameterSet &parset,
-        duchamp::Cube &cube):
+                                         const LOFAR::ParameterSet &parset,
+                                         duchamp::Cube *cube):
     itsObjects(),
     itsSpec(),
     itsCube(cube),
@@ -465,7 +465,7 @@ void HiEmissionCatalogue::write()
 void HiEmissionCatalogue::writeVOT()
 {
     AskapVOTableCatalogueWriter vowriter(itsVotableFilename);
-    vowriter.setup(&itsCube);
+    vowriter.setup(itsCube);
     ASKAPLOG_DEBUG_STR(logger, "Writing object table to the VOTable " <<
                        itsVotableFilename);
     vowriter.setColumnSpec(&itsSpec);
@@ -489,7 +489,7 @@ void HiEmissionCatalogue::writeASCII()
 
     AskapAsciiCatalogueWriter writer(itsAsciiFilename);
     ASKAPLOG_DEBUG_STR(logger, "Writing Fit results to " << itsAsciiFilename);
-    writer.setup(&itsCube);
+    writer.setup(itsCube);
     writer.setColumnSpec(&itsSpec);
     writer.openCatalogue();
     writer.writeTableHeader();
