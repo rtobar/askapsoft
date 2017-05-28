@@ -54,7 +54,8 @@ class HiEmissionCatalogue {
         /// based on the output file given in the parset.
         HiEmissionCatalogue(std::vector< sourcefitting::RadioSource> &srclist,
                             const LOFAR::ParameterSet &parset,
-                            duchamp::Cube *cube);
+                            duchamp::Cube *cube,
+                            askap::askapparallel::AskapParallel &comms);
 
         /// Default destructor
         virtual ~HiEmissionCatalogue() {};

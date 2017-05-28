@@ -34,6 +34,8 @@
 #include <catalogues/CasdaComponent.h>
 #include <sourcefitting/RadioSource.h>
 #include <Common/ParameterSet.h>
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
 #include <duchamp/Outputs/columns.hh>
 #include <vector>
@@ -70,6 +72,8 @@ class CasdaAbsorptionObject : public CatalogueEntry {
         const float ra();
         /// Return the Declination (in decimal degrees)
         const float dec();
+        // Return the ID string
+        const std::string id();
 
         ///  Print a row of values for the objet into an
         ///  output table. Each column from the catalogue
@@ -99,6 +103,31 @@ class CasdaAbsorptionObject : public CatalogueEntry {
         /// specification. If allColumns is false, only the columns
         /// with type=char are checked, otherwise all are.
         void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns = true);
+
+    /// @brief Functions allowing CasdaPolarisationEntry objects to be passed
+        /// over LOFAR Blobs
+        /// @name
+        /// @{
+        /// @brief Pass a CasdaPolarisationEntry object into a Blob
+        /// @details This function provides a mechanism for passing the
+        /// entire contents of a CasdaPolarisationEntry object into a
+        /// LOFAR::BlobOStream stream
+        friend LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &blob,
+                                              CasdaAbsorptionObject& src);
+        /// @brief Receive a CasdaPolarisationEntry object from a Blob
+        /// @details This function provides a mechanism for receiving the
+        /// entire contents of a CasdaPolarisationEntry object from a
+        /// LOFAR::BlobIStream stream
+        friend LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob,
+                                              CasdaAbsorptionObject& src);
+
+        /// @}
+
+        /// @brief Comparison operator, using the component ID
+        friend bool operator< (CasdaAbsorptionObject lhs, CasdaAbsorptionObject rhs)
+        {
+            return (lhs.id() < rhs.id());
+        }
 
 
     protected:

@@ -153,7 +153,7 @@ void ResultsWriter::writeHiEmissionCatalogue()
     if (itsComms.isMaster()) {
         if (itsParset.getBool("HiEmissionCatalogue", false)) {
 
-            HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube);
+            HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube, itsComms);
             cat.write();
 
         }

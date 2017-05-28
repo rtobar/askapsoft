@@ -32,6 +32,7 @@
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
 
+#include <parallelanalysis/DistributedHIemission.h>
 #include <catalogues/CasdaHiEmissionObject.h>
 #include <catalogues/CasdaComponent.h>
 #include <catalogues/Casda.h>
@@ -54,14 +55,20 @@ namespace analysis {
 
 HiEmissionCatalogue::HiEmissionCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                                          const LOFAR::ParameterSet &parset,
-                                         duchamp::Cube *cube):
+                                         duchamp::Cube *cube,
+                                         askap::askapparallel::AskapParallel &comms):
     itsObjects(),
     itsSpec(),
     itsCube(cube),
     itsVersion("casda.sl_hi_emission_object_v0.11")
 {
-    this->defineObjects(srclist, parset);
     this->defineSpec();
+
+    DistributedHIemission distribHI(comms, parset, srclist);
+    distribHI.distribute();
+    distribHI.parameterise();
+    distribHI.gather();
+    itsObjects = distribHI.finalList();
 
     duchamp::Param par = parseParset(parset);
     std::string filenameBase = par.getOutFile();

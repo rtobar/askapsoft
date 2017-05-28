@@ -64,10 +64,8 @@ RMCatalogue::RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
 {
 
     ASKAPLOG_INFO_STR(logger, "Defining the RM Catalogue");
-//    this->defineComponents(srclist, parset);
     this->defineSpec();
 
-//    DistributedRMsynthesis distribRM(comms,parset,cube,srclist);
     DistributedRMsynthesis distribRM(comms, parset, srclist);
     distribRM.distribute();
     distribRM.parameterise();

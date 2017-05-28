@@ -34,6 +34,8 @@
 #include <catalogues/CasdaComponent.h>
 #include <sourcefitting/RadioSource.h>
 #include <Common/ParameterSet.h>
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
 #include <duchamp/Outputs/columns.hh>
 #include <vector>
@@ -50,6 +52,9 @@ namespace analysis {
 /// file.
 class CasdaHiEmissionObject : public CatalogueEntry {
     public:
+        /// Default constructor that does nothing.
+        CasdaHiEmissionObject();
+    
         /// Constructor that builds the Emission-line object from a
         /// RadioSource. It takes a single detection, stored as a
         /// RadioSource. The parset is used to...
@@ -63,6 +68,8 @@ class CasdaHiEmissionObject : public CatalogueEntry {
         const float ra();
         /// Return the Declination (in decimal degrees)
         const float dec();
+        // Return the ID string
+        const std::string id();
 
         ///  Print a row of values for the objet into an
         ///  output table. Each column from the catalogue
@@ -93,6 +100,30 @@ class CasdaHiEmissionObject : public CatalogueEntry {
         /// with type=char are checked, otherwise all are.
         void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns = true);
 
+    /// @brief Functions allowing CasdaPolarisationEntry objects to be passed
+        /// over LOFAR Blobs
+        /// @name
+        /// @{
+        /// @brief Pass a CasdaPolarisationEntry object into a Blob
+        /// @details This function provides a mechanism for passing the
+        /// entire contents of a CasdaPolarisationEntry object into a
+        /// LOFAR::BlobOStream stream
+        friend LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &stream,
+                                              CasdaHiEmissionObject& src);
+        /// @brief Receive a CasdaPolarisationEntry object from a Blob
+        /// @details This function provides a mechanism for receiving the
+        /// entire contents of a CasdaPolarisationEntry object from a
+        /// LOFAR::BlobIStream stream
+        friend LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &stream,
+                                              CasdaHiEmissionObject& src);
+
+        /// @}
+
+        /// @brief Comparison operator, using the component ID
+        friend bool operator< (CasdaHiEmissionObject lhs, CasdaHiEmissionObject rhs)
+        {
+            return (lhs.id() < rhs.id());
+        }
 
     protected:
         /// The unique ID for this object
