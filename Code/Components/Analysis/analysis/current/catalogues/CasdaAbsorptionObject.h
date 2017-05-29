@@ -52,6 +52,9 @@ namespace analysis {
 /// file.
 class CasdaAbsorptionObject : public CatalogueEntry {
     public:
+        /// Default constructor that does nothing.
+        CasdaAbsorptionObject();
+    
         /// Constructor that builds the Absorption object from a
         /// RadioSource.
         /// **THE INTERFACE IS STILL TO BE WORKED OUT FULLY**

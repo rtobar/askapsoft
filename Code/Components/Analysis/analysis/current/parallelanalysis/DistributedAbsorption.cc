@@ -26,7 +26,7 @@
 ///
 /// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
-#include <parallelanalysis/DistributedHIemission.h>
+#include <parallelanalysis/DistributedAbsorption.h>
 #include <parallelanalysis/DistributedParameteriserBase.h>
 
 #include <askap_analysis.h>
@@ -35,7 +35,9 @@
 #include <askap/AskapError.h>
 #include <askapparallel/AskapParallel.h>
 
-#include <catalogues/CasdaHiEmissionObject.h>
+#include <catalogues/Casda.h>
+#include <catalogues/CasdaAbsorptionObject.h>
+#include <catalogues/CasdaComponent.h>
 
 #include <Blob/BlobString.h>
 #include <Blob/BlobIBufString.h>
@@ -50,28 +52,30 @@ ASKAP_LOGGER(logger, ".distribhiemission");
 namespace askap {
 namespace analysis {
 
-DistributedHIemission::DistributedHIemission(askap::askapparallel::AskapParallel& comms,
+DistributedAbsorption::DistributedAbsorption(askap::askapparallel::AskapParallel& comms,
                                              const LOFAR::ParameterSet &parset,
                                              std::vector<sourcefitting::RadioSource> sourcelist):
     DistributedParameteriserBase(comms, parset, sourcelist)
 {
 }
 
-DistributedHIemission::~DistributedHIemission()
+DistributedAbsorption::~DistributedAbsorption()
 {
 }
 
 
-void DistributedHIemission::parameterise()
+void DistributedAbsorption::parameterise()
 {
     
     if (itsComms->isWorker()) {
 
         // Master does not need to do this, as we get one HI object per
         // RadioSource object, so comparison can be done with input list.
+
         std::vector<sourcefitting::RadioSource>::iterator obj;
         for (obj = itsInputList.begin(); obj != itsInputList.end(); obj++) {
-            CasdaHiEmissionObject object(*obj, itsReferenceParset);
+            CasdaComponent comp(*obj,itsReferenceParset,0,casda::componentFitType);
+            CasdaAbsorptionObject object(comp, *obj, itsReferenceParset);
             itsOutputList.push_back(object);
         }
 
@@ -79,7 +83,7 @@ void DistributedHIemission::parameterise()
 
 }
 
-void DistributedHIemission::gather()
+void DistributedAbsorption::gather()
 {
     if (itsComms->isParallel()) {
 

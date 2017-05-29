@@ -50,7 +50,7 @@ class DistributedAbsorption : public DistributedParameteriserBase {
         DistributedAbsorption(askap::askapparallel::AskapParallel& comms,
                               const LOFAR::ParameterSet &parset,
                               std::vector<sourcefitting::RadioSource> sourcelist);
-        virtual ~DistributedHIemission();
+        virtual ~DistributedAbsorption();
 
         /// @brief Each object on a worker is parameterised, and
         /// fitted (if requested).
@@ -60,7 +60,7 @@ class DistributedAbsorption : public DistributedParameteriserBase {
         void gather();
 
         /// @brief The final list of objects is returned
-        const std::vector<CasdaHiEmissionObject> finalList() {return itsOutputList;};
+        const std::vector<CasdaAbsorptionObject> finalList() {return itsOutputList;};
 
     protected:
 

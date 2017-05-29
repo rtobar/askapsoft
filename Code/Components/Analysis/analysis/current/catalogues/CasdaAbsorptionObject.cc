@@ -61,6 +61,11 @@ namespace askap {
 
 namespace analysis {
 
+CasdaAbsorptionObject::CasdaAbsorptionObject():
+    CatalogueEntry()
+{
+}
+
 CasdaAbsorptionObject::CasdaAbsorptionObject(CasdaComponent &component,
         sourcefitting::RadioSource &obj,
         const LOFAR::ParameterSet &parset):
