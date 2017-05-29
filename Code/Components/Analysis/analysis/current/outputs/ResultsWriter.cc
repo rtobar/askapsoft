@@ -150,12 +150,11 @@ void ResultsWriter::writeComponentCatalogue()
 
 void ResultsWriter::writeHiEmissionCatalogue()
 {
-    if (itsComms.isMaster()) {
-        if (itsParset.getBool("HiEmissionCatalogue", false)) {
-
-            HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube, itsComms);
+    if (itsParset.getBool("HiEmissionCatalogue", false)) {
+        
+        HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube, itsComms);
+        if (itsComms.isMaster()) {
             cat.write();
-
         }
     }
 }

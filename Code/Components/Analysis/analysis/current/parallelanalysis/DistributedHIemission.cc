@@ -95,7 +95,7 @@ void DistributedHIemission::gather()
                     itsComms->receiveBlob(bs, n + 1);
                     LOFAR::BlobIBufString bib(bs);
                     LOFAR::BlobIStream in(bib);
-                    int version = in.getStart("RMfinal");
+                    int version = in.getStart("HIfinal");
                     ASKAPASSERT(version == 1);
                     in >> numSrc;
                     for (int i = 0; i < numSrc; i++) {
@@ -119,7 +119,7 @@ void DistributedHIemission::gather()
                 bs.resize(0);
                 LOFAR::BlobOBufString bob(bs);
                 LOFAR::BlobOStream out(bob);
-                out.putStart("RMfinal", 1);
+                out.putStart("HIfinal", 1);
                 out << int(itsOutputList.size());
                 for (size_t i = 0; i < itsOutputList.size(); i++) {
                     out << itsOutputList[i];
