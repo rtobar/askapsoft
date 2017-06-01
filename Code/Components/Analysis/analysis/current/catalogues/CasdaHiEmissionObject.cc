@@ -959,6 +959,9 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaHiEmissionObject& 
     v = src.itsBFfit_xp; blob << v;
     v = src.itsBFfit_c; blob << v;
     v = src.itsBFfit_n; blob << v;
+    u = src.itsFlagResolved; blob << u;
+    u = src.itsFlag2; blob << u;
+    u = src.itsFlag3; blob << u;
     s = src.itsComment; blob << s;
 
     return blob;
@@ -1046,6 +1049,9 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaHiEmissionObject& 
     blob >> v; src.itsBFfit_xp = v;
     blob >> v; src.itsBFfit_c = v;
     blob >> v; src.itsBFfit_n = v;
+    blob >> u; src.itsFlagResolved = u;
+    blob >> u; src.itsFlag2 = u;
+    blob >> u; src.itsFlag3 = u;
     blob >> s; src.itsComment = s;
 
     return blob;

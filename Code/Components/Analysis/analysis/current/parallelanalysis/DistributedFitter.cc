@@ -122,18 +122,18 @@ void DistributedFitter::parameterise()
 
                 sourcefitting::RadioSource src(tempDP.cube().getObject(0));
 
-                if (tempDP.fitParams().doFit()) {
+                src.setFitParams(tempDP.fitParams());
+                src.defineBox(tempDP.cube().pars().section(),
+                              tempDP.cube().header().getWCS()->spec);
+                src.setDetectionThreshold(tempDP.cube(),
+                                          tempDP.getFlagVariableThreshold());
 
-                    src.setFitParams(tempDP.fitParams());
-                    src.defineBox(tempDP.cube().pars().section(),
-                                  tempDP.cube().header().getWCS()->spec);
-                    src.setDetectionThreshold(tempDP.cube(),
-                                              tempDP.getFlagVariableThreshold());
+                src.prepareForFit(tempDP.cube(), true);
+                src.setAtEdge(false);
 
-                    src.prepareForFit(tempDP.cube(), true);
-                    src.setAtEdge(false);
+                 if (tempDP.fitParams().doFit()) {
 
-                    tempDP.fitSource(src);
+                     tempDP.fitSource(src);
 
                 }
 
