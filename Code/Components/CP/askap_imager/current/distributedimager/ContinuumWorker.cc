@@ -274,6 +274,7 @@ void ContinuumWorker::run(void)
     ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " finished");
 
     itsComms.barrier(itsComms.theWorkers());
+    ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed final barrier");
 }
 void ContinuumWorker::processWorkUnit(ContinuumWorkUnit& wu)
 {
@@ -681,7 +682,7 @@ void ContinuumWorker::buildSpectralCube() {
             if (itsComms.isWriter()) {
 
                 doLogBeams=true;
-                
+
                 ASKAPLOG_INFO_STR(logger,"I have (including my own) " << itsComms.getOutstanding() << " units to write");
                 ASKAPLOG_INFO_STR(logger,"I have " << itsComms.getClients().size() << " clients with work");
                 int cubeChannel = workUnits[workUnitCount-1].get_globalChannel()-this->baseCubeGlobalChannel;
@@ -850,7 +851,7 @@ void ContinuumWorker::buildSpectralCube() {
         ASKAPLOG_INFO_STR(logger, "About to log the full set of restoring beams");
         logBeamInfo();
     }
-    
+
 }
 void ContinuumWorker::handleImageParams(askap::scimath::Params::ShPtr params,
         unsigned int chan)
@@ -1117,12 +1118,19 @@ void ContinuumWorker::processChannels()
     }
     else {
 
+        bool stopping = false;
 
         for (size_t n = 0; n <= nCycles; n++) {
-            
+
+            if (stopping == true) {
+                ASKAPLOG_INFO_STR(logger,"Worker breaking out of major-cycle loop");
+                break;
+            }
+
             ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " at barrier");
             itsComms.barrier(itsComms.theWorkers());
             ASKAPLOG_INFO_STR(logger,"Rank " << itsComms.rank() << " passed barrier");
+
 
             ASKAPLOG_INFO_STR(logger,"Worker waiting to receive new model");
             rootImager.receiveModel();
@@ -1134,7 +1142,7 @@ void ContinuumWorker::processChannels()
                 if (peak_residual < targetPeakResidual) {
                     ASKAPLOG_DEBUG_STR(logger, "It is below the major cycle threshold of "
                                       << targetPeakResidual << " Jy. Stopping.");
-                    break;
+                    stopping = true;
                 } else {
                     if (targetPeakResidual < 0) {
                         ASKAPLOG_DEBUG_STR(logger, "Major cycle flux threshold is not used.");
