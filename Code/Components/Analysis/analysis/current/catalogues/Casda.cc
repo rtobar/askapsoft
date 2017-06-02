@@ -1,8 +1,8 @@
 /// @file
 ///
-/// XXX Notes on program XXX
+/// Constants needed for CASDA catalogues
 ///
-/// @copyright (c) 2017 CSIRO
+/// @copyright (c) 2014 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -12,7 +12,7 @@
 ///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
-/// published by the Free Software Foundation; either version 3 of the License,
+/// published by the Free Software Foundation; either version 2 of the License,
 /// or (at your option) any later version.
 ///
 /// This program is distributed in the hope that it will be useful,
@@ -24,5 +24,49 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author XXX XXX <XXX.XXX@csiro.au>
+/// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
+#include <catalogues/Casda.h>
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
+
+namespace askap {
+
+namespace analysis {
+
+namespace casda {
+
+ValueError::ValueError():
+    itsValue(0.),
+    itsError(0.)
+{
+}
+
+ValueError::ValueError(double val, double err):
+    itsValue(val),
+    itsError(err)
+{
+}
+
+ValueError::~ValueError()
+{
+}
+
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &blob, ValueError& src)
+{
+    blob << src.itsValue;
+    blob << src.itsError;
+    return blob;
+}
+
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob, ValueError& src)
+{
+    blob >> src.itsValue;
+    blob >> src.itsError;
+    return blob;
+}
+
+}
+}
+}
+
