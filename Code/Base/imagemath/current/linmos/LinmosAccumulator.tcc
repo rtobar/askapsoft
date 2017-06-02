@@ -410,7 +410,13 @@ namespace askap {
             } // n loop (taylor term)
 
         } // void LinmosAccumulator<T>::findAndSetTaylorTerms()
+        template<typename T>
+        void LinmosAccumulator<T>::removeBeamFromTaylorTerms( Array<T>& taylor0,
+                                        Array<T>& taylor1,
+                                        Array<T>& taylor2) {
 
+
+        } // removeBeamFromTaylorTerms()
         template<typename T>
         void LinmosAccumulator<T>::findAndSetMosaics(const vector<string> &imageTags) {
 
