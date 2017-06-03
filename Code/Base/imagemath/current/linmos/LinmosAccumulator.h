@@ -89,10 +89,11 @@ namespace askap {
                 /// @param[in] Array<T>& Taylor0 pixels
                 /// @param[in] Array<T>& Taylor1 pixels
                 /// @param[in] Array<T>& Taylor2 pixels
-                
+
                 void removeBeamFromTaylorTerms( Array<T>& taylor0,
                                                 Array<T>& taylor1,
-                                                Array<T>& taylor2);
+                                                Array<T>& taylor2,
+                                            const IPosition& curpos);
 
                 /// @brief search the current directory for suitable mosaics
                 /// @details based on a vector of image tags, look for sets of images with names

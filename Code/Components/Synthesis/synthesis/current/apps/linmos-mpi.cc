@@ -43,7 +43,10 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
 
     // initialise an image accessor
     accessors::IImageAccess& iacc = SynthesisParamsHelper::imageHandler();
+    // if we have Taylor terms and we need to correct them for the beam spectral
+    // index - do it now ...
 
+    
     // loop over the mosaics, reading each in an adding to the output pixel arrays
     vector<string> inImgNames, inWgtNames, inSenNames;
     string outImgName, outWgtName, outSenName;
