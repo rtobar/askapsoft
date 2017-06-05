@@ -46,7 +46,7 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
     // if we have Taylor terms and we need to correct them for the beam spectral
     // index - do it now ...
 
-    
+
     // loop over the mosaics, reading each in an adding to the output pixel arrays
     vector<string> inImgNames, inWgtNames, inSenNames;
     string outImgName, outWgtName, outSenName;
@@ -98,11 +98,11 @@ static void mergeMPI(const LOFAR::ParameterSet &parset, askap::askapparallel::As
         for (vector<string>::iterator it = inImgNames.begin(); it != inImgNames.end(); ++it) {
 
 
+            const casa::IPosition shape = iacc.shape(*it);
 
-            casa::Array<casa::Float> img = iacc.read(*it);
-            ASKAPCHECK(img.ok(),"Error loading "<< *it);
-            ASKAPCHECK(img.shape().nelements()>=3,"Work with at least 3D cubes!");
-            const casa::IPosition shape = img.shape();
+
+            ASKAPCHECK(shape.nelements()>=3,"Work with at least 3D cubes!");
+
             ASKAPLOG_INFO_STR(logger," - ImageAccess Shape " << shape);
 
 
