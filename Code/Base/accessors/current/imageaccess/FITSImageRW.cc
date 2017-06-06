@@ -355,16 +355,6 @@ bool FITSImageRW::write(const casa::Array<float> &arr,const casa::IPosition &whe
     if ( fits_movabs_hdu(fptr, 1, &hdutype, &status) )
         printerror( status );
 
-    // we do not currently support postage stamps so the write has to be of
-    // the correct dimension
-
-
-    // we have to place the slice at the start of a channel
-
-    if (where[0] != 0 || where[1] != 0) {
-        ASKAPLOG_ERROR_STR(FITSlogger,"slice position not at channel boundary");
-    }
-
     // get the dimensionality & size of the fits file.
     int naxes;
     if (fits_get_img_dim(fptr, &naxes, &status) ) {
@@ -395,7 +385,7 @@ bool FITSImageRW::write(const casa::Array<float> &arr,const casa::IPosition &whe
     if (where.nelements() >= 4) {
         fpixel[3] = where[3] + 1;
         lpixel[3] = where[3] + arr.shape()[3];
-        ASKAPLOG_INFO_STR(FITSlogger,"fpixel[3] = " << fpixel[2] << ", lpixel[3] = " << lpixel[3]);
+        ASKAPLOG_INFO_STR(FITSlogger,"fpixel[3] = " << fpixel[3] << ", lpixel[3] = " << lpixel[3]);
     }
 
     int64_t nelements = arr.nelements();          /* number of pixels to write */
