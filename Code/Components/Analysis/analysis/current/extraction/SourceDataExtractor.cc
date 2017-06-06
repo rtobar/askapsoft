@@ -61,7 +61,8 @@ namespace askap {
 
 namespace analysis {
 
-SourceDataExtractor::SourceDataExtractor(const LOFAR::ParameterSet& parset)
+SourceDataExtractor::SourceDataExtractor(const LOFAR::ParameterSet& parset):
+    itsParset(parset)
 {
     itsSource = 0;
     itsComponent = 0;
