@@ -35,7 +35,7 @@
 #include <string>
 #include <sourcefitting/RadioSource.h>
 #include <casainterface/CasaInterface.h>
-#include <imageaccess/CasaImageAccess.h>
+#include <imageaccess/ImageAccessFactory.h>
 #include <catalogues/CasdaComponent.h>
 #include <catalogues/CasdaIsland.h>
 
@@ -295,8 +295,8 @@ void SourceDataExtractor::writeBeam(std::string &filename)
     inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
 
     if (inputBeam.size() > 0) {
-        accessors::CasaImageAccess ia;
-        ia.setBeamInfo(filename,
+        boost::shared_ptr<accessors::IImageAccess> ia = accessors::imageAccessFactory(itsParset);
+        ia->setBeamInfo(filename,
                        inputBeam[0].getValue("rad"),
                        inputBeam[1].getValue("rad"),
                        inputBeam[2].getValue("rad"));
