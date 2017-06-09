@@ -32,15 +32,16 @@
 #include <SupportSearcherTest.h>
 #include <FrequencyMapperTest.h>
 #include <NonLinearWSamplingTest.h>
+#include <PrimaryBeamTest.h>
 
 int main(int argc, char *argv[])
 {
     askapdev::testutils::AskapTestRunner runner(argv[0]);
-
     runner.addTest( askap::synthesis::TableVisGridderTest::suite());
     runner.addTest( askap::synthesis::SupportSearcherTest::suite());
     runner.addTest( askap::synthesis::FrequencyMapperTest::suite());
     runner.addTest( askap::synthesis::NonLinearWSamplingTest::suite());
+    runner.addTest( askap::synthesis::PrimaryBeamTest::suite());
 
     bool wasSucessful = runner.run();
 

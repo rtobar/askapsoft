@@ -32,7 +32,7 @@ namespace synthesis {
   void PrimaryBeamFactory::registerPrimaryBeam (const std::string& name,
                                            PrimaryBeamFactory::PrimaryBeamCreator* creatorFunc)
   {
-    ASKAPLOG_DEBUG_STR(logger, "     - Adding "<<name<<" Primary Beam to the registry");
+    ASKAPLOG_INFO_STR(logger, "     - Adding "<<name<<" Primary Beam to the registry");
     theirRegistry[name] = creatorFunc;
   }
 
@@ -77,11 +77,11 @@ PrimaryBeam::ShPtr PrimaryBeamFactory::make(const LOFAR::ParameterSet &parset) {
 
     if (theirRegistry.size() == 0) {
         // this is the first call of the method, we need to fill the registry with
-        // all pre-defined gridders
-        ASKAPLOG_DEBUG_STR(logger, "Filling the Primary Beam registry with pre-defined Beams");
+        // all pre-defined primary beams
+        ASKAPLOG_INFO_STR(logger, "Filling the Primary Beam registry with pre-defined Beams");
         addPreDefinedPrimaryBeam<GaussianPB>();
-        /// addPreDefinedPrimaryBeam<UniformPB>();
-        /// addPreDefinedGridder<AWProjectVisGridder>();
+        /// addPreDefinedPrimaryBeam<ExamplePB>();
+
 
     }
 
@@ -91,7 +91,7 @@ PrimaryBeam::ShPtr PrimaryBeamFactory::make(const LOFAR::ParameterSet &parset) {
     std::string prefix("primarybeam");
     const string primaryBeamName = parset.getString(prefix);
     prefix += "." + primaryBeamName + ".";
-    ASKAPLOG_DEBUG_STR(logger, "Attempting to greate primary beam "<<primaryBeamName);
+    ASKAPLOG_INFO_STR(logger, "Attempting to greate primary beam "<<primaryBeamName);
     PB = createPrimaryBeam (primaryBeamName, parset.makeSubset(prefix));
 
     ASKAPASSERT(PB); // if a PB of that name is in the registry it will be here

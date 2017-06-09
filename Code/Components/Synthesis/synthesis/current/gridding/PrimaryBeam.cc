@@ -14,8 +14,15 @@ ASKAP_LOGGER(logger, ".primarybeam.primarybeam");
 namespace askap {
     namespace synthesis {
 
-            PrimaryBeam::~PrimaryBeam() {
+            PrimaryBeam::PrimaryBeam() {
+                ASKAPLOG_DEBUG_STR(logger,"PrimaryBeam default constructor");
+            }
 
+            PrimaryBeam::~PrimaryBeam() {
+                ASKAPLOG_DEBUG_STR(logger,"PrimaryBeam default destructor");
+            }
+            PrimaryBeam::PrimaryBeam(const PrimaryBeam &other) {
+                ASKAPLOG_DEBUG_STR(logger,"PrimaryBeam copy constructor");
             }
             PrimaryBeam::ShPtr PrimaryBeam::createPrimaryBeam(const LOFAR::ParameterSet&)
             {

@@ -22,9 +22,13 @@ namespace synthesis {
 
     public:
 
-        static inline std::string PrimaryBeamName() { return "Gaussian";}
+        GaussianPB();
+
+        static inline std::string PrimaryBeamName() { return "GaussianPB";}
 
         virtual ~GaussianPB();
+
+        GaussianPB(const GaussianPB &other);
 
         static PrimaryBeam::ShPtr createPrimaryBeam(const LOFAR::ParameterSet &parset);
 

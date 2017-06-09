@@ -1,5 +1,6 @@
-#include <PrimaryBeam.h>
-#include <PrimaryBeamFactory.h>
+#include <gridding/PrimaryBeam.h>
+#include <gridding/PrimaryBeamFactory.h>
+#include <askap/AskapError.h>
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -18,7 +19,7 @@ namespace askap
 
       CPPUNIT_TEST_SUITE(PrimaryBeamTest);
 
-      CPPUNIT_TEST(testCreate);
+      CPPUNIT_TEST(testCreateGaussian);
       CPPUNIT_TEST_EXCEPTION(testCreateAbstract,AskapError);
       CPPUNIT_TEST_SUITE_END();
 
@@ -28,10 +29,11 @@ namespace askap
   public:
 
 
-      void testCreate()
+      void testCreateGaussian()
       {
 
          LOFAR::ParameterSet parset;
+         parset.add("primarybeam","GaussianPB");
          PrimaryBeam::ShPtr PB = PrimaryBeamFactory::make(parset);
       }
       void testCreateAbstract()
@@ -40,7 +42,7 @@ namespace askap
           // calling createPriamryBeam static method should raise an
           // exception
           LOFAR::ParameterSet parset;
-          PrimaryBeam::ShPtr PB = PrimaryBeam::createPrimaryBeam(parset);
+          PrimaryBeam::createPrimaryBeam(parset);
 
       }
 

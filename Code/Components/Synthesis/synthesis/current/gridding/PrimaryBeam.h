@@ -28,6 +28,9 @@ namespace askap
 
             PrimaryBeam();
             virtual ~PrimaryBeam();
+
+            PrimaryBeam(const PrimaryBeam &other);
+
             /// This has to be static as we need to access it in the register even
             /// if there is not instantiated class.
             static ShPtr createPrimaryBeam(const LOFAR::ParameterSet& parset);
