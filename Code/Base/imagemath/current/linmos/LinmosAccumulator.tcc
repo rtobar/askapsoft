@@ -383,8 +383,9 @@ namespace askap {
                                 "Input not an image* file. Ignoring sensitivities.");
                             itsDoSensitivity = false;
                         }
-                    }
 
+                    }
+                    ASKAPLOG_INFO_STR(linmoslogger,"Taylor Image: " << inImgName);
                 } // img loop (input image)
 
                 // check whether any sensitivity images were found
