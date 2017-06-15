@@ -212,6 +212,10 @@ bool SourceDataExtractor::checkPol(std::string image,
                     haveMatch = haveMatch || (stokeCoo.stokes()[i] == stokes);
                 }
             }
+        } else {
+            ASKAPLOG_WARN_STR(logger, "Input cube has no Stokes axis - assuming it is Stokes I");
+            // No Stokes axis - assume it is Stokes I
+            haveMatch = (stokes==casa::Stokes::I);
         }
         this->closeInput();
     } else ASKAPLOG_ERROR_STR(logger, "Could not open image");

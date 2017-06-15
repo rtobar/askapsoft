@@ -221,6 +221,7 @@ void CubeletExtractor::writeImage()
             // copy the image mask to the cubelet, if there is one.
             casa::LogicalArray
                 mask(itsInputCubePtr->pixelMask().getSlice(itsSlicer).reform(outshape));
+            ia->makeDefaultMask(itsOutputFilename);
             ia->writeMask(itsOutputFilename, mask, casa::IPosition(outshape.nelements(),0));
         }
         

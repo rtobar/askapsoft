@@ -312,6 +312,7 @@ void MomentMapExtractor::writeImage()
 
                 this->writeBeam(filename);
 
+                ia->makeDefaultMask(filename);
                 ia->writeMask(filename, theMask, casa::IPosition(outshape.nelements(),0));
 
             }
