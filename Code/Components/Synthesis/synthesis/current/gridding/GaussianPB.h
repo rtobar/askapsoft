@@ -8,7 +8,6 @@
 #define ASKAP_SYNTHESIS_GAUSSIAN_H
 
 #include <boost/shared_ptr.hpp>
-#include <gridding/IBasicIllumination.h>
 #include <gridding/PrimaryBeam.h>
 #include <Common/ParameterSet.h>
 
