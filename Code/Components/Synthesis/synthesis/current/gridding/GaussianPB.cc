@@ -10,6 +10,9 @@
 #include "GaussianPB.h"
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
+#include <measurementequation/SynthesisParamsHelper.h>
+#include <Common/ParameterSet.h>
+
 ASKAP_LOGGER(logger, ".primarybeam.gaussianpb");
 namespace askap {
     namespace synthesis {
@@ -19,6 +22,7 @@ namespace askap {
                 ASKAPLOG_DEBUG_STR(logger,"GaussianPB default contructor");
             }
 
+
             GaussianPB::~GaussianPB() {
 
             }
@@ -27,14 +31,51 @@ namespace askap {
             {
                 ASKAPLOG_DEBUG_STR(logger,"GaussianPB copy contructor");
             }
-            PrimaryBeam::ShPtr GaussianPB::createPrimaryBeam(const LOFAR::ParameterSet&)
+            PrimaryBeam::ShPtr GaussianPB::createPrimaryBeam(const LOFAR::ParameterSet &parset)
             {
                ASKAPLOG_DEBUG_STR(logger, "createPrimaryBeam for the Gaussian Primary Beam ");
 
-               PrimaryBeam::ShPtr ptr;
+               // this is static so use this to create the instance....
+
+               // just for logging, declare private handle to avoid issues with template
+               // log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger(askap::generateLoggerName(std::string("createGaussianPB")));
+               //
+
+               // These pretty much define the pb as
+               // exp(-1(offset*offset)*expscaling/fwhm/fwhm)
+               // fwhm is a function of frequency so is only known when that is known
+
+
+               GaussianPB::ShPtr ptr;
+
+               // We need to pull all the parameters out of the parset - and set
+               // all the private variables required to define the beam
+
+
                ptr.reset( new GaussianPB());
+
+               ptr->setApertureSize(SynthesisParamsHelper::convertQuantity(
+                            parset.getString("aperture", "12m"),"m"));
+               ptr->setFWHMScaling(parset.getDouble("fwhmscaling", 1.00));
+
+               ptr->setExpScaling(parset.getDouble("expscaling", 4.*log(2.)));
+
+               ASKAPLOG_DEBUG_STR(logger,"Created Gaussian PB instance");
                return ptr;
 
+            }
+
+            double GaussianPB::evaluateAtOffset(double offset, double frequency) {
+
+                double pb = exp(-offset*offset*getExpScaling()/(getFWHM(frequency)*getFWHM(frequency)));
+                return pb;
+
+            }
+
+            double GaussianPB::getFWHM(const double frequency) {
+                double sol = 299792458.0;
+                double fwhm = sol/frequency/12.;
+                return fwhm;
             }
     }
 }

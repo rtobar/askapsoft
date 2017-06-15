@@ -35,6 +35,8 @@ namespace askap
             /// if there is not instantiated class.
             static ShPtr createPrimaryBeam(const LOFAR::ParameterSet& parset);
 
+            virtual double evaluateAtOffset(double offset, double frequency) = 0;
+
         private:
 
         }; // class
