@@ -1,4 +1,4 @@
-/// @file PrimaryBeam.tcc
+/// @file PrimaryBeam.cc
 ///
 /// @abstract
 /// Base class for primary beams

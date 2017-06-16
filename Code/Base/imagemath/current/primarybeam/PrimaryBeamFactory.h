@@ -1,5 +1,6 @@
-/// @file PrimaryBeamFactory
+/// @file PrimaryBeamFactory.h
 ///
+/// @details
 /// PrimaryBeamFactory: Factory class for Primary Beam Responses
 
 

@@ -1,4 +1,12 @@
-
+/// @file PrimaryBeamFactory.cc
+///
+/// @abstract
+/// Factory class that registers and manages the different possible instances of
+/// Primary Beams.
+/// @ details
+/// Maintains a registry of possible primary beams and selects - based upon a parset
+/// which one will be instantiated.
+///
 // Package level header file
 #include <askap_imagemath.h>
 

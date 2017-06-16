@@ -1,10 +1,10 @@
-/// @file PrimaryBeam.tcc
+/// @file GaussianPB.cc
 ///
 /// @abstract
-/// Base class for primary beams
+/// Derived from PrimaryBeams this is the Gaussian beam as already implemented
 /// @ details
-/// defines the interface to the Primary Beam structures for the purpose of image
-/// based weighting or (via an illumination) the gridding.
+/// Implements the methods that evaluate the primary beam gain ain the case of a
+/// Gaussian
 ///
 #include "askap_imagemath.h"
 
