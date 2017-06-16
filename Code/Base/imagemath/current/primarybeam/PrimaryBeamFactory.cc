@@ -99,7 +99,8 @@ PrimaryBeam::ShPtr PrimaryBeamFactory::make(const LOFAR::ParameterSet &parset) {
     catch(...) { // catch the case where no beam is selected
         subSet = parset;
     }
-    ASKAPLOG_INFO_STR(logger, "Attempting to greate primary beam "<<primaryBeamName);
+    ASKAPLOG_INFO_STR(logger, "Attempting to create primary beam of type "<<primaryBeamName);
+    ASKAPLOG_INFO_STR(logger, "with params "<< subSet);
     PB = createPrimaryBeam (primaryBeamName, subSet);
 
     ASKAPASSERT(PB); // if a PB of that name is in the registry it will be here

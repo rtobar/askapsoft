@@ -74,7 +74,7 @@ namespace askap {
 
             double GaussianPB::getFWHM(const double frequency) {
                 double sol = 299792458.0;
-                double fwhm = sol/frequency/12.;
+                double fwhm = sol/frequency/this->ApertureSize;
                 return fwhm;
             }
     }
