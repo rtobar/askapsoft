@@ -35,6 +35,7 @@
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
 
+#include <extraction/HIdata.h>
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FitResults.h>
 #include <outputs/CataloguePreparation.h>
@@ -101,6 +102,18 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     id << itsIDbase << obj.getID();
     itsObjectID = id.str();
 
+    LOFAR::ParameterSet hiParset = parset.makeSubset("HiEmissionCatalogue.");
+    if(! hiParset.isDefined("imagetype")){
+        hiParset.add("imagetype","fits");
+    }
+
+    HIdata hidata(parset);
+    hidata.setSource(&obj);
+    hidata.extract();
+    if ( hiParset.getBool("writeSpectra", "true")) {
+        hidata.write();
+    }
+    
     double peakFluxscale = getPeakFluxConversionScale(obj.header(), casda::fluxUnit);
 
     int lng = obj.header().WCS().lng;
