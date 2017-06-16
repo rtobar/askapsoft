@@ -7,16 +7,16 @@
 /// based weighting or (via an illumination) the gridding.
 ///
 
-#ifndef ASKAP_SYNTHESIS_PRIMARY_BEAM_H
+#ifndef ASKAP_PRIMARYBEAM_H
 
-#define ASKAP_SYNTHESIS_PRIMARY_BEAM_H
+#define ASKAP_PRIMARYBEAM_H
 
 #include <Common/ParameterSet.h>
 #include <boost/shared_ptr.hpp>
 
 namespace askap
 {
-    namespace synthesis
+    namespace imagemath
     {
 
         class PrimaryBeam {
@@ -40,7 +40,7 @@ namespace askap
         private:
 
         }; // class
-    } // synthesis
+    } // imagemath
 } //askap
 
 

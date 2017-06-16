@@ -4,16 +4,17 @@
 /// @details
 ///
 
-#ifndef ASKAP_SYNTHESIS_GAUSSIAN_H
-#define ASKAP_SYNTHESIS_GAUSSIAN_H
+#ifndef ASKAP_GAUSSIAN_H
+#define ASKAP_GAUSSIAN_H
+
+#include "PrimaryBeam.h"
 
 #include <boost/shared_ptr.hpp>
-#include <gridding/PrimaryBeam.h>
 #include <Common/ParameterSet.h>
 
 
 namespace askap {
-namespace synthesis {
+namespace imagemath {
 
     class GaussianPB : public PrimaryBeam
 
@@ -66,7 +67,7 @@ namespace synthesis {
 
     };
 
-} // namespace synthesis
+} // namespace imagemath
 
 } // namespace askap
 

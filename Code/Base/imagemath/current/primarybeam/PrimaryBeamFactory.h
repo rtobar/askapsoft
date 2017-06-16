@@ -3,8 +3,8 @@
 /// PrimaryBeamFactory: Factory class for Primary Beam Responses
 
 
-#ifndef ASKAP_SYNTHESIS_PRIMARYBEAMFACTORY_H_
-#define ASKAP_SYNTHESIS_PRIMARYBEAMFACTORY_H_
+#ifndef ASKAP_PRIMARYBEAMFACTORY_H_
+#define ASKAP_PRIMARYBEAMFACTORY_H_
 
 // System includes
 #include <map>
@@ -14,12 +14,12 @@
 #include <boost/shared_ptr.hpp>
 
 // Local package includes
-#include <gridding/PrimaryBeam.h>
+#include "PrimaryBeam.h"
 
 
 namespace askap
 {
-  namespace synthesis
+  namespace imagemath
   {
     /// @brief Factory class for Primary Beams
     /// @ingroup gridding

@@ -1,6 +1,6 @@
 
 // Package level header file
-#include <askap_synthesis.h>
+#include <askap_imagemath.h>
 
 // ASKAPsoft includes
 #include <askap/AskapLogging.h>
@@ -12,14 +12,14 @@ ASKAP_LOGGER(logger, ".primarybeam.primarybeamfactory");
 
 // Local package includes
 
-#include <gridding/PrimaryBeam.h>
-#include <gridding/PrimaryBeamFactory.h>
-
+#include "PrimaryBeam.h"
+#include "PrimaryBeamFactory.h"
 // Primary Beam Types
-#include <gridding/GaussianPB.h>
+#include "GaussianPB.h"
+
 
 namespace askap {
-namespace synthesis {
+namespace imagemath {
 
   // Define the static registry.
   std::map<std::string, PrimaryBeamFactory::PrimaryBeamCreator*>
@@ -39,6 +39,7 @@ namespace synthesis {
   PrimaryBeam::ShPtr PrimaryBeamFactory::createPrimaryBeam (const std::string& name,
                                     const LOFAR::ParameterSet& parset)
   {
+    ASKAPLOG_DEBUG_STR(logger, " Attempting to find "<<name<< " in the registry");
     std::map<std::string,PrimaryBeamCreator*>::const_iterator it = theirRegistry.find (name);
     if (it == theirRegistry.end()) {
       // Unknown Primary Beam. Try to load the data manager from a dynamic library
@@ -89,10 +90,17 @@ PrimaryBeam::ShPtr PrimaryBeamFactory::make(const LOFAR::ParameterSet &parset) {
     PrimaryBeam::ShPtr PB;
     /// @todo Better handling of string case
     std::string prefix("primarybeam");
-    const string primaryBeamName = parset.getString(prefix);
+    const string primaryBeamName = parset.getString(prefix,"GaussianPB");
     prefix += "." + primaryBeamName + ".";
+    LOFAR::ParameterSet subSet;
+    try {
+        subSet = parset.makeSubset(prefix);
+    }
+    catch(...) { // catch the case where no beam is selected
+        subSet = parset;
+    }
     ASKAPLOG_INFO_STR(logger, "Attempting to greate primary beam "<<primaryBeamName);
-    PB = createPrimaryBeam (primaryBeamName, parset.makeSubset(prefix));
+    PB = createPrimaryBeam (primaryBeamName, subSet);
 
     ASKAPASSERT(PB); // if a PB of that name is in the registry it will be here
 

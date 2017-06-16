@@ -1,12 +1,16 @@
-#include <gridding/PrimaryBeam.h>
-#include <gridding/GaussianPB.h>
-
-#include <gridding/PrimaryBeamFactory.h>
+#include "primarybeam/PrimaryBeam.h"
+#include "primarybeam/GaussianPB.h"
+#include "primarybeam/PrimaryBeamFactory.h"
+#include <casacore/casa/Arrays/Array.h>
 #include <casacore/casa/Arrays/Vector.h>
 #include <casacore/casa/Arrays/IPosition.h>
+
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/coordinates/Coordinates/SpectralCoordinate.h>
 #include <casacore/coordinates/Coordinates/LinearCoordinate.h>
-#include <imageaccess/ImageAccessFactory.h>
-#include <utils/LinmosUtils.h>
+#include <casacore/coordinates/Coordinates/StokesCoordinate.h>
+
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
 
 #include <askap/AskapError.h>
 
@@ -14,14 +18,15 @@
 
 #include <stdexcept>
 #include <boost/shared_ptr.hpp>
-#include <boost/pointer_cast.hpp>
-#include <boost/filesystem.hpp>
 
+
+
+using namespace casa;
 
 
 namespace askap
 {
-  namespace synthesis
+  namespace imagemath
   {
 
     class PrimaryBeamTest : public CppUnit::TestFixture
@@ -36,25 +41,24 @@ namespace askap
 
   private:
       /// @brief method to access image for primary beam tests
-      boost::shared_ptr<accessors::IImageAccess> itsImageAccessor;
 
       casa::CoordinateSystem makeCoords() {
 
           // Direction Coordinate
-          Matrix<Double> xform(2,2);                                    // 1
+          casa::Matrix<casa::Double> xform(2,2);                                    // 1
           xform = 0.0; xform.diagonal() = 1.0;                          // 2
-          DirectionCoordinate radec(MDirection::J2000,                  // 3
-              Projection(Projection::SIN),        // 4
-              135*C::pi/180.0, 60*C::pi/180.0,    // 5
-              -0.005*C::pi/180.0, 0.005*C::pi/180,        // 6
+          casa::DirectionCoordinate radec(casa::MDirection::J2000,                  // 3
+              casa::Projection(casa::Projection::SIN),        // 4
+              135*casa::C::pi/180.0, 60*casa::C::pi/180.0,    // 5
+              -0.005*casa::C::pi/180.0, 0.005*casa::C::pi/180,        // 6
               xform,                              // 7
               128.0, 128.0,                       // 8
               999.0, 999.0);
 
-          Vector<String> units(2); units = "deg";                        //  9
+          casa::Vector<casa::String> units(2); units = "deg";                        //  9
           radec.setWorldAxisUnits(units);                               // 10
 
-          Vector<Double> world(2), pixel(2);                            // 11
+          casa::Vector<casa::Double> world(2), pixel(2);                            // 11
           pixel = 138.0;                                                // 12
 
           CPPUNIT_ASSERT(radec.toWorld(world, pixel));                        // 13
@@ -111,40 +115,27 @@ namespace askap
   public:
 
       void setUp() {
-          string name = "tmp.testimage";
-          LOFAR::ParameterSet parset;
-          parset.add("imagetype","casa");
-          itsImageAccessor = accessors::imageAccessFactory(parset);
+          // create and write a constant into image
 
-          CPPUNIT_ASSERT(itsImageAccessor);
+      }
+      void tearDown() {
+      }
+      void testEvaluateGaussian() {
+          LOFAR::ParameterSet parset;
+
           const casa::IPosition shape(2,256,256);
           casa::Array<float> arr(shape);
           arr.set(1.);
           casa::CoordinateSystem coordsys(makeCoords());
 
-          // create and write a constant into image
-          itsImageAccessor->create(name, shape, coordsys);
-          itsImageAccessor->write(name,arr);
 
-      }
-      void tearDown() {
-          string name = "tmp.testimage";
-          boost::filesystem::remove_all(name);
-          string outname = "tmp.beam";
-          boost::filesystem::remove_all(outname);
-      }
-      void testEvaluateGaussian() {
-          string name = "tmp.testimage";
           casa::Vector<double> pixel(2,0.);
           casa::MVDirection world;
           double offsetBeam = 0;
           double frequency = 1.0E9; // 1GHz
-          vector<string> imgnames(1);
-          imgnames[0] = name;
 
 
-          LOFAR::ParameterSet parset;
-          parset.add("aperture", "12m");
+          parset.add("aperture", "12");
           parset.add("fwhmscaling", "0.5");
           parset.add("primarybeam","GaussianPB");
           PrimaryBeam::ShPtr GaussPB =  PrimaryBeamFactory::make(parset);
@@ -155,16 +146,13 @@ namespace askap
 
 
           // get coordinates of the direction axes
-          const int dcPos = itsImageAccessor->coordSys(name).findCoordinate(casa::Coordinate::DIRECTION,-1);
-          const casa::DirectionCoordinate outDC = itsImageAccessor->coordSys(name).directionCoordinate(dcPos);
+          const int dcPos = coordsys.findCoordinate(casa::Coordinate::DIRECTION,-1);
+          const casa::DirectionCoordinate outDC = coordsys.directionCoordinate(dcPos);
 
-          casa::Array<float> BeamArr = itsImageAccessor->read(name);
-          casa::IPosition Ishape = itsImageAccessor->shape(name);
+          casa::Array<float> BeamArr(shape);
 
-          for (int x=0; x<Ishape[0];++x) {
-              for (int y=0; y<Ishape[1];++y) {
-
-
+          for (int x=0; x<shape[0];++x) {
+              for (int y=0; y<shape[1];++y) {
 
                   // get the current pixel location and distance from beam centre
                   pixel[0] = double(x);
@@ -187,11 +175,6 @@ namespace askap
 
               }
           }
-          casa::CoordinateSystem coordsys(makeCoords());
-          string outname = "tmp.beam";
-          // create and write a constant into image
-          itsImageAccessor->create(outname, Ishape, itsImageAccessor->coordSys(name));
-          itsImageAccessor->write(outname,BeamArr);
           const casa::IPosition index(2,200,200);
           double testVal = BeamArr(index);
           // 0.49583 is the val at 200,200
@@ -211,7 +194,7 @@ namespace askap
       {
 
          LOFAR::ParameterSet parset;
-         parset.add("aperture", "12m");
+         parset.add("aperture", "12");
          parset.add("fwhmscaling", "0.5");
          parset.add("primarybeam","GaussianPB");
          PrimaryBeam::ShPtr PB = PrimaryBeamFactory::make(parset);

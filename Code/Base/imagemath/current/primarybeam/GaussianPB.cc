@@ -6,16 +6,18 @@
 /// defines the interface to the Primary Beam structures for the purpose of image
 /// based weighting or (via an illumination) the gridding.
 ///
+#include "askap_imagemath.h"
+
+
 #include "PrimaryBeam.h"
 #include "GaussianPB.h"
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
-#include <measurementequation/SynthesisParamsHelper.h>
 #include <Common/ParameterSet.h>
 
 ASKAP_LOGGER(logger, ".primarybeam.gaussianpb");
 namespace askap {
-    namespace synthesis {
+    namespace imagemath {
 
 
             GaussianPB::GaussianPB() {
@@ -54,10 +56,8 @@ namespace askap {
 
                ptr.reset( new GaussianPB());
 
-               ptr->setApertureSize(SynthesisParamsHelper::convertQuantity(
-                            parset.getString("aperture", "12m"),"m"));
+               ptr->setApertureSize(parset.getDouble("aperture",12));
                ptr->setFWHMScaling(parset.getDouble("fwhmscaling", 1.00));
-
                ptr->setExpScaling(parset.getDouble("expscaling", 4.*log(2.)));
 
                ASKAPLOG_DEBUG_STR(logger,"Created Gaussian PB instance");

@@ -6,13 +6,18 @@
 /// defines the interface to the Primary Beam structures for the purpose of image
 /// based weighting or (via an illumination) the gridding.
 ///
+
+#include "askap_imagemath.h"
+
 #include "PrimaryBeam.h"
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
+
+
 ASKAP_LOGGER(logger, ".primarybeam.primarybeam");
 
 namespace askap {
-    namespace synthesis {
+    namespace imagemath {
 
             PrimaryBeam::PrimaryBeam() {
                 ASKAPLOG_DEBUG_STR(logger,"PrimaryBeam default constructor");
