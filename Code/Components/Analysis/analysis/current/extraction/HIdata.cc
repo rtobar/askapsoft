@@ -108,6 +108,38 @@ HIdata::HIdata(const LOFAR::ParameterSet &parset):
 
 }
 
+void HIdata::findVoxelStats()
+{
+
+    itsFluxMax = itsSource->getPeakFlux();
+    casa::IPosition start=itsCubeletExtractor->slicer().start().nonDegenerate();
+    casa::Array<float> cubelet = itsCubeletExtractor->array().nonDegenerate();
+    std::vector<PixelInfo::Voxel> voxelList = itsSource->getPixelSet();
+    float min,sumf=0.,sumff=0.;
+    std::vector<PixelInfo::Voxel>::iterator vox = voxelList.begin();
+    for(;vox < voxelList.end(); vox++){
+        //float flux = vox->getF();
+        if (itsSource->isInObject(*vox)) {
+            casa::IPosition loc(3, vox->getX(), vox->getY(), vox->getZ());
+            float flux = cubelet(loc-start);
+            if(vox==voxelList.begin()) {
+                min = flux;
+            } else {
+                min = std::min(min,flux);
+            }
+            sumf += flux;
+            sumff += flux*flux;
+        }
+    }
+    float size=float(voxelList.size());
+    itsFluxMin = min;
+    itsFluxMean = sumf / size;
+    itsFluxStddev = sqrt(sumff/size - sumf*sumf/size/size);
+    itsFluxRMS = sqrt(sumff/size);
+
+}
+
+
 void HIdata::extract()
 {
                         ASKAPLOG_DEBUG_STR(logger, "Extracting HI object with x=("<<itsSource->getXmin() << ","

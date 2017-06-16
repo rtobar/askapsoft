@@ -124,10 +124,18 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     ASKAPLOG_DEBUG_STR(logger, newHead_freq.WCS().ctype[newHead_freq.WCS().spec] << " " <<
                        strncmp(newHead_freq.WCS().ctype[newHead_freq.WCS().spec], "FREQ", 4));
     bool doFreq = (strncmp(newHead_freq.WCS().ctype[newHead_freq.WCS().spec], "FREQ", 4) == 0);
+    if ( ! doFreq ){
+        ASKAPLOG_ERROR_STR(logger,
+                           "Conversion to Frequency-based WCS failed - cannot compute frequency-based quantities.");
+    }
     duchamp::FitsHeader newHead_vel = changeSpectralAxis(obj.header(), "VOPT-???", casda::velocityUnit);
     ASKAPLOG_DEBUG_STR(logger, newHead_vel.WCS().ctype[newHead_vel.WCS().spec] << " " <<
                        strncmp(newHead_vel.WCS().ctype[newHead_vel.WCS().spec], "VOPT", 4));
     bool doVel = (strncmp(newHead_vel.WCS().ctype[newHead_vel.WCS().spec], "VOPT", 4) == 0);
+    if ( ! doVel ){
+        ASKAPLOG_ERROR_STR(logger,
+                           "Conversion to Velocity-based WCS failed - cannot compute velocity-based quantities.");
+    }
     double intFluxscale = getIntFluxConversionScale(newHead_vel, casda::intFluxUnitSpectral);
 
     casa::Unit imageFreqUnits(newHead_freq.WCS().cunit[obj.header().WCS().spec]);
@@ -301,7 +309,15 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     itsIntegFlux.error() = sqrt(itsNumVoxels) * itsRMSimagecube * (intFluxscale / peakFluxscale) *
                            newHead_vel.WCS().cdelt[newHead_vel.WCS().spec] * velScale /
                            newHead_vel.beam().area();
-    itsFluxMax = obj.getPeakFlux() * peakFluxscale;
+
+    // Voxel statistics
+    hidata.findVoxelStats();
+    itsFluxMax = hidata.fluxMax() * peakFluxscale;
+    itsFluxMin = hidata.fluxMin() * peakFluxscale;
+    itsFluxMean = hidata.fluxMean() * peakFluxscale;
+    itsFluxStddev = hidata.fluxStddev() * peakFluxscale;
+    itsFluxRMS = hidata.fluxRMS() * peakFluxscale;
+    
 
 
     // @todo - Make moment-0 array, then fit single Gaussian to it.

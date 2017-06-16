@@ -120,6 +120,9 @@ class SourceDataExtractor {
         /// image
         casa::Unit bunit();
 
+    /// @brief Return the slicer used for the extraction
+    casa::Slicer slicer(){return itsSlicer;};
+
 
     protected:
         /// @brief Open the input cube.

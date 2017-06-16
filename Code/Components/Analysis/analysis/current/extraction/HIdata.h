@@ -54,6 +54,9 @@ class HIdata {
 
     /// @brief Set the source to be used.
     void setSource(RadioSource *src) {itsSource=src;};
+
+    /// @brief Calculate the range of voxel statistics needed by the HI catalogue.
+    void findVoxelStats();
     
     /// @brief Front-end for the extract functions
     void extract();
@@ -82,6 +85,13 @@ class HIdata {
     // /// @brief Fit a "busy-function" to the integrated spectrum
     // void busyFunctionFit(){};
 
+    const float fluxMin(){return itsFluxMin;};
+    const float fluxMax(){return itsFluxMax;};
+    const float fluxMean(){return itsFluxMean;};
+    const float fluxStddev(){return itsFluxStddev;};
+    const float fluxRMS(){return itsFluxRMS;};
+    
+    
 protected:
 
     /// @brief Parset relating to HI parameters
@@ -102,6 +112,19 @@ protected:
     /// @brief Extractor to obtain the cubelets
     boost::shared_ptr<CubeletExtractor>        itsCubeletExtractor;
 
+    /// @{
+    /// Flux statistics
+    /// @brief Maximum flux of object voxels
+    float itsFluxMax;
+    /// @brief Minimum flux of object voxels
+    float itsFluxMin;
+    /// @brief Mean flux over object voxels
+    float itsFluxMean;
+    /// @brief Standard deviation of object voxel fluxes
+    float itsFluxStddev;
+    /// @brief Root-mean-squared of the object voxel fluxes
+    float itsFluxRMS;
+    
 };
 
 }
