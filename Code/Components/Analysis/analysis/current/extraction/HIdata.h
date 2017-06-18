@@ -82,15 +82,21 @@ class HIdata {
     // //    /// @brief Return the results of the moment-0 Gaussian fit
     
 
-    // /// @brief Fit a "busy-function" to the integrated spectrum
-    // void busyFunctionFit(){};
+    /// @brief Fit a "busy-function" to the integrated spectrum
+    /// @return Returns the return value from the BusyFit::fit() function - anything non-zero is an error.
+    int busyFunctionFit();
 
     const float fluxMin(){return itsFluxMin;};
     const float fluxMax(){return itsFluxMax;};
     const float fluxMean(){return itsFluxMean;};
     const float fluxStddev(){return itsFluxStddev;};
     const float fluxRMS(){return itsFluxRMS;};
-    
+
+    const casa::Vector<double> BFparams(){return itsBFparams;};
+    const casa::Vector<double> BFerrors(){return itsBFerrors;};
+    const double BFchisq(){return itsBFchisq;};
+    const double BFredChisq(){return itsBFredChisq;};
+    const size_t BFndof(){return itsBFndof;};
     
 protected:
 
@@ -124,6 +130,22 @@ protected:
     float itsFluxStddev;
     /// @brief Root-mean-squared of the object voxel fluxes
     float itsFluxRMS;
+    /// @}
+
+    /// @{
+    /// Busy Function fit results
+    /// @brief Vector of BF fit parameters.
+    casa::Vector<double> itsBFparams;
+    /// @brief Vector of BF fit uncertainties on the parameters.
+    casa::Vector<double> itsBFerrors;
+    /// @brief chi-squared value from busy function fit
+    double itsBFchisq;
+    /// @brief Reduced chi-squared value (chisq/ndof)
+    double itsBFredChisq;
+    /// @brief Number of degrees of freedom of the fit.
+    size_t itsBFndof;
+    
+    
     
 };
 

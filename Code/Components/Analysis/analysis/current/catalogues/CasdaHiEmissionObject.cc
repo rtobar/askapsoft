@@ -323,8 +323,34 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     // @todo - Make moment-0 array, then fit single Gaussian to it.
     // Q - what if fit fails?
 
-    // @todo - Busy Function fitting
-
+    // Busy Function fitting
+    ASKAPLOG_INFO_STR(logger, "Fitting Busy function to spectrum of object " << itsObjectID);
+    int status = hidata.busyFunctionFit();
+    if (status == 0) {
+        casa::Vector<double> BFparams = hidata.BFparams();
+        ASKAPLOG_INFO_STR(logger, "BF results: " << BFparams);
+        casa::Vector<double> BFerrors = hidata.BFerrors();
+        const float channelFreqWidth = newHead_freq.WCS().cdelt[obj.header().WCS().spec] * freqScale;
+        itsBFfit_a.value()=BFparams[0];
+        itsBFfit_a.error()=BFerrors[0];
+        itsBFfit_b1.value()=BFparams[1];
+        itsBFfit_b1.error()=BFerrors[1];
+        itsBFfit_b2.value()=BFparams[2];
+        itsBFfit_b2.error()=BFerrors[2];
+        itsBFfit_c.value()=BFparams[3];
+        itsBFfit_c.error()=BFerrors[3];
+        itsBFfit_xe.value()=BFparams[4]*channelFreqWidth;
+        itsBFfit_xe.error()=BFerrors[4]*channelFreqWidth;
+        itsBFfit_xp.value()=BFparams[5]*channelFreqWidth;
+        itsBFfit_xp.error()=BFerrors[5]*channelFreqWidth;
+        itsBFfit_w.value()=BFparams[6]*channelFreqWidth;
+        itsBFfit_w.error()=BFerrors[6]*channelFreqWidth;
+        itsBFfit_n.value()=BFparams[7];
+        itsBFfit_n.error()=BFerrors[7];
+    } else {
+        ASKAPLOG_WARN_STR(logger, "Could not fit busy function to object " << itsObjectID);
+    }
+        
     // @todo - Need to add logic to measure resolvedness.
     itsFlagResolved = 1;
 

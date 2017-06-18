@@ -38,6 +38,7 @@
 #include <extraction/MomentMapExtractor.h>
 #include <extraction/CubeletExtractor.h>
 #include <Common/ParameterSet.h>
+#include <busyfit/BusyFit.h>
 
 ASKAP_LOGGER(logger, ".hidata");
 
@@ -52,6 +53,9 @@ HIdata::HIdata(const LOFAR::ParameterSet &parset):
     ASKAPCHECK(itsCubeName != "", "No cube name given");
 
     itsBeamLog = parset.getString("beamLog", "");
+
+    itsBFparams = casa::Vector<double>(BUSYFIT_FREE_PARAM,0);
+    itsBFerrors = casa::Vector<double>(BUSYFIT_FREE_PARAM,0);
 
     // Define and create (if need be) the directories to hold the extracted data products
     std::stringstream cmd;
@@ -184,6 +188,34 @@ void HIdata::write()
     itsMomentExtractor->writeImage();
     itsCubeletExtractor->writeImage();
 
+}
+
+int HIdata::busyFunctionFit()
+{
+
+    casa::Array<double> spectrum(itsSpecExtractor->array().shape(),0.);
+    for(size_t i=0;i<itsSpecExtractor->array().size();i++){
+        spectrum[i] = itsSpecExtractor->array().data()[i];
+    }
+    casa::Array<double> noise(itsNoiseExtractor->array().shape(),0.);
+    for(size_t i=0;i<itsNoiseExtractor->array().size();i++){
+        noise[i] = itsNoiseExtractor->array().data()[i];
+    }
+
+    BusyFit *theFitter = new BusyFit();
+
+    bool plotsTurnedOff = true;
+    bool relax=false;
+    bool verbose=false;
+       
+    theFitter->setup(spectrum.size(), spectrum.data(), noise.data(), plotsTurnedOff, relax, verbose);
+    
+    int status = theFitter->fit();
+    if (status == 0 ){
+        theFitter->getResult(itsBFparams.data(), itsBFerrors.data(), itsBFchisq, itsBFredChisq, itsBFndof);
+    }
+    return status;
+    
 }
 
 
