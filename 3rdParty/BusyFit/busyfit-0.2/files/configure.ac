@@ -172,7 +172,9 @@ for INCDIR in $GSLINCDIRS ; do
 done
 
 AC_CHECK_LIB([gsl], [gsl_matrix_alloc], [GSLLIB="$GSLLIB -lgsl -lgslcblas"], [],
-             [$GSLLIB $LIBS])
+             [-l gslcblas $GSLLIB $LIBS])
+AC_CHECK_LIB([gslcblas], [gsl_matrix_alloc], [GSLLIB="$GSLLIB -lgsl -lgslcblas"], [],
+             [-l gsl $GSLLIB $LIBS])
 
 # GSL is essential for busyfit, so exit with error message if it
 #   is not present.
