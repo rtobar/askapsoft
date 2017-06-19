@@ -72,15 +72,8 @@ class HIdata {
     /// @brief Call the writeImage() function for each extractor
     void write();
 
-    // /// @brief The extracted integrated spectrum
-    // casa::Array<float> spectrum();
-    // /// @brief The extracted moment-0 map
-    // casa::Array<float> moment0();
-
-    // /// @brief Fit a Gaussian to the moment-0 map
-    // void fitToMom0(){};
-    // //    /// @brief Return the results of the moment-0 Gaussian fit
-    
+    /// @brief Fit a Gaussian to the moment-0 map
+    void fitToMom0();
 
     /// @brief Fit a "busy-function" to the integrated spectrum
     /// @return Returns the return value from the BusyFit::fit() function - anything non-zero is an error.
@@ -97,6 +90,10 @@ class HIdata {
     const double BFchisq(){return itsBFchisq;};
     const double BFredChisq(){return itsBFredChisq;};
     const size_t BFndof(){return itsBFndof;};
+
+    const casa::Vector<double> mom0Fit(){return itsMom0Fit;};
+    const casa::Vector<double> mom0FitError(){return itsMom0FitError;};
+    const bool mom0Resolved(){return itsMom0Resolved;};
     
 protected:
 
@@ -144,7 +141,17 @@ protected:
     double itsBFredChisq;
     /// @brief Number of degrees of freedom of the fit.
     size_t itsBFndof;
-    
+    /// @}
+
+    /// @{
+    /// Gaussian fitting to moment-0 map
+    /// @brief Vector of 2D Gaussian shape parameters - major/minor/pa (in degrees)
+    casa::Vector<double> itsMom0Fit;
+    /// @brief Vector of errors in fitted 2D Gaussian shape parameters - major/minor/pa (in degrees)
+    casa::Vector<double> itsMom0FitError;
+    /// @brief Is the moment-0 map resolved (does the PSF fit give an acceptable result?)
+    bool itsMom0Resolved;
+    /// @}
     
     
 };

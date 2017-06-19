@@ -39,6 +39,8 @@
 #include <extraction/CubeletExtractor.h>
 #include <Common/ParameterSet.h>
 #include <busyfit/BusyFit.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
 
 ASKAP_LOGGER(logger, ".hidata");
 
@@ -54,8 +56,11 @@ HIdata::HIdata(const LOFAR::ParameterSet &parset):
 
     itsBeamLog = parset.getString("beamLog", "");
 
-    itsBFparams = casa::Vector<double>(BUSYFIT_FREE_PARAM,0);
-    itsBFerrors = casa::Vector<double>(BUSYFIT_FREE_PARAM,0);
+    itsBFparams = casa::Vector<double>(BUSYFIT_FREE_PARAM,0.);
+    itsBFerrors = casa::Vector<double>(BUSYFIT_FREE_PARAM,0.);
+
+    itsMom0Fit = casa::Vector<double>(3,0.);
+    itsMom0FitError = casa::Vector<double>(3,0.);
 
     // Define and create (if need be) the directories to hold the extracted data products
     std::stringstream cmd;
@@ -146,10 +151,6 @@ void HIdata::findVoxelStats()
 
 void HIdata::extract()
 {
-                        ASKAPLOG_DEBUG_STR(logger, "Extracting HI object with x=("<<itsSource->getXmin() << ","
-                                           << itsSource->getXmax() << ")+" << itsSource->getXOffset()
-                                           << ", y=("<<itsSource->getYmin() << "," << itsSource->getYmax()
-                                           << ")+" << itsSource->getYOffset());
     extractSpectrum();
     extractNoise();
     extractMoments();
@@ -217,6 +218,89 @@ int HIdata::busyFunctionFit()
     return status;
     
 }
+
+
+void HIdata::fitToMom0()
+{
+    casa::Array<float> mom0 = itsMomentExtractor->mom0();
+    casa::IPosition start=itsMomentExtractor->slicer().start().nonDegenerate();
+    casa::LogicalArray mom0mask = itsMomentExtractor->mom0mask();
+    size_t momSize = mom0.size();
+    casa::IPosition momShape=mom0.shape();
+    
+    casa::Matrix<casa::Double> pos;
+    casa::Vector<casa::Double> f;
+    casa::Vector<casa::Double> sigma;
+    pos.resize(momSize, 2);
+    f.resize(momSize);
+    sigma.resize(momSize);
+    casa::Vector<casa::Double> curpos(2);
+    curpos = 0;
+
+    for(size_t y=0;y<momShape[1];y++){
+        for(size_t x=0;x<momShape[0];x++){
+            size_t i = x + y * momShape[0];
+            curpos(0) = x;
+            curpos(1) = y;
+            pos.row(i) = curpos;
+            if (!mom0mask.data()[i]){
+                f(i) = 0.;
+            } else {
+                f(i) = mom0.data()[i];
+            }
+            sigma(i) = 1.;
+            ASKAPLOG_DEBUG_STR(logger, "i="<<i<<", (x,y)=("<<x<<","<<y<<"), f(i)="<<f(i));
+        }
+    }
+
+    // Get the restoring beam, to use as the initial guess
+    casa::Vector<Quantum<Double> > beam = itsMomentExtractor->inputBeam();
+    double cellsize = fabs(itsMomentExtractor->inputCoordSys().directionCoordinate().increment()[0]);
+    std::vector<SubComponent> initial(1);
+    initial[0].setX(itsSource->getXcentre()-start[0]);
+    initial[0].setY(itsSource->getYcentre()-start[1]);
+    initial[0].setPeak( casa::max(mom0) );
+    initial[0].setMajor(beam[0].getValue("rad")/cellsize);
+    initial[0].setMinor(beam[1].getValue("rad")/cellsize);
+    initial[0].setPA(beam[2].getValue());
+    
+    FittingParameters fitparams(itsParset);
+    fitparams.setMaxRMS(50.);
+    
+    fitparams.setFlagFitThisParam("full");
+    Fitter fullfit(fitparams);
+    fullfit.setNumGauss(1);
+    fullfit.setEstimates(initial);
+    fullfit.setRetries();
+    fullfit.setMasks();
+    fullfit.fit(pos, f, sigma);
+    
+    fitparams.setFlagFitThisParam("psf");
+    Fitter psffit(fitparams);
+    psffit.setNumGauss(1);
+    psffit.setEstimates(initial);
+    psffit.setRetries();
+    psffit.setMasks();
+    psffit.fit(pos, f, sigma);
+
+    FitResults fullres;
+    fullres.saveResults(fullfit);
+    casa::Gaussian2D<casa::Double> full = fullres.gaussian(0);
+    casa::Vector<casa::Double> fullErrors = fullfit.error(0);
+    itsMom0Fit[0] = full.majorAxis() * cellsize;
+    itsMom0Fit[1] = full.minorAxis() * cellsize;
+    itsMom0Fit[2] = full.PA();
+    itsMom0FitError[0] = fullErrors[3] * cellsize;
+    itsMom0FitError[1] = fullErrors[4] * cellsize;
+    itsMom0FitError[2] = fullErrors[5];
+
+    // If the PSF fit is rejected, it means the source is resolved.
+    itsMom0Resolved = !psffit.acceptable();
+    
+    
+}
+    
+
 
 
 }

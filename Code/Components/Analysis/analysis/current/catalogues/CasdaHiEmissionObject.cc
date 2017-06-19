@@ -229,6 +229,15 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     itsMajorAxis = obj.getMajorAxis() * 60.; // major axis from Object is in arcmin
     itsMinorAxis = obj.getMinorAxis() * 60.;
     itsPositionAngle = obj.getPositionAngle();
+
+    // From 2D Gaussian fit to the moment-zero image
+    hidata.fitToMom0();
+    itsMajorAxis_fit.value() = hidata.mom0Fit()[0] * 3600.;
+    itsMajorAxis_fit.error() = hidata.mom0FitError()[0] * 3600.;
+    itsMinorAxis_fit.value() = hidata.mom0Fit()[1] * 3600.;
+    itsMinorAxis_fit.error() = hidata.mom0FitError()[1] * 3600.;
+    itsPositionAngle_fit.value() = hidata.mom0Fit()[2] * 180. / M_PI;
+    itsPositionAngle_fit.error() = hidata.mom0FitError()[2] * 180. / M_PI;
     itsSizeX = obj.getXmax() - obj.getXmin() + 1;
     itsSizeY = obj.getYmax() - obj.getYmin() + 1;
     itsSizeZ = obj.getZmax() - obj.getZmin() + 1;
@@ -351,8 +360,10 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
         ASKAPLOG_WARN_STR(logger, "Could not fit busy function to object " << itsObjectID);
     }
         
-    // @todo - Need to add logic to measure resolvedness.
-    itsFlagResolved = 1;
+    // @todo - Need to add logic to measure resolvedness. Currently it
+    // is "Is the mom0 map adequately fitted by a PSF-shaped Gaussian?
+    // If so, it is not resolved."
+    itsFlagResolved = hidata.mom0Resolved() ? 1 : 0;
 
 }
 
