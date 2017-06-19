@@ -14,6 +14,9 @@
 #include <Common/ParameterSet.h>
 #include <boost/shared_ptr.hpp>
 
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/IPosition.h>
+
 namespace askap
 {
     namespace imagemath
@@ -36,6 +39,8 @@ namespace askap
             static ShPtr createPrimaryBeam(const LOFAR::ParameterSet& parset);
 
             virtual double evaluateAtOffset(double offset, double frequency) = 0;
+
+            virtual casa::Matrix<casa::Complex> getJonesAtOffset(double offset, double frequency) = 0;
 
         private:
 

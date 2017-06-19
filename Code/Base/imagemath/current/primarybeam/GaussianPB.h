@@ -12,6 +12,8 @@
 #include <boost/shared_ptr.hpp>
 #include <Common/ParameterSet.h>
 
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/IPosition.h>
 
 namespace askap {
 namespace imagemath {
@@ -53,6 +55,8 @@ namespace imagemath {
 
         /// Probably should have a "generate weight" - that calls evaluate for
         /// every pixel ....
+
+        virtual casa::Matrix<casa::Complex> getJonesAtOffset(double offset, double frequency);
 
     private:
 

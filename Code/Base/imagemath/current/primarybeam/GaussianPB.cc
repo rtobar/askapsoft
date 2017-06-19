@@ -15,6 +15,9 @@
 #include <askap/AskapLogging.h>
 #include <Common/ParameterSet.h>
 
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/IPosition.h>
+
 ASKAP_LOGGER(logger, ".primarybeam.gaussianpb");
 namespace askap {
     namespace imagemath {
@@ -69,6 +72,19 @@ namespace askap {
 
                 double pb = exp(-offset*offset*getExpScaling()/(getFWHM(frequency)*getFWHM(frequency)));
                 return pb;
+
+            }
+
+            casa::Matrix<casa::Complex> GaussianPB::getJonesAtOffset(double offset, double frequency) {
+
+                casa::IPosition shape(2,2,2);
+                casa::Matrix<casa::Complex> Jones(shape);
+                Jones = 0.0;
+
+                Jones(casa::IPosition(2,0,0)) = casa::Complex(this->evaluateAtOffset(offset,frequency),0.0);
+                Jones(casa::IPosition(2,1,1)) = Jones(casa::IPosition(2,0,0));
+
+                return Jones;
 
             }
 

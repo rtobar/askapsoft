@@ -13,6 +13,8 @@
 #include <askap/AskapError.h>
 #include <askap/AskapLogging.h>
 
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Arrays/IPosition.h>
 
 ASKAP_LOGGER(logger, ".primarybeam.primarybeam");
 
