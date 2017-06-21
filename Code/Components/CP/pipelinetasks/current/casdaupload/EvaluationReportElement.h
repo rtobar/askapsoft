@@ -31,7 +31,7 @@
 #include <string>
 
 // ASKAPsoft includes
-#include "casdaupload/ElementBase.h"
+#include "casdaupload/ProjectElementBase.h"
 #include "xercesc/dom/DOM.hpp" // Includes all DOM
 #include "boost/filesystem.hpp"
 #include "Common/ParameterSet.h"
@@ -44,7 +44,7 @@ namespace pipelinetasks {
 ///evaluation report) for upload to CASDA. Simply a specialisation of
 ///the ElementBase class, with the constructor defining the element
 ///name ("evaluation")
-class EvaluationReportElement : public ElementBase {
+class EvaluationReportElement : public ProjectElementBase {
     public:
         EvaluationReportElement(const LOFAR::ParameterSet &parset);
 
