@@ -1,3 +1,0 @@
-CC = 'gcc'
-CXX = 'g++'
-FORTRAN = 'gfortran'
