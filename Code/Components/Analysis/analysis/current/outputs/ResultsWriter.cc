@@ -34,6 +34,7 @@
 #include <askapparallel/AskapParallel.h>
 
 #include <parallelanalysis/DuchampParallel.h>
+#include <parallelanalysis/DistributedContinuumParameterisation.h>
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FittingParameters.h>
 #include <outputs/AskapComponentParsetWriter.h>
@@ -43,6 +44,7 @@
 #include <catalogues/HiEmissionCatalogue.h>
 #include <catalogues/RMCatalogue.h>
 #include <catalogues/FitCatalogue.h>
+#include <imageaccess/ImageAccessFactory.h>
 
 #include <duchamp/Cubes/cubes.hh>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
@@ -51,6 +53,7 @@
 #include <duchamp/Outputs/CasaAnnotationWriter.hh>
 #include <Common/ParameterSet.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/filesystem.hpp>
 
 ///@brief Where the log messages go.
 ASKAP_LOGGER(logger, ".resultsWriter");
@@ -124,6 +127,60 @@ void ResultsWriter::duchampOutput()
     }
 }
 
+void ResultsWriter::writeContinuumCatalogues()
+{
+    if (itsFlag2D || itsFitParams.doFit()) {
+        DistributedContinuumParameterisation distribCont(itsComms, itsParset, itsSourceList);
+        distribCont.distribute();
+        distribCont.parameterise();
+        distribCont.gather();
+        std::vector<CasdaIsland> islandList = distribCont.finalIslandList();
+        std::vector<CasdaComponent> compList = distribCont.finalComponentList();
+
+        IslandCatalogue islandCat(islandList, itsParset, &itsCube);
+        ComponentCatalogue compCat(compList, itsParset, &itsCube);
+
+        if (itsComms.isMaster()) {
+            islandCat.write();
+            compCat.write();
+
+            casa::Array<float> compMap = distribCont.componentImage();
+            writeComponentMaps(compMap);
+
+        }
+
+    }
+
+
+}
+
+void ResultsWriter::writeComponentMaps(casa::Array<float> &componentImage)
+{
+
+    std::string inputImage = itsParset.getString("image", "");
+    const boost::filesystem::path infile(inputImage);
+    ASKAPCHECK(inputImage != "", "No image name provided in parset with parameter 'image'");
+    boost::shared_ptr<casa::ImageInterface<Float> > inputImagePtr = analysisutilities::openImage(inputImage);
+    casa::CoordinateSystem coords = inputImagePtr->coordinates();
+
+    LOFAR::ParameterSet fitParset = itsParset.makeSubset("Fitter.");
+
+    boost::shared_ptr<accessors::IImageAccess> imageAcc = accessors::imageAccessFactory(fitParset);
+
+    bool doComponentMap = fitParset.getBool("writeComponentMap", true);
+    if (doComponentMap) {
+        std::string componentMap = "componentMap_" + infile.filename().string();
+        imageAcc->create(componentMap, componentImage.shape(), coords);
+        imageAcc->write(componentMap, componentImage);
+        std::string componentResidualMap = "componentResidual_" + infile.filename().string();
+        casa::Array<float> residual = inputImagePtr->get() - componentImage;
+        imageAcc->create(componentResidualMap, residual.shape(), coords);
+        imageAcc->write(componentResidualMap, residual);
+    }
+
+
+}
+
 void ResultsWriter::writeIslandCatalogue()
 {
     if (itsComms.isMaster()) {
@@ -151,7 +208,7 @@ void ResultsWriter::writeComponentCatalogue()
 void ResultsWriter::writeHiEmissionCatalogue()
 {
     if (itsParset.getBool("HiEmissionCatalogue", false)) {
-        
+
         HiEmissionCatalogue cat(itsSourceList, itsParset, &itsCube, itsComms);
         if (itsComms.isMaster()) {
             cat.write();
