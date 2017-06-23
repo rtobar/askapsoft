@@ -54,14 +54,14 @@ namespace askap
 
       /// @brief Factory class
 
-      DaliugeApplication::ShPtr make(std::string &name);
+      static DaliugeApplication::ShPtr make(const std::string &name);
 
       DaliugeApplicationFactory();
 
     protected:
       /// @brief helper template method to add pre-defined Applications
       template<typename DaliugeApplicationType> static inline void addPreDefinedDaliugeApplication()  {
-          registerPrimaryBeam(DaliugeApplicationType::DaliugeApplicationName(), DaliugeApplicationType::createApp);
+          registerDaliugeApplication(DaliugeApplicationType::ApplicationName(), DaliugeApplicationType::createDaliugeApplication);
       }
 
 

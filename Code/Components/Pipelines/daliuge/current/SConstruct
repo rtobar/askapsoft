@@ -9,9 +9,7 @@ from askapenv import env
 pkg = env.AskapPackage("daliuge_pipeline")
 
 pkg.AddSubPackage("factory")
-pkg.AddSubPackage("interface")
-
-env.Append(CCFLAGS=['-O3'])
+env.AppendUnique(CCFLAGS=['-O3'])
 
 # run the build process
 pkg()

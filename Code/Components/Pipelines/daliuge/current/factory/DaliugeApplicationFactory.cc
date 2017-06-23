@@ -24,6 +24,8 @@ ASKAP_LOGGER(logger, ".daliuge.factory");
 #include <factory/DaliugeApplicationFactory.h>
 
 // Apps need to be here - or can we register them from Somewhere else
+#include <factory/Example.h>
+//
 
 namespace askap {
 
@@ -80,14 +82,14 @@ namespace askap {
   // In the (near) future it should be done by putting creator functions
   // for these Beams in the registry and use that.
 
-DaliugeApplication::ShPtr DaliugeApplicationFactory::make(std::string &name) {
+DaliugeApplication::ShPtr DaliugeApplicationFactory::make(const std::string &name) {
 
     if (theirRegistry.size() == 0) {
         // this is the first call of the method, we need to fill the registry with
         // all pre-defined applications
         ASKAPLOG_INFO_STR(logger, "Filling the registry with predefined applications");
-        /// addPreDefinedDaliugeApplication<Example>();
-        /// addPreDefinedDaliugeApplication<ExamplePB>();
+        addPreDefinedDaliugeApplication<Example>();
+
 
 
     }
