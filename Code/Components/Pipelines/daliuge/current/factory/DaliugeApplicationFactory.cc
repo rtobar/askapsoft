@@ -2,9 +2,9 @@
 ///
 /// @abstract
 /// Factory class that registers and manages the different possible instances of
-/// Primary Beams.
+/// of a DaliugeApplication.
 /// @ details
-/// Maintains a registry of possible primary beams and selects - based upon a parset
+/// Maintains a registry of possible applications and selects - based upon a name
 /// which one will be instantiated.
 ///
 // Package level header file

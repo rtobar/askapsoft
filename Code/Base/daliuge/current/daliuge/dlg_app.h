@@ -92,7 +92,8 @@ typedef struct _dlg_output_info {
  * a data pointer holds application-specific data.
  */
 typedef struct _dlg_app_info {
-	char *uid;
+    char *appname;
+    char *uid;
 	char *oid;
 	dlg_input_info *inputs;
 	unsigned int n_inputs;
