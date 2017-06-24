@@ -164,6 +164,7 @@ void ResultsWriter::writeComponentMaps(casa::Array<float> &componentImage)
     casa::CoordinateSystem coords = inputImagePtr->coordinates();
 
     LOFAR::ParameterSet fitParset = itsParset.makeSubset("Fitter.");
+    fitParset.add("imagetype","fits");
 
     boost::shared_ptr<accessors::IImageAccess> imageAcc = accessors::imageAccessFactory(fitParset);
 
