@@ -84,17 +84,31 @@ if [ "${DO_IT}" == "true" ]; then
     if [ "$LOOP" != "" ]; then
         if [ "$LOOP" -gt 0 ]; then
             description="selavyContL${LOOP}"
-            contImage="${contImage}.SelfCalLoop${LOOP}"
-            contWeights="${contWeights}.SelfCalLoop${LOOP}"
+            contImage="${contImage%%.fits}.SelfCalLoop${LOOP}"
+            contWeights="${contWeights%%.fits}.SelfCalLoop${LOOP}"
             imageName=${contImage}
             setSelavyDirs cont
-            noiseMap=${noiseMap}.SelfCalLoop${LOOP}
-            thresholdMap=${thresholdMap}.SelfCalLoop${LOOP}
-            meanMap=${meanMap}.SelfCalLoop${LOOP}
-            snrMap=${snrMap}.SelfCalLoop${LOOP}
+            noiseMap="${noiseMap%%.fits}.SelfCalLoop${LOOP}"
+            thresholdMap="${thresholdMap%%.fits}.SelfCalLoop${LOOP}"
+            meanMap="${meanMap%%.fits}.SelfCalLoop${LOOP}"
+            snrMap="${snrMap%%.fits}.SelfCalLoop${LOOP}"
             doRM=false
+            if [ "${IMAGETYPE_CONT}" == "fits" ]; then
+                contImage="${contImage}.fits"
+                contWeights="${contWeights}.fits"
+                imageName=${contImage}
+                noiseMap="${noiseMap}.fits"
+                thresholdMap="${thresholdMap}.fits"
+                meanMap="${meanMap}.fits"
+                snrMap="${snrMap}.fits"
+            fi
         fi
     fi
+
+    noiseMap="${noiseMap%%.fits}"
+    thresholdMap="${thresholdMap%%.fits}"
+    meanMap="${meanMap%%.fits}"
+    snrMap="${snrMap%%.fits}"
 
     # Define the detection thresholds in terms of flux or SNR
     if [ "${SELAVY_FLUX_THRESHOLD}" != "" ]; then
@@ -158,25 +172,27 @@ NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 # List of images to convert to FITS in the Selavy job
 imlist=""
 
-image=${OUTPUT}/${contImage}
-weights=${OUTPUT}/${contWeights}
-contcube=${OUTPUT}/${contCube}
+image=${contImage}
+fitsimage=${contImage%%.fits}.fits
+weights=${contWeights}
+contcube=${contCube}
 
-imlist="\${imlist} \${image}"
+imlist="\${imlist} ${OUTPUT}/\${image}"
+
 if [ "\${NUM_TAYLOR_TERMS}" -gt 1 ]; then
     t1im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.1/g')
     if [ -e "\${t1im}" ]; then
-        imlist="\${imlist} \${t1im}"
+        imlist="\${imlist} ${OUTPUT}/\${t1im}"
     fi
     t2im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.2/g')
     if [ -e "\${t2im}" ]; then
-        imlist="\${imlist} \${t2im}"
+        imlist="\${imlist} ${OUTPUT}/\${t2im}"
     fi
 fi
 
 if [ "\${BEAM}" == "all" ]; then
-    imlist="\${imlist} \${weights}"
-    weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
+    imlist="\${imlist} ${OUTPUT}/\${weights}"
+    weightpars="Selavy.Weights.weightsImage = \${weights%%.fits}.fits
 Selavy.Weights.weightsCutoff = ${SELAVY_WEIGHTS_CUTOFF}"
 else
     weightpars="#"
@@ -189,7 +205,7 @@ if [ \$doRM == true ]; then
         sedstr="s/%p/\$p/g"
         thisim=\$(echo "\$contcube" | sed -e "\$sedstr")
         if [ -e "\${thisim}" ]; then
-            imlist="\${imlist} \${thisim}"
+            imlist="\${imlist} ${OUTPUT}/\${thisim}"
         else
             doRM=false
             echo "ERROR - Continuum cube \${thisim} not found. RM Synthesis being turned off."
@@ -197,23 +213,26 @@ if [ \$doRM == true ]; then
     done
 fi
 
-echo "Converting to FITS the following images: \${imlist}"
-for im in \${imlist}; do 
-    casaim="../\${im##*/}"
-    fitsim="../\${im##*/}.fits"
-    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
-    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
-    ${fitsConvertText}
-    # Make a link so we point to a file in the current directory for
-    # Selavy. This gets the referencing correct in the catalogue
-    # metadata 
-    if [ ! -e "\$fitsim" ]; then
-        HAVE_IMAGES=false
-        echo "ERROR - Could not create \${im}.fits"
-    else
-        ln -s "\${im}.fits" .
-    fi
-done
+if [ "\${imlist}" != "" ]; then
+    for im in \${imlist}; do 
+        casaim="\${im%%.fits}"
+        fitsim="\${im%%.fits}.fits"
+        if [ "\${im%%.fits}" == "\${im}" ]; then
+            echo "Converting to FITS the image \${im}"
+            parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+            log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
+            ${fitsConvertText}
+            if [ ! -e "\$fitsim" ]; then
+                HAVE_IMAGES=false
+                echo "ERROR - Could not create \${fitsim##*/}"
+            fi
+        fi
+        # Make a link so we point to a file in the current directory for
+        # Selavy. This gets the referencing correct in the catalogue
+        # metadata 
+        ln -s "\${fitsim}" .
+    done
+fi
 
 if [ "\${HAVE_IMAGES}" == "true" ]; then
 
@@ -223,7 +242,7 @@ if [ "\${HAVE_IMAGES}" == "true" ]; then
     if [ "\${doRM}" == "true" ]; then
         rmSynthParams="# RM Synthesis on extracted spectra from continuum cube
 Selavy.RMSynthesis = \${doRM}
-Selavy.RMSynthesis.cube = \$contcube
+Selavy.RMSynthesis.cube = ${OUTPUT}/\$contcube
 Selavy.RMSynthesis.beamLog = ${beamlog}
 Selavy.RMSynthesis.outputBase = ${OUTPUT}/${selavyPolDir}/${SELAVY_POL_OUTPUT_BASE}
 Selavy.RMSynthesis.writeSpectra = ${SELAVY_POL_WRITE_SPECTRA}
@@ -245,12 +264,12 @@ Selavy.RMSynthesis = \${doRM}"
     fi
 
     cat > "\$parset" <<EOFINNER
-Selavy.image = \${image##*/}.fits
+Selavy.image = \${fitsimage}
 Selavy.SBid = ${SB_SCIENCE}
 Selavy.nsubx = ${SELAVY_NSUBX}
 Selavy.nsuby = ${SELAVY_NSUBY}
 #
-Selavy.resultsFile = selavy-${contImage}.txt
+Selavy.resultsFile = selavy-\${fitsimage}.txt
 #
 Selavy.snrCut = ${SELAVY_SNR_CUT}
 Selavy.flagGrowth = ${SELAVY_FLAG_GROWTH}
@@ -258,7 +277,7 @@ Selavy.growthCut = ${SELAVY_GROWTH_CUT}
 #
 Selavy.VariableThreshold = ${SELAVY_VARIABLE_THRESHOLD}
 Selavy.VariableThreshold.boxSize = ${SELAVY_BOX_SIZE}
-Selavy.VariableThreshold.ThresholdImageName=${detThresh}
+Selavy.VariableThreshold.ThresholdImageName=${thresholdMap}
 Selavy.VariableThreshold.NoiseImageName=${noiseMap}
 Selavy.VariableThreshold.AverageImageName=${meanMap}
 Selavy.VariableThreshold.SNRimageName=${snrMap}
@@ -287,6 +306,27 @@ EOFINNER
     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
+    fi
+
+    doValidation=${DO_CONTINUUM_VALIDATION}
+    validatePerBeam=${VALIDATE_BEAM_IMAGES}
+    if [ "\${doValidation}" == "true" ] && [ "\${BEAM}" != "all" ]; then
+        doValidation=\${validatePerBeam}
+    fi
+    scriptname="${ACES}/UserScripts/col52r/ASKAP_continuum_validation.py"
+    if [ "\${doValidation}" == "true" ]; then
+        if [ ! -e "\${scriptname}" ]; then
+            echo "ERROR - Validation script \${scriptname} not found"
+        else
+            cd ..
+            module use /group/askap/continuum_validation
+            loadModule continuum_validation_env
+            aprun -n 1 -N 1 \${scriptname} \${fitsimage}.fits -S \${selavyDir}/selavy-\${fitsimage}.components.xml -N \${selavyDir}/${noiseMap}.fits
+            unloadModule continuum_validation_env
+            if [ ! -e "\${validationDir}" ]; then
+                echo "ERROR - could not create validation directory \${validationDir}"
+            fi
+        fi
     fi
 
     # Now convert the extracted polarisation artefacts to FITS

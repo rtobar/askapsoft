@@ -74,7 +74,7 @@ ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-imcontsubSL-%j.out
 
 ${askapsoftModuleCommands}
-module load aces
+loadModule aces
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
@@ -131,20 +131,22 @@ EOFINNER
 
     NCORES=1
     NPPN=1
-    module load casa
+    loadModule casa
     aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${pyscript}" > "\${log}"
     err=\$?
+    unloadModule casa
     cd ..
     rejuvenate "\${imageName}"
     #extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
-    outputName="\${imageName}.contsub"
-    imageCode=restored
-    setImageProperties spectral
-    echo "Renaming \$outputName to \$imageName"
-    mv \$outputName \$imageName
+    
+    if [ "\${imageName%%.fits}" == "\${imageName}" ]; then
+        # Want image.contsub.fits, not image.fits.contsub
+        echo "Renaming \${imageName}.contsub to \${imageName%%.fits}.contsub.fits"
+        mv \${imageName}.contsub \${imageName%%.fits}.contsub.fits
+    fi
 
 fi
 EOF
