@@ -157,12 +157,16 @@ void ResultsWriter::writeContinuumCatalogues()
 void ResultsWriter::writeComponentMaps(casa::Array<float> &componentImage)
 {
 
-    std::string inputImage = itsParset.getString("image", "");
-    const boost::filesystem::path infile(inputImage);
-    ASKAPCHECK(inputImage != "", "No image name provided in parset with parameter 'image'");
-    boost::shared_ptr<casa::ImageInterface<Float> > inputImagePtr = analysisutilities::openImage(inputImage);
-    casa::CoordinateSystem coords = inputImagePtr->coordinates();
+    std::string inputImageName = itsParset.getString("image", "");
+    const boost::filesystem::path infile(inputImageName);
+    ASKAPCHECK(inputImageName != "", "No image name provided in parset with parameter 'image'");
 
+    DuchampParallel dp(itsComms,itsParset);
+    ASKAPCHECK(dp.getCASA(IMAGE) == duchamp::SUCCESS, "Reading data from input image failed");
+    casa::Array<float> inputImage(componentImage.shape(),dp.cube().getArray(),SHARE);
+    int nstokes=1;
+    casa::CoordinateSystem coords = analysisutilities::wcsToCASAcoord(dp.cube().header().getWCS(), nstokes);
+    
     LOFAR::ParameterSet fitParset = itsParset.makeSubset("Fitter.");
     fitParset.add("imagetype","fits");
 
@@ -174,7 +178,7 @@ void ResultsWriter::writeComponentMaps(casa::Array<float> &componentImage)
         imageAcc->create(componentMap, componentImage.shape(), coords);
         imageAcc->write(componentMap, componentImage);
         std::string componentResidualMap = "componentResidual_" + infile.filename().string();
-        casa::Array<float> residual = inputImagePtr->get() - componentImage;
+        casa::Array<float> residual = inputImage - componentImage;
         imageAcc->create(componentResidualMap, residual.shape(), coords);
         imageAcc->write(componentResidualMap, residual);
     }
