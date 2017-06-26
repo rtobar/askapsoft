@@ -12,6 +12,26 @@
     int init(dlg_app_info *app, const char ***arguments) {
         // this means we have to instantiate an application
         // and call its init
+        const char **param = arguments[0];
+        bool got_name = false;
+        while (1) {
+
+            // Sentinel
+            if (*param == NULL) {
+                break;
+            }
+
+            if (strcmp(param[0], "name") == 0) {
+                app->appname = strdup(param[1]);
+                got_name = true;
+            }
+
+            param++;
+        }
+        if (got_name == false) {
+            app->appname = strdup("Example");
+        }
+        // need to set the app->appname here .... from the arguments ....
         askap::DaliugeApplication::ShPtr thisApp = askap::DaliugeApplicationFactory::make(app->appname);
         return thisApp->init(app, arguments);
     }
