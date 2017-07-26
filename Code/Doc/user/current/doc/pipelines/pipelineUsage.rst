@@ -14,14 +14,18 @@ use, simply run::
 Some parts of the pipeline make use of other modules, which are loaded
 at the appropriate time. The beam footprint information is obtained by
 using the *schedblock* tool in the askapcli module, while beam
-locations are set using the ACES tool *footprint.py*, which requires
-the aces module. For the latter, you will need to have an up-to-date
-version of the ACES subversion repository (which is not part of a
-module itself).
+locations are set using *footprint* from the same module.
+
+For the case of either BETA data or observations made with a
+non-standard footprint, the *footprint* tool will not have the correct
+information, and the ACES tool *footprint.py* is used. This is located
+in the ACES subversion repository, and is accessed either via the
+**acesops** module, or (should ``USE_ACES_OPS=false``) your own
+location defined by the $ACES environment variable.
 
 Once loaded, the askappipeline module will set an environment variable
-**PIPELINEDIR**, pointing to the directory containing the scripts. It
-also defines **PIPELINE_VERSION** to be the version number of the
+**$PIPELINEDIR**, pointing to the directory containing the scripts. It
+also defines **$PIPELINE_VERSION** to be the version number of the
 currently-used module.
 
 Configuration file
@@ -120,7 +124,7 @@ files. These are:
   to the queue via the sbatch command. When a job is run, it makes a
   copy of the file that is labelled with the job ID.
 * *metadata/* – information about the measurement sets and the beam
-  footprint are written to files here.  
+  footprint are written to files here.
 * *parsets/* – any parameter sets used by the askapsoft applications
   are written here. These contain the actual parameters that are used
   by the various programs. These are labeled by the job ID.
@@ -138,6 +142,10 @@ files. These are:
   the output directory. Both .txt and .csv files are created. The
   output directory also has a symbolic link to the top-level stats
   directory. See :doc:`pipelineDiagnostics` for details.
+* *diagnostics/* - this directory is intended to hold plots and other
+  data products that indicate how the processing went. The pipeline only
+  produces a few particular types at the moment, but the intention is
+  this will expand with time.
 * *tools/* – utility scripts to show progress and kill all jobs for a
   given run are placed here. See :doc:`pipelineDiagnostics` for
   details.
@@ -154,7 +162,8 @@ scheduling blocks (SBs) of the two observations, or provide specific
 measurement sets (MSs) for each case.
 
 The measurement sets that will be created should be named in the
-configuration file. A wildcard %b should be used to represent the beam
+configuration file. A wildcard %s can be used to represent the
+scheduling block ID, and %b should be used to represent the beam
 number in the resulting MSs, since the individual beams will be split
 into separate files.
 
@@ -163,7 +172,8 @@ will run fine (provided any pre- requisites such as measurement sets
 or bandpass solutions etc are available). If you have already created
 an averaged science MS, you can re-use that with the
 ``MS_SCIENCE_AVERAGE`` parameter (see :doc:`ScienceFieldPreparation`),
-again with the %b wildcard to represent the beam number.
+again with the %b wildcard to represent the beam number and %s the
+scheduling block ID.
 
 Workflow summary
 ----------------
@@ -173,14 +183,14 @@ Here is a summary of the workflow provided for by these scripts:
 
 * Get observation metadata from the MS and the beam footprint. This
   does the following steps:
-  
+
   * Use **mslist** to get basic metadata for the observation,
     including number of antennas & channels, and the list of field
     names.
   * Use **schedblock** to determine the footprint specification.
   * Use **footprint.py** (from the ACES tools) to convert that into
     beam centre positions.
-  
+
 * Read in user-defined parameters from the provided configuration
   file, and define further parameters derived from them.
 * If bandpass calibration is required and a 1934-638 observation is
@@ -211,10 +221,10 @@ Here is a summary of the workflow provided for by these scripts:
 * The science field data are then averaged with **mssplit** to form
   continuum data sets. (Still one per beam).
 * Another round of flagging can be done, this time on the averaged
-  dataset. 
+  dataset.
 * Each beam is then imaged individually. This is done in one of two
   ways:
-  
+
   * Basic imaging with **cimager** (:doc:`../calim/cimager`), without
     any self-calibration. A multi-scale, multi-frequency clean is
     used, with major & minor cycles.
@@ -231,7 +241,7 @@ Here is a summary of the workflow provided for by these scripts:
 * The continuum dataset can then be optionally imaged as a "continuum
   cube", using **simager** to preserve the full frequency
   sampling. This mode can be run for a range of polarisations,
-  creating a cube for each polarisation requested.    
+  creating a cube for each polarisation requested.
 * Once the continuum image has been made, the source-finder **selavy**
   can be run on it to produce a deeper catalogue of sources.
 * Once all beams have been done, they are all mosaicked together using
@@ -281,10 +291,9 @@ re-process) them. It is possible to set up your processing to start
 immediately upon completion of the restoration process, by using the
 **stage-processing.sh** script in the *askaputils* module. Typical
 usage is::
-  
+
   stage-processing.sh myconfig.sh <jobID>
 
 where <jobID> is the slurm job ID of the restore job and 'myconfig.sh'
 can be replaced with your configuration file. Run "stage-processing.sh
 -h" for more information.
-

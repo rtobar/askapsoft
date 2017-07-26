@@ -45,9 +45,9 @@ using askap::accessors::XercescString;
 using askap::accessors::XercescUtils;
 
 EvaluationReportElement::EvaluationReportElement(const LOFAR::ParameterSet &parset)
-    : ElementBase(parset)
+    : ProjectElementBase(parset)
 {
     itsName = "evaluation";
-    itsFormat = "pdf";
+    itsFormat = parset.getString("format","pdf");
 }
 

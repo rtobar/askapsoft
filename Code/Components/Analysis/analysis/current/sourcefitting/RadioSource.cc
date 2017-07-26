@@ -61,6 +61,7 @@
 #include <casacore/scimath/Functionals/Gaussian3D.h>
 #include <casacore/casa/namespace.h>
 #include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/MaskedArray.h>
 #include <casacore/casa/Arrays/Slicer.h>
 #include <casacore/casa/Arrays/ArrayMath.h>
 #include <casacore/casa/Quanta/Quantum.h>
@@ -107,16 +108,8 @@ RadioSource::RadioSource():
     itsHeader = duchamp::FitsHeader();
     itsFitParams = FittingParameters();
     itsNoiseLevel = itsFitParams.noiseLevel();
-    std::vector<std::string>::iterator type;
-    std::vector<std::string> typelist = availableFitTypes;
 
-    for (type = typelist.begin(); type < typelist.end(); type++) {
-        itsAlphaMap[*type] = std::vector<float>(1, -99.);
-        itsBetaMap[*type] = std::vector<float>(1, -99.);
-    }
-
-    itsAlphaMap["best"] = std::vector<float>(1, -99.);
-    itsBetaMap["best"] = std::vector<float>(1, -99.);
+    initialiseAlphaBetaMaps();
 }
 
 //**************************************************************//
@@ -129,16 +122,9 @@ RadioSource::RadioSource(duchamp::Detection obj):
     itsHeader = duchamp::FitsHeader();
     itsFitParams = FittingParameters();
     itsNoiseLevel = itsFitParams.noiseLevel();
-    std::vector<std::string>::iterator type;
-    std::vector<std::string> typelist = availableFitTypes;
 
-    for (type = typelist.begin(); type < typelist.end(); type++) {
-        itsAlphaMap[*type] = std::vector<float>(1, -99.);
-        itsBetaMap[*type] = std::vector<float>(1, -99.);
-    }
+    initialiseAlphaBetaMaps();
 
-    itsAlphaMap["best"] = std::vector<float>(1, -99.);
-    itsBetaMap["best"] = std::vector<float>(1, -99.);
 }
 
 //**************************************************************//
@@ -159,16 +145,9 @@ RadioSource& RadioSource::operator= (const duchamp::Detection& det)
     itsFitParams = FittingParameters();
     itsHeader = duchamp::FitsHeader();
     itsNoiseLevel = itsFitParams.noiseLevel();
-    std::vector<std::string>::iterator type;
-    std::vector<std::string> typelist = availableFitTypes;
 
-    for (type = typelist.begin(); type < typelist.end(); type++) {
-        itsAlphaMap[*type] = std::vector<float>(1, -99.);
-        itsBetaMap[*type] = std::vector<float>(1, -99.);
-    }
+    initialiseAlphaBetaMaps();
 
-    itsAlphaMap["best"] = std::vector<float>(1, -99.);
-    itsBetaMap["best"] = std::vector<float>(1, -99.);
     return *this;
 }
 
@@ -189,6 +168,24 @@ RadioSource& RadioSource::operator= (const RadioSource& src)
     itsAlphaMap = src.itsAlphaMap;
     itsBetaMap = src.itsBetaMap;
     return *this;
+}
+
+//**************************************************************//
+
+void RadioSource::initialiseAlphaBetaMaps()
+{
+
+    std::vector<std::string>::iterator type;
+    std::vector<std::string> typelist = availableFitTypes;
+
+    for (type = typelist.begin(); type < typelist.end(); type++) {
+        itsAlphaMap[*type] = std::vector<double>(1, defaultAlpha);
+        itsBetaMap[*type] = std::vector<double>(1, defaultBeta);
+    }
+
+    itsAlphaMap["best"] = std::vector<double>(1, defaultAlpha);
+    itsBetaMap["best"] = std::vector<double>(1, defaultBeta);
+
 }
 
 //**************************************************************//
@@ -372,7 +369,7 @@ void RadioSource::setAtEdge(duchamp::Cube &cube,
 
 void RadioSource::setNoiseLevel(duchamp::Cube &cube)
 {
-    if (itsFitParams.useNoise()) {
+    if (itsFitParams.useNoise() || !itsFitParams.doFit()) {
         std::vector<float> array(cube.getArray(),
                                  cube.getArray() + cube.getSize());
         std::vector<size_t> dim(cube.getDimArray(),
@@ -571,7 +568,10 @@ RadioSource::getSubComponentList(casa::Matrix<casa::Double> pos,
                                   itsBox.length(), Slicer::endIsLength);
 
 
-        casa::Array<float> curvArray =
+        // casa::Array<float> curvArray =
+        //     analysisutilities::getPixelsInBox(itsFitParams.curvatureImage(),
+        //                                       fullImageBox, false);
+        casa::MaskedArray<float> curvArray =
             analysisutilities::getPixelsInBox(itsFitParams.curvatureImage(),
                                               fullImageBox, false);
 
@@ -589,7 +589,7 @@ RadioSource::getSubComponentList(casa::Matrix<casa::Double> pos,
             if (spatMap.isInObject(x, y)) {
                 int loc = (x - this->boxXmin()) + this->boxXsize() * (y - this->boxYmin());
                 fluxArray[loc] = float(f(i));
-                summitMap[loc] = (curvArray.data()[loc] < -1.*itsFitParams.sigmaCurv());
+                summitMap[loc] = (curvArray.getArray().data()[loc] < -1.*itsFitParams.sigmaCurv());
             }
         }
 
@@ -953,9 +953,6 @@ bool RadioSource::fitGauss(casa::Matrix<casa::Double> &pos,
                       this->getXcentre() + this->getXOffset() << "," <<
                       this->getYcentre() + this->getYOffset() << ")");
 
-    ASKAPLOG_DEBUG_STR(logger, "pos="<<pos);
-    ASKAPLOG_DEBUG_STR(logger, "f="<<f);    
-
     if (this->getSpatialSize() < itsFitParams.minFitSize()) {
         ASKAPLOG_INFO_STR(logger, "Not fitting- source is too small - " <<
                           "spatial size = " << this->getSpatialSize() <<
@@ -1146,7 +1143,6 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
 
 
     if (!doCalc) {
-        // initialise arrays to zero and do nothing else
 
         std::vector<std::string>::iterator type;
         std::vector<std::string> typelist = availableFitTypes;
@@ -1155,14 +1151,16 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
         for (type = typelist.begin(); type < typelist.end(); type++) {
             int nfits = itsBestFitMap[*type].numFits();
             if (term == 1) {
-                itsAlphaMap[*type] = std::vector<float>(nfits, 0.);
+                itsAlphaMap[*type] = std::vector<double>(nfits, defaultAlpha);
             } else if (term == 2) {
-                itsBetaMap[*type] = std::vector<float>(nfits, 0.);
+                itsBetaMap[*type] = std::vector<double>(nfits, defaultBeta);
             }
         }
 
-    } else {
 
+
+    }
+    else {
         ASKAPLOG_DEBUG_STR(logger,
                            "About to find the " << termtype[term] <<
                            ", for image " << imageName);
@@ -1174,12 +1172,13 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
                                    this->boxYmax() - this->boxYmin() + 1, 1);
         Slicer theBox = casa::Slicer(xrange, yrange);
 
-        casa::Array<casa::Float> flux_all = getPixelsInBox(imageName, theBox);
+        // casa::Array<casa::Float> flux_all = getPixelsInBox(imageName, theBox);
+        casa::MaskedArray<casa::Float> flux_all = getPixelsInBox(imageName, theBox);
 
         std::vector<double> fluxvec;
         for (size_t i = 0; i < flux_all.size(); i++) {
-            if (!isnan(flux_all.data()[i])) {
-                fluxvec.push_back(flux_all.data()[i]);
+            if (!isnan(flux_all.getArray().data()[i])) {
+                fluxvec.push_back(flux_all.getArray().data()[i]);
             }
         }
         casa::Matrix<casa::Double> pos;
@@ -1193,7 +1192,7 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
         // ignores them
         int counter = 0;
         for (size_t i = 0; i < flux_all.size(); i++) {
-            if (!isnan(flux_all.data()[i])) {
+            if (flux_all.getMask().data()[i]) {
                 sigma(counter) = 1;
                 curpos(0) = i % this->boxXsize() + this->boxXmin();
                 curpos(1) = i / this->boxXsize() + this->boxYmin();
@@ -1208,7 +1207,7 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
         std::vector<std::string> typelist = availableFitTypes;
 
         for (type = typelist.begin(); type < typelist.end(); type++) {
-            std::vector<float> termValues(itsBestFitMap[*type].numGauss(), 0.);
+            std::vector<double> termValues(itsBestFitMap[*type].numGauss(), 0.);
 
             if (itsBestFitMap[*type].isGood() || itsBestFitMap[*type].fitIsGuess()) {
 
@@ -1232,11 +1231,11 @@ void RadioSource::findSpectralTerm(std::string imageName, int term, bool doCalc)
                                        "(" << itsBestFitMap[*type].numGauss() << " of them):");
 
                     for (unsigned int i = 0; i < itsBestFitMap[*type].numGauss(); i++) {
-                        float Iref = itsBestFitMap[*type].gaussian(i).flux();
+                        double Iref = itsBestFitMap[*type].gaussian(i).flux();
                         if (term == 1) {
                             termValues[i] = fit.gaussian(i).flux() / Iref;
                         } else if (term == 2) {
-                            float alpha = itsAlphaMap[*type][i];
+                            double alpha = itsAlphaMap[*type][i];
                             termValues[i] = fit.gaussian(i).flux() / Iref -
                                             0.5 * alpha * (alpha - 1.);
                         }
@@ -1334,8 +1333,8 @@ void RadioSource::printTableEntry(std::ostream &stream,
     if (itsHeader.needBeamSize()) {
         intfluxfit /= itsHeader.beam().area(); // Convert from Jy/beam to Jy
     }
-    float alpha = itsAlphaMap[fitType][fitNum];
-    float beta = itsBetaMap[fitType][fitNum];
+    double alpha = itsAlphaMap[fitType][fitNum];
+    double beta = itsBetaMap[fitType][fitNum];
     std::string blankComment = "--";
     int flagGuess = results.fitIsGuess() ? 1 : 0;
     int flagSiblings = itsBestFitMap[fitType].numFits() > 1 ? 1 : 0;
@@ -1585,7 +1584,7 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, RadioSource& src)
 
     size = src.itsAlphaMap.size();
     blob << size;
-    std::map<std::string, std::vector<float> >::iterator val;
+    std::map<std::string, std::vector<double> >::iterator val;
 
     for (val = src.itsAlphaMap.begin(); val != src.itsAlphaMap.end(); val++) {
         blob << val->first;
@@ -1712,7 +1711,7 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob, RadioSource& src)
     for (int i = 0; i < size; i++) {
         int32 vecsize;
         blob >> s >> vecsize;
-        std::vector<float> vec(vecsize);
+        std::vector<double> vec(vecsize);
 
         for (int i = 0; i < vecsize; i++) blob >> vec[i];
 
@@ -1724,7 +1723,7 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob, RadioSource& src)
     for (int i = 0; i < size; i++) {
         int32 vecsize;
         blob >> s >> vecsize;
-        std::vector<float> vec(vecsize);
+        std::vector<double> vec(vecsize);
 
         for (int i = 0; i < vecsize; i++) blob >> vec[i];
 

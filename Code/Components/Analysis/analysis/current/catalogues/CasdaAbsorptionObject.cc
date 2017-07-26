@@ -29,7 +29,7 @@
 #include <catalogues/CasdaAbsorptionObject.h>
 #include <catalogues/CatalogueEntry.h>
 #include <catalogues/CasdaComponent.h>
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <askap_analysis.h>
 
 #include <askap/AskapLogging.h>
@@ -45,6 +45,8 @@
 #include <duchampinterface/DuchampInterface.h>
 
 #include <Common/ParameterSet.h>
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
 #include <casacore/casa/Quanta/Quantum.h>
 #include <casacore/casa/Quanta/MVTime.h>
 #include <casacore/images/Images/ImageInterface.h>
@@ -58,6 +60,11 @@ ASKAP_LOGGER(logger, ".casdaabsorptionobject");
 namespace askap {
 
 namespace analysis {
+
+CasdaAbsorptionObject::CasdaAbsorptionObject():
+    CatalogueEntry()
+{
+}
 
 CasdaAbsorptionObject::CasdaAbsorptionObject(CasdaComponent &component,
         sourcefitting::RadioSource &obj,
@@ -137,6 +144,11 @@ const float CasdaAbsorptionObject::ra()
 const float CasdaAbsorptionObject::dec()
 {
     return itsDEC.value();
+}
+
+const std::string CasdaAbsorptionObject::id()
+{
+    return itsObjectID;
 }
 
 void CasdaAbsorptionObject::printTableRow(std::ostream &stream,
@@ -230,79 +242,80 @@ void CasdaAbsorptionObject::printTableEntry(std::ostream &stream,
 
 }
 
-void CasdaAbsorptionObject::checkCol(duchamp::Catalogues::Column &column)
+void CasdaAbsorptionObject::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
+    bool checkPrec=false;
     std::string type = column.type();
     if (type == "IMAGEID") {
-        column.check(itsImageID);
+        column.check(itsImageID, checkTitle);
     } else if (type == "DATEOBS") {
-        column.check(itsDate);
+        column.check(itsDate, checkTitle);
     } else if (type == "COMP_ID") {
-        column.check(itsComponentID);
+        column.check(itsComponentID, checkTitle);
     } else if (type == "CONTFLUX") {
-        column.check(itsContinuumFlux);
+        column.check(itsContinuumFlux, checkTitle, checkPrec);
     } else if (type == "ID") {
-        column.check(itsObjectID);
+        column.check(itsObjectID, checkTitle);
     } else if (type == "NAME") {
-        column.check(itsName);
+        column.check(itsName, checkTitle);
     } else if (type == "RA") {
-        column.check(itsRAs);
+        column.check(itsRAs, checkTitle);
     } else if (type == "DEC") {
-        column.check(itsDECs);
+        column.check(itsDECs, checkTitle);
     } else if (type == "RAJD") {
-        column.check(itsRA.value());
+        column.check(itsRA.value(), checkTitle, checkPrec);
     } else if (type == "RAERR") {
-        column.check(itsRA.error());
+        column.check(itsRA.error(), checkTitle, checkPrec);
     } else if (type == "DECJD") {
-        column.check(itsDEC.value());
+        column.check(itsDEC.value(), checkTitle, checkPrec);
     } else if (type == "DECERR") {
-        column.check(itsDEC.error());
+        column.check(itsDEC.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_UW") {
-        column.check(itsFreqUW.value());
+        column.check(itsFreqUW.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_UW_ERR") {
-        column.check(itsFreqUW.error());
+        column.check(itsFreqUW.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W") {
-        column.check(itsFreqW.value());
+        column.check(itsFreqW.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W_ERR") {
-        column.check(itsFreqW.error());
+        column.check(itsFreqW.error(), checkTitle, checkPrec);
     } else if (type == "Z_HI_UW") {
-        column.check(itsZHI_UW.value());
+        column.check(itsZHI_UW.value(), checkTitle, checkPrec);
     } else if (type == "Z_HI_UW_ERR") {
-        column.check(itsZHI_UW.error());
+        column.check(itsZHI_UW.error(), checkTitle, checkPrec);
     } else if (type == "Z_HI_W") {
-        column.check(itsZHI_W.value());
+        column.check(itsZHI_W.value(), checkTitle, checkPrec);
     } else if (type == "Z_HI_W_ERR") {
-        column.check(itsZHI_W.error());
+        column.check(itsZHI_W.error(), checkTitle, checkPrec);
     } else if (type == "Z_HI_PEAK") {
-        column.check(itsZHI_peak.value());
+        column.check(itsZHI_peak.value(), checkTitle, checkPrec);
     } else if (type == "Z_HI_PEAK_ERR") {
-        column.check(itsZHI_peak.error());
+        column.check(itsZHI_peak.error(), checkTitle, checkPrec);
     } else if (type == "W50") {
-        column.check(itsW50.value());
+        column.check(itsW50.value(), checkTitle, checkPrec);
     } else if (type == "W50_ERR") {
-        column.check(itsW50.error());
+        column.check(itsW50.error(), checkTitle, checkPrec);
     } else if (type == "W20") {
-        column.check(itsW20.value());
+        column.check(itsW20.value(), checkTitle, checkPrec);
     } else if (type == "W20_ERR") {
-        column.check(itsW20.error());
+        column.check(itsW20.error(), checkTitle, checkPrec);
     } else if (type == "RMS_IMAGECUBE") {
-        column.check(itsRMSimagecube);
+        column.check(itsRMSimagecube, checkTitle, checkPrec);
     } else if (type == "OPT_DEPTH_PEAK") {
-        column.check(itsOpticalDepth_peak.value());
+        column.check(itsOpticalDepth_peak.value(), checkTitle, checkPrec);
     } else if (type == "OPT_DEPTH_PEAK_ERR") {
-        column.check(itsOpticalDepth_peak.error());
+        column.check(itsOpticalDepth_peak.error(), checkTitle, checkPrec);
     } else if (type == "OPT_DEPTH_INT") {
-        column.check(itsOpticalDepth_int.value());
+        column.check(itsOpticalDepth_int.value(), checkTitle, checkPrec);
     } else if (type == "OPT_DEPTH_INT_ERR") {
-        column.check(itsOpticalDepth_int.error());
+        column.check(itsOpticalDepth_int.error(), checkTitle, checkPrec);
     } else if (type == "FLAG1") {
-        column.check(itsFlagResolved);
+        column.check(itsFlagResolved, checkTitle);
     } else if (type == "FLAG2") {
-        column.check(itsFlag2);
+        column.check(itsFlag2, checkTitle);
     } else if (type == "FLAG3") {
-        column.check(itsFlag3);
+        column.check(itsFlag3, checkTitle);
     } else if (type == "COMMENT") {
-        column.check(itsComment);
+        column.check(itsComment, checkTitle);
     } else {
         ASKAPTHROW(AskapError,
                    "Unknown column type " << type);
@@ -310,18 +323,76 @@ void CasdaAbsorptionObject::checkCol(duchamp::Catalogues::Column &column)
 
 }
 
-void CasdaAbsorptionObject::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns)
+void CasdaAbsorptionObject::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle)
 {
     for (size_t i = 0; i < spec.size(); i++) {
-        if ((spec.column(i).getDatatype() == "char") || allColumns) {
-            this->checkCol(spec.column(i));
-        }
+        this->checkCol(spec.column(i), checkTitle);
     }
 }
 
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &blob,
+                               CasdaAbsorptionObject& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
 
+    s = src.itsImageID; blob << s;
+    s = src.itsDate; blob << s;
+    s = src.itsComponentID; blob << s;
+    d = src.itsContinuumFlux; blob << d;
+    s = src.itsObjectID; blob << s;
+    s = src.itsName; blob << s;
+    s = src.itsRAs; blob << s;
+    s = src.itsDECs; blob << s;
+    v = src.itsRA; blob << v;
+    v = src.itsDEC; blob << v;
+    v = src.itsFreqUW; blob << v;
+    v = src.itsFreqW; blob << v;
+    v = src.itsZHI_UW; blob << v;
+    v = src.itsZHI_W; blob << v;
+    v = src.itsZHI_peak; blob << v;
+    v = src.itsW50; blob << v;
+    v = src.itsW20; blob << v;
+    d = src.itsRMSimagecube; blob << d;
+    v = src.itsOpticalDepth_peak; blob << v;
+    v = src.itsOpticalDepth_int; blob << v;
+    s = src.itsComment; blob << s;
 
-
+    return blob;
 }
 
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &blob,
+                               CasdaAbsorptionObject& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
+
+    blob >> s; src.itsImageID = s;
+    blob >> s; src.itsDate = s;
+    blob >> s; src.itsComponentID = s;
+    blob >> d; src.itsContinuumFlux = d;
+    blob >> s; src.itsObjectID = s;
+    blob >> s; src.itsName = s;
+    blob >> s; src.itsRAs = s;
+    blob >> s; src.itsDECs = s;
+    blob >> v; src.itsRA = v;
+    blob >> v; src.itsDEC = v;
+    blob >> v; src.itsFreqUW = v;
+    blob >> v; src.itsFreqW = v;
+    blob >> v; src.itsZHI_UW = v;
+    blob >> v; src.itsZHI_W = v;
+    blob >> v; src.itsZHI_peak = v;
+    blob >> v; src.itsW50 = v;
+    blob >> v; src.itsW20 = v;
+    blob >> d; src.itsRMSimagecube = d;
+    blob >> v; src.itsOpticalDepth_peak = v;
+    blob >> v; src.itsOpticalDepth_int = v;
+    blob >> s; src.itsComment = s;
+
+    return blob;
+}
+
+}
 }

@@ -7,10 +7,19 @@ from the given Scheduling Block (SB) directory. If SB numbers are
 given, this is where to look. If SB numbers are not provided, however,
 the ``MS_INPUT`` variables give the filename for the relevant MS.
 
+It may be that the SB you wish to process has been removed from /scratch2.
+You can follow the instructions on :doc:`../platform/comm_archive` to request
+it be reinstated. If you have already started processing it and wish to
+continue, you can specify the measurement set name it would have (this forms
+the **metadata/mslist_** filename), using the parameters ``MS_INPUT_1934`` or
+``MS_INPUT_SCIENCE``,  and the scripts will recognise the metadata
+file and continue. For anything to be done, it requires you to have already
+run the splitting, so that there is a local copy of the individual beam data.
+
 +----------------------+---------------------------------------------------------+------------------------------------------------------------+
 | Variable             | Default                                                 | Description                                                |
 +======================+=========================================================+============================================================+
-| ``DIR_SB``           | /scratch2/askap/askapops/askap-scheduling-blocks        |Location (on galaxy) of the scheduling blocks. This is used |
+| ``DIR_SB``           | /astro/askaprt/askapops/askap-scheduling-blocks         |Location (on galaxy) of the scheduling blocks. This is used |
 |                      |                                                         |when specifying SB numbers - the default is the standard    |
 |                      |                                                         |location for ASKAP operation.                               |
 +----------------------+---------------------------------------------------------+------------------------------------------------------------+

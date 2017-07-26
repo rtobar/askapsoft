@@ -1,7 +1,7 @@
 /// @file LinmosAccumulator.h
 ///
 /// @brief combine a number of images as a linear mosaic
-/// @details 
+/// @details
 ///
 /// @copyright (c) 2012,2014,2015 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -37,6 +37,8 @@
 
 // ASKAPsoft includes
 #include <utils/MultiDimArrayPlaneIter.h>
+#include <primarybeam/PrimaryBeam.h>
+
 
 using namespace casa;
 
@@ -80,6 +82,23 @@ namespace askap {
                                            const vector<string> &inWgtNames,
                                            const string &outImgName,
                                            const string &outWgtName);
+
+                /// @brief if the images have not been corrected for the primary
+                /// beam they still contain the spectral structure of the primary
+                /// beam as well as their intrinsic spectral indices
+                /// this method decouples the beam spectral behaviour from the images
+                /// Based on a Gaussian beam approximation.
+                /// @param[in] const vector<string> &inImgNames : vector of images to mosaic
+                /// @param[in] const vector<string> &inWgtNames : vector of weight images, if required
+                /// @param[in] const string &outImgName : output mosaic image name
+                /// @param[in] const string &outWgtName : output mosaic weight image name
+
+
+                void removeBeamFromTaylorTerms(Array<T> &taylor0,
+                                               Array<T> &taylor1,
+                                               Array<T> &taylor2,
+                                               const IPosition& curpos,
+                                               const CoordinateSystem& inSys);
 
                 /// @brief search the current directory for suitable mosaics
                 /// @details based on a vector of image tags, look for sets of images with names
@@ -247,7 +266,7 @@ namespace askap {
 
                 T itsCutoff;
 
-                // 
+                //
                 Vector<MVDirection> itsCentres;
                 MVDirection itsInCentre;
 
@@ -262,6 +281,8 @@ namespace askap {
                 map<string,vector<string> > itsInSenNameVecs;
                 map<string,bool> itsOutWgtDuplicates;
                 map<string,bool> itsGenSensitivityImage;
+                //
+                PrimaryBeam::ShPtr itsPB;
 
         };
 
@@ -272,4 +293,3 @@ namespace askap {
 #include <linmos/LinmosAccumulator.tcc>
 
 #endif
-

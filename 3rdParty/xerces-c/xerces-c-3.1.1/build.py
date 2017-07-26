@@ -19,6 +19,12 @@ if platform['system'] == 'Linux' and not is_cray:
     builder.add_option("--enable-transcoder-gnuiconv")
 
 if platform['system'] == 'Darwin':
-    builder.add_option("--with-curl=/usr/lib/")
+    builder.add_option("--with-curl=/usr/")
+    builder.add_option("--enable-transcoder-macosunicodeconverter")
+    builder.add_option("--enable-netaccessor-cfurl")
+    builder.add_option("--enable-netaccessor-cfurl")
+    builder.add_option('CFLAGS="-arch x86_64"')
+    builder.add_option('CXXFLAGS="-arch x86_64"')
+
 
 builder.build()

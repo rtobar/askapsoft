@@ -402,6 +402,15 @@ but with a .ann/.crf/.reg extension respectively. Whether these are
 produced is governed by the flagKarma/flagCasa/flagDS9 parameters (see
 :doc:`selavy` for details).
 
+By setting **Fitter.writeComponentMap=true** (the default), an image
+is made showing just the fitted Gaussian components. This is the
+"component map". At the same time, a residual map (input image with
+the component map subtracted) is created. These default to being FITS
+files, unless **Fitter.imagetype=casa** is given. If *imagename* is
+the input image given to Selavy, the name of these images will be
+componentMap_*imagename*.fits and componentResidual_*imagename*.fits
+(with no ".fits" extension for casa images),
+
 A similar output file is the fit Results catalogue. This is only
 produced when **writeFitResults=true**. This shows the fit results
 with a different emphasis (this is the original method of showing the
@@ -582,6 +591,11 @@ Parameters for fitting
 +-----------------------------------------------+---------------+----------------------------+-----------------------------------------------------------------------------------------+
 |**Output files**                               |               |                            |                                                                                         |
 +-----------------------------------------------+---------------+----------------------------+-----------------------------------------------------------------------------------------+
+|Selavy.Fitter.writeComponentMap                |bool           |true                        |Whether to write out an image showing the fitted Gaussian components, as well as a "fit  |
+|                                               |               |                            |residual" map (the input image with the component map subtracted).                       |
++-----------------------------------------------+---------------+----------------------------+-----------------------------------------------------------------------------------------+
+|Selavy.Fitter.imagetype                        |string         |fits                        |Type of image to write - either "casa" or "fits".                                        |
++-----------------------------------------------+---------------+----------------------------+-----------------------------------------------------------------------------------------+
 |Selavy.writeFitResults                         |bool           |false                       |Whether to write out the fitResults files (catalogues and annotations).                  |
 +-----------------------------------------------+---------------+----------------------------+-----------------------------------------------------------------------------------------+
 |Selavy.fitBoxAnnotationFile                    |string         |selavy-fitResults.boxes.ann |A Karma annoation file showing the location and size of boxes used in the Gaussian       |
@@ -637,14 +651,19 @@ spectral index map).
 Selavy defaults to assuming the images have been produced in the
 ASKAPsoft pipeline, and are thus named in a specific way. It is
 possible, however, to specify alternative names for the spectral index
-& curvature images (ie. taylor 1 & 2 maps), although the data they
+& curvature images (ie. Taylor 1 & 2 maps), although the data they
 hold must be formed in the same way (ie. conform to the above
 relationships). The image names are specified via the
 **spectralTermImages** input parameter. If this is not given, the
 names are derived, if possible, from the image name, assuming a
 standard format: if the total intensity image is named
 XXX.taylor.0.YYY, then the spectral index map will be XXX.taylor.1.YYY
-and the spectral curvature map will be XXX.taylor.2.YYY
+and the spectral curvature map will be XXX.taylor.2.YYY.
+
+If the additional Taylor maps are not available, or the
+**findSpectralTerms** parameters are set to **false**, then the values
+for spectral-index and spectral-curvature will be set to the special
+value of -99.
 
 
 Parameters for spectral term measurement
@@ -702,7 +721,13 @@ survey science team, and can be described as follows:
    that is named in the same way as the component and island
    catalogues - see the description above.
  * The extracted spectra of I, Q & U can also be written out to
-   individual files, along with the FDF and RMSF arrays.
+   individual files, along with the FDF and RMSF arrays. These files
+   can be either CASA or FITS format, selectable via the
+   **RMSynthesis.imagetype** parameter. Unlike elsewhere, this
+   defaults to **fits**. The FDF and RMSF files can each be written as 
+   either single complex-valued spectra, or separate spectra for the
+   phase & amplitude. If FITS output is being used, the complex-valued
+   option is not available.
 
 
 Parameters for Rotation Measure Synthesis
@@ -735,6 +760,9 @@ Parameters for Rotation Measure Synthesis
 |                                       |                |                               | **[outputbase]_spec_[Stokes]_[objectID]** for the spectra,           |
 |                                       |                |                               | **[outputbase]_FDF_[objectID]** for the FDF, and                     |
 |                                       |                |                               | **[outputbase]_RMSF_[objectID]** for the RMSF.                       |
++---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
+| Selavy.RMSynthesis.imagetype          | string         | casa                          | Type of image to create when extracting. Can be either "casa" or     |
+|                                       |                |                               | "fits" - anything else will throw an error.                          |
 +---------------------------------------+----------------+-------------------------------+----------------------------------------------------------------------+
 | Selavy.RMSynthesis.outputBase         | string         | ""                            | The base name for the output files - a front-end to                  |
 |                                       |                |                               | **extractSpectra.spectralOutputBase** (:doc:`extraction`).           |

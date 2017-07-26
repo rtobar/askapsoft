@@ -29,12 +29,13 @@
 #include <catalogues/CasdaHiEmissionObject.h>
 #include <catalogues/CatalogueEntry.h>
 #include <catalogues/CasdaComponent.h>
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <askap_analysis.h>
 
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
 
+#include <extraction/HIdata.h>
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FitResults.h>
 #include <outputs/CataloguePreparation.h>
@@ -46,6 +47,8 @@
 #include <duchampinterface/DuchampInterface.h>
 
 #include <Common/ParameterSet.h>
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
 #include <casacore/casa/Quanta/Quantum.h>
 #include <casacore/casa/Quanta/MVTime.h>
 #include <casacore/images/Images/ImageInterface.h>
@@ -60,6 +63,11 @@ ASKAP_LOGGER(logger, ".casdaabsorptionobject");
 namespace askap {
 
 namespace analysis {
+
+CasdaHiEmissionObject::CasdaHiEmissionObject():
+    CatalogueEntry()
+{
+}
 
 CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
         const LOFAR::ParameterSet &parset):
@@ -94,6 +102,18 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     id << itsIDbase << obj.getID();
     itsObjectID = id.str();
 
+    LOFAR::ParameterSet hiParset = parset.makeSubset("HiEmissionCatalogue.");
+    if (! hiParset.isDefined("imagetype")) {
+        hiParset.add("imagetype", "fits");
+    }
+
+    HIdata hidata(parset);
+    hidata.setSource(&obj);
+    hidata.extract();
+    if (hiParset.getBool("writeSpectra", "true")) {
+        hidata.write();
+    }
+
     double peakFluxscale = getPeakFluxConversionScale(obj.header(), casda::fluxUnit);
 
     int lng = obj.header().WCS().lng;
@@ -104,10 +124,18 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     ASKAPLOG_DEBUG_STR(logger, newHead_freq.WCS().ctype[newHead_freq.WCS().spec] << " " <<
                        strncmp(newHead_freq.WCS().ctype[newHead_freq.WCS().spec], "FREQ", 4));
     bool doFreq = (strncmp(newHead_freq.WCS().ctype[newHead_freq.WCS().spec], "FREQ", 4) == 0);
+    if (! doFreq) {
+        ASKAPLOG_ERROR_STR(logger,
+                           "Conversion to Frequency-based WCS failed - cannot compute frequency-based quantities.");
+    }
     duchamp::FitsHeader newHead_vel = changeSpectralAxis(obj.header(), "VOPT-???", casda::velocityUnit);
     ASKAPLOG_DEBUG_STR(logger, newHead_vel.WCS().ctype[newHead_vel.WCS().spec] << " " <<
                        strncmp(newHead_vel.WCS().ctype[newHead_vel.WCS().spec], "VOPT", 4));
     bool doVel = (strncmp(newHead_vel.WCS().ctype[newHead_vel.WCS().spec], "VOPT", 4) == 0);
+    if (! doVel) {
+        ASKAPLOG_ERROR_STR(logger,
+                           "Conversion to Velocity-based WCS failed - cannot compute velocity-based quantities.");
+    }
     double intFluxscale = getIntFluxConversionScale(newHead_vel, casda::intFluxUnitSpectral);
 
     casa::Unit imageFreqUnits(newHead_freq.WCS().cunit[obj.header().WCS().spec]);
@@ -201,6 +229,15 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     itsMajorAxis = obj.getMajorAxis() * 60.; // major axis from Object is in arcmin
     itsMinorAxis = obj.getMinorAxis() * 60.;
     itsPositionAngle = obj.getPositionAngle();
+
+    // From 2D Gaussian fit to the moment-zero image
+    hidata.fitToMom0();
+    itsMajorAxis_fit.value() = hidata.mom0Fit()[0] * 3600.;
+    itsMajorAxis_fit.error() = hidata.mom0FitError()[0] * 3600.;
+    itsMinorAxis_fit.value() = hidata.mom0Fit()[1] * 3600.;
+    itsMinorAxis_fit.error() = hidata.mom0FitError()[1] * 3600.;
+    itsPositionAngle_fit.value() = hidata.mom0Fit()[2] * 180. / M_PI;
+    itsPositionAngle_fit.error() = hidata.mom0FitError()[2] * 180. / M_PI;
     itsSizeX = obj.getXmax() - obj.getXmin() + 1;
     itsSizeY = obj.getYmax() - obj.getYmin() + 1;
     itsSizeZ = obj.getZmax() - obj.getZmin() + 1;
@@ -281,16 +318,52 @@ CasdaHiEmissionObject::CasdaHiEmissionObject(sourcefitting::RadioSource &obj,
     itsIntegFlux.error() = sqrt(itsNumVoxels) * itsRMSimagecube * (intFluxscale / peakFluxscale) *
                            newHead_vel.WCS().cdelt[newHead_vel.WCS().spec] * velScale /
                            newHead_vel.beam().area();
-    itsFluxMax = obj.getPeakFlux() * peakFluxscale;
+
+    // Voxel statistics
+    hidata.findVoxelStats();
+    itsFluxMax = hidata.fluxMax() * peakFluxscale;
+    itsFluxMin = hidata.fluxMin() * peakFluxscale;
+    itsFluxMean = hidata.fluxMean() * peakFluxscale;
+    itsFluxStddev = hidata.fluxStddev() * peakFluxscale;
+    itsFluxRMS = hidata.fluxRMS() * peakFluxscale;
+
 
 
     // @todo - Make moment-0 array, then fit single Gaussian to it.
     // Q - what if fit fails?
 
-    // @todo - Busy Function fitting
+    // Busy Function fitting
+    ASKAPLOG_INFO_STR(logger, "Fitting Busy function to spectrum of object " << itsObjectID);
+    int status = hidata.busyFunctionFit();
+    if (status == 0) {
+        casa::Vector<double> BFparams = hidata.BFparams();
+        ASKAPLOG_INFO_STR(logger, "BF results: " << BFparams);
+        casa::Vector<double> BFerrors = hidata.BFerrors();
+        const float channelFreqWidth = newHead_freq.WCS().cdelt[obj.header().WCS().spec] * freqScale;
+        itsBFfit_a.value() = BFparams[0];
+        itsBFfit_a.error() = BFerrors[0];
+        itsBFfit_b1.value() = BFparams[1];
+        itsBFfit_b1.error() = BFerrors[1];
+        itsBFfit_b2.value() = BFparams[2];
+        itsBFfit_b2.error() = BFerrors[2];
+        itsBFfit_c.value() = BFparams[3];
+        itsBFfit_c.error() = BFerrors[3];
+        itsBFfit_xe.value() = BFparams[4] * channelFreqWidth;
+        itsBFfit_xe.error() = BFerrors[4] * channelFreqWidth;
+        itsBFfit_xp.value() = BFparams[5] * channelFreqWidth;
+        itsBFfit_xp.error() = BFerrors[5] * channelFreqWidth;
+        itsBFfit_w.value() = BFparams[6] * channelFreqWidth;
+        itsBFfit_w.error() = BFerrors[6] * channelFreqWidth;
+        itsBFfit_n.value() = BFparams[7];
+        itsBFfit_n.error() = BFerrors[7];
+    } else {
+        ASKAPLOG_WARN_STR(logger, "Could not fit busy function to object " << itsObjectID);
+    }
 
-    // @todo - Need to add logic to measure resolvedness.
-    itsFlagResolved = 1;
+    // @todo - Need to add logic to measure resolvedness. Currently it
+    // is "Is the mom0 map adequately fitted by a PSF-shaped Gaussian?
+    // If so, it is not resolved."
+    itsFlagResolved = hidata.mom0Resolved() ? 1 : 0;
 
 }
 
@@ -302,6 +375,11 @@ const float CasdaHiEmissionObject::ra()
 const float CasdaHiEmissionObject::dec()
 {
     return itsDEC_w.value();
+}
+
+const std::string CasdaHiEmissionObject::id()
+{
+    return itsObjectID;
 }
 
 void CasdaHiEmissionObject::printTableRow(std::ostream &stream,
@@ -585,269 +663,270 @@ void CasdaHiEmissionObject::printTableEntry(std::ostream &stream,
 
 }
 
-void CasdaHiEmissionObject::checkCol(duchamp::Catalogues::Column &column)
+void CasdaHiEmissionObject::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
+    bool checkPrec=false;
     std::string type = column.type();
     if (type == "ID") {
-        column.check(itsObjectID);
+        column.check(itsObjectID, checkTitle);
     } else if (type == "NAME") {
-        column.check(itsName);
+        column.check(itsName, checkTitle);
     } else if (type == "RA") {
-        column.check(itsRAs_w);
+        column.check(itsRAs_w, checkTitle);
     } else if (type == "DEC") {
-        column.check(itsDECs_w);
+        column.check(itsDECs_w, checkTitle);
     } else if (type == "RA_W") {
-        column.check(itsRA_w.value());
+        column.check(itsRA_w.value(), checkTitle, checkPrec);
     } else if (type == "RA_W_ERR") {
-        column.check(itsRA_w.error());
+        column.check(itsRA_w.error(), checkTitle, checkPrec);
     } else if (type == "DEC_W") {
-        column.check(itsDEC_w.value());
+        column.check(itsDEC_w.value(), checkTitle, checkPrec);
     } else if (type == "DEC_W_ERR") {
-        column.check(itsDEC_w.error());
+        column.check(itsDEC_w.error(), checkTitle, checkPrec);
     } else if (type == "RA_UW") {
-        column.check(itsRA_uw.value());
+        column.check(itsRA_uw.value(), checkTitle, checkPrec);
     } else if (type == "RA_UW_ERR") {
-        column.check(itsRA_uw.error());
+        column.check(itsRA_uw.error(), checkTitle, checkPrec);
     } else if (type == "DEC_UW") {
-        column.check(itsDEC_uw.value());
+        column.check(itsDEC_uw.value(), checkTitle, checkPrec);
     } else if (type == "DEC_UW_ERR") {
-        column.check(itsDEC_uw.error());
+        column.check(itsDEC_uw.error(), checkTitle, checkPrec);
     } else if (type == "GLONG_W") {
-        column.check(itsGlong_w.value());
+        column.check(itsGlong_w.value(), checkTitle, checkPrec);
     } else if (type == "GLONG_W_ERR") {
-        column.check(itsGlong_w.error());
+        column.check(itsGlong_w.error(), checkTitle, checkPrec);
     } else if (type == "GLAT_W") {
-        column.check(itsGlat_w.value());
+        column.check(itsGlat_w.value(), checkTitle, checkPrec);
     } else if (type == "GLAT_W_ERR") {
-        column.check(itsGlat_w.error());
+        column.check(itsGlat_w.error(), checkTitle, checkPrec);
     } else if (type == "GLONG_UW") {
-        column.check(itsGlong_uw.value());
+        column.check(itsGlong_uw.value(), checkTitle, checkPrec);
     } else if (type == "GLONG_UW_ERR") {
-        column.check(itsGlong_uw.error());
+        column.check(itsGlong_uw.error(), checkTitle, checkPrec);
     } else if (type == "GLAT_UW") {
-        column.check(itsGlat_uw.value());
+        column.check(itsGlat_uw.value(), checkTitle, checkPrec);
     } else if (type == "GLAT_UW_ERR") {
-        column.check(itsGlat_uw.error());
+        column.check(itsGlat_uw.error(), checkTitle, checkPrec);
     } else if (type == "MAJ") {
-        column.check(itsMajorAxis);
+        column.check(itsMajorAxis, checkTitle, checkPrec);
     } else if (type == "MIN") {
-        column.check(itsMinorAxis);
+        column.check(itsMinorAxis, checkTitle, checkPrec);
     } else if (type == "PA") {
-        column.check(itsPositionAngle);
+        column.check(itsPositionAngle, checkTitle, checkPrec);
     } else if (type == "MAJFIT") {
-        column.check(itsMajorAxis_fit.value());
+        column.check(itsMajorAxis_fit.value(), checkTitle, checkPrec);
     } else if (type == "MAJFIT_ERR") {
-        column.check(itsMajorAxis_fit.error());
+        column.check(itsMajorAxis_fit.error(), checkTitle, checkPrec);
     } else if (type == "MINFIT") {
-        column.check(itsMinorAxis_fit.value());
+        column.check(itsMinorAxis_fit.value(), checkTitle, checkPrec);
     } else if (type == "MINFIT_ERR") {
-        column.check(itsMinorAxis_fit.error());
+        column.check(itsMinorAxis_fit.error(), checkTitle, checkPrec);
     } else if (type == "PAFIT") {
-        column.check(itsPositionAngle_fit.value());
+        column.check(itsPositionAngle_fit.value(), checkTitle, checkPrec);
     } else if (type == "PAFIT_ERR") {
-        column.check(itsPositionAngle_fit.error());
+        column.check(itsPositionAngle_fit.error(), checkTitle, checkPrec);
     } else if (type == "SIZEX") {
-        column.check(itsSizeX);
+        column.check(itsSizeX, checkTitle);
     } else if (type == "SIZEY") {
-        column.check(itsSizeY);
+        column.check(itsSizeY, checkTitle);
     } else if (type == "SIZEZ") {
-        column.check(itsSizeZ);
+        column.check(itsSizeZ, checkTitle);
     } else if (type == "NVOX") {
-        column.check(itsNumVoxels);
+        column.check(itsNumVoxels, checkTitle);
     } else if (type == "ASYMM2D") {
-        column.check(itsAsymmetry2d.value());
+        column.check(itsAsymmetry2d.value(), checkTitle, checkPrec);
     } else if (type == "ASYMM2D_ERR") {
-        column.check(itsAsymmetry2d.error());
+        column.check(itsAsymmetry2d.error(), checkTitle, checkPrec);
     } else if (type == "ASYMM3D") {
-        column.check(itsAsymmetry3d.value());
+        column.check(itsAsymmetry3d.value(), checkTitle, checkPrec);
     } else if (type == "ASYMM3D_ERR") {
-        column.check(itsAsymmetry3d.error());
+        column.check(itsAsymmetry3d.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_UW") {
-        column.check(itsFreq_uw.value());
+        column.check(itsFreq_uw.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_UW_ERR") {
-        column.check(itsFreq_uw.error());
+        column.check(itsFreq_uw.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W") {
-        column.check(itsFreq_w.value());
+        column.check(itsFreq_w.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W_ERR") {
-        column.check(itsFreq_w.error());
+        column.check(itsFreq_w.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_PEAK") {
-        column.check(itsFreq_peak);
+        column.check(itsFreq_peak, checkTitle, checkPrec);
     } else if (type == "VEL_UW") {
-        column.check(itsVelHI_uw.value());
+        column.check(itsVelHI_uw.value(), checkTitle, checkPrec);
     } else if (type == "VEL_UW_ERR") {
-        column.check(itsVelHI_uw.error());
+        column.check(itsVelHI_uw.error(), checkTitle, checkPrec);
     } else if (type == "VEL_W") {
-        column.check(itsVelHI_w.value());
+        column.check(itsVelHI_w.value(), checkTitle, checkPrec);
     } else if (type == "VEL_W_ERR") {
-        column.check(itsVelHI_w.error());
+        column.check(itsVelHI_w.error(), checkTitle, checkPrec);
     } else if (type == "VEL_PEAK") {
-        column.check(itsVelHI_peak);
+        column.check(itsVelHI_peak, checkTitle, checkPrec);
     } else if (type == "FINT") {
-        column.check(itsIntegFlux.value());
+        column.check(itsIntegFlux.value(), checkTitle, checkPrec);
     } else if (type == "FINT_ERR") {
-        column.check(itsIntegFlux.error());
+        column.check(itsIntegFlux.error(), checkTitle, checkPrec);
     } else if (type == "FLUXMAX") {
-        column.check(itsFluxMax);
+        column.check(itsFluxMax, checkTitle, checkPrec);
     } else if (type == "FLUXMIN") {
-        column.check(itsFluxMin);
+        column.check(itsFluxMin, checkTitle, checkPrec);
     } else if (type == "FLUXMEAN") {
-        column.check(itsFluxMean);
+        column.check(itsFluxMean, checkTitle, checkPrec);
     } else if (type == "FLUXSTDDEV") {
-        column.check(itsFluxStddev);
+        column.check(itsFluxStddev, checkTitle, checkPrec);
     } else if (type == "FLUXRMS") {
-        column.check(itsFluxRMS);
+        column.check(itsFluxRMS, checkTitle, checkPrec);
     } else if (type == "RMS_IMAGECUBE") {
-        column.check(itsRMSimagecube);
+        column.check(itsRMSimagecube, checkTitle, checkPrec);
     } else if (type == "W50_FREQ") {
-        column.check(itsW50_freq.value());
+        column.check(itsW50_freq.value(), checkTitle, checkPrec);
     } else if (type == "W50_FREQ_ERR") {
-        column.check(itsW50_freq.error());
+        column.check(itsW50_freq.error(), checkTitle, checkPrec);
     } else if (type == "CW50_FREQ") {
-        column.check(itsCW50_freq.value());
+        column.check(itsCW50_freq.value(), checkTitle, checkPrec);
     } else if (type == "CW50_FREQ_ERR") {
-        column.check(itsCW50_freq.error());
+        column.check(itsCW50_freq.error(), checkTitle, checkPrec);
     } else if (type == "W20_FREQ") {
-        column.check(itsW20_freq.value());
+        column.check(itsW20_freq.value(), checkTitle, checkPrec);
     } else if (type == "W20_FREQ_ERR") {
-        column.check(itsW20_freq.error());
+        column.check(itsW20_freq.error(), checkTitle, checkPrec);
     } else if (type == "CW20_FREQ") {
-        column.check(itsCW20_freq.value());
+        column.check(itsCW20_freq.value(), checkTitle, checkPrec);
     } else if (type == "CW20_FREQ_ERR") {
-        column.check(itsCW20_freq.error());
+        column.check(itsCW20_freq.error(), checkTitle, checkPrec);
     } else if (type == "W50_VEL") {
-        column.check(itsW50_vel.value());
+        column.check(itsW50_vel.value(), checkTitle, checkPrec);
     } else if (type == "W50_VEL_ERR") {
-        column.check(itsW50_vel.error());
+        column.check(itsW50_vel.error(), checkTitle, checkPrec);
     } else if (type == "CW50_VEL") {
-        column.check(itsCW50_vel.value());
+        column.check(itsCW50_vel.value(), checkTitle, checkPrec);
     } else if (type == "CW50_VEL_ERR") {
-        column.check(itsCW50_vel.error());
+        column.check(itsCW50_vel.error(), checkTitle, checkPrec);
     } else if (type == "W20_VEL") {
-        column.check(itsW20_vel.value());
+        column.check(itsW20_vel.value(), checkTitle, checkPrec);
     } else if (type == "W20_VEL_ERR") {
-        column.check(itsW20_vel.error());
+        column.check(itsW20_vel.error(), checkTitle, checkPrec);
     } else if (type == "CW20_VEL") {
-        column.check(itsCW20_vel.value());
+        column.check(itsCW20_vel.value(), checkTitle, checkPrec);
     } else if (type == "CW20_VEL_ERR") {
-        column.check(itsCW20_vel.error());
+        column.check(itsCW20_vel.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W50_UW") {
-        column.check(itsFreq_W50clip_uw.value());
+        column.check(itsFreq_W50clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W50_UW_ERR") {
-        column.check(itsFreq_W50clip_uw.error());
+        column.check(itsFreq_W50clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW50_UW") {
-        column.check(itsFreq_CW50clip_uw.value());
+        column.check(itsFreq_CW50clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW50_UW_ERR") {
-        column.check(itsFreq_CW50clip_uw.error());
+        column.check(itsFreq_CW50clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W20_UW") {
-        column.check(itsFreq_W20clip_uw.value());
+        column.check(itsFreq_W20clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W20_UW_ERR") {
-        column.check(itsFreq_W20clip_uw.error());
+        column.check(itsFreq_W20clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW20_UW") {
-        column.check(itsFreq_CW20clip_uw.value());
+        column.check(itsFreq_CW20clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW20_UW_ERR") {
-        column.check(itsFreq_CW20clip_uw.error());
+        column.check(itsFreq_CW20clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "VEL_W50_UW") {
-        column.check(itsVelHI_W50clip_uw.value());
+        column.check(itsVelHI_W50clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "VEL_W50_UW_ERR") {
-        column.check(itsVelHI_W50clip_uw.error());
+        column.check(itsVelHI_W50clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "VEL_CW50_UW") {
-        column.check(itsVelHI_CW50clip_uw.value());
+        column.check(itsVelHI_CW50clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "VEL_CW50_UW_ERR") {
-        column.check(itsVelHI_CW50clip_uw.error());
+        column.check(itsVelHI_CW50clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "VEL_W20_UW") {
-        column.check(itsVelHI_W20clip_uw.value());
+        column.check(itsVelHI_W20clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "VEL_W20_UW_ERR") {
-        column.check(itsVelHI_W20clip_uw.error());
+        column.check(itsVelHI_W20clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "VEL_CW20_UW") {
-        column.check(itsVelHI_CW20clip_uw.value());
+        column.check(itsVelHI_CW20clip_uw.value(), checkTitle, checkPrec);
     } else if (type == "VEL_CW20_UW_ERR") {
-        column.check(itsVelHI_CW20clip_uw.error());
+        column.check(itsVelHI_CW20clip_uw.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W50_W") {
-        column.check(itsFreq_W50clip_w.value());
+        column.check(itsFreq_W50clip_w.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W50_W_ERR") {
-        column.check(itsFreq_W50clip_w.error());
+        column.check(itsFreq_W50clip_w.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW50_W") {
-        column.check(itsFreq_CW50clip_w.value());
+        column.check(itsFreq_CW50clip_w.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW50_W_ERR") {
-        column.check(itsFreq_CW50clip_w.error());
+        column.check(itsFreq_CW50clip_w.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_W20_W") {
-        column.check(itsFreq_W20clip_w.value());
+        column.check(itsFreq_W20clip_w.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_W20_W_ERR") {
-        column.check(itsFreq_W20clip_w.error());
+        column.check(itsFreq_W20clip_w.error(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW20_W") {
-        column.check(itsFreq_CW20clip_w.value());
+        column.check(itsFreq_CW20clip_w.value(), checkTitle, checkPrec);
     } else if (type == "FREQ_CW20_W_ERR") {
-        column.check(itsFreq_CW20clip_w.error());
+        column.check(itsFreq_CW20clip_w.error(), checkTitle, checkPrec);
     } else if (type == "VEL_W50_W") {
-        column.check(itsVelHI_W50clip_w.value());
+        column.check(itsVelHI_W50clip_w.value(), checkTitle, checkPrec);
     } else if (type == "VEL_W50_W_ERR") {
-        column.check(itsVelHI_W50clip_w.error());
+        column.check(itsVelHI_W50clip_w.error(), checkTitle, checkPrec);
     } else if (type == "VEL_CW50_W") {
-        column.check(itsVelHI_CW50clip_w.value());
+        column.check(itsVelHI_CW50clip_w.value(), checkTitle, checkPrec);
     } else if (type == "VEL_CW50_W_ERR") {
-        column.check(itsVelHI_CW50clip_w.error());
+        column.check(itsVelHI_CW50clip_w.error(), checkTitle, checkPrec);
     } else if (type == "VEL_W20_W") {
-        column.check(itsVelHI_W20clip_w.value());
+        column.check(itsVelHI_W20clip_w.value(), checkTitle, checkPrec);
     } else if (type == "VEL_W20_W_ERR") {
-        column.check(itsVelHI_W20clip_w.error());
+        column.check(itsVelHI_W20clip_w.error(), checkTitle, checkPrec);
     } else if (type == "VEL_CW20_W") {
-        column.check(itsVelHI_CW20clip_w.value());
+        column.check(itsVelHI_CW20clip_w.value(), checkTitle, checkPrec);
     } else if (type == "VEL_CW20_W_ERR") {
-        column.check(itsVelHI_CW20clip_w.error());
+        column.check(itsVelHI_CW20clip_w.error(), checkTitle, checkPrec);
     } else if (type == "FINT_W50") {
-        column.check(itsIntegFlux_W50clip.value());
+        column.check(itsIntegFlux_W50clip.value(), checkTitle, checkPrec);
     } else if (type == "FINT_W50_ERR") {
-        column.check(itsIntegFlux_W50clip.error());
+        column.check(itsIntegFlux_W50clip.error(), checkTitle, checkPrec);
     } else if (type == "FINT_CW50") {
-        column.check(itsIntegFlux_CW50clip.value());
+        column.check(itsIntegFlux_CW50clip.value(), checkTitle, checkPrec);
     } else if (type == "FINT_CW50_ERR") {
-        column.check(itsIntegFlux_CW50clip.error());
+        column.check(itsIntegFlux_CW50clip.error(), checkTitle, checkPrec);
     } else if (type == "FINT_W20") {
-        column.check(itsIntegFlux_W20clip.value());
+        column.check(itsIntegFlux_W20clip.value(), checkTitle, checkPrec);
     } else if (type == "FINT_W20_ERR") {
-        column.check(itsIntegFlux_W20clip.error());
+        column.check(itsIntegFlux_W20clip.error(), checkTitle, checkPrec);
     } else if (type == "FINT_CW20") {
-        column.check(itsIntegFlux_CW20clip.value());
+        column.check(itsIntegFlux_CW20clip.value(), checkTitle, checkPrec);
     } else if (type == "FINT_CW20_ERR") {
-        column.check(itsIntegFlux_CW20clip.error());
+        column.check(itsIntegFlux_CW20clip.error(), checkTitle, checkPrec);
     } else if (type == "BF_A") {
-        column.check(itsBFfit_a.value());
+        column.check(itsBFfit_a.value(), checkTitle, checkPrec);
     } else if (type == "BF_A_ERR") {
-        column.check(itsBFfit_a.error());
+        column.check(itsBFfit_a.error(), checkTitle, checkPrec);
     } else if (type == "BF_W") {
-        column.check(itsBFfit_w.value());
+        column.check(itsBFfit_w.value(), checkTitle, checkPrec);
     } else if (type == "BF_W_ERR") {
-        column.check(itsBFfit_w.error());
+        column.check(itsBFfit_w.error(), checkTitle, checkPrec);
     } else if (type == "BF_B1") {
-        column.check(itsBFfit_b1.value());
+        column.check(itsBFfit_b1.value(), checkTitle, checkPrec);
     } else if (type == "BF_B1_ERR") {
-        column.check(itsBFfit_b1.error());
+        column.check(itsBFfit_b1.error(), checkTitle, checkPrec);
     } else if (type == "BF_B2") {
-        column.check(itsBFfit_b2.value());
+        column.check(itsBFfit_b2.value(), checkTitle, checkPrec);
     } else if (type == "BF_B2_ERR") {
-        column.check(itsBFfit_b2.value());
+        column.check(itsBFfit_b2.value(), checkTitle, checkPrec);
     } else if (type == "BF_XE") {
-        column.check(itsBFfit_xe.value());
+        column.check(itsBFfit_xe.value(), checkTitle, checkPrec);
     } else if (type == "BF_XE_ERR") {
-        column.check(itsBFfit_xe.error());
+        column.check(itsBFfit_xe.error(), checkTitle, checkPrec);
     } else if (type == "BF_XP") {
-        column.check(itsBFfit_xp.value());
+        column.check(itsBFfit_xp.value(), checkTitle, checkPrec);
     } else if (type == "BF_XP_ERR") {
-        column.check(itsBFfit_xp.error());
+        column.check(itsBFfit_xp.error(), checkTitle, checkPrec);
     } else if (type == "BF_C") {
-        column.check(itsBFfit_c.value());
+        column.check(itsBFfit_c.value(), checkTitle, checkPrec);
     } else if (type == "BF_C_ERR") {
-        column.check(itsBFfit_c.error());
+        column.check(itsBFfit_c.error(), checkTitle, checkPrec);
     } else if (type == "BF_N") {
-        column.check(itsBFfit_n.value());
+        column.check(itsBFfit_n.value(), checkTitle, checkPrec);
     } else if (type == "BF_N_ERR") {
-        column.check(itsBFfit_n.error());
+        column.check(itsBFfit_n.error(), checkTitle, checkPrec);
     } else if (type == "FLAG1") {
-        column.check(itsFlagResolved);
+        column.check(itsFlagResolved, checkTitle);
     } else if (type == "FLAG2") {
-        column.check(itsFlag2);
+        column.check(itsFlag2, checkTitle);
     } else if (type == "FLAG3") {
-        column.check(itsFlag3);
+        column.check(itsFlag3, checkTitle);
     } else {
         ASKAPTHROW(AskapError,
                    "Unknown column type " << type);
@@ -855,17 +934,193 @@ void CasdaHiEmissionObject::checkCol(duchamp::Catalogues::Column &column)
 
 }
 
-void CasdaHiEmissionObject::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns)
+void CasdaHiEmissionObject::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle)
 {
     for (size_t i = 0; i < spec.size(); i++) {
-        if ((spec.column(i).getDatatype() == "char") || allColumns) {
-            this->checkCol(spec.column(i));
-        }
+        this->checkCol(spec.column(i), checkTitle);
     }
 }
 
+//**************************************************************//
 
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaHiEmissionObject& src)
+{
+    std::string s;
+    double d;
+    unsigned int u;
+    casda::ValueError v;
+    int i;
 
+    s = src.itsObjectID; blob << s;
+    s = src.itsName; blob << s;
+    s = src.itsRAs_w; blob << s;
+    s = src.itsDECs_w; blob << s;
+    v = src.itsRA_w; blob << v;
+    v = src.itsDEC_w; blob << v;
+    v = src.itsRA_uw; blob << v;
+    v = src.itsDEC_uw; blob << v;
+    v = src.itsGlong_w; blob << v;
+    v = src.itsGlat_w; blob << v;
+    v = src.itsGlong_uw; blob << v;
+    v = src.itsGlat_uw; blob << v;
+    d = src.itsMajorAxis; blob << d;
+    d = src.itsMinorAxis; blob << d;
+    d = src.itsPositionAngle; blob << d;
+    v = src.itsMajorAxis_fit; blob << v;
+    v = src.itsMinorAxis_fit; blob << v;
+    v = src.itsPositionAngle_fit; blob << v;
+    i = src.itsSizeX; blob << i;
+    i = src.itsSizeY; blob << i;
+    i = src.itsSizeZ; blob << i;
+    i = src.itsNumVoxels; blob << i;
+    v = src.itsAsymmetry2d; blob << v;
+    v = src.itsAsymmetry3d; blob << v;
+    v = src.itsFreq_uw; blob << v;
+    v = src.itsFreq_w; blob << v;
+    d = src.itsFreq_peak; blob << d;
+    v = src.itsVelHI_uw; blob << v;
+    v = src.itsVelHI_w; blob << v;
+    d = src.itsVelHI_peak; blob << d;
+    v = src.itsIntegFlux; blob << v;
+    d = src.itsFluxMax; blob << d;
+    d = src.itsFluxMin; blob << d;
+    d = src.itsFluxMean; blob << d;
+    d = src.itsFluxStddev; blob << d;
+    d = src.itsFluxRMS; blob << d;
+    d = src.itsRMSimagecube; blob << d;
+    v = src.itsW50_freq; blob << v;
+    v = src.itsW20_freq; blob << v;
+    v = src.itsCW50_freq; blob << v;
+    v = src.itsCW20_freq; blob << v;
+    v = src.itsW50_vel; blob << v;
+    v = src.itsW20_vel; blob << v;
+    v = src.itsCW50_vel; blob << v;
+    v = src.itsCW20_vel; blob << v;
+    v = src.itsFreq_W50clip_uw; blob << v;
+    v = src.itsFreq_W20clip_uw; blob << v;
+    v = src.itsFreq_CW50clip_uw; blob << v;
+    v = src.itsFreq_CW20clip_uw; blob << v;
+    v = src.itsFreq_W50clip_w; blob << v;
+    v = src.itsFreq_W20clip_w; blob << v;
+    v = src.itsFreq_CW50clip_w; blob << v;
+    v = src.itsFreq_CW20clip_w; blob << v;
+    v = src.itsVelHI_W50clip_uw; blob << v;
+    v = src.itsVelHI_W20clip_uw; blob << v;
+    v = src.itsVelHI_CW50clip_uw; blob << v;
+    v = src.itsVelHI_CW20clip_uw; blob << v;
+    v = src.itsVelHI_W50clip_w; blob << v;
+    v = src.itsVelHI_W20clip_w; blob << v;
+    v = src.itsVelHI_CW50clip_w; blob << v;
+    v = src.itsVelHI_CW20clip_w; blob << v;
+    v = src.itsIntegFlux_W50clip; blob << v;
+    v = src.itsIntegFlux_W20clip; blob << v;
+    v = src.itsIntegFlux_CW50clip; blob << v;
+    v = src.itsIntegFlux_CW20clip; blob << v;
+    v = src.itsBFfit_a; blob << v;
+    v = src.itsBFfit_w; blob << v;
+    v = src.itsBFfit_b1; blob << v;
+    v = src.itsBFfit_b2; blob << v;
+    v = src.itsBFfit_xe; blob << v;
+    v = src.itsBFfit_xp; blob << v;
+    v = src.itsBFfit_c; blob << v;
+    v = src.itsBFfit_n; blob << v;
+    u = src.itsFlagResolved; blob << u;
+    u = src.itsFlag2; blob << u;
+    u = src.itsFlag3; blob << u;
+    s = src.itsComment; blob << s;
+
+    return blob;
+
+}
+
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaHiEmissionObject& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
+    unsigned int u;
+    int i;
+
+    blob >> s; src.itsObjectID = s;
+    blob >> s; src.itsName = s;
+    blob >> s; src.itsRAs_w = s;
+    blob >> s; src.itsDECs_w = s;
+    blob >> v; src.itsRA_w = v;
+    blob >> v; src.itsDEC_w = v;
+    blob >> v; src.itsRA_uw = v;
+    blob >> v; src.itsDEC_uw = v;
+    blob >> v; src.itsGlong_w = v;
+    blob >> v; src.itsGlat_w = v;
+    blob >> v; src.itsGlong_uw = v;
+    blob >> v; src.itsGlat_uw = v;
+    blob >> d; src.itsMajorAxis = d;
+    blob >> d; src.itsMinorAxis = d;
+    blob >> d; src.itsPositionAngle = d;
+    blob >> v; src.itsMajorAxis_fit = v;
+    blob >> v; src.itsMinorAxis_fit = v;
+    blob >> v; src.itsPositionAngle_fit = v;
+    blob >> i; src.itsSizeX = i;
+    blob >> i; src.itsSizeY = i;
+    blob >> i; src.itsSizeZ = i;
+    blob >> i; src.itsNumVoxels = i;
+    blob >> v; src.itsAsymmetry2d = v;
+    blob >> v; src.itsAsymmetry3d = v;
+    blob >> v; src.itsFreq_uw = v;
+    blob >> v; src.itsFreq_w = v;
+    blob >> d; src.itsFreq_peak = d;
+    blob >> v; src.itsVelHI_uw = v;
+    blob >> v; src.itsVelHI_w = v;
+    blob >> d; src.itsVelHI_peak = d;
+    blob >> v; src.itsIntegFlux = v;
+    blob >> d; src.itsFluxMax = d;
+    blob >> d; src.itsFluxMin = d;
+    blob >> d; src.itsFluxMean = d;
+    blob >> d; src.itsFluxStddev = d;
+    blob >> d; src.itsFluxRMS = d;
+    blob >> d; src.itsRMSimagecube = d;
+    blob >> v; src.itsW50_freq = v;
+    blob >> v; src.itsW20_freq = v;
+    blob >> v; src.itsCW50_freq = v;
+    blob >> v; src.itsCW20_freq = v;
+    blob >> v; src.itsW50_vel = v;
+    blob >> v; src.itsW20_vel = v;
+    blob >> v; src.itsCW50_vel = v;
+    blob >> v; src.itsCW20_vel = v;
+    blob >> v; src.itsFreq_W50clip_uw = v;
+    blob >> v; src.itsFreq_W20clip_uw = v;
+    blob >> v; src.itsFreq_CW50clip_uw = v;
+    blob >> v; src.itsFreq_CW20clip_uw = v;
+    blob >> v; src.itsFreq_W50clip_w = v;
+    blob >> v; src.itsFreq_W20clip_w = v;
+    blob >> v; src.itsFreq_CW50clip_w = v;
+    blob >> v; src.itsFreq_CW20clip_w = v;
+    blob >> v; src.itsVelHI_W50clip_uw = v;
+    blob >> v; src.itsVelHI_W20clip_uw = v;
+    blob >> v; src.itsVelHI_CW50clip_uw = v;
+    blob >> v; src.itsVelHI_CW20clip_uw = v;
+    blob >> v; src.itsVelHI_W50clip_w = v;
+    blob >> v; src.itsVelHI_W20clip_w = v;
+    blob >> v; src.itsVelHI_CW50clip_w = v;
+    blob >> v; src.itsVelHI_CW20clip_w = v;
+    blob >> v; src.itsIntegFlux_W50clip = v;
+    blob >> v; src.itsIntegFlux_W20clip = v;
+    blob >> v; src.itsIntegFlux_CW50clip = v;
+    blob >> v; src.itsIntegFlux_CW20clip = v;
+    blob >> v; src.itsBFfit_a = v;
+    blob >> v; src.itsBFfit_w = v;
+    blob >> v; src.itsBFfit_b1 = v;
+    blob >> v; src.itsBFfit_b2 = v;
+    blob >> v; src.itsBFfit_xe = v;
+    blob >> v; src.itsBFfit_xp = v;
+    blob >> v; src.itsBFfit_c = v;
+    blob >> v; src.itsBFfit_n = v;
+    blob >> u; src.itsFlagResolved = u;
+    blob >> u; src.itsFlag2 = u;
+    blob >> u; src.itsFlag3 = u;
+    blob >> s; src.itsComment = s;
+
+    return blob;
+}
 
 }
 

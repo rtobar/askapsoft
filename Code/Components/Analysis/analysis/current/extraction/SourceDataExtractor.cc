@@ -35,7 +35,7 @@
 #include <string>
 #include <sourcefitting/RadioSource.h>
 #include <casainterface/CasaInterface.h>
-#include <imageaccess/CasaImageAccess.h>
+#include <imageaccess/ImageAccessFactory.h>
 #include <catalogues/CasdaComponent.h>
 #include <catalogues/CasdaIsland.h>
 
@@ -61,7 +61,8 @@ namespace askap {
 
 namespace analysis {
 
-SourceDataExtractor::SourceDataExtractor(const LOFAR::ParameterSet& parset)
+SourceDataExtractor::SourceDataExtractor(const LOFAR::ParameterSet& parset):
+    itsParset(parset)
 {
     itsSource = 0;
     itsComponent = 0;
@@ -87,12 +88,25 @@ SourceDataExtractor::SourceDataExtractor(const LOFAR::ParameterSet& parset)
 
     this->verifyInputs();
 
+    openInput();
+    itsOutputUnits = itsInputUnits;
+
 }
 
 SourceDataExtractor::~SourceDataExtractor()
 {
     itsInputCubePtr.reset();
 }
+
+casa::Vector<Quantum<Double> > SourceDataExtractor::inputBeam()
+{
+    casa::Vector<Quantum<Double> > inputBeam(3,0.);
+    if (this->openInput()) {   
+        inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
+    }
+    return inputBeam;
+}
+
 
 casa::IPosition SourceDataExtractor::getShape(std::string image)
 {
@@ -208,6 +222,10 @@ bool SourceDataExtractor::checkPol(std::string image,
                     haveMatch = haveMatch || (stokeCoo.stokes()[i] == stokes);
                 }
             }
+        } else {
+            ASKAPLOG_WARN_STR(logger, "Input cube has no Stokes axis - assuming it is Stokes I");
+            // No Stokes axis - assume it is Stokes I
+            haveMatch = (stokes==casa::Stokes::I);
         }
         this->closeInput();
     } else ASKAPLOG_ERROR_STR(logger, "Could not open image");
@@ -291,8 +309,8 @@ void SourceDataExtractor::writeBeam(std::string &filename)
     inputBeam = itsInputCubePtr->imageInfo().restoringBeam().toVector();
 
     if (inputBeam.size() > 0) {
-        accessors::CasaImageAccess ia;
-        ia.setBeamInfo(filename,
+        boost::shared_ptr<accessors::IImageAccess> ia = accessors::imageAccessFactory(itsParset);
+        ia->setBeamInfo(filename,
                        inputBeam[0].getValue("rad"),
                        inputBeam[1].getValue("rad"),
                        inputBeam[2].getValue("rad"));

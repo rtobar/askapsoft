@@ -40,6 +40,10 @@ namespace askap {
 
 namespace analysis {
 
+CatalogueEntry::CatalogueEntry()
+{
+}
+
 CatalogueEntry::CatalogueEntry(const LOFAR::ParameterSet &parset):
     itsSBid(parset.getString("sbid", "null"))
 {

@@ -51,9 +51,10 @@ namespace askap {
 namespace analysis {
 
 DistributedImageWriter::DistributedImageWriter(askap::askapparallel::AskapParallel& comms,
-        duchamp::Cube *cube,
-        std::string imageName):
-    ImageWriter(cube, imageName), itsComms(&comms)
+                                               const LOFAR::ParameterSet &parset,
+                                               duchamp::Cube *cube,
+                                               std::string imageName):
+    ImageWriter(parset, cube, imageName), itsComms(&comms)
 {
 
 }
@@ -67,6 +68,14 @@ void DistributedImageWriter::create()
 }
 
 void DistributedImageWriter::write(const casa::Array<casa::Float> &data,
+                                   const casa::IPosition &loc, bool accumulate)
+{
+    casa::Array<bool> mask(data.shape(),true);
+    write(data,mask,loc,accumulate);
+}
+
+void DistributedImageWriter::write(const casa::Array<casa::Float> &data,
+                                   const casa::Array<bool> &mask,
                                    const casa::IPosition &loc, bool accumulate)
 {
 
@@ -119,6 +128,7 @@ void DistributedImageWriter::write(const casa::Array<casa::Float> &data,
 
             if (OK) {
                 this->ImageWriter::write(data, loc, accumulate);
+                this->ImageWriter::writeMask(mask, loc);
 
                 // Return the OK to the master to say that we've written to the image
                 if (itsComms->isParallel()) {

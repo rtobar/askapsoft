@@ -68,14 +68,7 @@ if __name__ == '__main__':
 
     # Define the weights image - we use this for plotting contours and
     # determining the correct noise level.
-    # The weights image can be given directly, but if not it is worked out from the image name.
-    if weightsim == '':
-        weightsim=os.path.basename(fitsim)
-        weightsim = weightsim.replace('.restored','')
-        prefix=weightsim[:weightsim.find('.')]
-        weightsim = weightsim.replace(prefix,'weights',1)
-        weightsim = "%s/%s"%(os.path.dirname(fitsim),weightsim)
-    if not os.access(weightsim,os.F_OK):
+    if weightsim != "" and not os.access(weightsim,os.F_OK):
         logging.warn('Weights image %s not found - no weights contours applied'%weightsim)
 
     # Get statistics for the image to determine greyscale levels.
@@ -83,9 +76,10 @@ if __name__ == '__main__':
     #  avoid pixels that have zero weight.
     image=fits.getdata(fitsim)
     isgood=(np.ones(image.shape)>0)
-    if os.access(weightsim,os.F_OK):
+    if weightsim!="" and os.access(weightsim,os.F_OK):
         weights=fits.getdata(weightsim)
         isgood=(weights>weightCutoff)
+    isgood = isgood * ~np.isnan(image)
     if robust:
         median=np.median(image[isgood])
         madfm=np.median(abs(image[isgood]-median))
@@ -135,7 +129,16 @@ if __name__ == '__main__':
                 fontsize=7
             plt.clabel(cs,fontsize=fontsize)
         else:
-            gc.show_colorscale(vmin=vmin,vmax=vmax)
+            #gc.show_colorscale(vmin=vmin,vmax=vmax)
+            # get array via FITSIO and plot directly, to be robust against NaNs
+            image=fits.getdata(fitsim)
+            # reshape to remove degenerate axes
+            newdim=[]
+            for d in image.shape:
+                if d > 1:
+                    newdim.append(d)
+            image2=image.reshape(newdim)
+            plt.imshow(image2, vmin=vmin, vmax=vmax, cmap='Greys')
             if os.access(weightsim,os.F_OK) and showWeightsContours:
                 cs=plt.contour(weights.squeeze(),levels=np.arange(0,10,2)/10.,colors='k',alpha=0.5)
                 plt.clabel(cs,fontsize=10)
@@ -149,8 +152,12 @@ if __name__ == '__main__':
         plt.title(figtitle)
         # Add the colour bar to the side of the plot, showing the
         # range of units covered by the greyscale
-        gc.add_colorbar()
-        gc.colorbar.set_axis_label_text(colorbartext)
+        if fitsim[:7]=='weights':
+            gc.add_colorbar()
+            gc.colorbar.set_axis_label_text(colorbartext)
+        else:
+            cbar = plt.colorbar()
+            cbar.set_label(colorbartext)
         #
         # If a catalogue has been provided, read it and plot ellipses
         # for each component.

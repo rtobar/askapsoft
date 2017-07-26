@@ -28,9 +28,15 @@ package askap.cp.manager.svcclients;
 // ASKAPsoft imports
 
 import askap.interfaces.schedblock.NoSuchSchedulingBlockException;
+import askap.interfaces.schedblock.ParameterException;
 import askap.util.ParameterSet;
+
+import java.util.Map;
 
 public interface IDataServiceClient {
     public ParameterSet getObsParameters(long sbid)
             throws NoSuchSchedulingBlockException;
+
+    public void setObsVariables(long sbid, Map<String, String> obsVars)
+        throws NoSuchSchedulingBlockException, ParameterException;
 }

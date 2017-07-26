@@ -29,7 +29,7 @@
 #ifndef ASKAP_ANALYSIS_CASDA_COMPONENT_H_
 #define ASKAP_ANALYSIS_CASDA_COMPONENT_H_
 
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <catalogues/CatalogueEntry.h>
 #include <sourcefitting/RadioSource.h>
 #include <Common/ParameterSet.h>
@@ -49,6 +49,9 @@ namespace analysis {
 /// file.
 class CasdaComponent : public CatalogueEntry {
     public:
+        /// Default constructor that does nothing.
+        CasdaComponent();
+
         /// Constructor that builds the Component object from a
         /// RadioSource. It takes a single fitted component, indicated
         /// by the parameter fitNumber, from the fit results given by
@@ -111,17 +114,41 @@ class CasdaComponent : public CatalogueEntry {
         /// the COLNAME key. If a key is given that was not expected,
         /// an Askap Error is thrown. Column must be non-const as it
         /// could change.
-        void checkCol(duchamp::Catalogues::Column &column);
+    void checkCol(duchamp::Catalogues::Column &column, bool checkTitle);
 
         /// Perform the column check for all colums in
-        /// specification. If allColumns is false, only the columns
-        /// with type=char are checked, otherwise all are.
-        void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns = true);
+        /// specification. 
+    void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle);
 
         /// Write the ellipse showing the component shape to the given
         /// Annotation file. This allows writing to Karma, DS9 or CASA
         /// annotation/region file.
         void writeAnnotation(boost::shared_ptr<duchamp::AnnotationWriter> &writer);
+
+        /// @brief Functions allowing CasdaComponent objects to be passed
+        /// over LOFAR Blobs
+        /// @name
+        /// @{
+        /// @brief Pass a CasdaComponent object into a Blob
+        /// @details This function provides a mechanism for passing the
+        /// entire contents of a CasdaComponent object into a
+        /// LOFAR::BlobOStream stream
+        friend LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &stream,
+                                              CasdaComponent& src);
+        /// @brief Receive a CasdaComponent object from a Blob
+        /// @details This function provides a mechanism for receiving the
+        /// entire contents of a CasdaComponent object from a
+        /// LOFAR::BlobIStream stream
+        friend LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &stream,
+                                              CasdaComponent& src);
+
+        /// @}
+
+        /// @brief Comparison operator, using the component ID
+        friend bool operator< (CasdaComponent lhs, CasdaComponent rhs)
+        {
+            return (lhs.componentID() < rhs.componentID());
+        }
 
     protected:
         /// The ID of the island that this component came from.
@@ -135,21 +162,21 @@ class CasdaComponent : public CatalogueEntry {
         /// The Declination in string format: 12:34:56.7
         std::string itsDECs;
         /// The RA in decimal degrees
-        casda::ValueError<double> itsRA;
+        casda::ValueError itsRA;
         /// The Declination in decimal degrees
-        casda::ValueError<double> itsDEC;
+        casda::ValueError itsDEC;
         /// The frequency of the image
         double itsFreq;
         /// The fitted peak flux of the component
-        casda::ValueError<double> itsFluxPeak;
+        casda::ValueError itsFluxPeak;
         /// The integrated flux (fitted) of the component
-        casda::ValueError<double> itsFluxInt;
+        casda::ValueError itsFluxInt;
         /// The fitted major axis (FWHM)
-        casda::ValueError<double> itsMaj;
+        casda::ValueError itsMaj;
         /// The fitted minor axis (FWHM)
-        casda::ValueError<double> itsMin;
+        casda::ValueError itsMin;
         /// The position angle of the fitted major axis
-        casda::ValueError<double> itsPA;
+        casda::ValueError itsPA;
         /// The major axis after deconvolution
         double itsMaj_deconv;
         /// The minor axis after deconvolution

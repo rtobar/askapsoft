@@ -54,14 +54,15 @@ class RMCatalogue {
         /// based on the output file given in the parset.
         RMCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                     const LOFAR::ParameterSet &parset,
-                    duchamp::Cube &cube);
+                    duchamp::Cube *cube,
+                    askap::askapparallel::AskapParallel &itsComms);
 
         /// Default destructor
         virtual ~RMCatalogue() {};
 
         /// Check the widths of the columns based on the values within
         /// the catalogue.
-        void check();
+        void check(bool checkTitle);
 
         /// Write the catalogue to the ASCII & VOTable files (acts as
         /// a front-end to the writeVOT() and writeASCII() functions)
@@ -101,7 +102,7 @@ class RMCatalogue {
 
         /// The duchamp::Cube, used to help instantiate the classes to
         /// write out the ASCII and VOTable files.
-        duchamp::Cube &itsCube;
+        duchamp::Cube *itsCube;
 
         /// The filename of the VOTable output file
         std::string itsVotableFilename;

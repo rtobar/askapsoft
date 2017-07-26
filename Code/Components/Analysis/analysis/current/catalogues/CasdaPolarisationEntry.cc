@@ -30,7 +30,7 @@
 #include <catalogues/CasdaComponent.h>
 #include <catalogues/CatalogueEntry.h>
 #include <catalogues/CasdaIsland.h>
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <askap_analysis.h>
 
 #include <askap/AskapLogging.h>
@@ -43,6 +43,9 @@
 #include <duchamp/Outputs/CatalogueSpecification.hh>
 #include <duchamp/Outputs/columns.hh>
 
+#include <Blob/BlobIStream.h>
+#include <Blob/BlobOStream.h>
+
 #include <vector>
 
 ASKAP_LOGGER(logger, ".casdapolarisation");
@@ -50,6 +53,11 @@ ASKAP_LOGGER(logger, ".casdapolarisation");
 namespace askap {
 
 namespace analysis {
+
+CasdaPolarisationEntry::CasdaPolarisationEntry():
+    CatalogueEntry()
+{
+}
 
 CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
         const LOFAR::ParameterSet &parset):
@@ -62,6 +70,9 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
     itsComponentID = comp->componentID();
 
     LOFAR::ParameterSet polParset = parset.makeSubset("RMSynthesis.");
+    if(! polParset.isDefined("imagetype")){
+        polParset.add("imagetype","fits");
+    }
 
     PolarisationData poldata(polParset);
     poldata.initialise(comp);
@@ -134,8 +145,8 @@ CasdaPolarisationEntry::CasdaPolarisationEntry(CasdaComponent *comp,
     itsComplexity = rmdata.complexityConstant();
     itsComplexity_screen = rmdata.complexityResidual();
 
-    itsFlagDetection = rmdata.flagDetection();
-    itsFlagEdge = rmdata.flagEdge();
+    itsFlagDetection = rmdata.flagDetection() ? 1 : 0;
+    itsFlagEdge = rmdata.flagEdge() ? 1 : 0;
     itsFlag3 = 0;
     itsFlag4 = 0;
 }
@@ -150,6 +161,10 @@ const float CasdaPolarisationEntry::dec()
     return itsDec;
 }
 
+const std::string CasdaPolarisationEntry::id()
+{
+    return itsComponentID;
+}
 
 void CasdaPolarisationEntry::printTableRow(std::ostream &stream,
         duchamp::Catalogues::CatalogueSpecification &columns)
@@ -258,95 +273,96 @@ void CasdaPolarisationEntry::printTableEntry(std::ostream &stream,
     }
 }
 
-void CasdaPolarisationEntry::checkCol(duchamp::Catalogues::Column &column)
+void CasdaPolarisationEntry::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
+    bool checkPrec=false;
     std::string type = column.type();
     if (type == "ID") {
-        column.check(itsComponentID);
+        column.check(itsComponentID, checkTitle);
     } else if (type == "NAME") {
-        column.check(itsName);
+        column.check(itsName, checkTitle);
     } else if (type == "RAJD") {
-        column.check(itsRA);
+        column.check(itsRA, checkTitle, checkPrec);
     } else if (type == "DECJD") {
-        column.check(itsDec);
+        column.check(itsDec, checkTitle, checkPrec);
     } else if (type == "IFLUX") {
-        column.check(itsFluxImedian);
+        column.check(itsFluxImedian, checkTitle, checkPrec);
     } else if (type == "QFLUX") {
-        column.check(itsFluxQmedian);
+        column.check(itsFluxQmedian, checkTitle, checkPrec);
     } else if (type == "UFLUX") {
-        column.check(itsFluxUmedian);
+        column.check(itsFluxUmedian, checkTitle, checkPrec);
     } else if (type == "VFLUX") {
-        column.check(itsFluxImedian);
+        column.check(itsFluxImedian, checkTitle, checkPrec);
     } else if (type == "RMS_I") {
-        column.check(itsRmsI);
+        column.check(itsRmsI, checkTitle, checkPrec);
     } else if (type == "RMS_Q") {
-        column.check(itsRmsQ);
+        column.check(itsRmsQ, checkTitle, checkPrec);
     } else if (type == "RMS_U") {
-        column.check(itsRmsU);
+        column.check(itsRmsU, checkTitle, checkPrec);
     } else if (type == "RMS_V") {
-        column.check(itsRmsV);
+        column.check(itsRmsV, checkTitle, checkPrec);
     } else if (type == "CO1") {
-        column.check(itsPolyCoeff0);
+        column.check(itsPolyCoeff0, checkTitle, checkPrec);
     } else if (type == "CO2") {
-        column.check(itsPolyCoeff1);
+        column.check(itsPolyCoeff1, checkTitle, checkPrec);
     } else if (type == "CO3") {
-        column.check(itsPolyCoeff2);
+        column.check(itsPolyCoeff2, checkTitle, checkPrec);
     } else if (type == "CO4") {
-        column.check(itsPolyCoeff3);
+        column.check(itsPolyCoeff3, checkTitle, checkPrec);
     } else if (type == "CO5") {
-        column.check(itsPolyCoeff4);
+        column.check(itsPolyCoeff4, checkTitle, checkPrec);
     } else if (type == "LAMSQ") {
-        column.check(itsLambdaSqRef);
+        column.check(itsLambdaSqRef, checkTitle, checkPrec);
     } else if (type == "RMSF") {
-        column.check(itsRmsfFwhm);
+        column.check(itsRmsfFwhm, checkTitle, checkPrec);
     } else if (type == "POLPEAK") {
-        column.check(itsPintPeak.value());
+        column.check(itsPintPeak.value(), checkTitle, checkPrec);
     } else if (type == "POLPEAKDB") {
-        column.check(itsPintPeakDebias);
+        column.check(itsPintPeakDebias, checkTitle, checkPrec);
     } else if (type == "POLPEAKERR") {
-        column.check(itsPintPeak.error());
+        column.check(itsPintPeak.error(), checkTitle, checkPrec);
     } else if (type == "POLPEAKFIT") {
-        column.check(itsPintPeakFit.value());
+        column.check(itsPintPeakFit.value(), checkTitle, checkPrec);
     } else if (type == "POLPEAKFITDB") {
-        column.check(itsPintPeakFitDebias);
+        column.check(itsPintPeakFitDebias, checkTitle, checkPrec);
     } else if (type == "POLPEAKFITERR") {
-        column.check(itsPintPeakFit.error());
+        column.check(itsPintPeakFit.error(), checkTitle, checkPrec);
     } else if (type == "POLPEAKFITSNR") {
-        column.check(itsPintFitSNR.value());
+        column.check(itsPintFitSNR.value(), checkTitle, checkPrec);
     } else if (type == "POLPEAKFITSNRERR") {
-        column.check(itsPintFitSNR.error());
+        column.check(itsPintFitSNR.error(), checkTitle, checkPrec);
     } else if (type == "FDPEAK") {
-        column.check(itsPhiPeak.value());
+        column.check(itsPhiPeak.value(), checkTitle, checkPrec);
     } else if (type == "FDPEAKERR") {
-        column.check(itsPhiPeak.error());
+        column.check(itsPhiPeak.error(), checkTitle, checkPrec);
     } else if (type == "FDPEAKFIT") {
-        column.check(itsPhiPeakFit.value());
+        column.check(itsPhiPeakFit.value(), checkTitle, checkPrec);
     } else if (type == "FDPEAKFITERR") {
-        column.check(itsPhiPeakFit.error());
+        column.check(itsPhiPeakFit.error(), checkTitle, checkPrec);
     } else if (type == "POLANG") {
-        column.check(itsPolAngleRef.value());
+        column.check(itsPolAngleRef.value(), checkTitle, checkPrec);
     } else if (type == "POLANGERR") {
-        column.check(itsPolAngleRef.error());
+        column.check(itsPolAngleRef.error(), checkTitle, checkPrec);
     } else if (type == "POLANG0") {
-        column.check(itsPolAngleZero.value());
+        column.check(itsPolAngleZero.value(), checkTitle, checkPrec);
     } else if (type == "POLANG0ERR") {
-        column.check(itsPolAngleZero.error());
+        column.check(itsPolAngleZero.error(), checkTitle, checkPrec);
     } else if (type == "POLFRAC") {
-        column.check(itsFracPol.value());
+        column.check(itsFracPol.value(), checkTitle, checkPrec);
     } else if (type == "POLFRACERR") {
-        column.check(itsFracPol.error());
+        column.check(itsFracPol.error(), checkTitle, checkPrec);
     } else if (type == "COMPLEX1") {
-        column.check(itsComplexity);
+        column.check(itsComplexity, checkTitle, checkPrec);
     } else if (type == "COMPLEX2") {
-        column.check(itsComplexity_screen);
+        column.check(itsComplexity_screen, checkTitle, checkPrec);
     } else if (type == "FLAG1") {
-        column.check(itsFlagDetection);
+        column.check(itsFlagDetection, checkTitle);
     } else if (type == "FLAG2") {
-        column.check(itsFlagEdge);
+        column.check(itsFlagEdge, checkTitle);
     } else if (type == "FLAG3") {
-        column.check(itsFlag3);
+        column.check(itsFlag3, checkTitle);
     } else if (type == "FLAG4") {
-        column.check(itsFlag4);
+        column.check(itsFlag4, checkTitle);
     } else {
         ASKAPTHROW(AskapError,
                    "Unknown column type " << type);
@@ -354,15 +370,120 @@ void CasdaPolarisationEntry::checkCol(duchamp::Catalogues::Column &column)
 
 }
 
-void CasdaPolarisationEntry::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec)
+void CasdaPolarisationEntry::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle)
 {
     for (size_t i = 0; i < spec.size(); i++) {
-        this->checkCol(spec.column(i));
+        this->checkCol(spec.column(i), checkTitle);
     }
 }
 
+//**************************************************************//
 
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaPolarisationEntry& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
+    unsigned int u;
+
+    // from CatalogueEntry.h
+    s = src.itsSBid; blob << s;
+    s = src.itsIDbase; blob << s;
+    // from CasdaPolarisationEntry.h
+    s = src.itsComponentID; blob << s;
+    s = src.itsName; blob << s;
+    d = src.itsRA; blob << d;
+    d = src.itsDec; blob << d;
+    d = src.itsFluxImedian; blob << d;
+    d = src.itsFluxQmedian; blob << d;
+    d = src.itsFluxUmedian; blob << d;
+    d = src.itsFluxVmedian; blob << d;
+    d = src.itsRmsI; blob << d;
+    d = src.itsRmsQ; blob << d;
+    d = src.itsRmsU; blob << d;
+    d = src.itsRmsV; blob << d;
+    d = src.itsPolyCoeff0; blob << d;
+    d = src.itsPolyCoeff1; blob << d;
+    d = src.itsPolyCoeff2; blob << d;
+    d = src.itsPolyCoeff3; blob << d;
+    d = src.itsPolyCoeff4; blob << d;
+    d = src.itsLambdaSqRef; blob << d;
+    d = src.itsRmsfFwhm; blob << d;
+    d = src.itsDetectionThreshold; blob << d;
+    d = src.itsDebiasThreshold; blob << d;
+    v = src.itsPintPeak; blob << v;
+    d = src.itsPintPeakDebias; blob << d;
+    v = src.itsPintPeakFit; blob << v;
+    d = src.itsPintPeakFitDebias; blob << d;
+    v = src.itsPintFitSNR; blob << v;
+    v = src.itsPhiPeak; blob << v;
+    v = src.itsPhiPeakFit; blob << v;
+    v = src.itsPolAngleRef; blob << v;
+    v = src.itsPolAngleZero; blob << v;
+    v = src.itsFracPol; blob << v;
+    d = src.itsComplexity; blob << d;
+    d = src.itsComplexity_screen; blob << d;
+    u = src.itsFlagDetection; blob << u;
+    u = src.itsFlagEdge; blob << u;
+    u = src.itsFlag3; blob << u;
+    u = src.itsFlag4; blob << u;
+
+    return blob;
 
 }
 
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaPolarisationEntry& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
+    unsigned int u;
+
+    // from CatalogueEntry.h
+    blob >> s; src.itsSBid = s;
+    blob >> s; src.itsIDbase = s;
+    // from CasdaPolarisationEntry.h
+    blob >> s; src.itsComponentID = s;
+    blob >> s; src.itsName = s;
+    blob >> d; src.itsRA = d;
+    blob >> d; src.itsDec = d;
+    blob >> d; src.itsFluxImedian = d;
+    blob >> d; src.itsFluxQmedian = d;
+    blob >> d; src.itsFluxUmedian = d;
+    blob >> d; src.itsFluxVmedian = d;
+    blob >> d; src.itsRmsI = d;
+    blob >> d; src.itsRmsQ = d;
+    blob >> d; src.itsRmsU = d;
+    blob >> d; src.itsRmsV = d;
+    blob >> d; src.itsPolyCoeff0 = d;
+    blob >> d; src.itsPolyCoeff1 = d;
+    blob >> d; src.itsPolyCoeff2 = d;
+    blob >> d; src.itsPolyCoeff3 = d;
+    blob >> d; src.itsPolyCoeff4 = d;
+    blob >> d; src.itsLambdaSqRef = d;
+    blob >> d; src.itsRmsfFwhm = d;
+    blob >> d; src.itsDetectionThreshold = d;
+    blob >> d; src.itsDebiasThreshold = d;
+    blob >> v; src.itsPintPeak = v;
+    blob >> d; src.itsPintPeakDebias = d;
+    blob >> v; src.itsPintPeakFit = v;
+    blob >> d; src.itsPintPeakFitDebias = d;
+    blob >> v; src.itsPintFitSNR = v;
+    blob >> v; src.itsPhiPeak = v;
+    blob >> v; src.itsPhiPeakFit = v;
+    blob >> v; src.itsPolAngleRef = v;
+    blob >> v; src.itsPolAngleZero = v;
+    blob >> v; src.itsFracPol = v;
+    blob >> d; src.itsComplexity = d;
+    blob >> d; src.itsComplexity_screen = d;
+    blob >> u; src.itsFlagDetection = u;
+    blob >> u; src.itsFlagEdge = u;
+    blob >> u; src.itsFlag3 = u;
+    blob >> u; src.itsFlag4 = u;
+
+    return blob;
+
+}
+
+}
 }
