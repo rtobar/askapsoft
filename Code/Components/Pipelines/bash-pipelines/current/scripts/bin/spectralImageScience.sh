@@ -31,12 +31,6 @@
 
 ID_SPECIMG_SCI=""
 
-<<<<<<< .working
-=======
-# set the $imageBase variable
-setImageBase spectral
-
->>>>>>> .merge-right.r7963
 DO_IT=$DO_SPECTRAL_IMAGING
 
 if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ]; then
@@ -99,7 +93,7 @@ if [ "${REST_FREQUENCY_SPECTRAL}" != "" ]; then
     restFrequency="${Imager}.Images.restFrequency                    = ${REST_FREQUENCY_SPECTRAL}"
 fi
 
-cleaningPars="# These parameters define the clean algorithm 
+cleaningPars="# These parameters define the clean algorithm
 ${Imager}.solver                                  = ${SOLVER_SPECTRAL}"
 if [ "${SOLVER_SPECTRAL}" == "Clean" ]; then
     cleaningPars="${cleaningPars}
@@ -132,8 +126,7 @@ if [ "${RESTORE_SPECTRAL}" == "true" ]; then
     restorePars="${restorePars}
 ${Imager}.restore.beam                            = ${RESTORING_BEAM_SPECTRAL}
 ${Imager}.restore.beam.cutoff                     = ${RESTORING_BEAM_CUTOFF_SPECTRAL}
-${Imager}.restore.beamReference                   = ${RESTORING_BEAM_REFERENCE}
-${Imager}.restore.beamLog                         = beamlog.${imageBase}.txt"
+${Imager}.restore.beamReference                   = ${RESTORING_BEAM_REFERENCE}"
 fi
 
 
@@ -167,7 +160,8 @@ Cimager.tmpfs                                   = ${tmpfs}"
 # barycentre and multiple solver mode not supported in continuum imaging (yet)
 Cimager.barycentre                              = ${DO_BARY}
 Cimager.solverpercore                           = true
-Cimager.nwriters                                = ${NUM_SPECTRAL_CUBES}"
+Cimager.nwriters                                = ${NUM_SPECTRAL_CUBES}
+Cimager.singleoutputfile                        = ${ALT_IMAGER_SINGLE_FILE}"
 
 # we also need to change the CPU allocations
 
@@ -207,7 +201,7 @@ ${askapsoftModuleCommands}
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
-. ${PIPELINEDIR}/utils.sh	
+. ${PIPELINEDIR}/utils.sh
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
@@ -284,7 +278,6 @@ EOFOUTER
 
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         DEP=""
-<<<<<<< .working
         DEP=$(addDep "$DEP" "$DEP_START")
         DEP=$(addDep "$DEP" "$ID_SPLIT_SCI")
         DEP=$(addDep "$DEP" "$ID_FLAG_SCI")
@@ -295,18 +288,6 @@ EOFOUTER
 	ID_SPECIMG_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
         DEP_SPECIMG=$(addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI")
 	recordJob "${ID_SPECIMG_SCI}" "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
-=======
-        DEP=`addDep "$DEP" "$DEP_START"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SCI"`
-        DEP=`addDep "$DEP" "$ID_FLAG_SCI"`
-        DEP=`addDep "$DEP" "$ID_CCALAPPLY_SCI"`
-        DEP=`addDep "$DEP" "$ID_SPLIT_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CAL_APPLY_SL_SCI"`
-        DEP=`addDep "$DEP" "$ID_CONT_SUB_SL_SCI"`
-	ID_SPECIMG_SCI=`sbatch $DEP $sbatchfile | awk '{print $4}'`
-        DEP_SPECIMG=`addDep "$DEP_SPECIMG" "$ID_SPECIMG_SCI"`
-	recordJob ${ID_SPECIMG_SCI} "Make a spectral-line cube for beam $BEAM of the science observation, with flags \"$DEP\""
->>>>>>> .merge-right.r8042
     else
 	echo "Would make a spectral-line cube for beam $BEAM of the science observation with slurm file $sbatchfile"
     fi

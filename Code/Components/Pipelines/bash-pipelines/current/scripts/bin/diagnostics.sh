@@ -76,16 +76,17 @@ if [ "\${pathToScript}" != "" ]; then
     
         if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
 
-            imdir="\${casdaTwoDimImageNames[i]%/*}"
+            imdir="\${casdaTwoDimImageNames[i]%%/*}"
             imageNoFITS=\$(echo "\${casdaTwoDimImageNames[i]##*/}"| sed -e 's/\\.fits//g')
             echo "image = \${imageNoFITS}"
 
             # make a second plot showing catalogued source positions
-            seldir="\${imdir}/selavy_\${imageNoFITS}"
-            echo "selavy dir = \${seldir}"
-            catalogue="\${seldir}/selavy-\${imageNoFITS}.components.txt"
+            imageName=\$imageNoFITS
+            setSelavyDirs cont
+            echo "selavy dir = \${selavyDir}"
+            catalogue="\${imdir}/\${selavyDir}/selavy-\${imageNoFITS}.components.txt"
             echo "catalogue = \$catalogue"
-            if [ -e "\${seldir}" ] && [ -e "\${catalogue}" ]; then
+            if [ -e "\${imdir}/\${selavyDir}" ] && [ -e "\${catalogue}" ]; then
 
                 cat >> "\$diagParset" <<EOF
 ###### Image #\${i} catalogue #############
@@ -132,31 +133,32 @@ if [ "\${pathToScript}" != "" ]; then
 
     for((i=0;i<\${#casdaTwoDimImageNames[@]};i++)); do
 
-        imdir="\${casdaTwoDimImageNames[i]%/*}"
+        imdir="\${casdaTwoDimImageNames[i]%%/*}"
         imageNoFITS=\$(echo "\${casdaTwoDimImageNames[i]##*/}"| sed -e 's/\\.fits//g')
         echo "image = \$imageNoFITS"
     
         if [ "\${casdaTwoDimImageTypes[i]}" == "cont_restored_T0" ]; then
 
             # make a second plot showing catalogued source positions
-            seldir="\${imdir}/selavy_\${imageNoFITS}"
-            noisemapbase="\${seldir}/noiseMap.\${imageNoFITS}"
-            echo "selavy dir = \$seldir"
+            imageName=\$imageNoFITS
+            setSelavyDirs cont
+            noisemapbase="\${imdir}/\${selavyDir}/noiseMap.\${imageNoFITS}"
+            echo "selavy dir = \$selavyDir"
             echo "noise map base = \$noisemapbase"
 
-            if [ ! -e "\${noisemapbase}.fits" ] && [ -e "\${noisemapbase}.img" ]; then
+            if [ ! -e "\${noisemapbase}.fits" ] && [ -e "\${noisemapbase}" ]; then
                 # need to convert to FITS
                 parset=\${fitsParset}
-                casaim=\${noisemapbase}.img
+                casaim=\${noisemapbase}
                 fitsim=\${noisemapbase}.fits
                 ${fitsConvertText}
             fi
-            catalogue="\${seldir}/selavy-\${imageNoFITS}.components.txt"
+            catalogue="\${imdir}/\${selavyDir}/selavy-\${imageNoFITS}.components.txt"
             if [ -e "\${noisemapbase}.fits" ]; then
                 cat >> "\$diagParset" <<EOF
 ###### Image #\${i} catalogue #############
 makeThumbnail.image = \${noisemapbase}.fits
-makeThumbnail.weights = \${seldir}/\$(echo \$imageNoFITS | sed -e 's/image\./weights\./g' | sed -e 's/\.restored//g').fits
+makeThumbnail.weights = \${selavyDir}/\$(echo \$imageNoFITS | sed -e 's/image\./weights\./g' | sed -e 's/\.restored//g').fits
 makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]} - noise map
 makeThumbnail.catalogue = \${catalogue}
 makeThumbnail.outdir = ${diagnostics}
@@ -194,7 +196,7 @@ EOFOUTER
         if [ "${SUBMIT_JOBS}" == "true" ]; then
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
+            dep="-d afterany:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
         ID_DIAG=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_DIAG}" "Job to create diagnostic plots, with flags \"${dep}\""

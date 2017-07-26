@@ -111,15 +111,11 @@ EOF
         sedstr="s/-${NOW}//g"
         link=$(echo "$1" | sed -e "$sedstr")
         # remove trailing suffix
-        link=${link%.*}
+        link=${link%%.*}
         # remove all leading paths
         link=${link##*/}
-        # clobber any existing link
-        if [ -e "$link" ]; then
-	    rm -f "$link"
-        fi
-        # make the link
-        ln -s "$1" "$link"
+        # make the link, and clobber any existing link
+        ln -s -f "$1" "$link"
     }
 
     # make links to the current scripts

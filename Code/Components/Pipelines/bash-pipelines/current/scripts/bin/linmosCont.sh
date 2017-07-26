@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -31,26 +31,38 @@
 
 ID_LINMOS_CONT=""
 
+mosaicImageList="restored altrestored image residual"
+
 DO_IT=$DO_MOSAIC
 if [ "$DO_CONT_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Get the name of the mosaicked image
-imageCode=restored
-BEAM=all
-setImageProperties cont
-
-if [ $CLOBBER == false ] && [ -e ${OUTPUT}/${imageName} ]; then
-    if [ $DO_IT == true ]; then
-        echo "Image ${imageName} exists, so not running continuum mosaicking"
+if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
+    BEAM=all
+    NLOOPS=0
+    if [ "${DO_SELFCAL}" == "true" ] && [ "${MOSAIC_SELFCAL_LOOPS}" == "true" ]; then
+        NLOOPS=$SELFCAL_NUM_LOOPS
     fi
-    DO_IT=false
+    for((LOOP=0;LOOP<=NLOOPS;LOOP++)); do
+        for imageCode in ${mosaicImageList}; do
+            for((TTERM=0;TTERM<NUM_TAYLOR_TERMS;TTERM++)); do
+                setImageProperties cont
+                if [ -e "${OUTPUT}/${imageName}" ]; then
+                    if [ "${DO_IT}" == "true" ]; then
+                        echo "Image ${imageName} exists, so not running continuum mosaicking"
+                    fi
+                    DO_IT=false
+                fi
+            done
+            unset TTERM
+        done
+    done
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
-    if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
+    if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
         reference="# No reference image or offsets, as we take the image centres"
     else
         reference="# Reference image for offsets
@@ -62,7 +74,7 @@ ${LINMOS_BEAM_OFFSETS}"
 
 
     setJob linmosCont linmosC
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -84,70 +96,75 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
+DO_ALT_IMAGER_CONT="${DO_ALT_IMAGER_CONT}"
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
-maxterm=\`echo \${NUM_TAYLOR_TERMS} | awk '{print 2*\$1-1}'\`
+maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 FIELD=${FIELD}
+BEAMS_TO_USE="${BEAMS_TO_USE}"
+IMAGETYPE_CONT="${IMAGETYPE_CONT}"
 
 NUM_LOOPS=0
 DO_SELFCAL=$DO_SELFCAL
 MOSAIC_SELFCAL_LOOPS=${MOSAIC_SELFCAL_LOOPS}
-if [ \$DO_SELFCAL == true ] && [ \$MOSAIC_SELFCAL_LOOPS == true ]; then
+if [ "\$DO_SELFCAL" == "true" ] && [ "\$MOSAIC_SELFCAL_LOOPS" == "true" ]; then
     NUM_LOOPS=$SELFCAL_NUM_LOOPS
 fi
 
-for((LOOP=0;LOOP<=\$NUM_LOOPS;LOOP++)); do
-echo "Loop \$LOOP"
+for((LOOP=0;LOOP<=NUM_LOOPS;LOOP++)); do
 
-    for imageCode in restored altrestored image residual; do
+    for imageCode in ${mosaicImageList}; do
 
-        for((TTERM=0;TTERM<\${maxterm};TTERM++)); do
+        for((TTERM=0;TTERM<maxterm;TTERM++)); do
 
             beamList=""
-            for BEAM in ${BEAMS_TO_USE}; do
+            for BEAM in \${BEAMS_TO_USE}; do
                 setImageProperties cont
-                if [ \$LOOP -eq 0 ]; then
+                if [ "\$LOOP" -eq 0 ]; then
                     DIR="."
                 else
                     DIR="selfCal_\${imageBase}/Loop\${LOOP}"
                 fi
-                echo \$DIR
-                echo \$BEAM
-                echo \${DIR}/\$imageName
-                if [ -e \${DIR}/\${imageName} ]; then
+                im="\${DIR}/\${imageName}"
+                if [ -e "\${im}" ]; then
                     if [ "\${beamList}" == "" ]; then
-                        beamList="\${DIR}/\${imageName}"
+                        beamList="\${im%%.fits}"
                     else
-                        beamList="\${beamList},\${DIR}/\${imageName}"
+                        beamList="\${beamList},\${im%%.fits}"
                     fi
                 fi
             done
-echo "beam list = \$beamList"
 
             jobCode=${jobname}_\${imageCode}
-            if [ \$maxterm -gt 1 ]; then
+            if [ "\$maxterm" -gt 1 ]; then
                 jobCode=\${jobCode}_T\${TTERM}
             fi
-            if [ \$LOOP -gt 0 ]; then
+            if [ "\$LOOP" -gt 0 ]; then
                 jobCode=\${jobCode}_L\${LOOP}
             fi
 
             if [ "\${beamList}" != "" ]; then
                 BEAM=all
                 setImageProperties cont
-                if [ \$LOOP -gt 0 ]; then
-                    imageName="\$imageName.SelfCalLoop\${LOOP}"
-                    weightsImage="\$weightsImage.SelfCalLoop\${LOOP}"
+                if [ "\$LOOP" -gt 0 ]; then
+                    imageName="\${imageName%%.fits}.SelfCalLoop\${LOOP}"
+                    weightsImage="\${weightsImage%%.fits}.SelfCalLoop\${LOOP}"
+                    if [ "\${IMAGETYPE_CONT}" == "fits" ]; then
+                        imageName="\${imageName}.fits"
+                        weightsImage="\${weightsImage}.fits"
+                    fi
                 fi
                 echo "Mosaicking to form \${imageName}"
                 parset=${parsets}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
                 log=${logs}/science_\${jobCode}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-                cat > \${parset} << EOFINNER
+                cat > "\${parset}" << EOFINNER
 linmos.names            = [\${beamList}]
-linmos.outname          = \$imageName
-linmos.outweight        = \$weightsImage
+linmos.imagetype        = \${IMAGETYPE_CONT}
+linmos.outname          = \${imageName%%.fits}
+linmos.outweight        = \${weightsImage%%.fits}
 linmos.weighttype       = FromPrimaryBeamModel
 linmos.weightstate      = Inherent
 ${reference}
@@ -157,12 +174,12 @@ EOFINNER
 
                 NCORES=1
                 NPPN=1
-                aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
+                aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
                 err=\$?
-                for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-                    rejuvenate \${im}
+                for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+                    rejuvenate "\${im}"
                 done
-                extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
+                extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
                 if [ \$err != 0 ]; then
                     exit \$err
                 fi
@@ -174,11 +191,11 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        FLAG_IMAGING_DEP=`echo $FLAG_IMAGING_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONT=`sbatch $FLAG_IMAGING_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONT} "Make a mosaic continuum image of the science observation, field $FIELD, with flags \"${FLAG_IMAGING_DEP}\""
-        FULL_LINMOS_CONT_DEP=`addDep "${FULL_LINMOS_CONT_DEP}" "${ID_LINMOS_CONT}"`
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        FLAG_IMAGING_DEP=$(echo "${FLAG_IMAGING_DEP}" | sed -e 's/afterok/afterany/g')
+	ID_LINMOS_CONT=$(sbatch ${FLAG_IMAGING_DEP} "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_LINMOS_CONT}" "Make a mosaic continuum image of the science observation, field $FIELD, with flags \"${FLAG_IMAGING_DEP}\""
+        FULL_LINMOS_CONT_DEP=$(addDep "${FULL_LINMOS_CONT_DEP}" "${ID_LINMOS_CONT}")
     else
 	echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
     fi
@@ -188,26 +205,3 @@ EOFOUTER
 fi
 
 
-if [ ${DO_SOURCE_FINDING} == true ]; then
-    # Run the sourcefinder on the mosaicked image.
-
-    NUM_LOOPS=0
-    if [ $DO_SELFCAL == true ] && [ $MOSAIC_SELFCAL_LOOPS == true ]; then
-        NUM_LOOPS=$SELFCAL_NUM_LOOPS
-    fi
-    for((LOOP=0;LOOP<=$NUM_LOOPS;LOOP++)); do
-
-        # set the $imageBase variable for the mosaicked image
-        BEAM="all"
-        setImageProperties cont
-        if [ $LOOP -gt 0 ]; then
-            imageName="${imageName}.SelfCalLoop${LOOP}"
-            weightsImage="${weightsImage}.SelfCalLoop${LOOP}"
-        fi            
-
-        . ${PIPELINEDIR}/sourcefinding.sh
-
-    done
-    unset LOOP
-    
-fi

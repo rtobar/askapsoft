@@ -60,13 +60,8 @@ cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 
 # Define the lists of image names, types, 
-<<<<<<< .working
 ADD_FITS_SUFFIX=true
 . "${getArtifacts}"
-=======
-ADD_FITS_SUFFIX=true
-. ${getArtifacts}
->>>>>>> .merge-right.r7963
 
 pathToScript=\$(which makeThumbnailImage.py 2> "${tmp}/whchmkthumb")
 if [ "\${pathToScript}" == "" ]; then
@@ -113,7 +108,9 @@ vmax=${THUMBNAIL_GREYSCALE_MAX} * stddev
 suffix='${THUMBNAIL_SUFFIX}'
 thumbim=fitsim.replace('.fits','.%s'%suffix)
 figtitle='\${title}'
-figsizes={'${THUMBNAIL_SIZE_TEXT[0]}':${THUMBNAIL_SIZE_INCHES[0]}, '${THUMBNAIL_SIZE_TEXT[1]}':${THUMBNAIL_SIZE_INCHES[1]}}
+sizetext=[${THUMBNAIL_SIZE_TEXT}]
+sizeinch=[${THUMBNAIL_SIZE_INCHES}]
+figsizes={sizetext[0]:sizeinch[0], sizetext[1]:sizeinch[1]}
 for size in figsizes:
     gc=aplpy.FITSFigure(fitsim,figsize=(figsizes[size],figsizes[size]))
     gc.show_colorscale(vmin=vmin,vmax=vmax)
@@ -146,8 +143,8 @@ makeThumbnail.imageTitle = \${casdaTwoDimThumbTitles[i]}
 makeThumbnail.imageSuffix = ${THUMBNAIL_SUFFIX}
 makeThumbnail.zmin = ${THUMBNAIL_GREYSCALE_MIN}
 makeThumbnail.zmax = ${THUMBNAIL_GREYSCALE_MAX}
-makeThumbnail.imageSizes = ${THUMBNAIL_SIZE_INCHES}
-makeThumbnail.imageSizeNames = ${THUMBNAIL_SIZE_TEXT}
+makeThumbnail.imageSizes = [${THUMBNAIL_SIZE_INCHES}]
+makeThumbnail.imageSizeNames = [${THUMBNAIL_SIZE_TEXT}]
 EOF
     
         NCORES=1
@@ -167,7 +164,7 @@ EOFOUTER
     if [ "${SUBMIT_JOBS}" == "true" ]; then
         dep=""
         if [ "${ALL_JOB_IDS}" != "" ]; then
-            dep="-d afterok:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
+            dep="-d afterany:$(echo "${ALL_JOB_IDS}" | sed -e 's/,/:/g')"
         fi
         ID_THUMBS=$(sbatch ${dep} "$sbatchfile" | awk '{print $4}')
         recordJob "${ID_THUMBS}" "Job to create ${THUMBNAIL_SUFFIX} thumbnails of all 2D images, with flags \"${dep}\""

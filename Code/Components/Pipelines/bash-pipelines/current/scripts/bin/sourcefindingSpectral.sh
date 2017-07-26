@@ -28,16 +28,38 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-if [ $DO_SOURCE_FINDING == true ]; then
+DO_IT=$DO_SOURCE_FINDING_SPEC 
 
+# set imageName and selavy directories
+imageCode=restored
+setImageProperties spectral
+beamlog=beamlog.${imageName}.txt
+
+# Dependencies for the job
+DEP=""
+if [ "$FIELD" == "." ]; then
+    DEP=$(addDep "$DEP" "$ID_LINMOS_SPECTRAL_ALL_RESTORED")
+elif [ "$BEAM" == "all" ]; then
+    DEP=$(addDep "$DEP" "$ID_LINMOS_SPECTRAL_RESTORED")
+else
+    DEP=$(addDep "$DEP" "$ID_SPECIMG_SCI")
+fi
+
+if [ ! -e "${OUTPUT}/${imageName}" ] && [ "${DEP}" == "" ] &&
+       [ "${SUBMIT_JOBS}" == "true" ]; then
+    DO_IT=false
+fi
+
+if [ "${DO_IT}" == "true" ]; then
+    
     # Define the detection thresholds in terms of flux or SNR
     if [ "${SELAVY_SPEC_FLUX_THRESHOLD}" != "" ]; then
         # Use a direct flux threshold if specified
         thresholdPars="# Detection threshold
 Selavy.threshold = ${SELAVY_SPEC_FLUX_THRESHOLD}"
-        if [ ${SELAVY_SPEC_FLAG_GROWTH} == true ] &&
-               [ ${SELAVY_SPEC_GROWTH_THRESHOLD} != "" ]; then
-           thresholdPars="${thresholdPars}
+        if [ "${SELAVY_SPEC_FLAG_GROWTH}" == "true" ] &&
+               [ "${SELAVY_SPEC_GROWTH_THRESHOLD}" != "" ]; then
+            thresholdPars="${thresholdPars}
 Selavy.flagGrowth =  ${SELAVY_SPEC_FLAG_GROWTH}
 Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_THRESHOLD}"
         fi
@@ -45,18 +67,19 @@ Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_THRESHOLD}"
         # Use a SNR threshold
         thresholdPars="# Detection threshold
 Selavy.snrCut = ${SELAVY_SPEC_SNR_CUT}"
-        if [ ${SELAVY_SPEC_FLAG_GROWTH} == true ] && 
-               [ ${SELAVY_SPEC_GROWTH_CUT} != "" ]; then
-           thresholdPars="${thresholdPars}
+        if [ "${SELAVY_SPEC_FLAG_GROWTH}" == true ] && 
+               [ "${SELAVY_SPEC_GROWTH_CUT}" != "" ]; then
+            thresholdPars="${thresholdPars}
 Selavy.flagGrowth =  ${SELAVY_SPEC_FLAG_GROWTH}
 Selavy.growthThreshold = ${SELAVY_SPEC_GROWTH_CUT}"
         fi
     fi
 
     # Pre-processing parameters
+    preprocessPars="# No pre-processing done"
     # Smoothing takes precedence over reconstruction
-    if [ ${SELAVY_SPEC_FLAG_SMOOTH} == "true" ]; then
-        if [ ${SELAVY_SPEC_SMOOTH_TYPE} == "spectral" ]; then
+    if [ "${SELAVY_SPEC_FLAG_SMOOTH}" == "true" ]; then
+        if [ "${SELAVY_SPEC_SMOOTH_TYPE}" == "spectral" ]; then
             preprocessPars="# Spectral smoothing
 Selavy.flagSmooth = ${SELAVY_SPEC_FLAG_SMOOTH}
 Selavy.smoothType = ${SELAVY_SPEC_SMOOTH_TYPE}
@@ -69,7 +92,7 @@ Selavy.kernMaj = ${SELAVY_SPEC_KERN_MAJ}
 Selavy.kernMin = ${SELAVY_SPEC_KERN_MIN}
 Selavy.kernPA = ${SELAVY_SPEC_KERN_PA}"
         fi
-    elif [ ${SELAVY_SPEC_FLAG_WAVELET} == "true" ]; then
+    elif [ "${SELAVY_SPEC_FLAG_WAVELET}" == "true" ]; then
         preprocessPars="# Multi-resolution wavelet reconstruction
 Selavy.flagAtrous = ${SELAVY_SPEC_FLAG_WAVELET}
 Selavy.reconDim   = ${SELAVY_SPEC_RECON_DIM}
@@ -79,8 +102,8 @@ Selavy.snrRecon   = ${SELAVY_SPEC_RECON_SNR}"
     fi
     
 
-    setJob science_selavy_spec_${imageName} $description
-    cat > $sbatchfile <<EOFOUTER
+    setJob "science_selavy_spec_${imageName}" selavySpec
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -92,7 +115,9 @@ ${RESERVATION_REQUEST}
 #SBATCH --job-name=${jobname}
 ${EMAIL_REQUEST}
 ${exportDirective}
-#SBATCH --output=slurmOutput/slurm-selavy-spec-%j.out
+#SBATCH --output=$slurmOut/slurm-selavy-spec-%j.out
+
+${askapsoftModuleCommands}
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
@@ -100,12 +125,13 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 # Working directory for the selavy output
 seldir=selavy-spectral-${imageName##*/}
-mkdir -p \$seldir
-cd \$seldir
+mkdir -p "\$seldir"
+cd "\$seldir"
     
 HAVE_IMAGES=true
 BEAM=$BEAM
@@ -114,14 +140,14 @@ BEAM=$BEAM
 imlist=""
 
 # Image to be searched
-image=${OUTPUT}/${imageName}
+image="${OUTPUT}/${imageName}"
 imlist="\${imlist} \${image}"
 if [ "\${BEAM}" == "all" ]; then
     # Weights image - really only useful if primary-beam corrected
     weights=${OUTPUT}/${weightsImage}
     imlist="\${imlist} \${weights}"
     weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
-Selavy.Weights.weightsCutoff = ${LINMOS_CUTOFF}"
+Selavy.Weights.weightsCutoff = ${SELAVY_WEIGHTS_CUTOFF}"
 else
     weightpars="#"
 fi
@@ -129,37 +155,40 @@ fi
 HAVE_IMAGES=true
 echo "Converting to FITS the following images: \${imlist}"
 for im in \${imlist}; do 
+
     casaim="../\${im##*/}"
     fitsim="../\${im##*/}.fits"
+    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
     ${fitsConvertText}
-    # make a link so we point to a file in the current directory for Selavy
-    if [ ! -e \$fitsim ]; then
+    # Make a link so we point to a file in the current directory for
+    # Selavy. This gets the referencing correct in the catalogue
+    # metadata 
+    if [ ! -e "\$fitsim" ]; then
         HAVE_IMAGES=false
         echo "ERROR - Could not create \${im}.fits"
     else
-        ln -s \${im}.fits .
+        ln -s -f "\${im}.fits" .
     fi
-    rejuvenate \${casaim}
 done
 
-if [ \${HAVE_IMAGES} == true ]; then
+if [ "\${HAVE_IMAGES}" == "true" ]; then
 
-    parset=${parsets}/science_selavy_spectral_${SLURM_JOB_ID}.in
-    log=${logs}/science_selavy_spectral_${SLURM_JOB_ID}.log
+    parset=${parsets}/science_selavy_spectral_\${SLURM_JOB_ID}.in
+    log=${logs}/science_selavy_spectral_\${SLURM_JOB_ID}.log
     
     # Directories for extracted data products
-    spectraDir=Spectra
-    mkdir -p \$spectraDir
-    momentDir=Moments
-    mkdir -p \$momentDir
-    cubeletDir=Cubelets
-    mkdir -p \$cubeletDir
+    mkdir -p "${OUTPUT}/$selavySpectraDir"
+    mkdir -p "${OUTPUT}/$selavyMomentsDir"
+    mkdir -p "${OUTPUT}/$selavyCubeletsDir"
     
-    cat > \$parset <<EOFINNER
-Selavy.image = \$image
+    cat > "\$parset" <<EOFINNER
+Selavy.image = \${image##*/}.fits
 Selavy.nsubx = ${SELAVY_SPEC_NSUBX}
 Selavy.nsuby = ${SELAVY_SPEC_NSUBY}
 Selavy.nsubz = ${SELAVY_SPEC_NSUBZ}
+#
+Selavy.resultsFile = selavy-${imageName}.txt
 #
 \${weightpars}
 #
@@ -194,30 +223,52 @@ Selavy.spectralUnits = km/s
 Selavy.HiEmissionCatalogue=true
 # Extraction
 Selavy.extractSpectra = true
-Selavy.extractSpectra.spectralCube = $image
-Selavy.extractSpectra.spectralOutputBase = \${spectraDir}/${SELAVY_SPEC_BASE_SPECTRUM}
+Selavy.extractSpectra.spectralCube = \$image
+Selavy.extractSpectra.spectralOutputBase = ${OUTPUT}/${selavySpectraDir}/${SELAVY_SPEC_BASE_SPECTRUM}
 Selavy.extractSpectra.useDetectedPixels = true
+Selavy.extractSpectra.beamLog = ${beamlog}
 Selavy.extractNoiseSpectra = true
-Selavy.extractNoiseSpectra.spectralCube= $image
-Selavy.extractNoiseSpectra.spectralOutputBase = \${spectraDir}/${SELAVY_SPEC_BASE_NOISE}
+Selavy.extractNoiseSpectra.spectralCube= \$image
+Selavy.extractNoiseSpectra.spectralOutputBase = ${OUTPUT}/${selavySpectraDir}/${SELAVY_SPEC_BASE_NOISE}
 Selavy.extractNoiseSpectra.useDetectedPixels = true
 Selavy.extractMomentMap = true
-Selavy.extractMomentMap.spectralCube = $image
-Selavy.extractMomentMap.momentOutputBase = \${momentDir}/${SELAVY_SPEC_BASE_MOMENT}
+Selavy.extractMomentMap.spectralCube = \$image
+Selavy.extractMomentMap.momentOutputBase = ${OUTPUT}/${selavyMomentsDir}/${SELAVY_SPEC_BASE_MOMENT}
 Selavy.extractMomentMap.moments = [0,1,2]
 Selavy.extractCubelet = true
-Selavy.extractCubelet.spectralCube = $image
-Selavy.extractCubelet.cubeletOutputBase = \${cubeletDir}/${SELAVY_SPEC_BASE_CUBELET}
+Selavy.extractCubelet.spectralCube = \$image
+Selavy.extractCubelet.cubeletOutputBase = ${OUTPUT}/${selavyCubeletsDir}/${SELAVY_SPEC_BASE_CUBELET}
 EOFINNER
 
-    NCORES==${NUM_CPUS_SELAVY_SPEC}
+    NCORES=${NUM_CPUS_SELAVY_SPEC}
     NPPN=${CPUS_PER_CORE_SELAVY_SPEC}
-    aprun -n \${NCORES} -N \${NPPN} $selavy -c $parset >> $log
+    aprun -n \${NCORES} -N \${NPPN} $selavy -c "\$parset" >> "\$log"
     err=\$?
-    extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
     if [ \$err != 0 ]; then
         exit \$err
     fi
+
+    # Now convert the extracted spectral & moment-map artefacts to FITS
+     parset=temp.in
+     log=$logs/convertToFITS_spectralArtefacts_\${SLURM_JOB_ID}.log
+     for dir in $OUTPUT/$selavySpectraDir $OUTPUT/$selavyMomentsDir $OUTPUT/$selavyCubeletsDir; do
+         cd "\${dir}"
+         neterr=0
+         for im in ./*; do 
+             casaim=\${im}
+             fitsim="\${im}.fits"
+             echo "Converting \$casaim to \$fitsim" >> "\$log"
+             ${fitsConvertText}
+             err=\$?
+             if [ \$err -ne 0 ]; then
+                 neterr=\$err
+             fi
+         done
+         cd -
+     done
+     extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${neterr} convertFITSspec "txt,csv"
+     rm -f \$parset
 
 else
 
@@ -225,29 +276,15 @@ else
 
 fi
 
-
-
 EOFOUTER
 
-    # Dependencies for the job
-    DEP=""
-    if [ "$FIELD" == "." ]; then
-        DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL_ALL"`
-    elif [ $BEAM == "all" ]; then
-        DEP=`addDep "$DEP" "$ID_LINMOS_SPECTRAL"`
-    else
-        DEP=`addDep "$DEP" "$ID_SPECIMG_SCI"`
-    fi
-    
-    if [ $SUBMIT_JOBS == true ]; then
-	ID_SOURCEFINDING_SPEC_SCI=`sbatch ${DEP} $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_SOURCEFINDING_SPEC_SCI} "Run the source-finder on the science cube ${imageName} with flags \"$DEP\""
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+	ID_SOURCEFINDING_SPEC_SCI=$(sbatch ${DEP} "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_SOURCEFINDING_SPEC_SCI}" "Run the source-finder on the science cube ${imageName} with flags \"$DEP\""
     else
 	echo "Would run the source-finder on the science cube ${imageName} with slurm file $sbatchfile"
     fi
 
     echo " "
 
-
-    
 fi

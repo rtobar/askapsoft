@@ -38,7 +38,7 @@ contWeights=$weightsImage
 pol="%p"
 setImageProperties contcube
 contCube=$imageName
-beamlog=beamlog.${imageBase}.txt
+beamlog=beamlog.${imageName}.txt
 
 # lower-case list of polarisations to use
 polList=$(echo "${POL_LIST}" | tr '[:upper:]' '[:lower:]')
@@ -58,9 +58,9 @@ else
 fi
 if [ "${DO_RM_SYNTHESIS}" == "true" ]; then
     if [ "$FIELD" == "." ]; then
-        DEP=$(addDep "$DEP" "$ID_LINMOS_CONTCUBE_ALL")
+        DEP=$(addDep "$DEP" "$ID_LINMOS_CONTCUBE_ALL_RESTORED")
     elif [ "$BEAM" == "all" ]; then
-        DEP=$(addDep "$DEP" "$ID_LINMOS_CONTCUBE")
+        DEP=$(addDep "$DEP" "$ID_LINMOS_CONTCUBE_RESTORED")
     else
         DEP=$(addDep "$DEP" "$ID_CONTCUBE_SCI")
     fi
@@ -84,11 +84,31 @@ if [ "${DO_IT}" == "true" ]; then
     if [ "$LOOP" != "" ]; then
         if [ "$LOOP" -gt 0 ]; then
             description="selavyContL${LOOP}"
-            contImage="${contImage}.SelfCalLoop${LOOP}"
-            contWeights="${contWeights}.SelfCalLoop${LOOP}"
+            contImage="${contImage%%.fits}.SelfCalLoop${LOOP}"
+            contWeights="${contWeights%%.fits}.SelfCalLoop${LOOP}"
+            imageName=${contImage}
+            setSelavyDirs cont
+            noiseMap="${noiseMap%%.fits}.SelfCalLoop${LOOP}"
+            thresholdMap="${thresholdMap%%.fits}.SelfCalLoop${LOOP}"
+            meanMap="${meanMap%%.fits}.SelfCalLoop${LOOP}"
+            snrMap="${snrMap%%.fits}.SelfCalLoop${LOOP}"
             doRM=false
+            if [ "${IMAGETYPE_CONT}" == "fits" ]; then
+                contImage="${contImage}.fits"
+                contWeights="${contWeights}.fits"
+                imageName=${contImage}
+                noiseMap="${noiseMap}.fits"
+                thresholdMap="${thresholdMap}.fits"
+                meanMap="${meanMap}.fits"
+                snrMap="${snrMap}.fits"
+            fi
         fi
     fi
+
+    noiseMap="${noiseMap%%.fits}"
+    thresholdMap="${thresholdMap%%.fits}"
+    meanMap="${meanMap%%.fits}"
+    snrMap="${snrMap%%.fits}"
 
     # Define the detection thresholds in terms of flux or SNR
     if [ "${SELAVY_FLUX_THRESHOLD}" != "" ]; then
@@ -139,10 +159,11 @@ sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 thisfile=$sbatchfile
 cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
-seldir=selavy_${contImage}
-mkdir -p \$seldir
-
-cd \${seldir}
+# Base directory for Selavy work
+mkdir -p $selavyDir
+# Directory for extracted polarisation data products
+mkdir -p $selavyPolDir
+cd ${selavyDir}
 
 HAVE_IMAGES=true
 BEAM=$BEAM
@@ -151,25 +172,27 @@ NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
 # List of images to convert to FITS in the Selavy job
 imlist=""
 
-image=${OUTPUT}/${contImage}
-weights=${OUTPUT}/${contWeights}
-contcube=${OUTPUT}/${contCube}
+image=${contImage}
+fitsimage=${contImage%%.fits}.fits
+weights=${contWeights}
+contcube=${contCube}
 
-imlist="\${imlist} \${image}"
+imlist="\${imlist} ${OUTPUT}/\${image}"
+
 if [ "\${NUM_TAYLOR_TERMS}" -gt 1 ]; then
     t1im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.1/g')
     if [ -e "\${t1im}" ]; then
-        imlist="\${imlist} \${t1im}"
+        imlist="\${imlist} ${OUTPUT}/\${t1im}"
     fi
     t2im=\$(echo "\$image" | sed -e 's/taylor\.0/taylor\.2/g')
     if [ -e "\${t2im}" ]; then
-        imlist="\${imlist} \${t2im}"
+        imlist="\${imlist} ${OUTPUT}/\${t2im}"
     fi
 fi
 
 if [ "\${BEAM}" == "all" ]; then
-    imlist="\${imlist} \${weights}"
-    weightpars="Selavy.Weights.weightsImage = \${weights##*/}.fits
+    imlist="\${imlist} ${OUTPUT}/\${weights}"
+    weightpars="Selavy.Weights.weightsImage = \${weights%%.fits}.fits
 Selavy.Weights.weightsCutoff = ${SELAVY_WEIGHTS_CUTOFF}"
 else
     weightpars="#"
@@ -182,7 +205,7 @@ if [ \$doRM == true ]; then
         sedstr="s/%p/\$p/g"
         thisim=\$(echo "\$contcube" | sed -e "\$sedstr")
         if [ -e "\${thisim}" ]; then
-            imlist="\${imlist} \${thisim}"
+            imlist="\${imlist} ${OUTPUT}/\${thisim}"
         else
             doRM=false
             echo "ERROR - Continuum cube \${thisim} not found. RM Synthesis being turned off."
@@ -190,39 +213,38 @@ if [ \$doRM == true ]; then
     done
 fi
 
-echo "Converting to FITS the following images: \${imlist}"
-for im in \${imlist}; do 
-    casaim="../\${im##*/}"
-    fitsim="../\${im##*/}.fits"
-    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
-    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
-    ${fitsConvertText}
-    # Make a link so we point to a file in the current directory for
-    # Selavy. This gets the referencing correct in the catalogue
-    # metadata 
-    if [ ! -e "\$fitsim" ]; then
-        HAVE_IMAGES=false
-        echo "ERROR - Could not create \${im}.fits"
-    else
-        ln -s "\${im}.fits" .
-    fi
-done
+if [ "\${imlist}" != "" ]; then
+    for im in \${imlist}; do 
+        casaim="\${im%%.fits}"
+        fitsim="\${im%%.fits}.fits"
+        if [ "\${im%%.fits}" == "\${im}" ]; then
+            echo "Converting to FITS the image \${im}"
+            parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+            log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
+            ${fitsConvertText}
+            if [ ! -e "\$fitsim" ]; then
+                HAVE_IMAGES=false
+                echo "ERROR - Could not create \${fitsim##*/}"
+            fi
+        fi
+        # Make a link so we point to a file in the current directory for
+        # Selavy. This gets the referencing correct in the catalogue
+        # metadata 
+        ln -s "\${fitsim}" .
+    done
+fi
 
 if [ "\${HAVE_IMAGES}" == "true" ]; then
 
     parset=${parsets}/science_selavy_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.in
     log=${logs}/science_selavy_cont_${FIELDBEAM}_\${SLURM_JOB_ID}.log
     
-    # Directory for extracted data products
-    polDir=PolData
-    mkdir -p \$polDir
-
     if [ "\${doRM}" == "true" ]; then
         rmSynthParams="# RM Synthesis on extracted spectra from continuum cube
 Selavy.RMSynthesis = \${doRM}
-Selavy.RMSynthesis.cube = \$contcube
+Selavy.RMSynthesis.cube = ${OUTPUT}/\$contcube
 Selavy.RMSynthesis.beamLog = ${beamlog}
-Selavy.RMSynthesis.outputBase = \${polDir}/${SELAVY_POL_OUTPUT_BASE}
+Selavy.RMSynthesis.outputBase = ${OUTPUT}/${selavyPolDir}/${SELAVY_POL_OUTPUT_BASE}
 Selavy.RMSynthesis.writeSpectra = ${SELAVY_POL_WRITE_SPECTRA}
 Selavy.RMSynthesis.writeComplexFDF = ${SELAVY_POL_WRITE_COMPLEX_FDF}
 Selavy.RMSynthesis.boxwidth = ${SELAVY_POL_BOX_WIDTH}
@@ -242,12 +264,12 @@ Selavy.RMSynthesis = \${doRM}"
     fi
 
     cat > "\$parset" <<EOFINNER
-Selavy.image = \${image##*/}.fits
+Selavy.image = \${fitsimage}
 Selavy.SBid = ${SB_SCIENCE}
 Selavy.nsubx = ${SELAVY_NSUBX}
 Selavy.nsuby = ${SELAVY_NSUBY}
 #
-Selavy.resultsFile = selavy-${contImage}.txt
+Selavy.resultsFile = selavy-\${fitsimage%%.fits}.txt
 #
 Selavy.snrCut = ${SELAVY_SNR_CUT}
 Selavy.flagGrowth = ${SELAVY_FLAG_GROWTH}
@@ -255,16 +277,18 @@ Selavy.growthCut = ${SELAVY_GROWTH_CUT}
 #
 Selavy.VariableThreshold = ${SELAVY_VARIABLE_THRESHOLD}
 Selavy.VariableThreshold.boxSize = ${SELAVY_BOX_SIZE}
-Selavy.VariableThreshold.ThresholdImageName=detThresh.${contImage}.img
-Selavy.VariableThreshold.NoiseImageName=noiseMap.${contImage}.img
-Selavy.VariableThreshold.AverageImageName=meanMap.${contImage}.img
-Selavy.VariableThreshold.SNRimageName=snrMap.${contImage}.img
+Selavy.VariableThreshold.ThresholdImageName=${thresholdMap}
+Selavy.VariableThreshold.NoiseImageName=${noiseMap}
+Selavy.VariableThreshold.AverageImageName=${meanMap}
+Selavy.VariableThreshold.SNRimageName=${snrMap}
 \${weightpars}
 #
 Selavy.Fitter.doFit = true
 Selavy.Fitter.fitTypes = [full]
 Selavy.Fitter.numGaussFromGuess = true
 Selavy.Fitter.maxReducedChisq = 10.
+# Force the component maps to be casa images for now
+Selavy.Fitter.imagetype = casa
 #
 Selavy.threshSpatial = 5
 Selavy.flagAdjacent = false
@@ -286,9 +310,58 @@ EOFINNER
         exit \$err
     fi
 
+    casaim="${noiseMap%%.fits}"
+    fitsim="${noiseMap%%.fits}.fits"
+    echo "Converting to FITS the image ${noiseMap}"
+    parset=$parsets/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.in
+    log=$logs/convertToFITS_\${casaim##*/}_\${SLURM_JOB_ID}.log
+    ${fitsConvertText}
+    if [ ! -e "\$fitsim" ]; then
+        echo "ERROR - Could not create \${fitsim}"
+    fi
+
+    doValidation=${DO_CONTINUUM_VALIDATION}
+    validatePerBeam=${VALIDATE_BEAM_IMAGES}
+    if [ "\${doValidation}" == "true" ] && [ "\${BEAM}" != "all" ]; then
+        doValidation=\${validatePerBeam}
+    fi
+    scriptname="${ACES_LOCATION}/UserScripts/col52r/ASKAP_continuum_validation.py"
+    if [ "\${doValidation}" == "true" ]; then
+        if [ ! -e "\${scriptname}" ]; then
+            echo "ERROR - Validation script \${scriptname} not found"
+        else
+            cd ..
+            module use /group/askap/continuum_validation
+            loadModule continuum_validation_env
+            log=${logs}/continuum_validation_${FIELDBEAM}_\${SLURM_JOB_ID}.log
+            validateArgs="\${fitsimage%%.fits}.fits"
+            validateArgs="\${validateArgs} -S ${selavyDir}/selavy-\${fitsimage%%.fits}.components.xml"
+            validateArgs="\${validateArgs} -N ${selavyDir}/${noiseMap}.fits "
+            validateArgs="\${validateArgs} -C NVSS_config.txt,SUMSS_config.txt"          
+            aprun -n 1 -N 1 \${scriptname} \${validateArgs} > "\${log}"
+            err=\$?
+            extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} validationCont "txt,csv"
+            unloadModule continuum_validation_env
+            if [ ! -e "\${validationDir}" ]; then
+                echo "ERROR - could not create validation directory \${validationDir}"
+            fi
+            # Place a copy in a standard place on /group
+            copyLocation="${VALIDATION_ARCHIVE_DIR}"
+            purgeCSV="${REMOVE_VALIDATION_CSV}"
+            if [ "\${copyLocation}" != "" ] && [ -e "\${copyLocation}" ]; then
+                sedstr="s/\.xml/__\$(whoami)_${NOW}/g"
+                validationDirCopy=\$(echo \${validationDir} | sed -e \${sedstr})
+                cp -r \${validationDir} \${copyLocation}/\${validationDirCopy}
+                if [ "\${purgeCSV}" == "true" ]; then
+                    rm -f \${copyLocation}/\${validationDirCopy}/*.csv
+                fi
+            fi
+        fi
+    fi
+
     # Now convert the extracted polarisation artefacts to FITS
     if [ "\${doRM}" == "true" ]; then
-        cd "\${polDir}"
+        cd "$OUTPUT/${selavyPolDir}"
         parset=temp.in
         log=$logs/convertToFITS_polSpectra_\${SLURM_JOB_ID}.log
         neterr=0

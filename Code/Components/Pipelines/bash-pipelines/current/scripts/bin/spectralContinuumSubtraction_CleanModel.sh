@@ -4,7 +4,7 @@
 # continuum is represented by the clean model image from the continuum
 # imaging 
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -33,14 +33,16 @@
 # In this bit, we use the clean model from the continuum imaging
 # as the input to ccontsubtract
 
-modelImage=image.${imageBase}
+imageCode=image
+setImageProperties cont
+modelImage=${imageName}
 
 ContsubModelDefinition="# The model definition
 CContsubtract.sources.names                       = [lsm]
 CContsubtract.sources.lsm.direction               = \${modelDirection}
 CContsubtract.sources.lsm.model                   = ${modelImage}
 CContsubtract.sources.lsm.nterms                  = ${NUM_TAYLOR_TERMS}"
-if [ ${NUM_TAYLOR_TERMS} -gt 1 ]; then
+if [ "${NUM_TAYLOR_TERMS}" -gt 1 ]; then
     if [ "$MFS_REF_FREQ" == "" ]; then
         freq=$CENTRE_FREQ
     else
@@ -51,7 +53,7 @@ CContsubtract.visweights                          = MFS
 CContsubtract.visweights.MFS.reffreq              = ${freq}"
 fi
 
-cat > $sbatchfile <<EOFOUTER
+cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -73,7 +75,8 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 if [ "${DIRECTION}" != "" ]; then
     modelDirection="${DIRECTION}"
@@ -81,16 +84,16 @@ else
     log=${logs}/mslist_for_ccontsub_\${SLURM_JOB_ID}.log
     NCORES=1
     NPPN=1
-    aprun -n \${NCORES} -N \${NPPN} $mslist --full ${msSciSL} 2>&1 1> \${log}
-    ra=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=RA\`
-    dec=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Dec\`
-    epoch=\`python ${PIPELINEDIR}/parseMSlistOutput.py --file=\$log --val=Epoch\`
+    aprun -n \${NCORES} -N \${NPPN} $mslist --full "${msSciSL}" 1>& "\${log}"
+    ra=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=RA)
+    dec=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Dec)
+    epoch=\$(python "${PIPELINEDIR}/parseMSlistOutput.py" --file="\$log" --val=Epoch)
     modelDirection="[\${ra}, \${dec}, \${epoch}]"
 fi
 
 parset=${parsets}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.in
 log=${logs}/contsub_spectralline_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-cat > \$parset <<EOFINNER
+cat > "\$parset" <<EOFINNER
 # The measurement set name - this will be overwritten
 CContSubtract.dataset                             = ${msSciSL}
 ${ContsubModelDefinition}
@@ -110,12 +113,12 @@ CContSubtract.gridder.WProject.variablesupport    = true
 CContSubtract.gridder.WProject.offsetsupport      = true
 EOFINNER
 
-aprun -n 1 -N 1NCORES=1
+NCORES=1
 NPPN=1
-aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c \${parset} > \${log}
+aprun -n \${NCORES} -N \${NPPN} ${ccontsubtract} -c "\${parset}" > "\${log}"
 err=\$?
 rejuvenate ${msSciSL}
-extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} ${jobname} "txt,csv"
+extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
 if [ \$err != 0 ]; then
     exit \$err
 else

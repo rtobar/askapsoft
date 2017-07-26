@@ -7,7 +7,7 @@
 # For an input cube image.something.restored, it produces
 # image.something.restored.contsub, holding the continuum-subtracted
 # data, and image.something.restored.coefs, holding the polynomial
-# coefficients for each spectrum 
+# coefficients for each spectrum
 #
 # @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
@@ -34,12 +34,7 @@
 # @author Matthew Whiting <Matthew.Whiting@csiro.au>
 #
 
-<<<<<<< .working
 for subband in ${SUBBAND_WRITER_LIST}; do
-=======
-# set the $imageBase variable
-setImageBase spectral
->>>>>>> .merge-right.r7963
 
     DO_IT=$DO_SPECTRAL_IMSUB
 
@@ -54,13 +49,13 @@ setImageBase spectral
     fi
 
     # Make sure we can see the robust_contsub script
-    script_location="$ACES/tools"
+    script_location="${ACES_LOCATION}/tools"
     script_name=robust_contsub
     if [ ! -e "${script_location}/${script_name}.py" ]; then
         echo "WARNING - ${script_name}.py not found in $script_location - not running image-based continuum subtraction."
         DO_IT=false
     fi
-
+    
     if [ "${DO_IT}" == "true" ]; then
 
         setJob "spectral_imcontsub${subband}" "imcontsub${subband}"
@@ -79,7 +74,6 @@ ${exportDirective}
 #SBATCH --output=$slurmOut/slurm-imcontsubSL-%j.out
 
 ${askapsoftModuleCommands}
-module load aces
 
 BASEDIR=${BASEDIR}
 cd $OUTPUT
@@ -91,15 +85,32 @@ thisfile=$sbatchfile
 cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
 IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
+TILE=${TILE}
 FIELD=${FIELD}
+BEAM=${BEAM}
+pol=${pol}
 DO_ALT_IMAGER_SPECTRAL="${DO_ALT_IMAGER_SPECTRAL}"
 NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES}
+IMAGETYPE_SPECTRAL=${IMAGETYPE_SPECTRAL}
 subband="${subband}"
 imageCode=restored
 setImageProperties spectral
 
-pyscript=${parsets}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.py
-cat > "\$pyscript" << EOFINNER
+if [ ! -e "\${imageName}" ]; then
+
+    echo "Image cube \${imageName} does not exist."
+    echo "Not running image-based continuum subtraction"
+
+else
+
+    # Make a working directory - the casapy & ipython log files will go in here.
+    # This will prevent conflicts
+    workdir=imcontsub-working-beam\${BEAM}
+    mkdir -p \$workdir
+    cd \$workdir
+
+    pyscript=${parsets}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.py
+    cat > "\$pyscript" << EOFINNER
 #!/usr/bin/env python
 
 # Need to import this from ACES
@@ -107,7 +118,7 @@ import sys
 sys.path.append('${script_location}')
 from ${script_name} import robust_contsub
 
-image="\${imageName}"
+image="../\${imageName}"
 threshold=${SPECTRAL_IMSUB_THRESHOLD}
 fit_order=${SPECTRAL_IMSUB_FIT_ORDER}
 n_every=${SPECTRAL_IMSUB_CHAN_SAMPLING}
@@ -115,19 +126,28 @@ rc=robust_contsub()
 rc.poly(infile=image,threshold=threshold,verbose=True,fit_order=fit_order,n_every=n_every,log_every=10)
 
 EOFINNER
-log=${logs}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.log
+    log=${logs}/spectral_imcontsub_${FIELDBEAM}_\${SLURM_JOB_ID}.log
 
-NCORES=1
-NPPN=1
-module load casa
-aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${pyscript}" > "\${log}"
-err=\$?
-rejuvenate "\${imageName}"
-extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
-if [ \$err != 0 ]; then
-    exit \$err
+    NCORES=1
+    NPPN=1
+    loadModule casa
+    aprun -n \${NCORES} -N \${NPPN} -b casa --nogui --nologger --log2term -c "\${pyscript}" > "\${log}"
+    err=\$?
+    unloadModule casa
+    cd ..
+    rejuvenate "\${imageName}"
+    #extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} ${jobname} "txt,csv"
+    if [ \$err != 0 ]; then
+        exit \$err
+    fi
+    
+    if [ "\${imageName%%.fits}" == "\${imageName}" ]; then
+        # Want image.contsub.fits, not image.fits.contsub
+        echo "Renaming \${imageName}.contsub to \${imageName%%.fits}.contsub.fits"
+        mv \${imageName}.contsub \${imageName%%.fits}.contsub.fits
+    fi
+
 fi
-
 EOF
 
         if [ "${SUBMIT_JOBS}" == "true" ]; then
@@ -153,6 +173,7 @@ EOF
                 DEP=$(addDep "$DEP" "$ID_CONT_SUB_SL_SCI")
                 DEP=$(addDep "$DEP" "$ID_SPECIMG_SCI")
                 ID_SPEC_IMCONTSUB_SCI=$(sbatch $DEP "$sbatchfile" | awk '{print $4}')
+                DEP_SPECIMCONTSUB=$(addDep "${DEP_SPECIMCONTSUB}" "${ID_SPEC_IMCONTSUB_SCI}")
                 recordJob "${ID_SPEC_IMCONTSUB_SCI}" "Image-based continuum subtraction for beam $BEAM of the science observation, with flags \"$DEP\""
             fi
         else
@@ -162,5 +183,3 @@ EOF
     fi
 done
 echo " "
-        
-
