@@ -53,6 +53,7 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         DO_CONT_IMAGING=false
         DO_SELFCAL=false
         DO_APPLY_CAL_CONT=false
+        DO_APPLY_CAL_SL=false
         DO_CONTCUBE_IMAGING=false
         DO_SPECTRAL_IMAGING=false
         DO_SPECTRAL_IMSUB=false
@@ -66,8 +67,15 @@ if [ "$PROCESS_DEFAULTS_HAS_RUN" != "true" ]; then
         DO_STAGE_FOR_CASDA=false
     fi
 
+    # Turn off the purging of the full-resolution MS if we need to use it.
+    if [ ${DO_COPY_SL} == true ] ||
+           [ ${DO_APPLY_CAL_SL} == true ] ||
+           [ ${DO_CONT_SUB_SL} == true ] || 
+           [ ${DO_SPECTRAL_IMAGING} == true ]; then
 
-
+        PURGE_FULL_MS=false
+        
+    fi
     
     ####################
     # Define the full path of output directory
@@ -231,6 +239,9 @@ module load askappipeline/${askappipelineVersion}"
     fi
     if [ "$JOB_TIME_SOURCEFINDING" == "" ]; then
         JOB_TIME_SOURCEFINDING=${JOB_TIME_DEFAULT}
+    fi
+    if [ "$JOB_TIME_SOURCEFINDING_SPEC" == "" ]; then
+        JOB_TIME_SOURCEFINDING_SPEC=${JOB_TIME_DEFAULT}
     fi
     if [ "$JOB_TIME_FITS_CONVERT" == "" ]; then
         JOB_TIME_FITS_CONVERT=${JOB_TIME_DEFAULT}
@@ -458,22 +469,54 @@ EOF
         ####################
         # Spectral source-finding
 
+        # Number of cores etc
+        NUM_CPUS_SELAVY_SPEC=`echo $SELAVY_SPEC_NSUBX $SELAVY_SPEC_NSUBY $SELAVY_SPEC_NSUBZ | awk '{print $1*$2*$3+1}'`
+        if [ "${CPUS_PER_CORE_SELAVY_SPEC}" == "" ]; then
+            CPUS_PER_CORE_SELAVY_SPEC=${NUM_CPUS_SELAVY_SPEC}
+            if [ ${CPUS_PER_CORE_SELAVY_SPEC} -gt 20 ]; then
+                CPUS_PER_CORE_SELAVY_SPEC=20
+            fi
+        fi
+
         # Check search type
-        if [ ${SELAVY_SPEC_SEARCH_TYPE} != "spectral" ] || [
-               ${SELAVY_SPEC_SEARCH_TYPE} != "spatial" ]; then
+        if [ ${SELAVY_SPEC_SEARCH_TYPE} != "spectral" ] || 
+               [ ${SELAVY_SPEC_SEARCH_TYPE} != "spatial" ]; then
             SELAVY_SPEC_SEARCH_TYPE="spectral"
             echo "WARNING - SELAVY_SPEC_SEARCH_TYPE needs to be 'spectral' or 'spatial' - Setting to 'spectral'"
         fi
             
         # Check smooth type
         if [ ${SELAVY_SPEC_FLAG_SMOOTH} == "true" ]; then
-            if [ ${SELAVY_SPEC_SMOOTH_TYPE} != "spectral" ] || [
-                   ${SELAVY_SPEC_SMOOTH_TYPE} != "spatial" ]; then
+            if [ ${SELAVY_SPEC_SMOOTH_TYPE} != "spectral" ] || 
+                   [ ${SELAVY_SPEC_SMOOTH_TYPE} != "spatial" ]; then
                 SELAVY_SPEC_SMOOTH_TYPE="spectral"
                 echo "WARNING - SELAVY_SPEC_SMOOTH_TYPE needs to be 'spectral' or 'spatial' - Setting to 'spectral'"
             fi
         fi
-            
+
+        # Spatial smoothing kernel - interpret to form selavy parameters
+        if [ ${SELAVY_SPEC_FLAG_SMOOTH} == "true" ] && 
+               [ ${SELAVY_SPEC_SMOOTH_TYPE} == "spatial" ]; then
+            kernelArray=()
+            for a in `echo $SELAVY_SPEC_SPATIAL_KERNEL | sed -e 's/[][,]/ /g'`; do
+                kernelArray+=($a)
+            done
+            if [ ${#kernelArray[@]} -eq 1 ]; then
+                SELAVY_SPEC_KERN_MAJ=${kernelArray[0]}
+                SELAVY_SPEC_KERN_MIN=${kernelArray[0]}
+                SELAVY_SPEC_KERN_PA=0
+            elif [ ${#kernelArray[@]} -eq 3 ]; then
+                SELAVY_SPEC_KERN_MAJ=${kernelArray[0]}
+                SELAVY_SPEC_KERN_MIN=${kernelArray[1]}
+                SELAVY_SPEC_KERN_PA=${kernelArray[2]}
+            else
+                echo "WARNING - badly formed parameter SELAVY_SPEC_SPATIAL_KERNEL=${SELAVY_SPEC_SPATIAL_KERNEL}"
+                echo "        - turning off Selavy's spatial smoothing."
+                SELAVY_SPEC_FLAG_SMOOTH=false
+            fi
+        fi
+
+        
         ####################
         # Variable inputs to Self-calibration settings
         #  This section takes the provided parameters and creates

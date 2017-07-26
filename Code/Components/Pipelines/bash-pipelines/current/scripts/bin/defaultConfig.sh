@@ -72,6 +72,7 @@ JOB_TIME_SPECTRAL_IMAGE=""
 JOB_TIME_SPECTRAL_IMCONTSUB=""
 JOB_TIME_LINMOS=""
 JOB_TIME_SOURCEFINDING=""
+JOB_TIME_SOURCEFINDING_SPEC=""
 JOB_TIME_FITS_CONVERT=""
 JOB_TIME_THUMBNAILS=""
 JOB_TIME_CASDA_UPLOAD=""
@@ -215,6 +216,8 @@ NUM_CPUS_CBPCAL=100
 # Value for the calibrate.scalenoise parameter for applying the
 # bandpass solution
 BANDPASS_SCALENOISE=false
+# Limit the data selection for bandpass solving to a minimum UV distance [m]
+BANDPASS_MINUV=0
 
 # Smoothing of the bandpass table - this is achieved by the ACES tool
 # plot_caltable.py. This tool also plots the cal solutions
@@ -304,6 +307,11 @@ FLAG_THRESHOLD_AMPLITUDE_SCIENCE_LOW=0.0
 ANTENNA_FLAG_SCIENCE=""
 # Whether to flag autocorrelations for the science data
 FLAG_AUTOCORRELATION_SCIENCE=false
+
+# Whether to remove the full-resolution dataset after averaging
+#     (We set this to true by default, but if spectral imaging is
+#      desired we change to false)
+PURGE_FULL_MS=true
 
 # Run flagging after averaging, as well as after bandpass application
 FLAG_AFTER_AVERAGING=true
@@ -682,6 +690,9 @@ SELAVY_NSUBY=3
 ##############################
 # Selavy source finder - spectral-line
 #
+# Allow user to specify number of cores per node. If blank, we work it
+# out based on number of requested cores
+CPUS_PER_CORE_SELAVY_SPEC=""
 # Signal-to-noise ratio threshold
 SELAVY_SPEC_SNR_CUT=5
 # Flux threshold - leave blank to use SNR
@@ -700,12 +711,11 @@ SELAVY_SPEC_FLAG_SMOOTH=false
 SELAVY_SPEC_SMOOTH_TYPE=spectral
 # Spectral smoothing hanning width (channels)
 SELAVY_SPEC_HANN_WIDTH=5
-# Spatial smoothing Gaussian size (pixels for maj/min, degrees for PA)
-SELAVY_SPEC_KERN_MAJ=3
-SELAVY_SPEC_KERN_MIN=3
-SELAVY_SPEC_KERN_PA=0
+# Spatial smoothing Gaussian kernel - either a single value ("3") or a
+# vector of three values ("[4,3,45]")
+SELAVY_SPEC_SPATIAL_KERNEL=3
 # Wavelet reconstruction
-SELAVY_SPEC_FLAG_WAVLET=false
+SELAVY_SPEC_FLAG_WAVELET=false
 # Dimension to do the wavelet reconstruction
 SELAVY_SPEC_RECON_DIM=1
 # Signal-to-noise for wavelet thresholding 
