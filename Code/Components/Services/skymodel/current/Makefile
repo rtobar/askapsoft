@@ -39,6 +39,7 @@ rebuild: clean
 .PHONY: generate
 generate:
 	cd ./schema_definitions && python3 generate.py
+	python2 ./run_odb_compiler.py
 
 .PHONY: generate_ice
 generate_ice: generate
