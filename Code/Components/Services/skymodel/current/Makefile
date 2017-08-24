@@ -1,16 +1,14 @@
 RBUILD_FLAGS=-na
 
 # Uncomment for verbose rbuild output
-RBUILD_FLAGS+= -v
-
-RBUILD_TEST_FLAGS=-naR
+#RBUILD_FLAGS+= -v
 
 .PHONY: install
 install:
 	rbuild $(RBUILD_FLAGS) -t install
 
 .PHONY: ftest
-ftest: install
+ftest:
 	rbuild $(RBUILD_FLAGS) -R -t functests
 
 .PHONY: test
