@@ -1,7 +1,9 @@
-RBUILD_FLAGS=-SMTR
+RBUILD_FLAGS=-na
 
 # Uncomment for verbose rbuild output
 RBUILD_FLAGS+= -v
+
+RBUILD_TEST_FLAGS=-naR
 
 .PHONY: install
 install:
@@ -9,11 +11,11 @@ install:
 
 .PHONY: ftest
 ftest: install
-	rbuild $(RBUILD_FLAGS) -t functests
+	rbuild $(RBUILD_FLAGS) -R -t functests
 
 .PHONY: test
 test:
-	rbuild $(RBUILD_FLAGS) -t test
+	rbuild $(RBUILD_FLAGS) -R -t test
 
 .PHONY: clean
 clean:
