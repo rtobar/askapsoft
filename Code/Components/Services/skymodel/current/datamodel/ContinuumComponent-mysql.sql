@@ -16,12 +16,50 @@ DELETE FROM `schema_version`
 CREATE TABLE `ContinuumComponent` (
   `version` BIGINT NOT NULL,
   `continuum_component_id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `observation_date` DATETIME NULL,
+  `healpix_index` BIGINT NOT NULL,
+  `sb_id` BIGINT NULL,
+  `component_id` TEXT NULL,
+  `ra` DOUBLE NOT NULL,
+  `dec` DOUBLE NOT NULL,
+  `ra_err` FLOAT NOT NULL,
+  `dec_err` FLOAT NOT NULL,
+  `freq` FLOAT NOT NULL,
+  `flux_peak` FLOAT NOT NULL,
+  `flux_peak_err` FLOAT NOT NULL,
+  `flux_int` FLOAT NOT NULL,
+  `flux_int_err` FLOAT NOT NULL,
+  `maj_axis` FLOAT NOT NULL,
+  `min_axis` FLOAT NOT NULL,
+  `pos_ang` FLOAT NOT NULL,
+  `maj_axis_err` FLOAT NOT NULL,
+  `min_axis_err` FLOAT NOT NULL,
+  `pos_ang_err` FLOAT NOT NULL,
+  `maj_axis_deconv` FLOAT NOT NULL,
+  `min_axis_deconv` FLOAT NOT NULL,
+  `pos_ang_deconv` FLOAT NOT NULL,
+  `chi_squared_fit` FLOAT NOT NULL,
+  `rms_fit_Gauss` FLOAT NOT NULL,
+  `spectral_index` FLOAT NOT NULL,
+  `spectral_curvature` FLOAT NOT NULL,
+  `rms_image` FLOAT NOT NULL,
+  `has_siblings` INT NOT NULL,
+  `fit_is_estimate` INT NOT NULL,
   `polarisation_component_id` BIGINT NULL,
   `data_source_id` BIGINT NULL)
  ENGINE=InnoDB;
 
 CREATE INDEX `continuum_component_id_i`
   ON `ContinuumComponent` (`continuum_component_id`);
+
+CREATE INDEX `observation_date_i`
+  ON `ContinuumComponent` (`observation_date`);
+
+CREATE INDEX `healpix_index_i`
+  ON `ContinuumComponent` (`healpix_index`);
+
+CREATE INDEX `sb_id_i`
+  ON `ContinuumComponent` (`sb_id`);
 
 /*
 ALTER TABLE `ContinuumComponent`

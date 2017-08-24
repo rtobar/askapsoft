@@ -73,6 +73,354 @@ namespace odb
 
     static const continuum_component_id_type_ continuum_component_id;
 
+    // observation_date
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::boost::posix_time::ptime,
+        sqlite::id_text >::query_type,
+      sqlite::id_text >
+    observation_date_type_;
+
+    static const observation_date_type_ observation_date;
+
+    // healpix_index
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::int64_t,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    healpix_index_type_;
+
+    static const healpix_index_type_ healpix_index;
+
+    // sb_id
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::int64_t,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    sb_id_type_;
+
+    static const sb_id_type_ sb_id;
+
+    // component_id
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::std::string,
+        sqlite::id_text >::query_type,
+      sqlite::id_text >
+    component_id_type_;
+
+    static const component_id_type_ component_id;
+
+    // ra
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        double,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    ra_type_;
+
+    static const ra_type_ ra;
+
+    // dec
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        double,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    dec_type_;
+
+    static const dec_type_ dec;
+
+    // ra_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    ra_err_type_;
+
+    static const ra_err_type_ ra_err;
+
+    // dec_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    dec_err_type_;
+
+    static const dec_err_type_ dec_err;
+
+    // freq
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    freq_type_;
+
+    static const freq_type_ freq;
+
+    // flux_peak
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_peak_type_;
+
+    static const flux_peak_type_ flux_peak;
+
+    // flux_peak_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_peak_err_type_;
+
+    static const flux_peak_err_type_ flux_peak_err;
+
+    // flux_int
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_int_type_;
+
+    static const flux_int_type_ flux_int;
+
+    // flux_int_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_int_err_type_;
+
+    static const flux_int_err_type_ flux_int_err;
+
+    // maj_axis
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_type_;
+
+    static const maj_axis_type_ maj_axis;
+
+    // min_axis
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_type_;
+
+    static const min_axis_type_ min_axis;
+
+    // pos_ang
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_type_;
+
+    static const pos_ang_type_ pos_ang;
+
+    // maj_axis_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_err_type_;
+
+    static const maj_axis_err_type_ maj_axis_err;
+
+    // min_axis_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_err_type_;
+
+    static const min_axis_err_type_ min_axis_err;
+
+    // pos_ang_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_err_type_;
+
+    static const pos_ang_err_type_ pos_ang_err;
+
+    // maj_axis_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_deconv_type_;
+
+    static const maj_axis_deconv_type_ maj_axis_deconv;
+
+    // min_axis_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_deconv_type_;
+
+    static const min_axis_deconv_type_ min_axis_deconv;
+
+    // pos_ang_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_deconv_type_;
+
+    static const pos_ang_deconv_type_ pos_ang_deconv;
+
+    // chi_squared_fit
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    chi_squared_fit_type_;
+
+    static const chi_squared_fit_type_ chi_squared_fit;
+
+    // rms_fit_Gauss
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    rms_fit_Gauss_type_;
+
+    static const rms_fit_Gauss_type_ rms_fit_Gauss;
+
+    // spectral_index
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    spectral_index_type_;
+
+    static const spectral_index_type_ spectral_index;
+
+    // spectral_curvature
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    spectral_curvature_type_;
+
+    static const spectral_curvature_type_ spectral_curvature;
+
+    // rms_image
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    rms_image_type_;
+
+    static const rms_image_type_ rms_image;
+
+    // has_siblings
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        bool,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    has_siblings_type_;
+
+    static const has_siblings_type_ has_siblings;
+
+    // fit_is_estimate
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        bool,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    fit_is_estimate_type_;
+
+    static const fit_is_estimate_type_ fit_is_estimate;
+
     // polarisation
     //
     typedef
@@ -111,6 +459,180 @@ namespace odb
   pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
   continuum_component_id (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::continuum_component_id,
                           A::table_name, "\"continuum_component_id\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::observation_date_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  observation_date (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::observation_date,
+                    A::table_name, "\"observation_date\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::healpix_index_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  healpix_index (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::healpix_index,
+                 A::table_name, "\"healpix_index\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::sb_id_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  sb_id (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::sb_id,
+         A::table_name, "\"sb_id\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::component_id_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  component_id (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::component_id,
+                A::table_name, "\"component_id\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::ra_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  ra (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::ra,
+      A::table_name, "\"ra\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::dec_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  dec (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::dec,
+       A::table_name, "\"dec\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::ra_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  ra_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::ra_err,
+          A::table_name, "\"ra_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::dec_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  dec_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::dec_err,
+           A::table_name, "\"dec_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::freq_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  freq (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::freq,
+        A::table_name, "\"freq\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_peak_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_peak (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_peak,
+             A::table_name, "\"flux_peak\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_peak_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_peak_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_peak_err,
+                 A::table_name, "\"flux_peak_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_int_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_int (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_int,
+            A::table_name, "\"flux_int\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_int_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_int_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_int_err,
+                A::table_name, "\"flux_int_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis,
+            A::table_name, "\"maj_axis\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis,
+            A::table_name, "\"min_axis\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang,
+           A::table_name, "\"pos_ang\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis_err,
+                A::table_name, "\"maj_axis_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis_err,
+                A::table_name, "\"min_axis_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang_err (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang_err,
+               A::table_name, "\"pos_ang_err\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis_deconv (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis_deconv,
+                   A::table_name, "\"maj_axis_deconv\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis_deconv (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis_deconv,
+                   A::table_name, "\"min_axis_deconv\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang_deconv (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang_deconv,
+                  A::table_name, "\"pos_ang_deconv\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::chi_squared_fit_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  chi_squared_fit (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::chi_squared_fit,
+                   A::table_name, "\"chi_squared_fit\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::rms_fit_Gauss_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  rms_fit_Gauss (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::rms_fit_Gauss,
+                 A::table_name, "\"rms_fit_Gauss\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::spectral_index_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  spectral_index (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::spectral_index,
+                  A::table_name, "\"spectral_index\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::spectral_curvature_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  spectral_curvature (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::spectral_curvature,
+                      A::table_name, "\"spectral_curvature\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::rms_image_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  rms_image (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::rms_image,
+             A::table_name, "\"rms_image\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::has_siblings_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  has_siblings (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::has_siblings,
+                A::table_name, "\"has_siblings\"", 0);
+
+  template <typename A>
+  const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::fit_is_estimate_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  fit_is_estimate (pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::fit_is_estimate,
+                   A::table_name, "\"fit_is_estimate\"", 0);
 
   template <typename A>
   const typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::polarisation_type_
@@ -155,6 +677,153 @@ namespace odb
       //
       long long continuum_component_id_value;
       bool continuum_component_id_null;
+
+      // observation_date
+      //
+      details::buffer observation_date_value;
+      std::size_t observation_date_size;
+      bool observation_date_null;
+
+      // healpix_index
+      //
+      long long healpix_index_value;
+      bool healpix_index_null;
+
+      // sb_id
+      //
+      long long sb_id_value;
+      bool sb_id_null;
+
+      // component_id
+      //
+      details::buffer component_id_value;
+      std::size_t component_id_size;
+      bool component_id_null;
+
+      // ra
+      //
+      double ra_value;
+      bool ra_null;
+
+      // dec
+      //
+      double dec_value;
+      bool dec_null;
+
+      // ra_err
+      //
+      double ra_err_value;
+      bool ra_err_null;
+
+      // dec_err
+      //
+      double dec_err_value;
+      bool dec_err_null;
+
+      // freq
+      //
+      double freq_value;
+      bool freq_null;
+
+      // flux_peak
+      //
+      double flux_peak_value;
+      bool flux_peak_null;
+
+      // flux_peak_err
+      //
+      double flux_peak_err_value;
+      bool flux_peak_err_null;
+
+      // flux_int
+      //
+      double flux_int_value;
+      bool flux_int_null;
+
+      // flux_int_err
+      //
+      double flux_int_err_value;
+      bool flux_int_err_null;
+
+      // maj_axis
+      //
+      double maj_axis_value;
+      bool maj_axis_null;
+
+      // min_axis
+      //
+      double min_axis_value;
+      bool min_axis_null;
+
+      // pos_ang
+      //
+      double pos_ang_value;
+      bool pos_ang_null;
+
+      // maj_axis_err
+      //
+      double maj_axis_err_value;
+      bool maj_axis_err_null;
+
+      // min_axis_err
+      //
+      double min_axis_err_value;
+      bool min_axis_err_null;
+
+      // pos_ang_err
+      //
+      double pos_ang_err_value;
+      bool pos_ang_err_null;
+
+      // maj_axis_deconv
+      //
+      double maj_axis_deconv_value;
+      bool maj_axis_deconv_null;
+
+      // min_axis_deconv
+      //
+      double min_axis_deconv_value;
+      bool min_axis_deconv_null;
+
+      // pos_ang_deconv
+      //
+      double pos_ang_deconv_value;
+      bool pos_ang_deconv_null;
+
+      // chi_squared_fit
+      //
+      double chi_squared_fit_value;
+      bool chi_squared_fit_null;
+
+      // rms_fit_Gauss
+      //
+      double rms_fit_Gauss_value;
+      bool rms_fit_Gauss_null;
+
+      // spectral_index
+      //
+      double spectral_index_value;
+      bool spectral_index_null;
+
+      // spectral_curvature
+      //
+      double spectral_curvature_value;
+      bool spectral_curvature_null;
+
+      // rms_image
+      //
+      double rms_image_value;
+      bool rms_image_null;
+
+      // has_siblings
+      //
+      long long has_siblings_value;
+      bool has_siblings_null;
+
+      // fit_is_estimate
+      //
+      long long fit_is_estimate_value;
+      bool fit_is_estimate_null;
 
       // polarisation
       //
@@ -211,7 +880,7 @@ namespace odb
 
     typedef sqlite::query_base query_base_type;
 
-    static const std::size_t column_count = 4UL;
+    static const std::size_t column_count = 33UL;
     static const std::size_t id_column_count = 1UL;
     static const std::size_t inverse_column_count = 0UL;
     static const std::size_t readonly_column_count = 0UL;
@@ -358,6 +1027,354 @@ namespace odb
 
     static const continuum_component_id_type_ continuum_component_id;
 
+    // observation_date
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::boost::posix_time::ptime,
+        sqlite::id_text >::query_type,
+      sqlite::id_text >
+    observation_date_type_;
+
+    static const observation_date_type_ observation_date;
+
+    // healpix_index
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::int64_t,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    healpix_index_type_;
+
+    static const healpix_index_type_ healpix_index;
+
+    // sb_id
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::int64_t,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    sb_id_type_;
+
+    static const sb_id_type_ sb_id;
+
+    // component_id
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        ::std::string,
+        sqlite::id_text >::query_type,
+      sqlite::id_text >
+    component_id_type_;
+
+    static const component_id_type_ component_id;
+
+    // ra
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        double,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    ra_type_;
+
+    static const ra_type_ ra;
+
+    // dec
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        double,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    dec_type_;
+
+    static const dec_type_ dec;
+
+    // ra_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    ra_err_type_;
+
+    static const ra_err_type_ ra_err;
+
+    // dec_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    dec_err_type_;
+
+    static const dec_err_type_ dec_err;
+
+    // freq
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    freq_type_;
+
+    static const freq_type_ freq;
+
+    // flux_peak
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_peak_type_;
+
+    static const flux_peak_type_ flux_peak;
+
+    // flux_peak_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_peak_err_type_;
+
+    static const flux_peak_err_type_ flux_peak_err;
+
+    // flux_int
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_int_type_;
+
+    static const flux_int_type_ flux_int;
+
+    // flux_int_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    flux_int_err_type_;
+
+    static const flux_int_err_type_ flux_int_err;
+
+    // maj_axis
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_type_;
+
+    static const maj_axis_type_ maj_axis;
+
+    // min_axis
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_type_;
+
+    static const min_axis_type_ min_axis;
+
+    // pos_ang
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_type_;
+
+    static const pos_ang_type_ pos_ang;
+
+    // maj_axis_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_err_type_;
+
+    static const maj_axis_err_type_ maj_axis_err;
+
+    // min_axis_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_err_type_;
+
+    static const min_axis_err_type_ min_axis_err;
+
+    // pos_ang_err
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_err_type_;
+
+    static const pos_ang_err_type_ pos_ang_err;
+
+    // maj_axis_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    maj_axis_deconv_type_;
+
+    static const maj_axis_deconv_type_ maj_axis_deconv;
+
+    // min_axis_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    min_axis_deconv_type_;
+
+    static const min_axis_deconv_type_ min_axis_deconv;
+
+    // pos_ang_deconv
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    pos_ang_deconv_type_;
+
+    static const pos_ang_deconv_type_ pos_ang_deconv;
+
+    // chi_squared_fit
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    chi_squared_fit_type_;
+
+    static const chi_squared_fit_type_ chi_squared_fit;
+
+    // rms_fit_Gauss
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    rms_fit_Gauss_type_;
+
+    static const rms_fit_Gauss_type_ rms_fit_Gauss;
+
+    // spectral_index
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    spectral_index_type_;
+
+    static const spectral_index_type_ spectral_index;
+
+    // spectral_curvature
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    spectral_curvature_type_;
+
+    static const spectral_curvature_type_ spectral_curvature;
+
+    // rms_image
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        float,
+        sqlite::id_real >::query_type,
+      sqlite::id_real >
+    rms_image_type_;
+
+    static const rms_image_type_ rms_image;
+
+    // has_siblings
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        bool,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    has_siblings_type_;
+
+    static const has_siblings_type_ has_siblings;
+
+    // fit_is_estimate
+    //
+    typedef
+    sqlite::query_column<
+      sqlite::value_traits<
+        bool,
+        sqlite::id_integer >::query_type,
+      sqlite::id_integer >
+    fit_is_estimate_type_;
+
+    static const fit_is_estimate_type_ fit_is_estimate;
+
     // polarisation
     //
     typedef
@@ -430,6 +1447,180 @@ namespace odb
   query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
   continuum_component_id (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::continuum_component_id,
                           A::table_name, "\"continuum_component_id\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::observation_date_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  observation_date (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::observation_date,
+                    A::table_name, "\"observation_date\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::healpix_index_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  healpix_index (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::healpix_index,
+                 A::table_name, "\"healpix_index\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::sb_id_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  sb_id (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::sb_id,
+         A::table_name, "\"sb_id\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::component_id_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  component_id (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::component_id,
+                A::table_name, "\"component_id\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::ra_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  ra (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::ra,
+      A::table_name, "\"ra\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::dec_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  dec (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::dec,
+       A::table_name, "\"dec\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::ra_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  ra_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::ra_err,
+          A::table_name, "\"ra_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::dec_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  dec_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::dec_err,
+           A::table_name, "\"dec_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::freq_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  freq (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::freq,
+        A::table_name, "\"freq\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_peak_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_peak (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_peak,
+             A::table_name, "\"flux_peak\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_peak_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_peak_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_peak_err,
+                 A::table_name, "\"flux_peak_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_int_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_int (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_int,
+            A::table_name, "\"flux_int\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::flux_int_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  flux_int_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::flux_int_err,
+                A::table_name, "\"flux_int_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis,
+            A::table_name, "\"maj_axis\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis,
+            A::table_name, "\"min_axis\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang,
+           A::table_name, "\"pos_ang\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis_err,
+                A::table_name, "\"maj_axis_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis_err,
+                A::table_name, "\"min_axis_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang_err (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang_err,
+               A::table_name, "\"pos_ang_err\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::maj_axis_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  maj_axis_deconv (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::maj_axis_deconv,
+                   A::table_name, "\"maj_axis_deconv\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::min_axis_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  min_axis_deconv (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::min_axis_deconv,
+                   A::table_name, "\"min_axis_deconv\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::pos_ang_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  pos_ang_deconv (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::pos_ang_deconv,
+                  A::table_name, "\"pos_ang_deconv\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::chi_squared_fit_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  chi_squared_fit (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::chi_squared_fit,
+                   A::table_name, "\"chi_squared_fit\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::rms_fit_Gauss_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  rms_fit_Gauss (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::rms_fit_Gauss,
+                 A::table_name, "\"rms_fit_Gauss\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::spectral_index_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  spectral_index (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::spectral_index,
+                  A::table_name, "\"spectral_index\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::spectral_curvature_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  spectral_curvature (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::spectral_curvature,
+                      A::table_name, "\"spectral_curvature\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::rms_image_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  rms_image (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::rms_image,
+             A::table_name, "\"rms_image\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::has_siblings_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  has_siblings (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::has_siblings,
+                A::table_name, "\"has_siblings\"", 0);
+
+  template <typename A>
+  const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::fit_is_estimate_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::
+  fit_is_estimate (query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, typename A::common_traits >::fit_is_estimate,
+                   A::table_name, "\"fit_is_estimate\"", 0);
 
   template <typename A>
   const typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_sqlite, A >::polarisation_type_

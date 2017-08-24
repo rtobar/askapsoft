@@ -147,13 +147,133 @@ namespace odb
     //
     t[1UL] = 0;
 
-    // polarisation
+    // observation_date
     //
     t[2UL] = 0;
 
-    // data_source
+    // healpix_index
     //
     t[3UL] = 0;
+
+    // sb_id
+    //
+    t[4UL] = 0;
+
+    // component_id
+    //
+    if (t[5UL])
+    {
+      i.component_id_value.capacity (i.component_id_size);
+      grew = true;
+    }
+
+    // ra
+    //
+    t[6UL] = 0;
+
+    // dec
+    //
+    t[7UL] = 0;
+
+    // ra_err
+    //
+    t[8UL] = 0;
+
+    // dec_err
+    //
+    t[9UL] = 0;
+
+    // freq
+    //
+    t[10UL] = 0;
+
+    // flux_peak
+    //
+    t[11UL] = 0;
+
+    // flux_peak_err
+    //
+    t[12UL] = 0;
+
+    // flux_int
+    //
+    t[13UL] = 0;
+
+    // flux_int_err
+    //
+    t[14UL] = 0;
+
+    // maj_axis
+    //
+    t[15UL] = 0;
+
+    // min_axis
+    //
+    t[16UL] = 0;
+
+    // pos_ang
+    //
+    t[17UL] = 0;
+
+    // maj_axis_err
+    //
+    t[18UL] = 0;
+
+    // min_axis_err
+    //
+    t[19UL] = 0;
+
+    // pos_ang_err
+    //
+    t[20UL] = 0;
+
+    // maj_axis_deconv
+    //
+    t[21UL] = 0;
+
+    // min_axis_deconv
+    //
+    t[22UL] = 0;
+
+    // pos_ang_deconv
+    //
+    t[23UL] = 0;
+
+    // chi_squared_fit
+    //
+    t[24UL] = 0;
+
+    // rms_fit_Gauss
+    //
+    t[25UL] = 0;
+
+    // spectral_index
+    //
+    t[26UL] = 0;
+
+    // spectral_curvature
+    //
+    t[27UL] = 0;
+
+    // rms_image
+    //
+    t[28UL] = 0;
+
+    // has_siblings
+    //
+    t[29UL] = 0;
+
+    // fit_is_estimate
+    //
+    t[30UL] = 0;
+
+    // polarisation
+    //
+    t[31UL] = 0;
+
+    // data_source
+    //
+    t[32UL] = 0;
 
     return grew;
   }
@@ -190,6 +310,216 @@ namespace odb
       b[n].is_null = &i.continuum_component_id_null;
       n++;
     }
+
+    // observation_date
+    //
+    b[n].buffer_type = MYSQL_TYPE_DATETIME;
+    b[n].buffer = &i.observation_date_value;
+    b[n].is_null = &i.observation_date_null;
+    n++;
+
+    // healpix_index
+    //
+    b[n].buffer_type = MYSQL_TYPE_LONGLONG;
+    b[n].is_unsigned = 0;
+    b[n].buffer = &i.healpix_index_value;
+    b[n].is_null = &i.healpix_index_null;
+    n++;
+
+    // sb_id
+    //
+    b[n].buffer_type = MYSQL_TYPE_LONGLONG;
+    b[n].is_unsigned = 0;
+    b[n].buffer = &i.sb_id_value;
+    b[n].is_null = &i.sb_id_null;
+    n++;
+
+    // component_id
+    //
+    b[n].buffer_type = MYSQL_TYPE_STRING;
+    b[n].buffer = i.component_id_value.data ();
+    b[n].buffer_length = static_cast<unsigned long> (
+      i.component_id_value.capacity ());
+    b[n].length = &i.component_id_size;
+    b[n].is_null = &i.component_id_null;
+    n++;
+
+    // ra
+    //
+    b[n].buffer_type = MYSQL_TYPE_DOUBLE;
+    b[n].buffer = &i.ra_value;
+    b[n].is_null = &i.ra_null;
+    n++;
+
+    // dec
+    //
+    b[n].buffer_type = MYSQL_TYPE_DOUBLE;
+    b[n].buffer = &i.dec_value;
+    b[n].is_null = &i.dec_null;
+    n++;
+
+    // ra_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.ra_err_value;
+    b[n].is_null = &i.ra_err_null;
+    n++;
+
+    // dec_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.dec_err_value;
+    b[n].is_null = &i.dec_err_null;
+    n++;
+
+    // freq
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.freq_value;
+    b[n].is_null = &i.freq_null;
+    n++;
+
+    // flux_peak
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.flux_peak_value;
+    b[n].is_null = &i.flux_peak_null;
+    n++;
+
+    // flux_peak_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.flux_peak_err_value;
+    b[n].is_null = &i.flux_peak_err_null;
+    n++;
+
+    // flux_int
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.flux_int_value;
+    b[n].is_null = &i.flux_int_null;
+    n++;
+
+    // flux_int_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.flux_int_err_value;
+    b[n].is_null = &i.flux_int_err_null;
+    n++;
+
+    // maj_axis
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.maj_axis_value;
+    b[n].is_null = &i.maj_axis_null;
+    n++;
+
+    // min_axis
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.min_axis_value;
+    b[n].is_null = &i.min_axis_null;
+    n++;
+
+    // pos_ang
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.pos_ang_value;
+    b[n].is_null = &i.pos_ang_null;
+    n++;
+
+    // maj_axis_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.maj_axis_err_value;
+    b[n].is_null = &i.maj_axis_err_null;
+    n++;
+
+    // min_axis_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.min_axis_err_value;
+    b[n].is_null = &i.min_axis_err_null;
+    n++;
+
+    // pos_ang_err
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.pos_ang_err_value;
+    b[n].is_null = &i.pos_ang_err_null;
+    n++;
+
+    // maj_axis_deconv
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.maj_axis_deconv_value;
+    b[n].is_null = &i.maj_axis_deconv_null;
+    n++;
+
+    // min_axis_deconv
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.min_axis_deconv_value;
+    b[n].is_null = &i.min_axis_deconv_null;
+    n++;
+
+    // pos_ang_deconv
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.pos_ang_deconv_value;
+    b[n].is_null = &i.pos_ang_deconv_null;
+    n++;
+
+    // chi_squared_fit
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.chi_squared_fit_value;
+    b[n].is_null = &i.chi_squared_fit_null;
+    n++;
+
+    // rms_fit_Gauss
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.rms_fit_Gauss_value;
+    b[n].is_null = &i.rms_fit_Gauss_null;
+    n++;
+
+    // spectral_index
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.spectral_index_value;
+    b[n].is_null = &i.spectral_index_null;
+    n++;
+
+    // spectral_curvature
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.spectral_curvature_value;
+    b[n].is_null = &i.spectral_curvature_null;
+    n++;
+
+    // rms_image
+    //
+    b[n].buffer_type = MYSQL_TYPE_FLOAT;
+    b[n].buffer = &i.rms_image_value;
+    b[n].is_null = &i.rms_image_null;
+    n++;
+
+    // has_siblings
+    //
+    b[n].buffer_type = MYSQL_TYPE_LONG;
+    b[n].is_unsigned = 0;
+    b[n].buffer = &i.has_siblings_value;
+    b[n].is_null = &i.has_siblings_null;
+    n++;
+
+    // fit_is_estimate
+    //
+    b[n].buffer_type = MYSQL_TYPE_LONG;
+    b[n].is_unsigned = 0;
+    b[n].buffer = &i.fit_is_estimate_value;
+    b[n].is_null = &i.fit_is_estimate_null;
+    n++;
 
     // polarisation
     //
@@ -253,6 +583,419 @@ namespace odb
           mysql::id_longlong >::set_image (
         i.continuum_component_id_value, is_null, v);
       i.continuum_component_id_null = is_null;
+    }
+
+    // observation_date
+    //
+    {
+      ::boost::posix_time::ptime const& v =
+        o.observation_date;
+
+      bool is_null (true);
+      mysql::value_traits<
+          ::boost::posix_time::ptime,
+          mysql::id_datetime >::set_image (
+        i.observation_date_value, is_null, v);
+      i.observation_date_null = is_null;
+    }
+
+    // healpix_index
+    //
+    {
+      ::int64_t const& v =
+        o.healpix_index;
+
+      bool is_null (false);
+      mysql::value_traits<
+          ::int64_t,
+          mysql::id_longlong >::set_image (
+        i.healpix_index_value, is_null, v);
+      i.healpix_index_null = is_null;
+    }
+
+    // sb_id
+    //
+    {
+      ::int64_t const& v =
+        o.sb_id;
+
+      bool is_null (true);
+      mysql::value_traits<
+          ::int64_t,
+          mysql::id_longlong >::set_image (
+        i.sb_id_value, is_null, v);
+      i.sb_id_null = is_null;
+    }
+
+    // component_id
+    //
+    {
+      ::std::string const& v =
+        o.component_id;
+
+      bool is_null (true);
+      std::size_t size (0);
+      std::size_t cap (i.component_id_value.capacity ());
+      mysql::value_traits<
+          ::std::string,
+          mysql::id_string >::set_image (
+        i.component_id_value,
+        size,
+        is_null,
+        v);
+      i.component_id_null = is_null;
+      i.component_id_size = static_cast<unsigned long> (size);
+      grew = grew || (cap != i.component_id_value.capacity ());
+    }
+
+    // ra
+    //
+    {
+      double const& v =
+        o.ra;
+
+      bool is_null (false);
+      mysql::value_traits<
+          double,
+          mysql::id_double >::set_image (
+        i.ra_value, is_null, v);
+      i.ra_null = is_null;
+    }
+
+    // dec
+    //
+    {
+      double const& v =
+        o.dec;
+
+      bool is_null (false);
+      mysql::value_traits<
+          double,
+          mysql::id_double >::set_image (
+        i.dec_value, is_null, v);
+      i.dec_null = is_null;
+    }
+
+    // ra_err
+    //
+    {
+      float const& v =
+        o.ra_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.ra_err_value, is_null, v);
+      i.ra_err_null = is_null;
+    }
+
+    // dec_err
+    //
+    {
+      float const& v =
+        o.dec_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.dec_err_value, is_null, v);
+      i.dec_err_null = is_null;
+    }
+
+    // freq
+    //
+    {
+      float const& v =
+        o.freq;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.freq_value, is_null, v);
+      i.freq_null = is_null;
+    }
+
+    // flux_peak
+    //
+    {
+      float const& v =
+        o.flux_peak;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.flux_peak_value, is_null, v);
+      i.flux_peak_null = is_null;
+    }
+
+    // flux_peak_err
+    //
+    {
+      float const& v =
+        o.flux_peak_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.flux_peak_err_value, is_null, v);
+      i.flux_peak_err_null = is_null;
+    }
+
+    // flux_int
+    //
+    {
+      float const& v =
+        o.flux_int;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.flux_int_value, is_null, v);
+      i.flux_int_null = is_null;
+    }
+
+    // flux_int_err
+    //
+    {
+      float const& v =
+        o.flux_int_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.flux_int_err_value, is_null, v);
+      i.flux_int_err_null = is_null;
+    }
+
+    // maj_axis
+    //
+    {
+      float const& v =
+        o.maj_axis;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.maj_axis_value, is_null, v);
+      i.maj_axis_null = is_null;
+    }
+
+    // min_axis
+    //
+    {
+      float const& v =
+        o.min_axis;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.min_axis_value, is_null, v);
+      i.min_axis_null = is_null;
+    }
+
+    // pos_ang
+    //
+    {
+      float const& v =
+        o.pos_ang;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.pos_ang_value, is_null, v);
+      i.pos_ang_null = is_null;
+    }
+
+    // maj_axis_err
+    //
+    {
+      float const& v =
+        o.maj_axis_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.maj_axis_err_value, is_null, v);
+      i.maj_axis_err_null = is_null;
+    }
+
+    // min_axis_err
+    //
+    {
+      float const& v =
+        o.min_axis_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.min_axis_err_value, is_null, v);
+      i.min_axis_err_null = is_null;
+    }
+
+    // pos_ang_err
+    //
+    {
+      float const& v =
+        o.pos_ang_err;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.pos_ang_err_value, is_null, v);
+      i.pos_ang_err_null = is_null;
+    }
+
+    // maj_axis_deconv
+    //
+    {
+      float const& v =
+        o.maj_axis_deconv;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.maj_axis_deconv_value, is_null, v);
+      i.maj_axis_deconv_null = is_null;
+    }
+
+    // min_axis_deconv
+    //
+    {
+      float const& v =
+        o.min_axis_deconv;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.min_axis_deconv_value, is_null, v);
+      i.min_axis_deconv_null = is_null;
+    }
+
+    // pos_ang_deconv
+    //
+    {
+      float const& v =
+        o.pos_ang_deconv;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.pos_ang_deconv_value, is_null, v);
+      i.pos_ang_deconv_null = is_null;
+    }
+
+    // chi_squared_fit
+    //
+    {
+      float const& v =
+        o.chi_squared_fit;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.chi_squared_fit_value, is_null, v);
+      i.chi_squared_fit_null = is_null;
+    }
+
+    // rms_fit_Gauss
+    //
+    {
+      float const& v =
+        o.rms_fit_Gauss;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.rms_fit_Gauss_value, is_null, v);
+      i.rms_fit_Gauss_null = is_null;
+    }
+
+    // spectral_index
+    //
+    {
+      float const& v =
+        o.spectral_index;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.spectral_index_value, is_null, v);
+      i.spectral_index_null = is_null;
+    }
+
+    // spectral_curvature
+    //
+    {
+      float const& v =
+        o.spectral_curvature;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.spectral_curvature_value, is_null, v);
+      i.spectral_curvature_null = is_null;
+    }
+
+    // rms_image
+    //
+    {
+      float const& v =
+        o.rms_image;
+
+      bool is_null (false);
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_image (
+        i.rms_image_value, is_null, v);
+      i.rms_image_null = is_null;
+    }
+
+    // has_siblings
+    //
+    {
+      bool const& v =
+        o.has_siblings;
+
+      bool is_null (false);
+      mysql::value_traits<
+          bool,
+          mysql::id_long >::set_image (
+        i.has_siblings_value, is_null, v);
+      i.has_siblings_null = is_null;
+    }
+
+    // fit_is_estimate
+    //
+    {
+      bool const& v =
+        o.fit_is_estimate;
+
+      bool is_null (false);
+      mysql::value_traits<
+          bool,
+          mysql::id_long >::set_image (
+        i.fit_is_estimate_value, is_null, v);
+      i.fit_is_estimate_null = is_null;
     }
 
     // polarisation
@@ -345,6 +1088,413 @@ namespace odb
         i.continuum_component_id_null);
     }
 
+    // observation_date
+    //
+    {
+      ::boost::posix_time::ptime& v =
+        o.observation_date;
+
+      mysql::value_traits<
+          ::boost::posix_time::ptime,
+          mysql::id_datetime >::set_value (
+        v,
+        i.observation_date_value,
+        i.observation_date_null);
+    }
+
+    // healpix_index
+    //
+    {
+      ::int64_t& v =
+        o.healpix_index;
+
+      mysql::value_traits<
+          ::int64_t,
+          mysql::id_longlong >::set_value (
+        v,
+        i.healpix_index_value,
+        i.healpix_index_null);
+    }
+
+    // sb_id
+    //
+    {
+      ::int64_t& v =
+        o.sb_id;
+
+      mysql::value_traits<
+          ::int64_t,
+          mysql::id_longlong >::set_value (
+        v,
+        i.sb_id_value,
+        i.sb_id_null);
+    }
+
+    // component_id
+    //
+    {
+      ::std::string& v =
+        o.component_id;
+
+      mysql::value_traits<
+          ::std::string,
+          mysql::id_string >::set_value (
+        v,
+        i.component_id_value,
+        i.component_id_size,
+        i.component_id_null);
+    }
+
+    // ra
+    //
+    {
+      double& v =
+        o.ra;
+
+      mysql::value_traits<
+          double,
+          mysql::id_double >::set_value (
+        v,
+        i.ra_value,
+        i.ra_null);
+    }
+
+    // dec
+    //
+    {
+      double& v =
+        o.dec;
+
+      mysql::value_traits<
+          double,
+          mysql::id_double >::set_value (
+        v,
+        i.dec_value,
+        i.dec_null);
+    }
+
+    // ra_err
+    //
+    {
+      float& v =
+        o.ra_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.ra_err_value,
+        i.ra_err_null);
+    }
+
+    // dec_err
+    //
+    {
+      float& v =
+        o.dec_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.dec_err_value,
+        i.dec_err_null);
+    }
+
+    // freq
+    //
+    {
+      float& v =
+        o.freq;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.freq_value,
+        i.freq_null);
+    }
+
+    // flux_peak
+    //
+    {
+      float& v =
+        o.flux_peak;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.flux_peak_value,
+        i.flux_peak_null);
+    }
+
+    // flux_peak_err
+    //
+    {
+      float& v =
+        o.flux_peak_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.flux_peak_err_value,
+        i.flux_peak_err_null);
+    }
+
+    // flux_int
+    //
+    {
+      float& v =
+        o.flux_int;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.flux_int_value,
+        i.flux_int_null);
+    }
+
+    // flux_int_err
+    //
+    {
+      float& v =
+        o.flux_int_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.flux_int_err_value,
+        i.flux_int_err_null);
+    }
+
+    // maj_axis
+    //
+    {
+      float& v =
+        o.maj_axis;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.maj_axis_value,
+        i.maj_axis_null);
+    }
+
+    // min_axis
+    //
+    {
+      float& v =
+        o.min_axis;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.min_axis_value,
+        i.min_axis_null);
+    }
+
+    // pos_ang
+    //
+    {
+      float& v =
+        o.pos_ang;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.pos_ang_value,
+        i.pos_ang_null);
+    }
+
+    // maj_axis_err
+    //
+    {
+      float& v =
+        o.maj_axis_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.maj_axis_err_value,
+        i.maj_axis_err_null);
+    }
+
+    // min_axis_err
+    //
+    {
+      float& v =
+        o.min_axis_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.min_axis_err_value,
+        i.min_axis_err_null);
+    }
+
+    // pos_ang_err
+    //
+    {
+      float& v =
+        o.pos_ang_err;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.pos_ang_err_value,
+        i.pos_ang_err_null);
+    }
+
+    // maj_axis_deconv
+    //
+    {
+      float& v =
+        o.maj_axis_deconv;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.maj_axis_deconv_value,
+        i.maj_axis_deconv_null);
+    }
+
+    // min_axis_deconv
+    //
+    {
+      float& v =
+        o.min_axis_deconv;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.min_axis_deconv_value,
+        i.min_axis_deconv_null);
+    }
+
+    // pos_ang_deconv
+    //
+    {
+      float& v =
+        o.pos_ang_deconv;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.pos_ang_deconv_value,
+        i.pos_ang_deconv_null);
+    }
+
+    // chi_squared_fit
+    //
+    {
+      float& v =
+        o.chi_squared_fit;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.chi_squared_fit_value,
+        i.chi_squared_fit_null);
+    }
+
+    // rms_fit_Gauss
+    //
+    {
+      float& v =
+        o.rms_fit_Gauss;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.rms_fit_Gauss_value,
+        i.rms_fit_Gauss_null);
+    }
+
+    // spectral_index
+    //
+    {
+      float& v =
+        o.spectral_index;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.spectral_index_value,
+        i.spectral_index_null);
+    }
+
+    // spectral_curvature
+    //
+    {
+      float& v =
+        o.spectral_curvature;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.spectral_curvature_value,
+        i.spectral_curvature_null);
+    }
+
+    // rms_image
+    //
+    {
+      float& v =
+        o.rms_image;
+
+      mysql::value_traits<
+          float,
+          mysql::id_float >::set_value (
+        v,
+        i.rms_image_value,
+        i.rms_image_null);
+    }
+
+    // has_siblings
+    //
+    {
+      bool& v =
+        o.has_siblings;
+
+      mysql::value_traits<
+          bool,
+          mysql::id_long >::set_value (
+        v,
+        i.has_siblings_value,
+        i.has_siblings_null);
+    }
+
+    // fit_is_estimate
+    //
+    {
+      bool& v =
+        o.fit_is_estimate;
+
+      mysql::value_traits<
+          bool,
+          mysql::id_long >::set_value (
+        v,
+        i.fit_is_estimate_value,
+        i.fit_is_estimate_null);
+    }
+
     // polarisation
     //
     {
@@ -435,15 +1585,73 @@ namespace odb
   "INSERT INTO `ContinuumComponent` "
   "(`version`, "
   "`continuum_component_id`, "
+  "`observation_date`, "
+  "`healpix_index`, "
+  "`sb_id`, "
+  "`component_id`, "
+  "`ra`, "
+  "`dec`, "
+  "`ra_err`, "
+  "`dec_err`, "
+  "`freq`, "
+  "`flux_peak`, "
+  "`flux_peak_err`, "
+  "`flux_int`, "
+  "`flux_int_err`, "
+  "`maj_axis`, "
+  "`min_axis`, "
+  "`pos_ang`, "
+  "`maj_axis_err`, "
+  "`min_axis_err`, "
+  "`pos_ang_err`, "
+  "`maj_axis_deconv`, "
+  "`min_axis_deconv`, "
+  "`pos_ang_deconv`, "
+  "`chi_squared_fit`, "
+  "`rms_fit_Gauss`, "
+  "`spectral_index`, "
+  "`spectral_curvature`, "
+  "`rms_image`, "
+  "`has_siblings`, "
+  "`fit_is_estimate`, "
   "`polarisation_component_id`, "
   "`data_source_id`) "
   "VALUES "
-  "(1, ?, ?, ?)";
+  "(1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   const char access::object_traits_impl< ::askap::cp::sms::datamodel::ContinuumComponent, id_mysql >::find_statement[] =
   "SELECT "
   "`ContinuumComponent`.`version`, "
   "`ContinuumComponent`.`continuum_component_id`, "
+  "`ContinuumComponent`.`observation_date`, "
+  "`ContinuumComponent`.`healpix_index`, "
+  "`ContinuumComponent`.`sb_id`, "
+  "`ContinuumComponent`.`component_id`, "
+  "`ContinuumComponent`.`ra`, "
+  "`ContinuumComponent`.`dec`, "
+  "`ContinuumComponent`.`ra_err`, "
+  "`ContinuumComponent`.`dec_err`, "
+  "`ContinuumComponent`.`freq`, "
+  "`ContinuumComponent`.`flux_peak`, "
+  "`ContinuumComponent`.`flux_peak_err`, "
+  "`ContinuumComponent`.`flux_int`, "
+  "`ContinuumComponent`.`flux_int_err`, "
+  "`ContinuumComponent`.`maj_axis`, "
+  "`ContinuumComponent`.`min_axis`, "
+  "`ContinuumComponent`.`pos_ang`, "
+  "`ContinuumComponent`.`maj_axis_err`, "
+  "`ContinuumComponent`.`min_axis_err`, "
+  "`ContinuumComponent`.`pos_ang_err`, "
+  "`ContinuumComponent`.`maj_axis_deconv`, "
+  "`ContinuumComponent`.`min_axis_deconv`, "
+  "`ContinuumComponent`.`pos_ang_deconv`, "
+  "`ContinuumComponent`.`chi_squared_fit`, "
+  "`ContinuumComponent`.`rms_fit_Gauss`, "
+  "`ContinuumComponent`.`spectral_index`, "
+  "`ContinuumComponent`.`spectral_curvature`, "
+  "`ContinuumComponent`.`rms_image`, "
+  "`ContinuumComponent`.`has_siblings`, "
+  "`ContinuumComponent`.`fit_is_estimate`, "
   "`ContinuumComponent`.`polarisation_component_id`, "
   "`ContinuumComponent`.`data_source_id` "
   "FROM `ContinuumComponent` "
@@ -453,6 +1661,35 @@ namespace odb
   "UPDATE `ContinuumComponent` "
   "SET "
   "`version`=`version`+1, "
+  "`observation_date`=?, "
+  "`healpix_index`=?, "
+  "`sb_id`=?, "
+  "`component_id`=?, "
+  "`ra`=?, "
+  "`dec`=?, "
+  "`ra_err`=?, "
+  "`dec_err`=?, "
+  "`freq`=?, "
+  "`flux_peak`=?, "
+  "`flux_peak_err`=?, "
+  "`flux_int`=?, "
+  "`flux_int_err`=?, "
+  "`maj_axis`=?, "
+  "`min_axis`=?, "
+  "`pos_ang`=?, "
+  "`maj_axis_err`=?, "
+  "`min_axis_err`=?, "
+  "`pos_ang_err`=?, "
+  "`maj_axis_deconv`=?, "
+  "`min_axis_deconv`=?, "
+  "`pos_ang_deconv`=?, "
+  "`chi_squared_fit`=?, "
+  "`rms_fit_Gauss`=?, "
+  "`spectral_index`=?, "
+  "`spectral_curvature`=?, "
+  "`rms_image`=?, "
+  "`has_siblings`=?, "
+  "`fit_is_estimate`=?, "
   "`polarisation_component_id`=?, "
   "`data_source_id`=? "
   "WHERE `continuum_component_id`=? AND `version`=?";
@@ -469,6 +1706,35 @@ namespace odb
   "SELECT\n"
   "`ContinuumComponent`.`version`,\n"
   "`ContinuumComponent`.`continuum_component_id`,\n"
+  "`ContinuumComponent`.`observation_date`,\n"
+  "`ContinuumComponent`.`healpix_index`,\n"
+  "`ContinuumComponent`.`sb_id`,\n"
+  "`ContinuumComponent`.`component_id`,\n"
+  "`ContinuumComponent`.`ra`,\n"
+  "`ContinuumComponent`.`dec`,\n"
+  "`ContinuumComponent`.`ra_err`,\n"
+  "`ContinuumComponent`.`dec_err`,\n"
+  "`ContinuumComponent`.`freq`,\n"
+  "`ContinuumComponent`.`flux_peak`,\n"
+  "`ContinuumComponent`.`flux_peak_err`,\n"
+  "`ContinuumComponent`.`flux_int`,\n"
+  "`ContinuumComponent`.`flux_int_err`,\n"
+  "`ContinuumComponent`.`maj_axis`,\n"
+  "`ContinuumComponent`.`min_axis`,\n"
+  "`ContinuumComponent`.`pos_ang`,\n"
+  "`ContinuumComponent`.`maj_axis_err`,\n"
+  "`ContinuumComponent`.`min_axis_err`,\n"
+  "`ContinuumComponent`.`pos_ang_err`,\n"
+  "`ContinuumComponent`.`maj_axis_deconv`,\n"
+  "`ContinuumComponent`.`min_axis_deconv`,\n"
+  "`ContinuumComponent`.`pos_ang_deconv`,\n"
+  "`ContinuumComponent`.`chi_squared_fit`,\n"
+  "`ContinuumComponent`.`rms_fit_Gauss`,\n"
+  "`ContinuumComponent`.`spectral_index`,\n"
+  "`ContinuumComponent`.`spectral_curvature`,\n"
+  "`ContinuumComponent`.`rms_image`,\n"
+  "`ContinuumComponent`.`has_siblings`,\n"
+  "`ContinuumComponent`.`fit_is_estimate`,\n"
   "`ContinuumComponent`.`polarisation_component_id`,\n"
   "`ContinuumComponent`.`data_source_id`\n"
   "FROM `ContinuumComponent`\n"
@@ -830,6 +2096,20 @@ namespace odb
     auto_result ar (st);
     select_statement::result r (st.fetch ());
 
+    if (r == select_statement::truncated)
+    {
+      if (grow (im, sts.select_image_truncated ()))
+        im.version++;
+
+      if (im.version != sts.select_image_version ())
+      {
+        bind (imb.bind, im, statement_select);
+        sts.select_image_version (im.version);
+        imb.version++;
+        st.refetch ();
+      }
+    }
+
     return r != select_statement::no_data;
   }
 
@@ -981,11 +2261,46 @@ namespace odb
           db.execute ("CREATE TABLE `ContinuumComponent` (\n"
                       "  `version` BIGINT NOT NULL,\n"
                       "  `continuum_component_id` BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
+                      "  `observation_date` DATETIME NULL,\n"
+                      "  `healpix_index` BIGINT NOT NULL,\n"
+                      "  `sb_id` BIGINT NULL,\n"
+                      "  `component_id` TEXT NULL,\n"
+                      "  `ra` DOUBLE NOT NULL,\n"
+                      "  `dec` DOUBLE NOT NULL,\n"
+                      "  `ra_err` FLOAT NOT NULL,\n"
+                      "  `dec_err` FLOAT NOT NULL,\n"
+                      "  `freq` FLOAT NOT NULL,\n"
+                      "  `flux_peak` FLOAT NOT NULL,\n"
+                      "  `flux_peak_err` FLOAT NOT NULL,\n"
+                      "  `flux_int` FLOAT NOT NULL,\n"
+                      "  `flux_int_err` FLOAT NOT NULL,\n"
+                      "  `maj_axis` FLOAT NOT NULL,\n"
+                      "  `min_axis` FLOAT NOT NULL,\n"
+                      "  `pos_ang` FLOAT NOT NULL,\n"
+                      "  `maj_axis_err` FLOAT NOT NULL,\n"
+                      "  `min_axis_err` FLOAT NOT NULL,\n"
+                      "  `pos_ang_err` FLOAT NOT NULL,\n"
+                      "  `maj_axis_deconv` FLOAT NOT NULL,\n"
+                      "  `min_axis_deconv` FLOAT NOT NULL,\n"
+                      "  `pos_ang_deconv` FLOAT NOT NULL,\n"
+                      "  `chi_squared_fit` FLOAT NOT NULL,\n"
+                      "  `rms_fit_Gauss` FLOAT NOT NULL,\n"
+                      "  `spectral_index` FLOAT NOT NULL,\n"
+                      "  `spectral_curvature` FLOAT NOT NULL,\n"
+                      "  `rms_image` FLOAT NOT NULL,\n"
+                      "  `has_siblings` INT NOT NULL,\n"
+                      "  `fit_is_estimate` INT NOT NULL,\n"
                       "  `polarisation_component_id` BIGINT NULL,\n"
                       "  `data_source_id` BIGINT NULL)\n"
                       " ENGINE=InnoDB");
           db.execute ("CREATE INDEX `continuum_component_id_i`\n"
                       "  ON `ContinuumComponent` (`continuum_component_id`)");
+          db.execute ("CREATE INDEX `observation_date_i`\n"
+                      "  ON `ContinuumComponent` (`observation_date`)");
+          db.execute ("CREATE INDEX `healpix_index_i`\n"
+                      "  ON `ContinuumComponent` (`healpix_index`)");
+          db.execute ("CREATE INDEX `sb_id_i`\n"
+                      "  ON `ContinuumComponent` (`sb_id`)");
           return true;
         }
         case 2:

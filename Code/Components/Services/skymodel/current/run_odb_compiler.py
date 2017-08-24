@@ -87,13 +87,13 @@ def run_odb_compiler():
 
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     while True:
-        nextline = process.stdout.readline()
+        nextline = process.stdout.readline().decode()
         if nextline == '' and process.poll() is not None:
             break
         sys.stdout.write(nextline)
         sys.stdout.flush()
 
-    output = process.communicate()[0]
+    output = process.communicate()[0].decode()
     exitCode = process.returncode
 
     if (exitCode == 0):

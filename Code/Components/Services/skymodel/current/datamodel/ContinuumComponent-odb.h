@@ -114,6 +114,180 @@ namespace odb
 
     static continuum_component_id_type_ continuum_component_id;
 
+    // observation_date
+    //
+    typedef odb::query_column< ::boost::posix_time::ptime > observation_date_type_;
+
+    static observation_date_type_ observation_date;
+
+    // healpix_index
+    //
+    typedef odb::query_column< ::int64_t > healpix_index_type_;
+
+    static healpix_index_type_ healpix_index;
+
+    // sb_id
+    //
+    typedef odb::query_column< ::int64_t > sb_id_type_;
+
+    static sb_id_type_ sb_id;
+
+    // component_id
+    //
+    typedef odb::query_column< ::std::string > component_id_type_;
+
+    static component_id_type_ component_id;
+
+    // ra
+    //
+    typedef odb::query_column< double > ra_type_;
+
+    static ra_type_ ra;
+
+    // dec
+    //
+    typedef odb::query_column< double > dec_type_;
+
+    static dec_type_ dec;
+
+    // ra_err
+    //
+    typedef odb::query_column< float > ra_err_type_;
+
+    static ra_err_type_ ra_err;
+
+    // dec_err
+    //
+    typedef odb::query_column< float > dec_err_type_;
+
+    static dec_err_type_ dec_err;
+
+    // freq
+    //
+    typedef odb::query_column< float > freq_type_;
+
+    static freq_type_ freq;
+
+    // flux_peak
+    //
+    typedef odb::query_column< float > flux_peak_type_;
+
+    static flux_peak_type_ flux_peak;
+
+    // flux_peak_err
+    //
+    typedef odb::query_column< float > flux_peak_err_type_;
+
+    static flux_peak_err_type_ flux_peak_err;
+
+    // flux_int
+    //
+    typedef odb::query_column< float > flux_int_type_;
+
+    static flux_int_type_ flux_int;
+
+    // flux_int_err
+    //
+    typedef odb::query_column< float > flux_int_err_type_;
+
+    static flux_int_err_type_ flux_int_err;
+
+    // maj_axis
+    //
+    typedef odb::query_column< float > maj_axis_type_;
+
+    static maj_axis_type_ maj_axis;
+
+    // min_axis
+    //
+    typedef odb::query_column< float > min_axis_type_;
+
+    static min_axis_type_ min_axis;
+
+    // pos_ang
+    //
+    typedef odb::query_column< float > pos_ang_type_;
+
+    static pos_ang_type_ pos_ang;
+
+    // maj_axis_err
+    //
+    typedef odb::query_column< float > maj_axis_err_type_;
+
+    static maj_axis_err_type_ maj_axis_err;
+
+    // min_axis_err
+    //
+    typedef odb::query_column< float > min_axis_err_type_;
+
+    static min_axis_err_type_ min_axis_err;
+
+    // pos_ang_err
+    //
+    typedef odb::query_column< float > pos_ang_err_type_;
+
+    static pos_ang_err_type_ pos_ang_err;
+
+    // maj_axis_deconv
+    //
+    typedef odb::query_column< float > maj_axis_deconv_type_;
+
+    static maj_axis_deconv_type_ maj_axis_deconv;
+
+    // min_axis_deconv
+    //
+    typedef odb::query_column< float > min_axis_deconv_type_;
+
+    static min_axis_deconv_type_ min_axis_deconv;
+
+    // pos_ang_deconv
+    //
+    typedef odb::query_column< float > pos_ang_deconv_type_;
+
+    static pos_ang_deconv_type_ pos_ang_deconv;
+
+    // chi_squared_fit
+    //
+    typedef odb::query_column< float > chi_squared_fit_type_;
+
+    static chi_squared_fit_type_ chi_squared_fit;
+
+    // rms_fit_Gauss
+    //
+    typedef odb::query_column< float > rms_fit_Gauss_type_;
+
+    static rms_fit_Gauss_type_ rms_fit_Gauss;
+
+    // spectral_index
+    //
+    typedef odb::query_column< float > spectral_index_type_;
+
+    static spectral_index_type_ spectral_index;
+
+    // spectral_curvature
+    //
+    typedef odb::query_column< float > spectral_curvature_type_;
+
+    static spectral_curvature_type_ spectral_curvature;
+
+    // rms_image
+    //
+    typedef odb::query_column< float > rms_image_type_;
+
+    static rms_image_type_ rms_image;
+
+    // has_siblings
+    //
+    typedef odb::query_column< bool > has_siblings_type_;
+
+    static has_siblings_type_ has_siblings;
+
+    // fit_is_estimate
+    //
+    typedef odb::query_column< bool > fit_is_estimate_type_;
+
+    static fit_is_estimate_type_ fit_is_estimate;
+
     // polarisation
     //
     typedef odb::query_column< ::askap::cp::sms::datamodel::id_type > polarisation_type_;
@@ -136,6 +310,122 @@ namespace odb
   template <typename A>
   typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::continuum_component_id_type_
   pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::continuum_component_id;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::observation_date_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::observation_date;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::healpix_index_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::healpix_index;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::sb_id_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::sb_id;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::component_id_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::component_id;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::freq_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::freq;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_err_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_err;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_deconv;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_deconv;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_deconv_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_deconv;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::chi_squared_fit_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::chi_squared_fit;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_fit_Gauss_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_fit_Gauss;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_index_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_index;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_curvature_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_curvature;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_image_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_image;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::has_siblings_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::has_siblings;
+
+  template <typename A>
+  typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::fit_is_estimate_type_
+  pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::fit_is_estimate;
 
   template <typename A>
   typename pointer_query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::polarisation_type_
@@ -253,6 +543,180 @@ namespace odb
 
     static continuum_component_id_type_ continuum_component_id;
 
+    // observation_date
+    //
+    typedef odb::query_column< ::boost::posix_time::ptime > observation_date_type_;
+
+    static observation_date_type_ observation_date;
+
+    // healpix_index
+    //
+    typedef odb::query_column< ::int64_t > healpix_index_type_;
+
+    static healpix_index_type_ healpix_index;
+
+    // sb_id
+    //
+    typedef odb::query_column< ::int64_t > sb_id_type_;
+
+    static sb_id_type_ sb_id;
+
+    // component_id
+    //
+    typedef odb::query_column< ::std::string > component_id_type_;
+
+    static component_id_type_ component_id;
+
+    // ra
+    //
+    typedef odb::query_column< double > ra_type_;
+
+    static ra_type_ ra;
+
+    // dec
+    //
+    typedef odb::query_column< double > dec_type_;
+
+    static dec_type_ dec;
+
+    // ra_err
+    //
+    typedef odb::query_column< float > ra_err_type_;
+
+    static ra_err_type_ ra_err;
+
+    // dec_err
+    //
+    typedef odb::query_column< float > dec_err_type_;
+
+    static dec_err_type_ dec_err;
+
+    // freq
+    //
+    typedef odb::query_column< float > freq_type_;
+
+    static freq_type_ freq;
+
+    // flux_peak
+    //
+    typedef odb::query_column< float > flux_peak_type_;
+
+    static flux_peak_type_ flux_peak;
+
+    // flux_peak_err
+    //
+    typedef odb::query_column< float > flux_peak_err_type_;
+
+    static flux_peak_err_type_ flux_peak_err;
+
+    // flux_int
+    //
+    typedef odb::query_column< float > flux_int_type_;
+
+    static flux_int_type_ flux_int;
+
+    // flux_int_err
+    //
+    typedef odb::query_column< float > flux_int_err_type_;
+
+    static flux_int_err_type_ flux_int_err;
+
+    // maj_axis
+    //
+    typedef odb::query_column< float > maj_axis_type_;
+
+    static maj_axis_type_ maj_axis;
+
+    // min_axis
+    //
+    typedef odb::query_column< float > min_axis_type_;
+
+    static min_axis_type_ min_axis;
+
+    // pos_ang
+    //
+    typedef odb::query_column< float > pos_ang_type_;
+
+    static pos_ang_type_ pos_ang;
+
+    // maj_axis_err
+    //
+    typedef odb::query_column< float > maj_axis_err_type_;
+
+    static maj_axis_err_type_ maj_axis_err;
+
+    // min_axis_err
+    //
+    typedef odb::query_column< float > min_axis_err_type_;
+
+    static min_axis_err_type_ min_axis_err;
+
+    // pos_ang_err
+    //
+    typedef odb::query_column< float > pos_ang_err_type_;
+
+    static pos_ang_err_type_ pos_ang_err;
+
+    // maj_axis_deconv
+    //
+    typedef odb::query_column< float > maj_axis_deconv_type_;
+
+    static maj_axis_deconv_type_ maj_axis_deconv;
+
+    // min_axis_deconv
+    //
+    typedef odb::query_column< float > min_axis_deconv_type_;
+
+    static min_axis_deconv_type_ min_axis_deconv;
+
+    // pos_ang_deconv
+    //
+    typedef odb::query_column< float > pos_ang_deconv_type_;
+
+    static pos_ang_deconv_type_ pos_ang_deconv;
+
+    // chi_squared_fit
+    //
+    typedef odb::query_column< float > chi_squared_fit_type_;
+
+    static chi_squared_fit_type_ chi_squared_fit;
+
+    // rms_fit_Gauss
+    //
+    typedef odb::query_column< float > rms_fit_Gauss_type_;
+
+    static rms_fit_Gauss_type_ rms_fit_Gauss;
+
+    // spectral_index
+    //
+    typedef odb::query_column< float > spectral_index_type_;
+
+    static spectral_index_type_ spectral_index;
+
+    // spectral_curvature
+    //
+    typedef odb::query_column< float > spectral_curvature_type_;
+
+    static spectral_curvature_type_ spectral_curvature;
+
+    // rms_image
+    //
+    typedef odb::query_column< float > rms_image_type_;
+
+    static rms_image_type_ rms_image;
+
+    // has_siblings
+    //
+    typedef odb::query_column< bool > has_siblings_type_;
+
+    static has_siblings_type_ has_siblings;
+
+    // fit_is_estimate
+    //
+    typedef odb::query_column< bool > fit_is_estimate_type_;
+
+    static fit_is_estimate_type_ fit_is_estimate;
+
     // polarisation
     //
     typedef odb::query_column< ::askap::cp::sms::datamodel::id_type > polarisation_column_type_;
@@ -299,6 +763,122 @@ namespace odb
   template <typename A>
   typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::continuum_component_id_type_
   query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::continuum_component_id;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::observation_date_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::observation_date;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::healpix_index_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::healpix_index;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::sb_id_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::sb_id;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::component_id_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::component_id;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::ra_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::dec_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::freq_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::freq;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_peak_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::flux_int_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_err_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_err;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::maj_axis_deconv;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::min_axis_deconv;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_deconv_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::pos_ang_deconv;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::chi_squared_fit_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::chi_squared_fit;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_fit_Gauss_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_fit_Gauss;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_index_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_index;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_curvature_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::spectral_curvature;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_image_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::rms_image;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::has_siblings_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::has_siblings;
+
+  template <typename A>
+  typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::fit_is_estimate_type_
+  query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::fit_is_estimate;
 
   template <typename A>
   typename query_columns< ::askap::cp::sms::datamodel::ContinuumComponent, id_common, A >::polarisation_type_
