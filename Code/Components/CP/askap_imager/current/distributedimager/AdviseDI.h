@@ -85,7 +85,7 @@ namespace askap {
             void addMissingParameters(LOFAR::ParameterSet& parset);
 
             void addMissingParameters();
-            
+
 
 
 
@@ -96,6 +96,10 @@ namespace askap {
 
             /// @brief the datasets
             std::vector<std::string> getDatasets();
+
+
+            /// @brief get the channels
+            std::vector<int> getChannels();
 
             ///
             casa::MVDirection getTangent(int ms=0) {return itsTangent[ms];};

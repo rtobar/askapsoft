@@ -136,6 +136,12 @@ void AdviseDI::prepare() {
 
     ASKAPCHECK(nwriters > 0 ,"Number of writers must be greater than zero");
 
+    /// Get the channel range
+    /// The imager ususally uses the Channels keyword in the parset to
+    /// defined the work unit that it will attempt. That does not work in this
+
+
+
     casa::uInt srow = 0;
     chanFreq.resize(ms.size());
     chanWidth.resize(ms.size());
@@ -672,6 +678,14 @@ std::vector<std::string> AdviseDI::getDatasets()
 
     return ms;
 }
+
+std::vector<int> AdviseDI::getChannels() {
+    if (!itsParset.isDefined("Channels")) {
+    ASKAPTHROW(std::runtime_error,
+        "Channels keyword is not defined");
+    }
+}
+
 void AdviseDI::updateComms() {
 
     cp::CubeComms& itsCubeComms = dynamic_cast< cp::CubeComms& >(itsComms);
@@ -704,7 +718,7 @@ void AdviseDI::updateComms() {
         itsCubeComms.setMultiSink();
     }
 
-    
+
 }
 std::vector<int> AdviseDI::getBeams()
 {
