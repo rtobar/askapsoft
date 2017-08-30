@@ -716,6 +716,7 @@ std::vector<int> AdviseDI::getChannels() {
 
     // channels is now a start and stop for the whole dataset so be careful
     std::vector<int> c(3,0);
+    std::vector<string> cstr(3,"0");
 
     if (!itsParset.isDefined("Channels")) {
     ASKAPLOG_WARN_STR(logger,
@@ -723,7 +724,18 @@ std::vector<int> AdviseDI::getChannels() {
         c[2] = -1;
     }
     else {
-        c = itsParset.getInt32Vector("Channels",c);
+        cstr = itsParset.getStringVector("Channels",true);
+        c[0] = stoi(cstr[0]);
+        string wild = "%w";
+        if (cstr[1].compare(wild) == 0) {
+            c[1] = 0;
+            c[2] = -1;
+        }
+        else {
+            c[1] = stoi(cstr[1]);
+            c[2] = stoi(cstr[2]);
+        }
+
 
     }
 

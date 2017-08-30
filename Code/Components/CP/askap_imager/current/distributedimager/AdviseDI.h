@@ -139,17 +139,12 @@ namespace askap {
 
             vector<casa::MFrequency> itsTopoFrequencies;
 
-            double refFreq;
 
             double minFrequency;
 
             double maxFrequency;
 
-            double deltaFrequency;
 
-            int numFrequencies;
-
-            bool constChanWidth;
 
             std::vector<casa::MVDirection> itsTangent;
 
