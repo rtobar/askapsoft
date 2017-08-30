@@ -31,6 +31,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <mpi.h>
 
 // ASKAPsoft includes
@@ -38,6 +39,7 @@
 #include "Common/ParameterSet.h"
 #include "casacore/casa/OS/Timer.h"
 
+#define BLOCKSIZE 4*1024*1024
 
 // Using
 using LOFAR::ParameterSet;
@@ -60,12 +62,45 @@ static ParameterSet getParameterSet(int argc, char *argv[])
 
     return parset;
 }
-void doWorkRoot(void *buffer, int time) {
-    sleep(time);
+void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
+
+    casa::Timer work;
+    int rtn=0;
+    work.mark();
+    size_t towrite=buffsize;
+    size_t write_block=BLOCKSIZE;
+    char * buffptr= (char *) buffer;
+    while (towrite>0) {
+
+        if (towrite < write_block)
+            write_block = towrite;
+
+        if (fptr != NULL) {
+            rtn=fwrite(buffptr,write_block,1,fptr);
+            if (rtn!=1) {
+                std::cout << "WARNING - failed write" << std::endl;
+            }
+            else {
+                towrite = towrite - write_block;
+                buffptr = buffptr+write_block;
+            }
+        }
+        else {
+            std::cout << "WARNING - not writing"<< std::endl;
+            towrite = 0;
+        }
+    }
+
+    *workTime = work.real();
+
+
+
 }
 void doWorkWorker(void *buffer) {
 
 }
+
+
 int main(int argc, char *argv[])
 {
     // MPI init
@@ -78,18 +113,37 @@ int main(int argc, char *argv[])
     ParameterSet parset = getParameterSet(argc, argv);
     ParameterSet subset(parset.makeSubset("mpiperf."));
 
-    int intTime = subset.getInt32("integrationTime");
-    int integrations = subset.getInt32("nIntegrations");
-    int antennas = subset.getInt32("nAntenna");
-    int channels = subset.getInt32("nChan");
-    int beams = subset.getInt32("nFeeds");
-    int pol = subset.getInt32("nPol");
+    // Replace in the filename the %w pattern with the rank number
+    std::string filename = subset.getString("filename");
+
+    // create the output file
+    FILE *fptr=NULL;
+
+
+
+
+    int intTime = subset.getInt32("integrationTime",5);
+    int integrations = subset.getInt32("nIntegrations",1);
+    int antennas = subset.getInt32("nAntenna",36);
+    int channels = subset.getInt32("nChan",2048);
+    int beams = subset.getInt32("nFeeds",36);
+    int pol = subset.getInt32("nPol",4);
+    int maxfilesizeMB = subset.getInt32("maxfilesizeMB",0);
 
     int baselines = (antennas*(antennas-1)/2);
 
     size_t nElements = baselines*channels*beams*pol*2;
     size_t sendBufferSize = nElements*sizeof(float);
     size_t recvBufferSize = wsize*sendBufferSize;
+
+    int intPerFile = integrations;
+
+    if (maxfilesizeMB != 0) {
+        float temp = recvBufferSize/(1024*1024);
+        temp = maxfilesizeMB/temp;
+        intPerFile = ceil(temp);
+    }
+
 
     float *sBuf = (float *) malloc(sendBufferSize);
     float *rBuf = (float *) malloc(recvBufferSize);
@@ -105,8 +159,30 @@ int main(int argc, char *argv[])
     casa::Timer timer;
     casa::Timer total;
     total.mark();
+    if (rank == 0) {
+        std::cout << "Gathering and Writing " << integrations << " integrations of " << intTime << " seconds " << std::endl;
+        std::cout << "There are " << wsize << " blocks of " << channels << " channels " << std::endl;
+        std::cout << "With " << antennas << " antennas and " << beams << " beams " << std::endl;
+        std::cout << "For a datasize (in Mbytes) per integration of " << sendBufferSize/(1024*1024) << " per rank and " << recvBufferSize/(1024*1024) << " in total " << std::endl;
+        std::cout << "Datarate in MB/s is " << recvBufferSize/(intTime*1024*1024) << std::endl;
+        if (maxfilesizeMB !=0) {
+            std::cout << "Integrations per file " << intPerFile << std::endl;
+        }
+    }
+
     for (int i = 0; i < integrations; ++i) {
 
+        if (i==0 || i%intPerFile == 0) {
+            if (fptr != NULL) {
+                fclose(fptr);
+            }
+            std::ostringstream oss;
+            oss << filename << "_" << i << ".dat";
+            fptr = fopen(oss.str().c_str(),"w");
+            assert(fptr);
+            setvbuf(fptr,NULL,recvBufferSize,_IOFBF);
+
+        }
         timer.mark();
         doWorkWorker(sBuf);
         MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -123,7 +199,18 @@ int main(int argc, char *argv[])
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
             std::cout << "Doing some work" << std::endl;
-            doWorkRoot(rBuf,intTime);
+            float workTime;
+            doWorkRoot(rBuf,recvBufferSize,&workTime,fptr);
+            std::cout << "Wrote integration " << i <<  " in "
+            << workTime << " seconds" << std::endl;
+            float combinedTime = workTime + realtime;
+            if (combinedTime < intTime) {
+                useconds_t timetosleep = (useconds_t) 1000.0*(intTime-combinedTime);
+                usleep(timetosleep);
+            }
+            else {
+                std::cout << "WARNING combined time greater than integration time" << std::endl;
+            }
         }
     }
 
@@ -134,6 +221,9 @@ int main(int argc, char *argv[])
         std::cout << "Received " << integrations << " integrations "
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
+    }
+    if (fptr != NULL) {
+        fclose(fptr);
     }
     free(sBuf);
     free(rBuf);
