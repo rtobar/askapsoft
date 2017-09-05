@@ -5,7 +5,7 @@
 # input file, and any value given there will override the default
 # value set here.
 #
-# @copyright (c) 2015 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -73,6 +73,7 @@ JOB_TIME_SPECTRAL_IMCONTSUB=""
 JOB_TIME_LINMOS=""
 JOB_TIME_SOURCEFINDING_CONT=""
 JOB_TIME_SOURCEFINDING_SPEC=""
+JOB_TIME_DIAGNOSTICS=""
 JOB_TIME_FITS_CONVERT=""
 JOB_TIME_THUMBNAILS=""
 JOB_TIME_CASDA_UPLOAD=""
@@ -96,10 +97,10 @@ LUSTRE_STRIPE_SIZE=1048576
 BUCKET_SIZE=1048576
 
 ####################
-# Locations of the executables. 
+# Locations of the executables.
 # If you have a local version of the ASKAPsoft codebase, and have
 # defined ASKAP_ROOT, then you will use the executables from that
-# tree. 
+# tree.
 # Otherwise (the most common case for ACES members), the executables
 # from the askapsoft module will be used.
 
@@ -121,6 +122,7 @@ if [ "$ASKAP_ROOT" != "" ]; then
     cimstat=${ASKAP_ROOT}/Code/Components/Analysis/analysis/current/apps/cimstat.sh
     mslist=${ASKAP_ROOT}/Code/Components/Synthesis/synthesis/current/apps/mslist.sh
     image2fits=${ASKAP_ROOT}/3rdParty/casacore/casacore-2.0.3/install/bin/image2fits
+    makeThumbnails=${ASKAP_ROOT}/Code/Components/Analysis/evaluation/current/install/bin/makeThumbnailImage.py
     casdaupload=$ASKAP_ROOT/Code/Components/CP/pipelinetasks/current/apps/casdaupload.sh
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=ASKAP_ROOT,AIPSPATH"
@@ -136,17 +138,26 @@ else
     simager=simager
     altimager=imager
     linmos=linmos
-    linmosMPI=linmos-mpi
+    linmosMPI="linmos-mpi"
     selavy=selavy
     cimstat=cimstat
     mslist=mslist
     image2fits=image2fits
+    makeThumbnails=makeThumbnailImage.py
     casdaupload=casdaupload
     # export directives for slurm job files:
     exportDirective="#SBATCH --export=NONE"
 fi
 
+# User can select a particular version of the askapsoft module
 ASKAPSOFT_VERSION=""
+
+# User can use the acesops module (true), or their own nominated ACES
+# directory (false)
+USE_ACES_OPS=true
+
+# Version of the acesops module to use. Leave blank for the default
+ACESOPS_VERSION=""
 
 ####################
 # Control flags
@@ -175,51 +186,65 @@ DO_SOURCE_FINDING_CONT=""
 DO_SOURCE_FINDING_SPEC=""
 DO_SOURCE_FINDING_BEAMWISE=false
 DO_ALT_IMAGER=false
+DO_ALT_IMAGER_CONT=""
+DO_ALT_IMAGER_CONTCUBE=""
+DO_ALT_IMAGER_SPECTRAL=""
 #
-DO_CONVERT_TO_FITS=false
+DO_DIAGNOSTICS=true
+DO_CONVERT_TO_FITS=true
 DO_MAKE_THUMBNAILS=false
 DO_STAGE_FOR_CASDA=false
 
 ####################
 # Input Scheduling Blocks (SBs)
 # Location of the SBs
-DIR_SB=/scratch2/askap/askapops/askap-scheduling-blocks
+DIR_SB=/astro/askaprt/askapops/askap-scheduling-blocks
 # SB with 1934-638 observation
-SB_1934="SET_THIS"
+SB_1934=""
 MS_INPUT_1934=""
 # SB with science observation
-SB_SCIENCE="SET_THIS"
+SB_SCIENCE=""
 MS_INPUT_SCIENCE=""
 
 # Set to true if the dataset being processed is from BETA observations
 IS_BETA=false
 
+# Set to not true if you know the schedblock & footprint services are offline
+USE_CLI=true
+
 ####################
 # Which beams to use.
+NUM_BEAMS_FOOTPRINT=36
 BEAM_MIN=0
 BEAM_MAX=35
 BEAMLIST=""
 
 ####################
+# Image output type
+IMAGETYPE_CONT=casa
+IMAGETYPE_CONTCUBE=casa
+IMAGETYPE_SPECTRAL=casa
+
+####################
 ##  BANDPASS CAL
 
 # Base name for the 1934 measurement sets after splitting
-MS_BASE_1934="1934_beam%b.ms"
+MS_BASE_1934="1934_SB%s_%b.ms"
 # Channel range for splitting - defaults to full set of channels in MS
 CHAN_RANGE_1934=""
 # Location of 1934-638, formatted for use in cbpcalibrator
 DIRECTION_1934="[19h39m25.036, -63.42.45.63, J2000]"
 # Name of the table for the bandpass calibration parameters
-TABLE_BANDPASS=calparameters_1934_bp.tab
+TABLE_BANDPASS="calparameters_1934_bp_SB%s.tab"
 # Number of cycles used in cbpcalibrator
-NCYCLES_BANDPASS_CAL=25
+NCYCLES_BANDPASS_CAL=50
 # Number of CPUs (cores) used for the cbpcalibrator job
-NUM_CPUS_CBPCAL=100
+NUM_CPUS_CBPCAL=216
 # Value for the calibrate.scalenoise parameter for applying the
 # bandpass solution
 BANDPASS_SCALENOISE=false
 # Limit the data selection for bandpass solving to a minimum UV distance [m]
-BANDPASS_MINUV=0
+BANDPASS_MINUV=200
 
 # Smoothing of the bandpass table - this is achieved by the ACES tool
 # plot_caltable.py. This tool also plots the cal solutions
@@ -233,9 +258,9 @@ BANDPASS_SMOOTH_AMP=true
 # If true, only smooth outlier points
 BANDPASS_SMOOTH_OUTLIER=true
 # polynomial order (if >= 0) or window size (if <0) to use when smoothing bandpass
-BANDPASS_SMOOTH_FIT=1
+BANDPASS_SMOOTH_FIT=0
 # The threshold level for fitting bandpass
-BANDPASS_SMOOTH_THRESHOLD=1.0
+BANDPASS_SMOOTH_THRESHOLD=3.0
 
 
 # Whether to do dynamic flagging
@@ -271,7 +296,7 @@ SCAN_SELECTION_SCIENCE=""
 # science observation. If this isn't needed, leave as a blank string.
 FIELD_SELECTION_SCIENCE=""
 # Base name for the science observation measurement set
-MS_BASE_SCIENCE=scienceObservation_beam%b.ms
+MS_BASE_SCIENCE="scienceData_SB%s_%b.ms"
 # Name for the channel-averaged science measurement set (if blank, it
 # will be set using MS_BASE_SCIENCE)
 MS_SCIENCE_AVERAGE=""
@@ -325,7 +350,7 @@ FLAG_THRESHOLD_DYNAMIC_SCIENCE_AV=4.0
 FLAG_DYNAMIC_INTEGRATE_SPECTRA_AV=true
 # Dynamic threshold applied to amplitudes in integrated spectra mode  [sigma]
 FLAG_THRESHOLD_DYNAMIC_SCIENCE_SPECTRA_AV=4.0
-# Whether to apply a dynamic threshold to integrated times on averaged data 
+# Whether to apply a dynamic threshold to integrated times on averaged data
 FLAG_DYNAMIC_INTEGRATE_TIMES_AV=false
 # Dynamic threshold applied to amplitudes in integrated times mode [sigma]
 FLAG_THRESHOLD_DYNAMIC_SCIENCE_TIMES_AV=4.0
@@ -339,27 +364,28 @@ FLAG_THRESHOLD_AMPLITUDE_SCIENCE_LOW_AV=0.0
 # Data column in MS to use in cimager
 DATACOLUMN=DATA
 # Number of Taylor terms to create in MFS imaging
-NUM_TAYLOR_TERMS=2
+NUM_TAYLOR_TERMS=1
 # Number of CPUs to use on each core in the continuum imaging
-CPUS_PER_CORE_CONT_IMAGING=16
+CPUS_PER_CORE_CONT_IMAGING=20
 # Total number of cores to use for the continuum imaging. Leave blank
 # to have one core for each of nworkergroups*nchannels (plus a
-# master). 
+# master).
 NUM_CPUS_CONTIMG_SCI=""
 
 # base name for images: if IMAGE_BASE_CONT=i.blah then we'll get
 # image.i.blah, image.i.blah.restored, psf.i.blah etc
-IMAGE_BASE_CONT=i.cont
+IMAGE_BASE_CONT="i.SB%s.cont"
 # number of pixels on the side of the images to be created
-NUM_PIXELS_CONT=4096
+NUM_PIXELS_CONT=3200
 # Size of the pixels in arcsec
-CELLSIZE_CONT=10
+CELLSIZE_CONT=4
 # Frequency at which continuum image is made [Hz]
 MFS_REF_FREQ=""
 # Restoring beam: 'fit' will fit the PSF to determine the appropriate
 # beam, else give a size
 RESTORING_BEAM_CONT=fit
-
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONT=0.5
 
 ###########################
 # parameters from the new (alt) imager
@@ -372,8 +398,8 @@ NCHAN_PER_CORE_SL=54
 USE_TMPFS=false
 # where is the shared memory mounted
 TMPFS="/dev/shm"
-# barycentre?
-DO_BARY=false
+# Whether to convert the frequency channels to the Barycentre frame
+DO_BARY=true
 # local solver - distribute the minor cycle - each channel is solved individually
 # this mimics simager behaviour
 # automatically set to true in the spectral imaging
@@ -381,7 +407,14 @@ DO_LOCAL_SOLVER=false
 # How many sub-cubes to write out.
 # This improves performance of the imaging - and also permits parallelisation
 # of the LINMOS step
-NSUB_CUBES=16
+NUM_SPECTRAL_WRITERS=1
+# Whether to write out a single file in the case of writing to FITS
+ALT_IMAGER_SINGLE_FILE=false
+
+# Same for continuum cubes
+NUM_SPECTRAL_WRITERS_CONTCUBE=1
+ALT_IMAGER_SINGLE_FILE_CONTCUBE=true
+
 
 ####################
 # Gridding parameters for continuum imaging
@@ -391,18 +424,18 @@ GRIDDER_SNAPSHOT_LONGTRACK=true
 GRIDDER_SNAPSHOT_CLIPPING=0.01
 GRIDDER_WMAX=2600
 GRIDDER_NWPLANES=99
-GRIDDER_OVERSAMPLE=4
+GRIDDER_OVERSAMPLE=5
 GRIDDER_MAXSUPPORT=512
 
 ####################
 # Cleaning parameters for continuum imaging
 SOLVER=Clean
 CLEAN_ALGORITHM=BasisfunctionMFS
-CLEAN_MINORCYCLE_NITER=500
-CLEAN_GAIN=0.5
-CLEAN_PSFWIDTH=512
-CLEAN_SCALES="[0,3,10]"
-CLEAN_THRESHOLD_MINORCYCLE="[30%, 0.9mJy]"
+CLEAN_MINORCYCLE_NITER=4000
+CLEAN_GAIN=0.1
+CLEAN_PSFWIDTH=1600
+CLEAN_SCALES="[0]"
+CLEAN_THRESHOLD_MINORCYCLE="[40%, 1.8mJy]"
 # If true, this will write out intermediate images at the end of each
 # major cycle
 CLEAN_WRITE_AT_MAJOR_CYCLE=false
@@ -414,22 +447,22 @@ CLEAN_WRITE_AT_MAJOR_CYCLE=false
 # If no self-calibration is used, we just use the first element
 #
 # The number of major cycles in the deconvolution
-CLEAN_NUM_MAJORCYCLES=2
+CLEAN_NUM_MAJORCYCLES="[1,8,10]"
 # The maximum residual to stop the major-cycle deconvolution (if not
 # reached, or negative, CLEAN_NUM_MAJORCYCLES cycles are used)
-CLEAN_THRESHOLD_MAJORCYCLE=1mJy
+CLEAN_THRESHOLD_MAJORCYCLE="[10mJy,4mJy,2mJy]"
 
 
 ####################
 # Parameters for preconditioning (A.K.A. weighting)
-PRECONDITIONER_LIST="[Wiener, GaussianTaper]"
-PRECONDITIONER_GAUSS_TAPER="[30arcsec, 30arcsec, 0deg]"
-PRECONDITIONER_WIENER_ROBUSTNESS=0.5
+PRECONDITIONER_LIST="[Wiener]"
+PRECONDITIONER_GAUSS_TAPER="[10arcsec, 10arcsec, 0deg]"
+PRECONDITIONER_WIENER_ROBUSTNESS=-0.5
 PRECONDITIONER_WIENER_TAPER=""
 # Parameters for preconditioning for the restore solver alone
-RESTORE_PRECONDITIONER_LIST="[Wiener, GaussianTaper]"
-RESTORE_PRECONDITIONER_GAUSS_TAPER="[30arcsec, 30arcsec, 0deg]"
-RESTORE_PRECONDITIONER_WIENER_ROBUSTNESS=-1
+RESTORE_PRECONDITIONER_LIST=""
+RESTORE_PRECONDITIONER_GAUSS_TAPER="[10arcsec, 10arcsec, 0deg]"
+RESTORE_PRECONDITIONER_WIENER_ROBUSTNESS=-2
 RESTORE_PRECONDITIONER_WIENER_TAPER=""
 
 
@@ -440,11 +473,11 @@ RESTORE_PRECONDITIONER_WIENER_TAPER=""
 # via a components parset ("Components")
 SELFCAL_METHOD="Cmodel"
 # Number of loops of self-calibration
-SELFCAL_NUM_LOOPS=5
+SELFCAL_NUM_LOOPS=2
 # Should we keep the images from the intermediate selfcal loops?
 SELFCAL_KEEP_IMAGES=true
 # Should we make full-field mosaics of each loop iteration?
-MOSAIC_SELFCAL_LOOPS=true
+MOSAIC_SELFCAL_LOOPS=false
 # Division of image for source-finding in selfcal
 SELFCAL_SELAVY_NSUBX=6
 SELFCAL_SELAVY_NSUBY=3
@@ -462,6 +495,12 @@ SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=true
 # If SELFCAL_SELAVY_GAUSSIANS_FROM_GUESS=false, this is how many
 # Gaussians to use
 SELFCAL_SELAVY_NUM_GAUSSIANS=1
+# Reference antenna to use in self-calibration. Should be antenna
+# number, 0 - nAnt-1 that matches antenna numbering in MS
+SELFCAL_REF_ANTENNA=""
+# Reference gains to use in self-calibration - something like
+# gain.g11.0.0
+SELFCAL_REF_GAINS=""
 
 # Array-capable self-calibration parameters
 #   These parameters can be given as either a single value (eg. "300")
@@ -469,9 +508,9 @@ SELFCAL_SELAVY_NUM_GAUSSIANS=1
 #   (eg. "[1800,900,300]"), allowing a different value for each loop.
 #
 # Interval [sec] over which to solve for self-calibration
-SELFCAL_INTERVAL=300
+SELFCAL_INTERVAL="[57600,57600,1]"
 # SNR threshold for detection with selavy in determining selfcal sources
-SELFCAL_SELAVY_THRESHOLD=15
+SELFCAL_SELAVY_THRESHOLD=8
 # Option to pass to the "Ccalibrator.normalisegains" parameter,
 # indicating we want to approximate phase-only self-cal
 SELFCAL_NORMALISE_GAINS=true
@@ -481,8 +520,15 @@ CIMAGER_MINUV=0
 CCALIBRATOR_MINUV=0
 
 # name of the final gains calibration table
-GAINS_CAL_TABLE=cont_gains_cal_beam%b.tab
+GAINS_CAL_TABLE="cont_gains_cal_SB%s_%b.tab"
 KEEP_RAW_AV_MS=true
+
+# Shift position offsets - precomputed, and added to position in final
+# self-cal selavy catalogue
+DO_POSITION_OFFSET=false
+# Position offsets in arcsec
+RA_POSITION_OFFSET=0
+DEC_POSITION_OFFSET=0
 
 ###################
 # Parameters for continuum cube imaging
@@ -491,11 +537,17 @@ KEEP_RAW_AV_MS=true
 # get image.i.blah, image.i.blah.restored, psf.i.blah etc
 # Polarisations will replace the .i. in the image name using the list
 # in CONTCUBE_POLARISATIONS
-IMAGE_BASE_CONTCUBE=i.contcube
+IMAGE_BASE_CONTCUBE="i.SB%s.contcube"
+
+# Image size for continuum cubes (spatial size) [pixels]
+NUM_PIXELS_CONTCUBE=1536
+
+# Size of the pixels for the continuum cubes [arcsec]
+CELLSIZE_CONTCUBE=""
 
 # List of polarisations to make continuum cubes for. The lower-case
 # version of these will go in the image name.
-CONTCUBE_POLARISATIONS="I,Q,U,V"
+CONTCUBE_POLARISATIONS="I"
 
 # Set if there needs to be a rest frequency recorded in the continuum cubes
 REST_FREQUENCY_CONTCUBE=""
@@ -504,6 +556,8 @@ REST_FREQUENCY_CONTCUBE=""
 RESTORING_BEAM_CONTCUBE=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_CONTCUBE_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_CONTCUBE=0.5
 
 # Number of processors for continuum-cube imaging.
 # Leave blank to fit to number of channels
@@ -520,12 +574,12 @@ SOLVER_CONTCUBE=Clean
 # default clean algorithm is Basisfunction, as we don't need the
 # multi-frequency part that is used by BasisfunctionMFS
 CLEAN_CONTCUBE_ALGORITHM=Basisfunction
-CLEAN_CONTCUBE_MINORCYCLE_NITER=500
-CLEAN_CONTCUBE_GAIN=0.5
+CLEAN_CONTCUBE_MINORCYCLE_NITER=4000
+CLEAN_CONTCUBE_GAIN=0.1
 CLEAN_CONTCUBE_PSFWIDTH=512
 CLEAN_CONTCUBE_SCALES="[0,3,10]"
-CLEAN_CONTCUBE_THRESHOLD_MINORCYCLE="[30%]"
-CLEAN_CONTCUBE_THRESHOLD_MAJORCYCLE=1mJy
+CLEAN_CONTCUBE_THRESHOLD_MINORCYCLE="[40%, 12.6mJy]"
+CLEAN_CONTCUBE_THRESHOLD_MAJORCYCLE=12mJy
 CLEAN_CONTCUBE_NUM_MAJORCYCLES=2
 # If true, this will write out intermediate images at the end of each
 # major cycle
@@ -533,7 +587,7 @@ CLEAN_CONTCUBE_WRITE_AT_MAJOR_CYCLE=false
 
 ##############################
 # Spectral-line imaging
-# 
+#
 # For this, we repeat some of the parameters used for continuum
 # imaging, with names that reflect the spectral-line nature...
 
@@ -563,7 +617,7 @@ CONTSUB_SELAVY_THRESHOLD=6
 CONTSUB_MODEL_FLUX_LIMIT=10uJy
 
 # Number of processors allocated to the spectral-line imaging
-NUM_CPUS_SPECIMG_SCI=2000
+NUM_CPUS_SPECIMG_SCI=200
 # Number of processors per node for the spectral-line imaging
 CPUS_PER_CORE_SPEC_IMAGING=20
 # Number of processors for spectral-line mosaicking.
@@ -576,7 +630,7 @@ NCHAN_PER_CORE_SPECTRAL_LINMOS=8
 
 # base name for image cubes: if IMAGE_BASE_SPECTRAL=i.blah then we'll
 # get image.i.blah, image.i.blah.restored, psf.i.blah etc
-IMAGE_BASE_SPECTRAL=i.cube
+IMAGE_BASE_SPECTRAL="i.SB%s.cube"
 
 # Direction of the science field makes use of DIRECTION_SCI, as above
 
@@ -626,9 +680,11 @@ RESTORE_SPECTRAL=true
 RESTORING_BEAM_SPECTRAL=fit
 # Reference channel for recording the restoring beam of the cube
 RESTORING_BEAM_REFERENCE=mid
+# Cutoff in determining support for the fit to the PSF
+RESTORING_BEAM_CUTOFF_SPECTRAL=0.5
 
 # Image-based continuum subtraction
-# Threshold [sigma] to mask outliers prior to fitting ('threshold' parameter) 
+# Threshold [sigma] to mask outliers prior to fitting ('threshold' parameter)
 SPECTRAL_IMSUB_THRESHOLD=2.0
 # Order of polynomial to fit ('fit_order' parameter)
 SPECTRAL_IMSUB_FIT_ORDER=2
@@ -640,7 +696,7 @@ SPECTRAL_IMSUB_CHAN_SAMPLING=1
 # Linear Mosaicking & beam locations
 #
 # Reference footprint rotation angle. This is used only when the
-# scheduling block parset does not contain the parameter 
+# scheduling block parset does not contain the parameter
 # common.target.src%d.footprint.rotation
 #    If not given, same effect as setting to zero.
 FOOTPRINT_PA_REFERENCE=""
@@ -680,6 +736,8 @@ SELAVY_FLAG_GROWTH=true
 SELAVY_GROWTH_CUT=3
 # Growth flux threshold - leave blank if using SNR
 SELAVY_GROWTH_THRESHOLD=""
+# Cutoff in the weights for source-detection
+SELAVY_WEIGHTS_CUTOFF=0.15
 # Whether to use a variable threshold
 SELAVY_VARIABLE_THRESHOLD=true
 # Half-size of the box used to calculate the local threshold
@@ -688,12 +746,25 @@ SELAVY_BOX_SIZE=50
 SELAVY_NSUBX=6
 SELAVY_NSUBY=3
 
+##############################
+# Run the continuum validation script following source finding
+DO_CONTINUUM_VALIDATION=true
+
+# Run the validation for individual beam images
+VALIDATE_BEAM_IMAGES=false
+
+# Location to copy validation directories to
+VALIDATION_ARCHIVE_DIR="/group/askap/ValidationReportsArchive"
+
+# Whether to remove the .csv files when copying the validation
+# directories
+REMOVE_VALIDATION_CSV=true
 
 ##############################
 # Selavy source finder - polarisation
 #
 # Whether to include the RM synthesis in the continuum sourcefinding
-DO_RM_SYNTHESIS=true
+DO_RM_SYNTHESIS=false
 # Output base name for the spectra
 SELAVY_POL_OUTPUT_BASE=pol
 # Whether to write the spectra as individual files
@@ -741,6 +812,8 @@ SELAVY_SPEC_FLAG_GROWTH=true
 SELAVY_SPEC_GROWTH_CUT=3
 # Growth flux threshold - leave blank if using SNR
 SELAVY_SPEC_GROWTH_THRESHOLD=""
+# Cutoff in the weights for source-detection
+SELAVY_WEIGHTS_CUTOFF=0.15
 #
 # Preprocessing
 # Smoothing:
@@ -756,7 +829,7 @@ SELAVY_SPEC_SPATIAL_KERNEL=3
 SELAVY_SPEC_FLAG_WAVELET=false
 # Dimension to do the wavelet reconstruction
 SELAVY_SPEC_RECON_DIM=1
-# Signal-to-noise for wavelet thresholding 
+# Signal-to-noise for wavelet thresholding
 SELAVY_SPEC_RECON_SNR=4
 # Minimum scale for inclusion in reconstruction (1=lowest)
 SELAVY_SPEC_RECON_SCALE_MIN=1
@@ -791,12 +864,12 @@ SELAVY_SPEC_BASE_CUBELET=cubelet
 # The image prefixes to be archived
 IMAGE_LIST="image psf psf.image residual sensitivity"
 
-# Whether to archive individual beam images 
+# Whether to archive individual beam images
 ARCHIVE_BEAM_IMAGES=false
 # Whether to archive mosaics of self-calibration loops
-ARCHIVE_SELFCAL_LOOP_MOSAICS=true
+ARCHIVE_SELFCAL_LOOP_MOSAICS=false
 # Whether to archive the mosaicked images of each field
-ARCHIVE_FIELD_MOSAICS=true
+ARCHIVE_FIELD_MOSAICS=false
 
 # OPAL project ID, for CASDA use
 PROJECT_ID="AS031"
@@ -805,9 +878,9 @@ PROJECT_ID="AS031"
 OBS_PROGRAM="Commissioning"
 
 # For making thumbnails, this is the size value given to figsize (in inches)
-THUMBNAIL_SIZE_INCHES=(16 5)
+THUMBNAIL_SIZE_INCHES="16,5"
 # For making thumbnails, this is the corresponding string for the sizes
-THUMBNAIL_SIZE_TEXT=(large small)
+THUMBNAIL_SIZE_TEXT="large,small"
 
 # Suffix for thumnail images - determines the image type
 THUMBNAIL_SUFFIX="png"

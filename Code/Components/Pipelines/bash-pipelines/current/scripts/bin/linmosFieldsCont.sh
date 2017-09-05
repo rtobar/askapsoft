@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -38,11 +38,6 @@ if [ "$DO_CONT_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-# Don't run if there is only one field
-if [ ${NUM_FIELDS} -eq 1 ]; then
-    DO_IT=false
-fi
-
 if [ "${DO_MOSAIC_FIELDS}" != "true" ]; then
     DO_IT=false
 fi
@@ -50,17 +45,18 @@ fi
 if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     BEAM=all
     FIELD="."
-    if [ `echo $TILE_LIST | awk '{print NF}'` -gt 1 ]; then
+    tilelistsize=$(echo "${TILE_LIST}" | awk '{print NF}')
+    if [ "${tilelistsize}" -gt 1 ]; then
         FULL_TILE_LIST="$TILE_LIST ALL"
     else
         FULL_TILE_LIST="ALL"
     fi
     for TILE in $FULL_TILE_LIST; do
         for imageCode in ${mosaicImageList}; do
-            for((TTERM=0;TTERM<${NUM_TAYLOR_TERMS};TTERM++)); do
+            for((TTERM=0;TTERM<NUM_TAYLOR_TERMS;TTERM++)); do
                 setImageProperties cont
-                if [ -e ${OUTPUT}/${imageName} ]; then
-                    if [ $DO_IT == true ]; then
+                if [ -e "${OUTPUT}/${imageName}" ]; then
+                    if [ "${DO_IT}" == "true" ]; then
                         echo "Image ${imageName} exists, so not running continuum mosaicking"
                     fi
                     DO_IT=false
@@ -71,10 +67,10 @@ if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
     done
 fi
 
-if [ $DO_IT == true ]; then
+if [ "${DO_IT}" == "true" ]; then
 
     sbatchfile=$slurms/linmos_all_cont.sbatch
-    cat > $sbatchfile <<EOFOUTER
+    cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -96,19 +92,23 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
+DO_ALT_IMAGER_CONT="${DO_ALT_IMAGER_CONT}"
 NUM_TAYLOR_TERMS=${NUM_TAYLOR_TERMS}
-maxterm=\`echo \${NUM_TAYLOR_TERMS} | awk '{print 2*\$1-1}'\`
+maxterm=\$(echo "\${NUM_TAYLOR_TERMS}" | awk '{print 2*\$1-1}')
 IMAGE_BASE_CONT=${IMAGE_BASE_CONT}
 SB_SCIENCE=${SB_SCIENCE}
 
 FIELD_LIST="$FIELD_LIST"
 TILE_LIST="$TILE_LIST"
 
+IMAGETYPE_CONT="${IMAGETYPE_CONT}"
+
 # If there is only one tile, only include the "ALL" case, which
 # mosaics together all fields
-if [ \`echo \$TILE_LIST | awk '{print NF}'\` -gt 1 ]; then
+if [ "\$(echo \$TILE_LIST | awk '{print NF}')" -gt 1 ]; then
     FULL_TILE_LIST="\$TILE_LIST ALL"
 else
     FULL_TILE_LIST="ALL"
@@ -122,7 +122,7 @@ for THISTILE in \$FULL_TILE_LIST; do
     TILE_FIELD_LIST=""
     for FIELD in \$FIELD_LIST; do
         getTile
-        if [ \$THISTILE == "ALL" ] || [ \$TILE == \$THISTILE ]; then
+        if [ "\$THISTILE" == "ALL" ] || [ "\$TILE" == "\$THISTILE" ]; then
             TILE_FIELD_LIST="\$TILE_FIELD_LIST \$FIELD"
         fi
     done
@@ -135,25 +135,29 @@ for THISTILE in \$FULL_TILE_LIST; do
             imList=""
             wtList=""
             BEAM=all
+            listCount=0
             for FIELD in \${TILE_FIELD_LIST}; do
                 setImageProperties cont
-                if [ -e \${FIELD}/\${imageName} ]; then
+                im="\${FIELD}/\${imageName}"
+                wt="\${FIELD}/\${weightsImage}"
+                if [ -e "\${im}" ]; then
+                    ((listCount++))
                     if [ "\${imList}" == "" ]; then
-                        imList="\${FIELD}/\${imageName}"
-                        wtList="\${FIELD}/\${weightsImage}"
+                        imList="\${im%%.fits}"
+                        wtList="\${wt%%.fits}"
                     else
-                        imList="\${imList},\${FIELD}/\${imageName}"
-                        wtList="\${wtList},\${FIELD}/\${weightsImage}"
+                        imList="\${imList},\${im%%.fits}"
+                        wtList="\${wtList},\${wt%%.fits}"
                     fi
                 fi
             done
 
-            if [ \$THISTILE == "ALL" ]; then
+            if [ "\$THISTILE" == "ALL" ]; then
                 jobCode=linmosC_Full_\${imageCode}
             else
                 jobCode=linmosC_\${THISTILE}_\${imageCode}
             fi
-            if [ \$maxterm -gt 1 ]; then
+            if [ "\$maxterm" -gt 1 ]; then
                 jobCode=\${jobCode}_T\${TTERM}
             fi
 
@@ -161,28 +165,43 @@ for THISTILE in \$FULL_TILE_LIST; do
                 FIELD="."
                 TILE=\$THISTILE
                 setImageProperties cont
-                echo "Mosaicking to form \${imageName}"
-                parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
-                log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
-                cat > \${parset} << EOFINNER
+
+                if [ \${listCount} -gt 1 ]; then
+                    echo "Mosaicking to form \${imageName}"
+                    parset=${parsets}/science_\${jobCode}_\${SLURM_JOB_ID}.in
+                    log=${logs}/science_\${jobCode}_\${SLURM_JOB_ID}.log
+                    cat > "\${parset}" << EOFINNER
 linmos.names            = [\${imList}]
 linmos.weights          = [\${wtList}]
-linmos.outname          = \$imageName
-linmos.outweight        = \$weightsImage
+linmos.imagetype        = \${IMAGETYPE_CONT}
+linmos.outname          = \${imageName%%.fits}
+linmos.outweight        = \${weightsImage%%.fits}
 linmos.weighttype       = FromWeightImages
 EOFINNER
 
-                NCORES=1
-                NPPN=1
-                aprun -n \${NCORES} -N \${NPPN} $linmos -c \$parset > \$log
-                err=\$?
-                for im in \`echo \${imList} | sed -e 's/,/ /g'\`; do
-                    rejuvenate \$im
-                done
-                extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
-                if [ \$err != 0 ]; then
-                    exit \$err
+                    NCORES=1
+                    NPPN=1
+                    aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
+                    err=\$?
+                    for im in \$(echo "\${imList}" | sed -e 's/,/ /g'); do
+                        rejuvenate "\$im"
+                    done
+                    extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
+                    if [ \$err != 0 ]; then
+                        exit \$err
+                    fi
+                else
+                    # imList and wtList just have a single image -
+                    #  just do a simple copy rather than running linmos
+                    if [ "\${IMAGETYPE_CONTCUBE}" == "fits" ]; then
+                        imList="\${imList}.fits"
+                        wtList="\${wtList}.fits"
+                    fi
+                    echo "Copying \${imList} to form \${imageName}"
+                    cp -r \${imList} \${imageName}
+                    cp -r \${wtList} \${weightsImage}
                 fi
+
             else
                 echo "WARNING - no good images were found for mosaicking image type '\${imageCode}'!"
             fi
@@ -191,10 +210,10 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        FULL_LINMOS_CONT_DEP=`echo $FULL_LINMOS_CONT_DEP | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONT_ALL=`sbatch $FULL_LINMOS_CONT_DEP $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONT_ALL} "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
+    if [ "${SUBMIT_JOBS}" == "true" ]; then
+        FULL_LINMOS_CONT_DEP=$(echo "${FULL_LINMOS_CONT_DEP}" | sed -e 's/afterok/afterany/g')
+	ID_LINMOS_CONT_ALL=$(sbatch ${FULL_LINMOS_CONT_DEP} "$sbatchfile" | awk '{print $4}')
+	recordJob "${ID_LINMOS_CONT_ALL}" "Make a mosaic continuum image of the science observation, with flags \"${FULL_LINMOS_CONT_DEP}\""
     else
 	echo "Would make a mosaic image of the science observation, with slurm file $sbatchfile"
     fi

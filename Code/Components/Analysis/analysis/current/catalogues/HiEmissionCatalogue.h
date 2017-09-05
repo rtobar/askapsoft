@@ -54,16 +54,15 @@ class HiEmissionCatalogue {
         /// based on the output file given in the parset.
         HiEmissionCatalogue(std::vector< sourcefitting::RadioSource> &srclist,
                             const LOFAR::ParameterSet &parset,
-                            duchamp::Cube &cube);
+                            duchamp::Cube *cube,
+                            askap::askapparallel::AskapParallel &comms);
 
         /// Default destructor
         virtual ~HiEmissionCatalogue() {};
 
         /// Check the widths of the columns based on the values within
         /// the catalogue.
-        /// @param allColumns If true, run the check on all columns in
-        /// the specification, else just do it for the strings.
-        void check(bool allColumns);
+        void check(bool checkTitle);
 
         /// Write the catalogue to the ASCII & VOTable files (acts as
         /// a front-end to the writeVOT() and writeASCII() functions)
@@ -103,7 +102,7 @@ class HiEmissionCatalogue {
 
         /// The duchamp::Cube, used to help instantiate the classes to
         /// write out the ASCII and VOTable files.
-        duchamp::Cube &itsCube;
+        duchamp::Cube *itsCube;
 
         /// The filename of the VOTable output file
         std::string itsVotableFilename;

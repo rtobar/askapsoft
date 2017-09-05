@@ -29,7 +29,7 @@
 #include <catalogues/CasdaIsland.h>
 #include <askap_analysis.h>
 #include <catalogues/CatalogueEntry.h>
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 
 #include <askap/AskapLogging.h>
 #include <askap/AskapError.h>
@@ -50,11 +50,16 @@ namespace askap {
 
 namespace analysis {
 
+CasdaIsland::CasdaIsland():
+    CatalogueEntry()
+{
+}
+
 CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
                          const LOFAR::ParameterSet &parset):
     CatalogueEntry(parset),
     itsName(obj.getName()),
-    itsNumComponents(obj.numFits("best")),
+    itsNumComponents(obj.numFits(casda::componentFitType)),
     itsRAs(obj.getRAs()),
     itsDECs(obj.getDecs()),
     itsRA(obj.getRA()),
@@ -87,8 +92,8 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     itsIslandID = id.str();
 
     // Convert the header class to use FREQ type and the appropriate unit
-    duchamp::FitsHeader newHead_freq = changeSpectralAxis(obj.header(),"FREQ-???",casda::freqUnit);
-    
+    duchamp::FitsHeader newHead_freq = changeSpectralAxis(obj.header(), "FREQ-???", casda::freqUnit);
+
     casa::Unit wcsFreqUnits(newHead_freq.getSpectralUnits());
     casa::Unit freqUnits(casda::freqUnit);
     double freqScale = casa::Quantity(1., wcsFreqUnits).getValue(freqUnits);
@@ -101,8 +106,8 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
 
     // Re-calculate WCS parameters
     obj.calcWCSparams(newHead_freq);
-    itsFreq = obj.getVel()*freqScale;
-    
+    itsFreq = obj.getVel() * freqScale;
+
 }
 
 const float CasdaIsland::ra()
@@ -199,67 +204,68 @@ void CasdaIsland::printTableEntry(std::ostream &stream,
 
 }
 
-void CasdaIsland::checkCol(duchamp::Catalogues::Column &column)
+void CasdaIsland::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
+    bool checkPrec=false;
     std::string type = column.type();
     if (type == "ID") {
-        column.check(itsIslandID);
+        column.check(itsIslandID, checkTitle);
     } else if (type == "NAME") {
-        column.check(itsName);
+        column.check(itsName, checkTitle);
     } else if (type == "NCOMP") {
-        column.check(itsNumComponents);
+        column.check(itsNumComponents, checkTitle);
     } else if (type == "RA") {
-        column.check(itsRAs);
+        column.check(itsRAs, checkTitle);
     } else if (type == "DEC") {
-        column.check(itsDECs);
+        column.check(itsDECs, checkTitle);
     } else if (type == "RAJD") {
-        column.check(itsRA);
+        column.check(itsRA, checkTitle, checkPrec);
     } else if (type == "DECJD") {
-        column.check(itsDEC);
+        column.check(itsDEC, checkTitle, checkPrec);
     } else if (type == "FREQ") {
-        column.check(itsFreq);
+        column.check(itsFreq, checkTitle, checkPrec);
     } else if (type == "MAJ") {
-        column.check(itsMaj);
+        column.check(itsMaj, checkTitle, checkPrec);
     } else if (type == "MIN") {
-        column.check(itsMin);
+        column.check(itsMin, checkTitle, checkPrec);
     } else if (type == "PA") {
-        column.check(itsPA);
+        column.check(itsPA, checkTitle, checkPrec);
     } else if (type == "FINT") {
-        column.check(itsFluxInt);
+        column.check(itsFluxInt, checkTitle, checkPrec);
     } else if (type == "FPEAK") {
-        column.check(itsFluxPeak);
+        column.check(itsFluxPeak, checkTitle, checkPrec);
     } else if (type == "XMIN") {
-        column.check(itsXmin);
+        column.check(itsXmin, checkTitle);
     } else if (type == "XMAX") {
-        column.check(itsXmax);
+        column.check(itsXmax, checkTitle);
     } else if (type == "YMIN") {
-        column.check(itsYmin);
+        column.check(itsYmin, checkTitle);
     } else if (type == "YMAX") {
-        column.check(itsYmax);
+        column.check(itsYmax, checkTitle);
     } else if (type == "NPIX") {
-        column.check(itsNumPix);
+        column.check(itsNumPix, checkTitle);
     } else if (type == "XAV") {
-        column.check(itsXaverage);
+        column.check(itsXaverage, checkTitle, checkPrec);
     } else if (type == "YAV") {
-        column.check(itsYaverage);
+        column.check(itsYaverage, checkTitle, checkPrec);
     } else if (type == "XCENT") {
-        column.check(itsXcentroid);
+        column.check(itsXcentroid, checkTitle, checkPrec);
     } else if (type == "YCENT") {
-        column.check(itsYcentroid);
+        column.check(itsYcentroid, checkTitle, checkPrec);
     } else if (type == "XPEAK") {
-        column.check(itsXpeak);
+        column.check(itsXpeak, checkTitle);
     } else if (type == "YPEAK") {
-        column.check(itsYpeak);
+        column.check(itsYpeak, checkTitle);
     } else if (type == "FLAG1") {
-        column.check(itsFlag1);
+        column.check(itsFlag1, checkTitle);
     } else if (type == "FLAG2") {
-        column.check(itsFlag2);
+        column.check(itsFlag2, checkTitle);
     } else if (type == "FLAG3") {
-        column.check(itsFlag3);
+        column.check(itsFlag3, checkTitle);
     } else if (type == "FLAG4") {
-        column.check(itsFlag4);
+        column.check(itsFlag4, checkTitle);
     } else if (type == "COMMENT") {
-        column.check(itsComment);
+        column.check(itsComment, checkTitle);
     } else {
         ASKAPTHROW(AskapError,
                    "Unknown column type " << type);
@@ -267,16 +273,93 @@ void CasdaIsland::checkCol(duchamp::Catalogues::Column &column)
 
 }
 
-void CasdaIsland::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns)
+void CasdaIsland::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle)
 {
     for (size_t i = 0; i < spec.size(); i++) {
-        if ((spec.column(i).getDatatype() == "char") || allColumns) {
-            this->checkCol(spec.column(i));
-        }
+        this->checkCol(spec.column(i), checkTitle);
     }
 }
 
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaIsland& src)
+{
+    std::string s;
+    double d;
+    unsigned int u;
+    int i;
 
+    s = src.itsIslandID; blob << s;
+    s = src.itsName; blob << s;
+    u = src.itsNumComponents; blob << u;
+    s = src.itsRAs; blob << s;
+    s = src.itsDECs; blob << s;
+    d = src.itsRA; blob << d;
+    d = src.itsDEC; blob << d;
+    d = src.itsFreq; blob << d;
+    d = src.itsMaj; blob << d;
+    d = src.itsMin; blob << d;
+    d = src.itsPA; blob << d;
+    d = src.itsFluxInt; blob << d;
+    d = src.itsFluxPeak; blob << d;
+    i = src.itsXmin; blob << i;
+    i = src.itsXmax; blob << i;
+    i = src.itsYmin; blob << i;
+    i = src.itsYmax; blob << i;
+    u = src.itsNumPix; blob << u;
+    d = src.itsXaverage; blob << d;
+    d = src.itsYaverage; blob << d;
+    d = src.itsXcentroid; blob << d;
+    d = src.itsYcentroid; blob << d;
+    i = src.itsXpeak; blob << i;
+    i = src.itsYpeak; blob << i;
+    u = src.itsFlag1; blob << u;
+    u = src.itsFlag2; blob << u;
+    u = src.itsFlag3; blob << u;
+    u = src.itsFlag4; blob << u;
+    s = src.itsComment; blob << s;
+
+    return blob;
+}
+
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaIsland& src)
+{
+    std::string s;
+    double d;
+    unsigned int u;
+    int i;
+
+    blob >> s; src.itsIslandID = s;
+    blob >> s; src.itsName = s;
+    blob >> u; src.itsNumComponents = u;
+    blob >> s; src.itsRAs = s;
+    blob >> s; src.itsDECs = s;
+    blob >> d; src.itsRA = d;
+    blob >> d; src.itsDEC = d;
+    blob >> d; src.itsFreq = d;
+    blob >> d; src.itsMaj = d;
+    blob >> d; src.itsMin = d;
+    blob >> d; src.itsPA = d;
+    blob >> d; src.itsFluxInt = d;
+    blob >> d; src.itsFluxPeak = d;
+    blob >> i; src.itsXmin = i;
+    blob >> i; src.itsXmax = i;
+    blob >> i; src.itsYmin = i;
+    blob >> i; src.itsYmax = i;
+    blob >> u; src.itsNumPix = u;
+    blob >> d; src.itsXaverage = d;
+    blob >> d; src.itsYaverage = d;
+    blob >> d; src.itsXcentroid = d;
+    blob >> d; src.itsYcentroid = d;
+    blob >> i; src.itsXpeak = i;
+    blob >> i; src.itsYpeak = i;
+    blob >> u; src.itsFlag1 = u;
+    blob >> u; src.itsFlag2 = u;
+    blob >> u; src.itsFlag3 = u;
+    blob >> u; src.itsFlag4 = u;
+    blob >> s; src.itsComment = s;
+
+    return blob;
+
+}
 
 }
 

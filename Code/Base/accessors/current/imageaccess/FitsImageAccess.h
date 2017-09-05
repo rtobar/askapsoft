@@ -52,7 +52,7 @@ struct FitsImageAccess : public IImageAccess {
 public:
 
     /// @brief connect accessor to an existing image
-    /// @details Instantiates the private FITSImageRW shared pointer. 
+    /// @details Instantiates the private FITSImageRW shared pointer.
     /// @param[in] name image name
     void connect(const std::string &name);
 
@@ -83,10 +83,21 @@ public:
     /// @return coordinate system object
     virtual casa::CoordinateSystem coordSys(const std::string &name) const;
 
+    /// @brief obtain coordinate system info for part of an image
+    /// @param[in] name image name
+    /// @return coordinate system object
+    virtual casa::CoordinateSystem coordSysSlice(const std::string &name,const casa::IPosition &blc,
+                                    const casa::IPosition &trc ) const;
+
     /// @brief obtain beam info
     /// @param[in] name image name
     /// @return beam info vector
     virtual casa::Vector<casa::Quantum<double> > beamInfo(const std::string &name) const;
+
+    /// @brief obtain pixel units
+    /// @param[in] name image name
+    /// @return units string
+    virtual std::string getUnits(const std::string &name) const;
 
     //////////////////
     // Writing methods
@@ -114,6 +125,18 @@ public:
     virtual void write(const std::string &name, const casa::Array<float> &arr,
                        const casa::IPosition &where);
 
+    /// @brief write a slice of an image mask
+    /// @param[in] name image name
+    /// @param[in] arr array with pixels
+    /// @param[in] where bottom left corner where to put the slice to (trc is deduced from the array shape)
+    virtual void writeMask(const std::string &name, const casa::Array<bool> &mask,
+                                                   const casa::IPosition &where);
+
+    /// @brief write a slice of an image mask
+    /// @param[in] name image name
+    /// @param[in] arr array with pixels
+    
+    virtual void writeMask(const std::string &name, const casa::Array<bool> &mask);
     /// @brief set brightness units of the image
     /// @details
     /// @param[in] name image name
@@ -129,20 +152,20 @@ public:
     /// @param[in] pa position angle in radians
     virtual void setBeamInfo(const std::string &name, double maj, double min, double pa);
 
+    /// @brief apply mask to image
+    /// @details Deteails depend upon the implemenation - CASA images will have the pixel mask assigned
+    /// but FITS images will have it applied to the pixels ... which is an irreversible process
+    /// @param[in] name image name
+
+
+    virtual void makeDefaultMask(const std::string &name);
+
+
 private:
 
 
     boost::shared_ptr<FITSImageRW> itsFITSImage;
-/*
-    bool buildFITSImageRW(
-    	casa::String &error, const casa::ImageInterface<casa::Float>& image,
-        casa::FitsOutput *output, uint memoryInMB, bool preferVelocity,
-    	bool opticalVelocity, int BITPIX, float minPix, float maxPix,
-    	bool degenerateLast, bool verbose, bool stokesLast,
-    	bool preferWavelength, bool airWavelength, bool primHead,
-    	bool allowAppend, string& origin, bool history
-    );
-*/
+
 };
 
 

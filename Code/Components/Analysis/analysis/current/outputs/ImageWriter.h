@@ -37,6 +37,7 @@
 #include <casacore/casa/Arrays/IPosition.h>
 #include <casacore/coordinates/Coordinates/CoordinateSystem.h>
 #include <casacore/images/Images/ImageInfo.h>
+#include <Common/ParameterSet.h>
 
 namespace askap {
 
@@ -45,7 +46,7 @@ namespace analysis {
 class ImageWriter {
     public:
         ImageWriter() {};
-        ImageWriter(duchamp::Cube *cube, std::string imageName);
+        ImageWriter(const LOFAR::ParameterSet &parset,duchamp::Cube *cube, std::string imageName);
         virtual ~ImageWriter() {};
 
         void copyMetadata(duchamp::Cube *cube);
@@ -75,10 +76,16 @@ class ImageWriter {
                            const casa::IPosition &loc,
                            bool accumulate = false);
 
+    void writeMask(const casa::Array<bool> &mask,
+                   const casa::IPosition &loc);
+
         casa::Array<casa::Float> read(const casa::IPosition& loc,
                                       const casa::IPosition &shape);
 
     protected:
+            /// @brief The defining parset
+        LOFAR::ParameterSet itsParset;
+
         std::string itsImageName;
         casa::Unit itsBunit;
         casa::IPosition itsShape;

@@ -30,11 +30,13 @@
 #define ASKAP_ANALYSIS_RESULTS_H_
 
 #include <parallelanalysis/DuchampParallel.h>
+#include <parallelanalysis/DistributedContinuumParameterisation.h>
 #include <duchamp/Cubes/cubes.hh>
 #include <Common/ParameterSet.h>
 #include <sourcefitting/RadioSource.h>
 #include <sourcefitting/FittingParameters.h>
 #include <outputs/AskapVOTableCatalogueWriter.h>
+#include <askapparallel/AskapParallel.h>
 
 namespace askap {
 
@@ -50,7 +52,7 @@ class ResultsWriter {
     public:
         /// Initialise with the parset, used to access parameters
         /// defining aspects of the output
-        ResultsWriter(DuchampParallel *finder);
+        ResultsWriter(DuchampParallel *finder, askap::askapparallel::AskapParallel &itsComms);
 
         /// Default destructor
         virtual ~ResultsWriter() {};
@@ -65,6 +67,16 @@ class ResultsWriter {
         /// include the writing of the binary catalogue and the
         /// text-based spectra.
         void duchampOutput();
+
+        /// Writes out the CASDA island and component catalogues, as well
+        /// as the maps of components and their residuals via the
+        /// writeComponentMaps(componentImage) function.
+        void writeContinuumCatalogues();
+
+        /// Writes images that contain: a) a map of all continuum
+        /// components, and b) the residual emission after these are
+        /// removed from the input image.
+        void writeComponentMaps(DistributedContinuumParameterisation &dcp);
 
         /// Writes out the CASDA island catalogue, using the
         /// IslandCatalogue class to handle the writing (which will
@@ -81,12 +93,12 @@ class ResultsWriter {
         /// create VOTable and ASCII text versions of the catalogue).
         void writeHiEmissionCatalogue();
 
-    /// Writes out the CASDA Polarisatoin catalogue, using the
-    /// RMCatalogue class to handle the calculations and the writing
-    /// (which will create VOTable and ASCII text versions of the
-    /// catalogue), as well as the writing to disk of extracted
-    /// polarisation spectra.
-    void writePolarisationCatalogue();
+        /// Writes out the CASDA Polarisation catalogue, using the
+        /// RMCatalogue class to handle the calculations and the writing
+        /// (which will create VOTable and ASCII text versions of the
+        /// catalogue), as well as the writing to disk of extracted
+        /// polarisation spectra.
+        void writePolarisationCatalogue();
 
         /// Writes out the catalogue of 2D Gaussian fits, using the
         /// FitCatalogue class to handle the writing (which will
@@ -112,7 +124,10 @@ class ResultsWriter {
     protected:
 
         /// The input parset
-        LOFAR::ParameterSet &itsParset;
+        LOFAR::ParameterSet itsParset;
+
+        /// Communications
+        askap::askapparallel::AskapParallel& itsComms;
 
         /// The Duchamp cube structure
         duchamp::Cube &itsCube;

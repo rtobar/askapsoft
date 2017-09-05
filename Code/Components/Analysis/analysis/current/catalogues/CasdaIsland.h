@@ -47,6 +47,9 @@ namespace analysis {
 /// write out the Island to a VOTable or other type of catalogue file.
 class CasdaIsland : public CatalogueEntry {
     public:
+        /// Default constructor that does nothing.
+        CasdaIsland();
+
         /// Constructor that builds the Island object from a
         /// RadioSource. The number of fitted components is used,
         /// otherwise it is essentially the information contained in
@@ -90,12 +93,36 @@ class CasdaIsland : public CatalogueEntry {
         /// the COLNAME key. If a key is given that was not expected,
         /// an Askap Error is thrown. The column must be non-const as
         /// it could change.
-        void checkCol(duchamp::Catalogues::Column &column);
+    void checkCol(duchamp::Catalogues::Column &column, bool checkTitle);
 
         /// Perform the column check for all columns in the
-        /// specification. If allColumns is false, only the columns
-        /// with type=char are checked, otherwise all are.
-        void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns = true);
+        /// specification. 
+    void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle);
+
+        /// @brief Functions allowing CasdaIsland objects to be passed
+        /// over LOFAR Blobs
+        /// @name
+        /// @{
+        /// @brief Pass a CasdaIsland object into a Blob
+        /// @details This function provides a mechanism for passing the
+        /// entire contents of a CasdaIsland object into a
+        /// LOFAR::BlobOStream stream
+        friend LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream &stream,
+                                              CasdaIsland& src);
+        /// @brief Receive a CasdaIsland object from a Blob
+        /// @details This function provides a mechanism for receiving the
+        /// entire contents of a CasdaIsland object from a
+        /// LOFAR::BlobIStream stream
+        friend LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream &stream,
+                                              CasdaIsland& src);
+
+        /// @}
+
+        /// @brief Comparison operator, using the island ID
+        friend bool operator< (CasdaIsland lhs, CasdaIsland rhs)
+        {
+            return (lhs.id() < rhs.id());
+        }
 
     protected:
         /// The unique ID for the island

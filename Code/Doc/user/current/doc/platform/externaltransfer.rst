@@ -8,7 +8,7 @@ those images on your desktop computer.
 You may use the secure copy program (scp) to copy data to/from either your home directory or
 the scratch filesysyem. A special data-mover node exists, with hostname *hpc-data.pawsey.org.au*,
 for this purpose. It is possible to copy data through the login nodes, however this should
-be avoided if possible so as to reduce the load on the login
+be avoided so as to reduce the load on the login
 nodes. This data-mover node is actually a front-end to one of four
 nodes, and these can see both /scratch2 (on galaxy) and /scratch (on magnus).
 
@@ -41,7 +41,7 @@ a few extra parameters. To copy a file from the /scratch2 filesystem::
 
 and to copy a file to the /scratch2 filesystem::
 
-    bbcp -P 10 -s 32 -w 2M -r image.fits hpc-data1.pawsey.org.au:/scratch2/askap/user123
+    bbcp -P 10 -s 32 -w 2M -m 2755/644 -r image.fits hpc-data1.pawsey.org.au:/scratch2/askap/user123
 
 .. note:: The hostname necessary to use bbcp is *hpc-data1.pawsey.org.au*. This is one of the
           four hosts to which the *hpc-data* DNS alias points to (the

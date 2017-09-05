@@ -85,6 +85,10 @@ class Dependency:
         self._silent = silent   # mimimal output
         self.selfupdate = False # should object request updates from svn
 
+        self._codename = utils.get_platform()['codename']
+        self._system = utils.get_platform()['system'].lower()
+        self._hostname = socket.gethostname().split(".")[0]
+
 
     def q_print(self, msg):
         if self._silent:
@@ -99,6 +103,8 @@ class Dependency:
     def get_dep_path(self, key):
         return self._deps[key]["path"]
 
+    def get_explicit(self):
+        return [ v["path"] for v in self._deps.values() if v["explicit"] ]
 
     # Used by "in" test.
     # object.__contains__(self, item)
@@ -213,13 +219,10 @@ class Dependency:
         return tagfiles
 
 
-    def _get_dependencies(self, package):
-        codename = utils.get_platform()['codename']
-        system = utils.get_platform()['system'].lower()
-        hostname = socket.gethostname().split(".")[0]
+    def _get_dependencies(self, package, explicit=False):
 
-        for ext in [hostname, system, codename, 'default']:
-            if ext:
+        for ext in [self._hostname, self._system, self._codename, 'default']:
+            if ext: # i.e. not empty string
                 depfile = '%s.%s' % (self.DEPFILE, ext)
                 if package:
                     depfile = os.path.join(self.ASKAPROOT, package, depfile)
@@ -228,14 +231,13 @@ class Dependency:
                     basedir = os.path.split(depfile)[0] or "."
                     if not os.path.exists(basedir):
                         utils.update_tree(basedir)
-		if os.path.exists(depfile):
-		    self.q_print("info: processing %s" % depfile)
-                    self._get_depfile(depfile)
-		    break
+                if os.path.exists(depfile):
+                    self.q_print("info: processing %s" % depfile)
+                    self._get_depfile(depfile, explicit=explicit)
+                    break
 
 
-
-    def _get_depfile(self, depfile, overwrite=False):
+    def _get_depfile(self, depfile, overwrite=False, explicit=False):
         if not os.path.exists(depfile):
             # assume no dependencies
             return
@@ -253,7 +255,8 @@ class Dependency:
                 if len(lspl) > 1:
                     libs = lspl[1].strip().split()
                 value = lspl[0]
-                self._add_dependency(key, value, libs, overwrite)
+                self._add_dependency(key, value, libs, overwrite,
+                                     explicit)
                 if not value.startswith("/"):
                     # recurse into ASKAP dependencies
                     # otherwise just move on as we specified system dependency
@@ -301,7 +304,8 @@ class Dependency:
         return info
 
 
-    def _add_dependency(self, key, value, libs, overwrite=False):
+    def _add_dependency(self, key, value, libs, overwrite=False,
+                        explicit=False):
         if self._deps.has_key(key):
             # deal with potential symbolic links for 'default' packages
             paths = [self._deps[key]["path"], value]
@@ -342,7 +346,8 @@ class Dependency:
             # XXX only used in Tools/scons_tools/askap_package.py
             if self.selfupdate:
                 utils.update_tree(value)
-            self._deps[key] = {"path": value, "libs": libs}
+            self._deps[key] = {"path": value, "libs": libs,
+                               "explicit": explicit}
 
 
     def _remove_duplicates(self, values):
@@ -389,7 +394,7 @@ class Dependency:
         if tag:
             tag = os.path.join(self.ASKAPROOT, tag)
 
-        self._get_dependencies(tag)
+        self._get_dependencies(tag, explicit=True)
 
         parent = ''
         for key, value in self._deps.iteritems():

@@ -57,8 +57,11 @@ ASKAPsoft.
 | **Preparing the calibrator datasets**   |                                       |                                                        |                                                           |
 |                                         |                                       |                                                        |                                                           |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``MS_BASE_1934``                        | 1934_beam%b.ms                        | none                                                   | Base name for the 1934 measurement sets after splitting.  |
-|                                         |                                       |                                                        | The wildcard %b will be replaced with the beam number.    |
+| ``MS_BASE_1934``                        | 1934_SB%s_%b.ms                       | none                                                   | Base name for the 1934 measurement sets after splitting.  |
+|                                         |                                       |                                                        | The wildcard %b will be replaced with the string "beamBB",|
+|                                         |                                       |                                                        | where BB is the (zero-based) beam number, and             |
+|                                         |                                       |                                                        | the %s will be replaced by the calibration scheduling     |
+|                                         |                                       |                                                        | block ID.                                                 |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 | ``CHAN_RANGE_1934``                     | ""                                    | channel (:doc:`../calim/mssplit`)                      | Channel range for splitting (1-based!). This range also   |
 |                                         |                                       |                                                        | defines the internal variable ``NUM_CHAN_1934`` (which    |
@@ -111,23 +114,25 @@ ASKAPsoft.
 | ``DIRECTION_1934``                      | "[19h39m25.036, -63.42.45.63, J2000]" | sources.field1.direction                               | Location of 1934-638, formatted for use in cbpcalibrator. |
 |                                         |                                       | (:doc:`../calim/cbpcalibrator`)                        |                                                           |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``TABLE_BANDPASS``                      | calparameters_1934_bp.tab             | calibaccess.table                                      | Name of the CASA table used for the bandpass calibration  |
+| ``TABLE_BANDPASS``                      | calparameters_1934_bp_SB%s.tab        | calibaccess.table                                      | Name of the CASA table used for the bandpass calibration  |
 |                                         |                                       | (:doc:`../calim/cbpcalibrator` and                     | parameters. If no leading directory is given, the table   |
 |                                         |                                       | :doc:`../calim/ccalapply`)                             | will be put in the BPCAL directory. Otherwise, the table  |
 |                                         |                                       |                                                        | is left where it is (this allows the user to specify a    |
-|                                         |                                       |                                                        | previously-created table for use with the science field). |
+|                                         |                                       |                                                        | previously-created table for use with the science         |
+|                                         |                                       |                                                        | field). The %s will be replaced by the calibration        |
+|                                         |                                       |                                                        | scheduling block ID.                                      |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 | ``BANDPASS_SCALENOISE``                 | false                                 | calibrate.scalenoise (:doc:`../calim/ccalapply`)       | Whether the noise estimate will be scaled in accordance   |
 |                                         |                                       |                                                        | with the applied calibrator factor to achieve proper      |
 |                                         |                                       |                                                        | weighting.                                                |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``NCYCLES_BANDPASS_CAL``                | 25                                    | ncycles (:doc:`../calim/cbpcalibrator`)                | Number of cycles used in cbpcalibrator.                   |
+| ``NCYCLES_BANDPASS_CAL``                | 50                                    | ncycles (:doc:`../calim/cbpcalibrator`)                | Number of cycles used in cbpcalibrator.                   |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``NUM_CPUS_CBPCAL``                     | 100                                   | none                                                   | The number of cpus allocated to the cbpcalibrator job. The|
+| ``NUM_CPUS_CBPCAL``                     | 216                                   | none                                                   | The number of cpus allocated to the cbpcalibrator job. The|
 |                                         |                                       |                                                        | job will use all 20 cpus on each node (the memory         |
 |                                         |                                       |                                                        | footprint is small enough to allow this).                 |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``BANDPASS_MINUV``                      | 0                                     | MinUV (:doc:`../calim/data_selection`)                 | Minimum UV distance [m] applied to data prior to solving  |
+| ``BANDPASS_MINUV``                      | 200                                   | MinUV (:doc:`../calim/data_selection`)                 | Minimum UV distance [m] applied to data prior to solving  |
 |                                         |                                       |                                                        | for the bandpass (used to exclude the short baselines).   |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 | **Smoothing and plotting the bandpass** |                                       |                                                        |                                                           |
@@ -144,10 +149,10 @@ ASKAPsoft.
 | ``BANDPASS_SMOOTH_OUTLIER``             | true                                  | none                                                   | If true, only smooth/interpolate over outlier points      |
 |                                         |                                       |                                                        | (based on the inter-quartile range).                      |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``BANDPASS_SMOOTH_FIT``                 | 1                                     | none                                                   | The order of the polynomial (if >=0) or the window size   |
+| ``BANDPASS_SMOOTH_FIT``                 | 0                                     | none                                                   | The order of the polynomial (if >=0) or the window size   |
 |                                         |                                       |                                                        | (if <0) used in the smoothing.                            |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
-| ``BANDPASS_SMOOTH_THRESHOLD``           | 1.0                                   | none                                                   | The threshold level used for fitting to the bandpass.     |
+| ``BANDPASS_SMOOTH_THRESHOLD``           | 3.0                                   | none                                                   | The threshold level used for fitting to the bandpass.     |
 +-----------------------------------------+---------------------------------------+--------------------------------------------------------+-----------------------------------------------------------+
 
 

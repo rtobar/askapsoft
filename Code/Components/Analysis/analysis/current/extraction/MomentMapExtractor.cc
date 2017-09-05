@@ -39,7 +39,7 @@
 
 #include <sourcefitting/RadioSource.h>
 
-#include <imageaccess/CasaImageAccess.h>
+#include <imageaccess/ImageAccessFactory.h>
 
 #include <casacore/casa/Arrays/IPosition.h>
 #include <casacore/casa/Arrays/Array.h>
@@ -302,19 +302,18 @@ void MomentMapExtractor::writeImage()
                 std::string filename = this->outfile(i);
                 ASKAPLOG_INFO_STR(logger, "Writing moment-" << i << " map to '" <<
                                   filename << "'");
-                accessors::CasaImageAccess ia;
-                ia.create(filename, newarray.shape(), newcoo);
+                boost::shared_ptr<accessors::IImageAccess> ia = accessors::imageAccessFactory(itsParset);
+                ia->create(filename, newarray.shape(), newcoo);
 
                 // write the array
-                ia.write(filename, newarray);
+                ia->write(filename, newarray);
 
-                ia.setUnits(filename, newunits);
+                ia->setUnits(filename, newunits);
 
                 this->writeBeam(filename);
 
-                casa::PagedImage<float> img(filename);
-                img.makeMask("mask");
-                img.pixelMask().put(theMask);
+                ia->makeDefaultMask(filename);
+                ia->writeMask(filename, theMask, casa::IPosition(outshape.nelements(),0));
 
             }
         }
@@ -366,13 +365,13 @@ double MomentMapExtractor::getSpectralIncrement(int z)
         ASKAPASSERT(spcoo.pixelToVelocity(vel, double(z)));
         ASKAPASSERT(spcoo.pixelToVelocity(velMinus, double(z - 1)));
         ASKAPASSERT(spcoo.pixelToVelocity(velPlus, double(z + 1)));
-        ASKAPLOG_DEBUG_STR(logger, velMinus << " " << vel << " " << velPlus);
+//        ASKAPLOG_DEBUG_STR(logger, velMinus << " " << vel << " " << velPlus);
         specIncr = fabs(velPlus.getValue() - velMinus.getValue()) / 2.;
     } else {
         // can't do velocity conversion, so just use the WCS spectral units
         specIncr = fabs(spcoo.increment()[0]);
     }
-    ASKAPLOG_DEBUG_STR(logger, "Channel " << z << " had spectral increment " << specIncr);
+//    ASKAPLOG_DEBUG_STR(logger, "Channel " << z << " had spectral increment " << specIncr);
     return specIncr;
 }
 

@@ -48,32 +48,67 @@ namespace analysis {
 /// information to VOTable and ASCII format files.
 class ComponentCatalogue {
     public:
+        /// Constructor, that uses a pre-defined list of Components,
+        /// and then calls setup to set the column specification. The
+        /// filenames are set based on the output file given in the
+        /// parset. This constructor takes a fitType to determine
+        /// which fit results to use.
+        ComponentCatalogue(std::vector<CasdaComponent> &componentList,
+                           const LOFAR::ParameterSet &parset,
+                           duchamp::Cube *cube,
+                           const std::string fitType);
+
+        /// Constructor, that uses a pre-defined list of Components,
+        /// and then calls setup to set the column specification. The
+        /// filenames are set based on the output file given in the
+        /// parset. This constructor assumes we are using the
+        /// casda::componentFitType for the fitType.
+        ComponentCatalogue(std::vector<CasdaComponent> &componentList,
+                           const LOFAR::ParameterSet &parset,
+                           duchamp::Cube *cube);
+
         /// Constructor, that calls defineComponents to define the
         /// catalogue from a set of RadioSource object, and defineSpec
         /// to set the column specification. The filenames are set
-        /// based on the output file given in the parset.
+        /// based on the output file given in the parset. This
+        /// constructor takes a fitType to determine which fit results
+        /// to use.
         ComponentCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                            const LOFAR::ParameterSet &parset,
-                           duchamp::Cube &cube,
-                           const std::string fitType = casda::componentFitType);
+                           duchamp::Cube *cube,
+                           const std::string fitType);
+
+        /// Constructor, that calls defineComponents to define the
+        /// catalogue from a set of RadioSource object, and defineSpec
+        /// to set the column specification. The filenames are set
+        /// based on the output file given in the parset. This
+        /// constructor assumes we are using the
+        /// casda::componentFitType for the fitType.
+        ComponentCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
+                           const LOFAR::ParameterSet &parset,
+                           duchamp::Cube *cube);
 
         /// Default destructor
         virtual ~ComponentCatalogue() {};
 
         /// Check the widths of the columns based on the values within
         /// the catalogue.
-        /// @param allColumns If true, run the check on all columns in
-        /// the specification, else just do it for the strings.
-        virtual void check(bool allColumns);
+    /// @param checkTitle - whether to include the title widths in the checking
+        virtual void check(bool checkTitle);
 
         /// Write the catalogue to the ASCII & VOTable files (acts as
         /// a front-end to the writeVOT() and writeASCII() functions)
         virtual void write();
 
-    /// Return a reference to the vector list of components
-    std::vector<CasdaComponent> &components();
+        /// Return a reference to the vector list of components
+        std::vector<CasdaComponent> &components();
 
     protected:
+        /// Complete the initialisation of the catalogue - defining the
+        /// catalogue spec and setting up filenames. The filenames are set
+        /// based on the output file given in the parset.
+        void setup(const LOFAR::ParameterSet &parset);
+
         /// Define the vector list of Components using the input list
         /// of RadioSource objects and the parset. One component is
         /// created for each fitted Gaussian component from each
@@ -124,7 +159,7 @@ class ComponentCatalogue {
 
         /// The duchamp::Cube, used to help instantiate the classes to
         /// write out the ASCII and VOTable files.
-        duchamp::Cube &itsCube;
+        duchamp::Cube *itsCube;
 
         /// The filename of the VOTable output file
         std::string itsVotableFilename;

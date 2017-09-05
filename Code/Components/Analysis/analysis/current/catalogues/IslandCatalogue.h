@@ -47,28 +47,41 @@ namespace analysis {
 /// information to VOTable and ASCII format files.
 class IslandCatalogue {
     public:
+        /// Constructor, that uses a pre-defined list of Islands, and
+        /// then calls setup to set the column specification. The
+        /// filenames are set based on the output file given in the
+        /// parset.
+        IslandCatalogue(std::vector<CasdaIsland> &islandList,
+                        const LOFAR::ParameterSet &parset,
+                        duchamp::Cube *cube);
+
         /// Constructor, that calls defineIslands to define the
         /// catalogue from a set of RadioSource object, and defineSpec
         /// to set the column specification. The filenames are set
         /// based on the output file given in the parset.
         IslandCatalogue(std::vector<sourcefitting::RadioSource> &srclist,
                         const LOFAR::ParameterSet &parset,
-                        duchamp::Cube &cube);
+                        duchamp::Cube *cube);
 
         /// Default destructor
         virtual ~IslandCatalogue() {};
 
         /// Check the widths of the columns based on the values within
         /// the catalogue.
-        /// @param allColumns If true, run the check on all columns in
-        /// the specification, else just do it for the strings.
-        void check(bool allColumns);
+        void check(bool checkTitle);
 
         /// Write the catalogue to the ASCII & VOTable files (acts as
         /// a front-end to the writeVOT() and writeASCII() functions)
         void write();
 
     protected:
+
+        /// Complete the initialisation of the catalogue - defining the
+        /// catalogue spec and setting up filenames. The filenames are set
+        /// based on the output file given in the parset.
+        void setup(const LOFAR::ParameterSet &parset);
+
+
         /// Define the vector list of Islands using the input list of
         /// RadioSource objects and the parset. One island is created
         /// for each RadioSource, then added to itsIslands.
@@ -101,7 +114,7 @@ class IslandCatalogue {
 
         /// The duchamp::Cube, used to help instantiate the classes to
         /// write out the ASCII and VOTable files.
-        duchamp::Cube &itsCube;
+        duchamp::Cube *itsCube;
 
         /// The filename of the VOTable output file
         std::string itsVotableFilename;

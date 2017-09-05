@@ -17,7 +17,7 @@ The *linmos* program is not parallel/distributed.
 Parallel linmos (*linmos-mpi*)
 ------------------------------
 
-There is a parallel version of *linmos* which will divide the mosaic over the number of 
+There is a parallel version of *linmos* which will divide the mosaic over the number of
 ranks. This improves the run time markedly as the I/O is distributed. Furthermore this also
 reduces the memory load.
 
@@ -96,8 +96,8 @@ If input images need to be regridded, the following ImageRegrid options are avai
 +------------------+------------------+--------------+------------------------------------------------------------+
 |**Parameter**     |**Type**          |**Default**   |**Description**                                             |
 +==================+==================+==============+============================================================+
-|regrid.method     |string            |linear        |ImageRegrid interpolation method:                           |
-|                  |                  |              |*nearest*, *linear* or *cubic* (possibly *lanczos* soon).   |
+|regrid.method     |string            |linear        |ImageRegrid interpolation method: *nearest*, *linear*,      |
+|                  |                  |              |*cubic* or *lanczos*.                                       |
 +------------------+------------------+--------------+------------------------------------------------------------+
 |regrid.decimate   |uint              |3             |ImageRegrid decimation factor. In the range 3-10 is likely  |
 |                  |                  |              |to provide the best performance/accuracy tradeoff           |
@@ -117,7 +117,7 @@ offset system is not specified, using either *feeds.centre* or *feeds.centreref*
 reference pixel of each input image is used as the primary-beam centre.
 
 The *feeds* parameters can be given either in the main linmos parset or a separate offsets parset file set by the
-*feeds.offsetsfile* parameter. 
+*feeds.offsetsfile* parameter.
 
 +------------------+------------------+--------------+------------------------------------------------------------+
 |**Parameter**     |**Type**          |**Default**   |**Description**                                             |
@@ -182,6 +182,49 @@ the linmos program), the file shall have the following format:
 |(one per input    |                  |              |the *feeds.centre* parameter. Offsets correspond to hour    |
 |image)            |                  |              |angle and declination. *beamnames[i]* should match the      |
 |                  |                  |              |names given in feeds.names* (see above).                    |
++------------------+------------------+--------------+------------------------------------------------------------+
+
+
+Alternate Primary Beam Models
+-----------------------------
+
+It is possible to select the model that is used for the weighting. This is selected in the linmos parset by
+the key "primarybeam"
+
++------------------+------------------+--------------+------------------------------------------------------------+
+|**Parameter**     |**Type**          |**Default**   |**Description**                                             |
++==================+==================+==============+============================================================+
+|primarybeam       |string            |"GaussianPB"  |Optional parameter that allows the user to select which     |
+|                  |                  |              |primary beam will be used in weighting. The parameters of   |
+|                  |                  |              |which can also be altered if required                       |
++------------------+------------------+--------------+------------------------------------------------------------+
+
+**Gaussian Primary Beam Options**
+
+You can choose the aperture size and scaling parameters both of the FWHM of the beam and a scaling of the exponent.
+In the parfile these are sub parameters of the Primary beam type. (e.g linmos.primarybeam.GaussianPB.aperture)
+
++------------------+------------------+--------------+------------------------------------------------------------+
+|**Parameter**     |**Type**          |**Default**   |**Description**                                             |
++==================+==================+==============+============================================================+
+|aperture          |double            |12            |Aperture size in metres.                                    |
++------------------+------------------+--------------+------------------------------------------------------------+
+|fwhmscaling       |double            |1.0           |Scaling of the full width half max of the Gaussian          |
++------------------+------------------+--------------+------------------------------------------------------------+
+|expscaling        |double            | 4 log(2)     |Scaling of the primary beam exponent                        |
++------------------+------------------+--------------+------------------------------------------------------------+
+
+Primary Beam Corrections to the Taylor terms
+--------------------------------------------
+
+The primary beam is a function of frequency. Therefore the apparent spectral index of a point source away from beam centre
+will contain a contribution from the frequency dependence of the primary beam. It is possible to estimate this contribution
+and remove it by scaling the Taylor term images appropriately.
+
++------------------+------------------+--------------+------------------------------------------------------------+
+|**Parameter**     |**Type**          |**Default**   |**Description**                                             |
++==================+==================+==============+============================================================+
+|removebeam        |bool              |false         |Remove beam from the Taylor term images                     |
 +------------------+------------------+--------------+------------------------------------------------------------+
 
 Examples
@@ -302,5 +345,3 @@ FromPrimaryBeamModel.
     linmos.weighttype  = FromWeightImages
     linmos.findmosaics = true
     linmos.names       = [feed00..35_offset]
-
-

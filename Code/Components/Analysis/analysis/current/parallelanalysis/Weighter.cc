@@ -24,7 +24,7 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
-/// @author XXX XXX <XXX.XXX@csiro.au>
+/// @author Matthew Whiting <Matthew.Whiting@csiro.au>
 ///
 #include <askap_analysis.h>
 #include <parallelanalysis/Weighter.h>
@@ -59,7 +59,8 @@ using namespace analysisutilities;
 
 Weighter::Weighter(askap::askapparallel::AskapParallel& comms,
                    const LOFAR::ParameterSet &parset):
-    itsComms(&comms)
+    itsComms(&comms),
+    itsNorm(0.)
 {
     itsImage = parset.getString("weightsImage", "");
     if (itsComms->isMaster()) {
@@ -94,9 +95,10 @@ void Weighter::readWeights()
     ASKAPLOG_INFO_STR(logger, "Reading weights from " << itsImage <<
                       ", section " << itsCube->pars().section().getSection());
 
-    itsWeights = getPixelsInBox(itsImage,
-                                subsectionToSlicer(itsCube->pars().section()),
-                                false);
+    casa::Slicer theSlicer = subsectionToSlicer(itsCube->pars().section());
+    ASKAPLOG_INFO_STR(logger, "Using casa::Slicer " << theSlicer);
+
+    itsWeights = getPixelsInBox(itsImage, theSlicer, false);
 }
 
 void Weighter::findNorm()
@@ -107,13 +109,18 @@ void Weighter::findNorm()
             if (itsWeights.size() == 0)
                 ASKAPLOG_ERROR_STR(logger, "Weights array not initialised!");
             // find maximum of weights and send to master
-            float maxW = max(itsWeights);
-            ASKAPLOG_DEBUG_STR(logger, "Local maximum weight = " << maxW);
+            unsigned int numValid = itsWeights.nelementsValid();
+            float maxW = 0.;
+            if (numValid > 0) {
+                maxW = max(itsWeights.getCompressedArray());
+            }
+            ASKAPLOG_DEBUG_STR(logger, "Local maximum weight = " << maxW
+                               << ", number of valid elements = " << numValid);
             bs.resize(0);
             LOFAR::BlobOBufString bob(bs);
             LOFAR::BlobOStream out(bob);
             out.putStart("localmax", 1);
-            out << maxW;
+            out << numValid << maxW;
             out.putEnd();
             itsComms->sendBlob(bs, 0);
 
@@ -130,13 +137,16 @@ void Weighter::findNorm()
             // read local maxima from workers and find the maximum of them
             for (int n = 0; n < itsComms->nProcs() - 1; n++) {
                 float localmax;
+                unsigned int numValid;
                 itsComms->receiveBlob(bs, n + 1);
                 LOFAR::BlobIBufString bib(bs);
                 LOFAR::BlobIStream in(bib);
                 int version = in.getStart("localmax");
                 ASKAPASSERT(version == 1);
-                in >> localmax;
-                itsNorm = (n == 0) ? localmax : std::max(localmax, itsNorm);
+                in >> numValid  >> localmax;
+                if (numValid > 0) {
+                    itsNorm = std::max(localmax, itsNorm);
+                }
                 in.getEnd();
             }
             // send the actual maximum to all workers
@@ -150,7 +160,8 @@ void Weighter::findNorm()
         }
     } else {
         // serial mode - read entire weights image, so can just measure maximum directly
-        itsNorm = max(itsWeights);
+        ASKAPCHECK(itsWeights.nelementsValid() > 0, "Weights array has no valid elements!");
+        itsNorm = max(itsWeights.getCompressedArray());
     }
 
     ASKAPLOG_INFO_STR(logger, "Normalising weights image to maximum " << itsNorm);
@@ -163,13 +174,18 @@ float Weighter::weight(size_t i)
                "Index out of bounds for weights array : index=" << i <<
                ", weights array is size " << itsWeights.size());
 
-    return sqrt(itsWeights.data()[i] / itsNorm);
+    if (itsWeights.getMask().data()[i]) {
+        return sqrt(itsWeights.getArray().data()[i] / itsNorm);
+    } else {
+        return 0.;
+    }
 }
 
 bool Weighter::isValid(size_t i)
 {
     if (this->doApplyCutoff()) {
-        return (itsWeights.data()[i] / itsNorm > itsWeightCutoff);
+        return itsWeights.getMask().data()[i] &&
+               (itsWeights.getArray().data()[i] / itsNorm > itsWeightCutoff);
     } else {
         return true;
     }

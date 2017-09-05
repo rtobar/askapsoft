@@ -1,7 +1,7 @@
 /// @file LinmosAccumulator.tcc
 ///
 /// @brief combine a number of images as a linear mosaic
-/// @details 
+/// @details
 ///
 /// @copyright (c) 2012,2014,2015 CSIRO
 /// Australia Telescope National Facility (ATNF)
@@ -42,10 +42,13 @@
 #include <askap/AskapUtil.h>
 #include <askap/StatReporter.h>
 #include <utils/MultiDimArrayPlaneIter.h>
+#include <primarybeam/PrimaryBeam.h>
+#include <primarybeam/PrimaryBeamFactory.h>
 
 ASKAP_LOGGER(linmoslogger, ".linmosaccumulator");
 
 using namespace casa;
+
 
 // variables functions used by the linmos accumulator class
 
@@ -66,7 +69,7 @@ MVDirection convertDir(const std::string &ra, const std::string &dec) {
     Quantity tmpra,tmpdec;
     Quantity::read(tmpra, ra);
     Quantity::read(tmpdec,dec);
-    return MVDirection(tmpra,tmpdec);  
+    return MVDirection(tmpra,tmpdec);
 }
 
 namespace askap {
@@ -105,7 +108,7 @@ namespace askap {
             // Check weighting options. One of the following must be set:
             //  - weightTypeName==FromWeightImages: get weights from input weight images
             //    * the number of weight images and their shapes must match the input images
-            //  - weightTypeName==FromPrimaryBeamModel: set weights using a Gaussian beam model 
+            //  - weightTypeName==FromPrimaryBeamModel: set weights using a Gaussian beam model
             //    * the direction coordinate centre will be used as beam centre, unless ...
             //    * an output weight image will be written, so an output file name is required
 
@@ -145,14 +148,14 @@ namespace askap {
                 if (itsWeightType == FROM_WEIGHT_IMAGES) {
                     ASKAPCHECK(inImgNames.size()==inWgtNames.size(), "# weight images should equal # images");
                 }
- 
+
                 // Check for taylor terms
- 
+
                 if (parset.isDefined("nterms")) {
- 
+
                     itsNumTaylorTerms = parset.getInt32("nterms");
                     findAndSetTaylorTerms(inImgNames, inWgtNames, outImgName, outWgtName);
- 
+
                 } else {
 
                     setSingleMosaic(inImgNames, inWgtNames, outImgName, outWgtName);
@@ -162,7 +165,7 @@ namespace askap {
             }
 
             if (itsWeightType == FROM_WEIGHT_IMAGES) {
- 
+
                 // if reading weights from images, check for inputs associated with other kinds of weighting
                 if (parset.isDefined("feeds.centre") ||
                     parset.isDefined("feeds.centreref") ||
@@ -172,7 +175,7 @@ namespace askap {
                     ASKAPLOG_WARN_STR(linmoslogger,
                         "Beam information specified in parset but ignored. Using weight images");
                 }
- 
+
             } else if (itsWeightType == FROM_BP_MODEL) {
 
                 // check for inputs associated with other kinds of weighting
@@ -214,6 +217,9 @@ namespace askap {
                 ASKAPCHECK(parset.getUint("psfref")<inImgNames.size(), "PSF reference-image number is too large");
             }
 
+            // sort out primary beam
+            itsPB = PrimaryBeamFactory::make(parset);
+
             return true;
 
         }
@@ -236,7 +242,7 @@ namespace askap {
                 ASKAPCHECK(inImgNames[img]!=outImgName,
                     "Output image, "<<outImgName<<", is present among the inputs");
 
-                // if this is an "image*" file, see if there is an appropriate sensitivity image 
+                // if this is an "image*" file, see if there is an appropriate sensitivity image
                 if (itsDoSensitivity) {
                     tmpName = inImgNames[img];
                     size_t image_pos = tmpName.find(image_tag);
@@ -359,7 +365,7 @@ namespace askap {
                             "Output wgt image, "<<outWgtName<<", is among the inputs");
                     }
 
-                    // if this is an "image*" file, see if there is an appropriate sensitivity image 
+                    // if this is an "image*" file, see if there is an appropriate sensitivity image
                     if (itsDoSensitivity) {
                         tmpName = inImgName;
                         size_t image_pos = tmpName.find(image_tag);
@@ -383,8 +389,9 @@ namespace askap {
                                 "Input not an image* file. Ignoring sensitivities.");
                             itsDoSensitivity = false;
                         }
-                    }
 
+                    }
+                    ASKAPLOG_INFO_STR(linmoslogger,"Taylor Image: " << inImgName);
                 } // img loop (input image)
 
                 // check whether any sensitivity images were found
@@ -409,8 +416,127 @@ namespace askap {
 
             } // n loop (taylor term)
 
-        } // void LinmosAccumulator<T>::findAndSetTaylorTerms()
 
+        } // void LinmosAccumulator<T>::findAndSetTaylorTerms()
+        template<typename T>
+        void LinmosAccumulator<T>::removeBeamFromTaylorTerms(Array<T>& taylor0,
+                                                             Array<T>& taylor1,
+                                                             Array<T>& taylor2,
+                                                         const IPosition& curpos,
+                                                          const CoordinateSystem& inSys) {
+
+            // The basics of this are we need to remove the effect of the beam
+            // from the Taylor terms
+            // This is only required if you do not grid with the beam. One wonders
+            // whether we should just implement the beam (A) projection in the gridding.
+
+            // This means redistribution of some of Taylor terms (tt) into tt'
+            //
+            // tt0' = tt0 - no change
+            // tt1' = tt1 - (tt0 x alpha)
+            // tt2' = tt2 - tt1 x alpha - tt2 x (beta - alpha(alpha + 1.)/2. )
+            //
+            // we therefore need some partial products ...
+            //
+            //
+            // tt0 x alpha = tt0Alpha
+            // tt1 x alpha = tt1Alpha
+            // tt2 x (beta - alpha(alpha + 1.)/2.) = tt2AlphaBeta
+            //
+            // the taylor terms have no frequency axis - by contruction - but
+            // I'm keeping this assumption that there may be some frequency structure
+            // I should probably clean this up.
+            //
+            // copy the pixel iterator containing all dimensions
+            //
+            //
+            // The assumption is that we rescale each constituent image. But we do need to
+            // group them.
+
+            // We need the Taylor terms for each pointing grouped together.
+            // So lets just get those first
+
+#if 1
+            IPosition fullpos(curpos);
+            // set a pixel iterator that does not have the higher dimensions
+            IPosition pos(2);
+            // copy the pixel iterator containing all dimensions
+            Vector<double> pixel(2,0.);
+
+            MVDirection world0, world1;
+            T offsetBeam, alpha, beta;
+
+            // get coordinates of the spectral axis and the current frequency
+            const int scPos = inSys.findCoordinate(Coordinate::SPECTRAL,-1);
+            const SpectralCoordinate inSC = inSys.spectralCoordinate(scPos);
+            int chPos = inSys.pixelAxes(scPos)[0];
+            const T freq = inSC.referenceValue()[0] +
+                (curpos[chPos] - inSC.referencePixel()[0]) * inSC.increment()[0];
+
+            // set FWHM for the current beam
+            // Removing the factor of 1.22 gives a good match to the simultation weight images
+            // const T fwhm = 1.22*3e8/freq/12;
+
+            const T fwhm = 3e8/freq/12.;
+
+            // get coordinates of the direction axes
+            const int dcPos = inSys.findCoordinate(Coordinate::DIRECTION,-1);
+            const DirectionCoordinate inDC = inSys.directionCoordinate(dcPos);
+            const DirectionCoordinate outDC = inSys.directionCoordinate(dcPos);
+
+            // set the centre of the input beam (needs to be more flexible -- and correct...)
+            inDC.toWorld(world0,inDC.referencePixel());
+
+            // we need to interate through each of the taylor term images for all of the output
+            // mosaics
+
+
+            //
+            // step through the pixels
+            //
+
+
+
+
+            Array<T> scr1 = taylor1.copy();
+            Array<T> scr2 = taylor2.copy();
+
+            ASKAPLOG_INFO_STR(linmoslogger,"Assuming Gaussian PB fwhm " << fwhm << " and freq " << freq);
+
+            for (int x=0; x < taylor1.shape()[0];++x) {
+                for (int y=0; y < taylor1.shape()[1];++y) {
+
+                    fullpos[0] = x;
+                    fullpos[1] = y;
+
+                    // get the current pixel location and distance from beam centre
+                    pixel[0] = double(x);
+                    pixel[1] = double(y);
+                    outDC.toWorld(world1,pixel);
+                    offsetBeam = world0.separation(world1);
+                    //
+                    // set the alpha
+                    // this assumes that the reference frequency is the current
+                    // frequency.
+                    //
+                    alpha = -8. * log(2.) * pow((offsetBeam/fwhm),2.);
+                    // ASKAPLOG_INFO_STR(linmoslogger, "alpha " << alpha);
+                    T toPut = scr1(fullpos) - taylor0(fullpos) * alpha;
+                    // build
+
+                    taylor1(fullpos) = toPut;
+
+                    beta = alpha;
+                    toPut = scr2(fullpos) - scr1(fullpos) * alpha - taylor0(fullpos)*(beta - alpha * (alpha + 1)/2.);
+                    //
+                    taylor2(fullpos) = toPut;
+
+
+                    //
+                }
+            } // for all pixels
+#endif
+        } // removeBeamFromTaylorTerms()
         template<typename T>
         void LinmosAccumulator<T>::findAndSetMosaics(const vector<string> &imageTags) {
 
@@ -675,7 +801,7 @@ namespace askap {
         template<typename T>
         void LinmosAccumulator<T>::setOutputParameters(const vector<IPosition>& inShapeVec,
                                                        const vector<CoordinateSystem>& inCoordSysVec) {
-                                                 
+
             ASKAPLOG_INFO_STR(linmoslogger, "Determining output image based on the overlap of input images");
             ASKAPCHECK(inShapeVec.size()==inCoordSysVec.size(), "Input vectors are inconsistent");
             ASKAPCHECK(inShapeVec.size()>0, "Number of input vectors should be greater that 0");
@@ -686,17 +812,17 @@ namespace askap {
             const int dcPos = refCS.findCoordinate(Coordinate::DIRECTION,-1);
             const DirectionCoordinate refDC = refCS.directionCoordinate(dcPos);
             IPosition refBLC(refShape.nelements(),0);
-            IPosition refTRC(refShape);       
+            IPosition refTRC(refShape);
             for (uInt dim=0; dim<refShape.nelements(); ++dim) {
                 --refTRC(dim); // these are added back later. Is this just to deal with degenerate axes?
             }
             ASKAPDEBUGASSERT(refBLC.nelements() >= 2);
             ASKAPDEBUGASSERT(refTRC.nelements() >= 2);
- 
+
             IPosition tempBLC = refBLC;
             IPosition tempTRC = refTRC;
 
-            // Loop over input vectors, converting their image bounds to the ref system 
+            // Loop over input vectors, converting their image bounds to the ref system
             // and expanding the new overlapping image bounds where appropriate.
             for (uint img = 1; img < inShapeVec.size(); ++img ) {
 
@@ -722,14 +848,14 @@ namespace askap {
                         tempTRC(dim) = newTRC(dim);
                     }
                 }
- 
+
             }
 
             itsOutShape = refShape;
             itsOutShape(0) = tempTRC(0) - tempBLC(0) + 1;
             itsOutShape(1) = tempTRC(1) - tempBLC(1) + 1;
             ASKAPDEBUGASSERT(itsOutShape(0) > 0);
-            ASKAPDEBUGASSERT(itsOutShape(1) > 0);       
+            ASKAPDEBUGASSERT(itsOutShape(1) > 0);
             Vector<Double> refPix = refDC.referencePixel();
             refPix[0] -= Double(tempBLC(0) - refBLC(0));
             refPix[1] -= Double(tempBLC(1) - refBLC(1));
@@ -801,13 +927,13 @@ namespace askap {
             itsInBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);
             ASKAPCHECK(itsInBuffer.shape().nelements()>0, "Input buffer does not appear to be set");
             if (itsWeightType == FROM_WEIGHT_IMAGES) {
-                itsInWgtBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);       
+                itsInWgtBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);
                 ASKAPCHECK(itsInWgtBuffer.shape().nelements()>0,
                     "Input weights buffer does not appear to be set");
             }
             if (itsDoSensitivity) {
-                itsInSenBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);       
-                itsInSnrBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);       
+                itsInSenBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);
+                itsInSnrBuffer = TempImage<T>(shape,cSys,maxMemoryInMB);
                 ASKAPCHECK(itsInSnrBuffer.shape().nelements()>0,
                     "Input sensitivity buffer does not appear to be set");
             }
@@ -902,7 +1028,7 @@ namespace askap {
                 // set FWHM for the current beam
                 // Removing the factor of 1.22 gives a good match to the simultation weight images
                 //const T fwhm = 1.22*3e8/freq/12;
-                const T fwhm = 3e8/freq/12;
+                //const T fwhm = 3e8/freq/12;
 
                 // get coordinates of the direction axes
                 const int dcPos = itsInCoordSys.findCoordinate(Coordinate::DIRECTION,-1);
@@ -929,7 +1055,8 @@ namespace askap {
                         offsetBeam = world0.separation(world1);
 
                         // set the weight
-                        pb = exp(-offsetBeam*offsetBeam*4.*log(2.)/fwhm/fwhm);
+                        //pb = exp(-offsetBeam*offsetBeam*4.*log(2.)/fwhm/fwhm);
+                        pb = itsPB->evaluateAtOffset(offsetBeam,freq);
                         wgtBuffer.putAt(pb * pb, pos);
 
                     }
@@ -1042,7 +1169,7 @@ namespace askap {
                 // set FWHM for the current beam
                 // Removing the factor of 1.22 gives a good match to the simultation weight images
                 //const T fwhm = 1.22*3e8/freq/12;
-                const T fwhm = 3e8/freq/12;
+                //const T fwhm = 3e8/freq/12;
 
                 // get coordinates of the direction axes
                 const int dcPos = itsInCoordSys.findCoordinate(Coordinate::DIRECTION,-1);
@@ -1067,7 +1194,8 @@ namespace askap {
                         offsetBeam = itsInCentre.separation(world);
 
                         // set the weight
-                        pb = exp(-offsetBeam*offsetBeam*4.*log(2.)/fwhm/fwhm);
+                        //pb = exp(-offsetBeam*offsetBeam*4.*log(2.)/fwhm/fwhm);
+                        pb = itsPB->evaluateAtOffset(offsetBeam,freq);
                         wgtPix(wgtpos) = pb * pb;
 
                     }
@@ -1154,7 +1282,10 @@ namespace askap {
                 for (int y=0; y<outPix.shape()[1];++y) {
                     fullpos[0] = x;
                     fullpos[1] = y;
-                    if (outWgtPix(fullpos)>0.0) {
+                    if (isNaN(outWgtPix(fullpos))) {
+                        setNaN(outPix(fullpos));
+                    }
+                    else if (outWgtPix(fullpos)>0.0) {
                         outPix(fullpos) = outPix(fullpos) / outWgtPix(fullpos);
                     } else {
                         outPix(fullpos) = 0.0;
@@ -1167,7 +1298,10 @@ namespace askap {
                     for (int y=0; y<outPix.shape()[1];++y) {
                         fullpos[0] = x;
                         fullpos[1] = y;
-                        if (outSenPix(fullpos)>0.0) {
+                        if (isNaN(outWgtPix(fullpos))) {
+                            setNaN(outSenPix(fullpos));
+                        }
+                        else if (outSenPix(fullpos)>0.0) {
                             outSenPix(fullpos) = sqrt(1.0 / outSenPix(fullpos));
                         } else {
                             outSenPix(fullpos) = 0.0;
@@ -1196,7 +1330,7 @@ namespace askap {
             }
             // currently blc,trc describe the whole input image; convert coordinates
             Vector<Double> pix(2);
-            
+
             // first process BLC
             pix[0] = Double(blc[0]);
             pix[1] = Double(blc[1]);
@@ -1211,7 +1345,7 @@ namespace askap {
                 << refDC.errorMessage());
             blc[0] = casa::Int(round(pix[0]));
             blc[1] = casa::Int(round(pix[1]));
- 
+
             // now process TRC
             pix[0] = Double(trc[0]);
             pix[1] = Double(trc[1]);

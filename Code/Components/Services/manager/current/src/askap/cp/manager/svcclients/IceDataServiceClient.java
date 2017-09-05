@@ -25,6 +25,7 @@
  */
 package askap.cp.manager.svcclients;
 
+import askap.interfaces.schedblock.ParameterException;
 import org.apache.log4j.Logger;
 
 import askap.interfaces.schedblock.ISchedulingBlockServicePrx;
@@ -32,51 +33,30 @@ import askap.interfaces.schedblock.ISchedulingBlockServicePrxHelper;
 import askap.interfaces.schedblock.NoSuchSchedulingBlockException;
 import askap.util.ParameterSet;
 
-public class IceDataServiceClient implements IDataServiceClient {
-    /**
-     * The interval (in seconds) between connection retry attempts.
-     * This includes retrying connection to the Ice Locator service
-     * of the TOS Data service.
-     */
-    private static final int RETRY_INTERVAL = 5;
+import java.util.Map;
 
+public class IceDataServiceClient implements IDataServiceClient {
     /**
      * Logger.
      */
     private static final Logger logger = Logger.getLogger(IceDataServiceClient.class.getName());
+    private final String iceIdentity;
+    private final Ice.Communicator ic;
 
     private ISchedulingBlockServicePrx itsProxy = null;
 
-    public IceDataServiceClient(Ice.Communicator ic, String iceIdentity) {
+
+
+    IceDataServiceClient(Ice.Communicator ic, String iceIdentity) {
+        this.ic = ic;
+        this.iceIdentity = iceIdentity;
+    }
+
+    void getProxy() {
         logger.info("Obtaining proxy to DataServiceClient");
 
-        while (itsProxy == null) {
-            final String baseWarn = " - will retry in " + RETRY_INTERVAL
-                    + " seconds";
-            try {
-                Ice.ObjectPrx obj = ic.stringToProxy(iceIdentity);
-                itsProxy = ISchedulingBlockServicePrxHelper.checkedCast(obj);
-            } catch (Ice.ConnectionRefusedException e) {
-                logger.warn("Connection refused" + baseWarn);
-            } catch (Ice.NoEndpointException e) {
-                logger.warn("No endpoint exception" + baseWarn);
-            } catch (Ice.NotRegisteredException e) {
-                logger.warn("Not registered exception" + baseWarn);
-            } catch (Ice.ConnectFailedException e) {
-                logger.warn("Connect failed exception" + baseWarn);
-            } catch (Ice.DNSException e) {
-                logger.warn("DNS exception" + baseWarn);
-            } catch (Ice.SocketException e) {
-                logger.warn("Socket exception" + baseWarn);
-            }
-            if (itsProxy == null) {
-                try {
-                    Thread.sleep(RETRY_INTERVAL * 1000);
-                } catch (InterruptedException e) {
-                    // In this rare case this might happen, faster polling is ok
-                }
-            }
-        }
+        Ice.ObjectPrx obj = ic.stringToProxy(iceIdentity);
+        itsProxy = ISchedulingBlockServicePrxHelper.checkedCast(obj);
         logger.info("Obtained proxy to DataServiceClient");
     }
 
@@ -85,8 +65,15 @@ public class IceDataServiceClient implements IDataServiceClient {
      */
     public ParameterSet getObsParameters(long sbid)
             throws NoSuchSchedulingBlockException {
+        getProxy();
         return new ParameterSet(itsProxy.getObsParameters(sbid));
     }
 
-    // TODO: Implement getState and transition on ISchedulingBlockServicePrx
+    @Override
+    public void setObsVariables(long sbid, Map<String, String> obsVars) throws NoSuchSchedulingBlockException, ParameterException {
+        getProxy();
+        itsProxy.setObsVariables(sbid, obsVars);
+    }
+
+// TODO: Implement getState and transition on ISchedulingBlockServicePrx
 }

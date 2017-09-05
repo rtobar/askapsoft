@@ -39,6 +39,51 @@ module interfaces
 module calparams 
 {
 
+/** Status enum for a calibration solution */
+enum CalParamStatus {
+
+    /**
+     * The appropriate parameter has a default value (i.e. 1.0 for gains), neither
+     * automatic calibration pipeline, nor manual adjustment was done. The related
+     * timestamp field is meaningless.
+     */
+    DEFAULT,
+
+    /**
+     * The value is set by operator (or any actor other than the calibration
+     * pipeline) at the given time.
+     * Design Note:  Do we need a special option which ensures that the appropriate
+     * value is not be overwritten by the calibration pipeline?
+     */
+    USERDEFINED,
+
+    /**
+     * The value is a result of the calibration pipeline execution at the given
+     * time and it is considered to be valid.
+     */
+    DERIVED,
+
+    /**
+     * The pipeline failed to determine the value for some reason. This option is
+     * present here for consistency, although the merging logic should probably
+     * keep the previous value/status for the given antenna/beam if the solution
+     * for an update fails for some reason. The time field shows when the solution
+     * for an update has been attempted.
+     */
+    FAILED,
+
+    /**
+     * The value is invalidated by some other mechanism, i.e. the operator
+     * intervention. The merging logic should probably keep it invalid when
+     * the next solution arrives, unlike the FAILED case which should be replaced
+     * by the new soltuion if it is valid. The ingest pipeline behavior may also be
+     * different in this case (i.e. it may flag this beam/antenna in the dataset
+     * prepared for the calibration pipeline)
+     */
+    INVALID
+};
+
+
 /**
  * Jones Index
  */
@@ -90,8 +135,8 @@ dictionary<JonesIndex, JonesJTermSeq> BandpassSolution;
  
 /** Structure containing gains solution plus a timestamp */
 struct TimeTaggedGainSolution {
-    /** Absolute time expressed as microseconds since MJD=0. */
-    long timestamp;
+    /** Absolute time expressed as MJD in UTC frame */
+    double timestamp;
 
     /** Gain solution */
     GainSolution solutionMap;
@@ -99,8 +144,8 @@ struct TimeTaggedGainSolution {
 
 /** Structure containing leakage solution plus a timestamp */
 struct TimeTaggedLeakageSolution {
-    /** Absolute time expressed as microseconds since MJD=0. */
-    long timestamp;
+    /** Absolute time expressed as MJD in UTC frame */
+    double timestamp;
 
     /** Leakage solution */
     LeakageSolution solutionMap;
@@ -108,11 +153,13 @@ struct TimeTaggedLeakageSolution {
 
 /** Structure containing bandpass solution plus a timestamp */
 struct TimeTaggedBandpassSolution {
-    /** Absolute time expressed as microseconds since MJD=0. */
-    long timestamp;
+    /** Absolute time expressed as MJD in UTC frame */
+    double timestamp;
 
     /** Bandpass solution */
     BandpassSolution solutionMap;
+
+    //CalParamStatus status;
 };
 
 // Design Note: Structures above describe the calibration solutions as such (i.e.
@@ -121,55 +168,12 @@ struct TimeTaggedBandpassSolution {
 // different time. Therefore, it would be handy to have a buffer of the parameters which
 // are actually applied (it may be a responsibility of another piece of code to poll the
 // database and populate this buffer with the most recent solutions for every
-// calibration parameter. The ingest pipeline would access this buffer and just applyall
+// calibration parameter. The ingest pipeline would access this buffer and just apply all
 // values. In the future, the structure is likely to change, because it should be aligned
 // with the actual architecture. Interfaces below are given as an example or a starting
 // point. They essentially pass the same information as the interfaces given above but
 // in somewhat transposed form.
 
-/** Status enum for a calibration parameter */
-enum CalParamStatus {
-
-    /**
-     * The appropriate parameter has a default value (i.e. 1.0 for gains), neither
-     * automatic calibration pipeline, nor manual adjustment was done. The related
-     * timestamp field is meaningless.
-     */
-    DEFAULT,
-
-    /**
-     * The value is set by operator (or any actor other than the calibration
-     * pipeline) at the given time.
-     * Design Note:  Do we need a special option which ensures that the appropriate
-     * value is not be overwritten by the calibration pipeline?
-     */
-    USERDEFINED,
-
-    /**
-     * The value is a result of the calibration pipeline execution at the given
-     * time and it is considered to be valid.
-     */
-    DERIVED,
-
-    /**
-     * The pipeline failed to determine the value for some reason. This option is
-     * present here for consistency, although the merging logic should probably
-     * keep the previous value/status for the given antenna/beam if the solution
-     * for an update fails for some reason. The time field shows when the solution
-     * for an update has been attempted.
-     */
-    FAILED,
-
-    /**
-     * The value is invalidated by some other mechanism, i.e. the operator
-     * intervention. The merging logic should probably keep it invalid when
-     * the next solution arrives, unlike the FAILED case which should be replaced
-     * by the new soltuion if it is valid. The ingest pipeline behavior may also be
-     * different in this case (i.e. it may flag this beam/antenna in the dataset
-     * prepared for the calibration pipeline)
-     */
-    INVALID
-};
 
 };
 

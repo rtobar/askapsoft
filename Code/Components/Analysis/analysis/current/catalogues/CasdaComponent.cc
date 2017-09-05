@@ -29,7 +29,7 @@
 #include <catalogues/CasdaComponent.h>
 #include <catalogues/CatalogueEntry.h>
 #include <catalogues/CasdaIsland.h>
-#include <catalogues/casda.h>
+#include <catalogues/Casda.h>
 #include <askap_analysis.h>
 
 #include <askap/AskapLogging.h>
@@ -53,6 +53,11 @@ namespace askap {
 
 namespace analysis {
 
+CasdaComponent::CasdaComponent():
+    CatalogueEntry()
+{
+}
+
 CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
                                const LOFAR::ParameterSet &parset,
                                const unsigned int fitNumber,
@@ -64,8 +69,8 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
 {
     // check that we are requesting a valid fit number
     ASKAPCHECK(fitNumber < obj.numFits(fitType),
-               "fitNumber=" << fitNumber << ", but source " << obj.getID() <<
-               " only has " << obj.numFits(fitType));
+               "For fitType="<<fitType<<", fitNumber=" << fitNumber << ", but source " << obj.getID() <<
+               "("<<obj.getName()<<") only has " << obj.numFits(fitType));
 
     sourcefitting::FitResults results = obj.fitResults(fitType);
 
@@ -324,93 +329,94 @@ void CasdaComponent::printTableEntry(std::ostream &stream,
 
 }
 
-void CasdaComponent::checkCol(duchamp::Catalogues::Column &column)
+void CasdaComponent::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
+    bool checkPrec=false;
     std::string type = column.type();
     if (type == "ISLAND") {
-        column.check(itsIslandID);
+        column.check(itsIslandID, checkTitle);
     } else if (type == "ID") {
-        column.check(itsComponentID);
+        column.check(itsComponentID, checkTitle);
     } else if (type == "NAME") {
-        column.check(itsName);
+        column.check(itsName, checkTitle);
     } else if (type == "RA") {
-        column.check(itsRAs);
+        column.check(itsRAs, checkTitle);
     } else if (type == "DEC") {
-        column.check(itsDECs);
+        column.check(itsDECs, checkTitle);
     } else if (type == "RAJD") {
-        column.check(itsRA.value());
+        column.check(itsRA.value(), checkTitle, checkPrec);
     } else if (type == "DECJD") {
-        column.check(itsDEC.value());
+        column.check(itsDEC.value(), checkTitle, checkPrec);
     } else if (type == "RAERR") {
-        column.check(itsRA.error());
+        column.check(itsRA.error(), checkTitle, checkPrec);
     } else if (type == "DECERR") {
-        column.check(itsDEC.error());
+        column.check(itsDEC.error(), checkTitle, checkPrec);
     } else if (type == "FREQ") {
-        column.check(itsFreq);
+        column.check(itsFreq, checkTitle, checkPrec);
     } else if (type == "FPEAK") {
-        column.check(itsFluxPeak.value());
+        column.check(itsFluxPeak.value(), checkTitle, checkPrec);
     } else if (type == "FPEAKERR") {
-        column.check(itsFluxPeak.error());
+        column.check(itsFluxPeak.error(), checkTitle, checkPrec);
     } else if (type == "FINT") {
-        column.check(itsFluxInt.value());
+        column.check(itsFluxInt.value(), checkTitle, checkPrec);
     } else if (type == "FINTERR") {
-        column.check(itsFluxInt.error());
+        column.check(itsFluxInt.error(), checkTitle, checkPrec);
     } else if (type == "MAJ") {
-        column.check(itsMaj.value());
+        column.check(itsMaj.value(), checkTitle, checkPrec);
     } else if (type == "MIN") {
-        column.check(itsMin.value());
+        column.check(itsMin.value(), checkTitle, checkPrec);
     } else if (type == "PA") {
-        column.check(itsPA.value());
+        column.check(itsPA.value(), checkTitle, checkPrec);
     } else if (type == "MAJERR") {
-        column.check(itsMaj.error());
+        column.check(itsMaj.error(), checkTitle, checkPrec);
     } else if (type == "MINERR") {
-        column.check(itsMin.error());
+        column.check(itsMin.error(), checkTitle, checkPrec);
     } else if (type == "PAERR") {
-        column.check(itsPA.error());
+        column.check(itsPA.error(), checkTitle, checkPrec);
     } else if (type == "MAJDECONV") {
-        column.check(itsMaj_deconv);
+        column.check(itsMaj_deconv, checkTitle, checkPrec);
     } else if (type == "MINDECONV") {
-        column.check(itsMin_deconv);
+        column.check(itsMin_deconv, checkTitle, checkPrec);
     } else if (type == "PADECONV") {
-        column.check(itsPA_deconv);
+        column.check(itsPA_deconv, checkTitle, checkPrec);
     } else if (type == "CHISQ") {
-        column.check(itsChisq);
+        column.check(itsChisq, checkTitle, checkPrec);
     } else if (type == "RMSFIT") {
-        column.check(itsRMSfit);
+        column.check(itsRMSfit, checkTitle, checkPrec);
     } else if (type == "ALPHA") {
-        column.check(itsAlpha);
+        column.check(itsAlpha, checkTitle, checkPrec);
     } else if (type == "BETA") {
-        column.check(itsBeta);
+        column.check(itsBeta, checkTitle, checkPrec);
     } else if (type == "RMSIMAGE") {
-        column.check(itsRMSimage);
+        column.check(itsRMSimage, checkTitle, checkPrec);
     } else if (type == "FLAG1") {
-        column.check(itsFlagSiblings);
+        column.check(itsFlagSiblings, checkTitle);
     } else if (type == "FLAG2") {
-        column.check(itsFlagGuess);
+        column.check(itsFlagGuess, checkTitle);
     } else if (type == "FLAG3") {
-        column.check(itsFlag3);
+        column.check(itsFlag3, checkTitle);
     } else if (type == "FLAG4") {
-        column.check(itsFlag4);
+        column.check(itsFlag4, checkTitle);
     } else if (type == "COMMENT") {
-        column.check(itsComment);
+        column.check(itsComment, checkTitle);
     } else if (type == "LOCALID") {
-        column.check(itsLocalID);
+        column.check(itsLocalID, checkTitle);
     } else if (type == "XPOS") {
-        column.check(itsXpos);
+        column.check(itsXpos, checkTitle);
     } else if (type == "YPOS") {
-        column.check(itsYpos);
+        column.check(itsYpos, checkTitle);
     } else if (type == "FINTISLAND") {
-        column.check(itsFluxInt_island);
+        column.check(itsFluxInt_island, checkTitle, checkPrec);
     } else if (type == "FPEAKISLAND") {
-        column.check(itsFluxPeak_island);
+        column.check(itsFluxPeak_island, checkTitle, checkPrec);
     } else if (type == "NFREEFIT") {
-        column.check(itsNfree_fit);
+        column.check(itsNfree_fit, checkTitle);
     } else if (type == "NDOFFIT") {
-        column.check(itsNDoF_fit);
+        column.check(itsNDoF_fit, checkTitle);
     } else if (type == "NPIXFIT") {
-        column.check(itsNpix_fit);
+        column.check(itsNpix_fit, checkTitle);
     } else if (type == "NPIXISLAND") {
-        column.check(itsNpix_island);
+        column.check(itsNpix_island, checkTitle);
     } else {
         ASKAPTHROW(AskapError,
                    "Unknown column type " << type);
@@ -418,12 +424,10 @@ void CasdaComponent::checkCol(duchamp::Catalogues::Column &column)
 
 }
 
-void CasdaComponent::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool allColumns)
+void CasdaComponent::checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle)
 {
     for (size_t i = 0; i < spec.size(); i++) {
-        if ((spec.column(i).getDatatype() == "char") || allColumns) {
-            this->checkCol(spec.column(i));
-        }
+        this->checkCol(spec.column(i),checkTitle);
     }
 }
 
@@ -440,7 +444,97 @@ void CasdaComponent::writeAnnotation(boost::shared_ptr<duchamp::AnnotationWriter
 
 }
 
+LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaComponent& src)
+{
+    std::string s;
+    double d;
+    unsigned int u;
+    casda::ValueError v;
 
+    s = src.itsIslandID; blob << s;
+    s = src.itsComponentID; blob << s;
+    s = src.itsName; blob << s;
+    s = src.itsRAs; blob << s;
+    s = src.itsDECs; blob << s;
+    v = src.itsRA; blob << v;
+    v = src.itsDEC; blob << v;
+    d = src.itsFreq; blob << d;
+    v = src.itsFluxPeak; blob << v;
+    v = src.itsFluxInt; blob << v;
+    v = src.itsMaj; blob << v;
+    v = src.itsMin; blob << v;
+    v = src.itsPA; blob << v;
+    d = src.itsMaj_deconv; blob << d;
+    d = src.itsMin_deconv; blob << d;
+    d = src.itsPA_deconv; blob << d;
+    d = src.itsChisq; blob << d;
+    d = src.itsRMSfit; blob << d;
+    d = src.itsAlpha; blob << d;
+    d = src.itsBeta; blob << d;
+    d = src.itsRMSimage; blob << d;
+    u = src.itsFlagSiblings; blob << u;
+    u = src.itsFlagGuess; blob << u;
+    u = src.itsFlag3; blob << u;
+    u = src.itsFlag4; blob << u;
+    s = src.itsComment; blob << s;
+    s = src.itsLocalID; blob << s;
+    d = src.itsXpos; blob << d;
+    d = src.itsYpos; blob << d;
+    d = src.itsFluxInt_island; blob << d;
+    d = src.itsFluxPeak_island; blob << d;
+    u = src.itsNfree_fit; blob << u;
+    u = src.itsNDoF_fit; blob << u;
+    u = src.itsNpix_fit; blob << u;
+    u = src.itsNpix_island; blob << u;
+
+    return blob;
+}
+
+LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaComponent& src)
+{
+    std::string s;
+    double d;
+    casda::ValueError v;
+    unsigned int u;
+
+    blob >> s; src.itsIslandID = s;
+    blob >> s; src.itsComponentID = s;
+    blob >> s; src.itsName = s;
+    blob >> s; src.itsRAs = s;
+    blob >> s; src.itsDECs = s;
+    blob >> v; src.itsRA = v;
+    blob >> v; src.itsDEC = v;
+    blob >> d; src.itsFreq = d;
+    blob >> v; src.itsFluxPeak = v;
+    blob >> v; src.itsFluxInt = v;
+    blob >> v; src.itsMaj = v;
+    blob >> v; src.itsMin = v;
+    blob >> v; src.itsPA = v;
+    blob >> d; src.itsMaj_deconv = d;
+    blob >> d; src.itsMin_deconv = d;
+    blob >> d; src.itsPA_deconv = d;
+    blob >> d; src.itsChisq = d;
+    blob >> d; src.itsRMSfit = d;
+    blob >> d; src.itsAlpha = d;
+    blob >> d; src.itsBeta = d;
+    blob >> d; src.itsRMSimage = d;
+    blob >> u; src.itsFlagSiblings = u;
+    blob >> u; src.itsFlagGuess = u;
+    blob >> u; src.itsFlag3 = u;
+    blob >> u; src.itsFlag4 = u;
+    blob >> s; src.itsComment = s;
+    blob >> s; src.itsLocalID = s;
+    blob >> d; src.itsXpos = d;
+    blob >> d; src.itsYpos = d;
+    blob >> d; src.itsFluxInt_island = d;
+    blob >> d; src.itsFluxPeak_island = d;
+    blob >> u; src.itsNfree_fit = u;
+    blob >> u; src.itsNDoF_fit = u;
+    blob >> u; src.itsNpix_fit = u;
+    blob >> u; src.itsNpix_island = u;
+
+    return blob;
+}
 
 }
 

@@ -14,10 +14,12 @@ with several optional pre-processing steps:
    image constructed by Cmodel from the component catalogue generated
    by Selavy.
 
-Following this pre-processing, the resulting MS is imaged by the
-simager task, creating a set of spectral cubes. At this point, no
-mosaicking of these is done, but this will be added in a future
-version of the pipeline.
+Following this pre-processing, the resulting MS is imaged by either the
+simager task (the default), or the new imager, creating a set of
+spectral cubes. The new imager provides the ability to image in the
+barycentric reference frame, and allows (for efficiency purposes) the
+option of writing out multiple sub-cubes (each having a subset of the
+full range of channels).
 
 A final task can perform image-based continuum subtraction. This uses
 the *robust_contsub.py* script in the ACES directory to fit and
@@ -29,7 +31,23 @@ if it is not found, the task will not run.
 
 The variables presented below work in the same manner as those for the
 continuum imaging, albeit with names that clearly refer to the
-spectral-imaging. 
+spectral-imaging.
+
+A note on the imagers and the output formats. The default approach is
+to use **simager** to produce the spectral-line cubes. The new imager
+application **imager** (:doc:`../calim/imager`) can be used by setting
+``DO_ALT_IMAGER_SPECTRAL`` to true.
+
+The default output format is CASA images, although FITS files can be
+written directly by setting ``IMAGETYPE_SPECTRAL`` to ``fits`` (rather
+than ``casa``). This will only work with the new imager, as
+**simager** does not yet have this functionality. This mode is still
+in development, so may not be completely reliable. The recommended
+method for getting images into FITS format is still to use the
+``DO_CONVERT_TO_FITS`` flag, which makes use of the
+:doc:`../calim/imagetofits` application. A single FITS file can be
+produced by setting ``ALT_IMAGER_SINGLE_FILE=true``.
+
 
 
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
@@ -38,6 +56,10 @@ spectral-imaging.
 | ``DO_SPECTRAL_IMAGING``                       | false                           | none                               | Whether to do the spectral-line imaging                           |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``JOB_TIME_SPECTRAL_IMAGE``                   | ``JOB_TIME_DEFAULT`` (12:00:00) | none                               | Time request for imaging the spectral-line data                   |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``IMAGETYPE_SPECTRAL``                        | casa                            | imagetype (:doc:`../calim/imager`) | Image format to use - can be either 'casa' or 'fits', although    |
+|                                               |                                 |                                    | 'fits' can only be given in conjunction with                      |
+|                                               |                                 |                                    | ``DO_ALT_IMAGER_SPECTRAL=true``.                                  |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | **Preparation of spectral dataset**           |                                 |                                    |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
@@ -57,7 +79,7 @@ spectral-imaging.
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``DO_APPLY_CAL_SL``                           | false                           | none                               | Whether to apply the gains calibration determined from the        |
 |                                               |                                 |                                    | continuum self-calibration (see ``GAINS_CAL_TABLE`` in            |
-|                                               |                                 |                                    | :doc:`ScienceFieldSelfCalibration`).                              |
+|                                               |                                 |                                    | :doc:`ScienceFieldContinuumImaging`).                             |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``JOB_TIME_SPECTRAL_APPLYCAL``                | ``JOB_TIME_DEFAULT`` (12:00:00) | none                               | Time request for applying the gains calibration to the spectral   |
 |                                               |                                 |                                    | data                                                              |
@@ -95,15 +117,16 @@ spectral-imaging.
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | **Basic variables for imaging**               |                                 |                                    |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``NUM_CPUS_SPECIMG_SCI``                      | 2000                            | none                               | The total number of processors allocated to the spectral-imaging  |
+| ``NUM_CPUS_SPECIMG_SCI``                      | 200                             | none                               | The total number of cores allocated to the spectral-imaging       |
 |                                               |                                 |                                    | job. One will be the master, while the rest will be devoted to    |
 |                                               |                                 |                                    | imaging individual channels.                                      |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``CPUS_PER_CORE_SPEC_IMAGING``                | 20                              | none                               | The number of processors per node to use (max 20).                |
+| ``CPUS_PER_CORE_SPEC_IMAGING``                | 20                              | none                               | The number of cores per node to use (max 20).                     |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``IMAGE_BASE_SPECTRAL``                       | i.cube                          | Helps form Images.name             | The base name for image cubes: if ``IMAGE_BASE_SPECTRAL=i.blah``  |
-|                                               |                                 | (:doc:`../calim/simager`)          | then we'll get image.i.blah, image.i.blah.restored, psf.i.blah etc|
-|                                               |                                 |                                    |                                                                   |
+| ``IMAGE_BASE_SPECTRAL``                       | i.SB%s.cube                     | Helps form Images.name             | The base name for image cubes: if ``IMAGE_BASE_SPECTRAL=i.blah``  |
+|                                               |                                 | (:doc:`../calim/simager`)          | then we'll get image.i.blah, image.i.blah.restored, psf.i.blah    |
+|                                               |                                 |                                    | etc. The %s wildcard will be resolved into the scheduling block   |
+|                                               |                                 |                                    | ID.                                                               |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``DIRECTION_SCI``                             | none                            | Images.direction                   | The direction parameter for the image cubes, i.e. the central     |
 |                                               |                                 | (:doc:`../calim/simager`)          | position. Can be left out, in which case it will be determined    |
@@ -131,7 +154,7 @@ spectral-imaging.
 | ``GRIDDER_SPECTRAL_SNAPSHOT_LONGTRACK``       | true                            | snapshotimaging.longtrack          | The longtrack parameter controlling how the best-fit W plane is   |
 |                                               |                                 | (:doc:`../calim/gridder`)          | determined when using snapshots.                                  |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING``        | 0                               | snapshotimaging.clipping           | If greater than zero, this fraction of the full image width       | 
+| ``GRIDDER_SPECTRAL_SNAPSHOT_CLIPPING``        | 0                               | snapshotimaging.clipping           | If greater than zero, this fraction of the full image width       |
 |                                               |                                 | (:doc:`../calim/gridder`)          | is set to zero. Useful when imaging at high declination as        |
 |                                               |                                 |                                    | the edges can generate artefacts.                                 |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
@@ -204,12 +227,44 @@ spectral-imaging.
 |                                               |                                 |                                    | else give a size (such as 30arcsec, or                            |
 |                                               |                                 |                                    | “[30arcsec, 30arcsec, 0deg]”).                                    |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``RESTORING_BEAM_CUTOFF_SPECTRAL``            | 0.5                             | restore.beam.cutoff                | Cutoff value used in determining the support for the fitting      |
+|                                               |                                 | (:doc:`../calim/simager`)          | (ie. the rectangular area given to the fitting routine). Value is |
+|                                               |                                 |                                    | a fraction of the peak.                                           |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | ``RESTORING_BEAM_REFERENCE``                  | mid                             | restore.beamReference              | Which channel to use as the reference when writing the restoring  |
 |                                               |                                 | (:doc:`../calim/simager`)          | beam to the image cube. Can be an integer as the channel number   |
 |                                               |                                 |                                    | (0-based), or one of 'mid' (the middle channel), 'first' or 'last'|
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
-| ``RESTORING_BEAM_LOG``                        |  beamLog.IMAGE.txt (with IMAGE  | restore.beamLog                    | The ASCII text file to which will be written the restoring beam   |
-|                                               |  from ``IMAGE_BASE_SPECTRAL``)  | (:doc:`../calim/simager`)          | for each channel. If blank, no such file will be written.         |
+| **New imager parameters**                     |                                 |                                    |                                                                   |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``DO_ALT_IMAGER_SPECTRAL``                    | ""                              | none                               | If true, the spectral-line imaging is done by imager              |
+|                                               |                                 |                                    | (:doc:`../calim/imager`). If false, it is done by simager         |
+|                                               |                                 |                                    | (:doc:`../calim/simager`). When true, the following parameters are|
+|                                               |                                 |                                    | used. If left blank (the default), the value is given by the      |
+|                                               |                                 |                                    | overall parameter ``DO_ALT_IMAGER``.                              |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``NCHAN_PER_CORE_SL``                         | 54                              | nchanpercore                       | The number of channels each core will process.                    |
+|                                               |                                 | (:doc:`../calim/imager`)           |                                                                   |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``USE_TMPFS``                                 | false                           | usetmpfs (:doc:`../calim/imager`)  | Whether to store the visibilities in shared memory. This will give|
+|                                               |                                 |                                    | a performance boost at the expense of memory usage. Better used   |
+|                                               |                                 |                                    | for processing continuum data.                                    |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``TMPFS``                                     | /dev/shm                        | tmpfs (:doc:`../calim/imager`)     | Location of the shared memory.                                    |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``NUM_SPECTRAL_WRITERS``                      | 1                               | nwriters (:doc:`../calim/imager`)  | The number of writers used by imager. Unless                      |
+|                                               |                                 |                                    | ``ALT_IMAGER_SINGLE_FILE=true``, this will equate to the number of|
+|                                               |                                 |                                    | distinct spectral cubes produced. In the case of multiple cubes,  |
+|                                               |                                 |                                    | each will be a sub-band of the full bandwidth. No combination of  |
+|                                               |                                 |                                    | the sub-cubes is currently done. The number of writers will be    |
+|                                               |                                 |                                    | reduced to the number of workers in the job if necessary.         |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``ALT_IMAGER_SINGLE_FILE``                    | false                           | singleoutputfile                   | Whether to write a single cube, even with multiple writers (ie.   |
+|                                               |                                 | (:doc:`../calim/imager`)           | ``NUM_SPECTRAL_WRITERS>1``). Only works when                      |
+|                                               |                                 |                                    | ``IMAGETYPE_SPECTRAL=fits``                                       |
++-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
+| ``DO_BARY``                                   | true                            | barycentre (:doc:`../calim/imager`)| Whether to write the spectral cubes in the Barycentric reference  |
+|                                               |                                 |                                    | frame.                                                            |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+
 | **Image-based continuum subtraction**         |                                 |                                    |                                                                   |
 +-----------------------------------------------+---------------------------------+------------------------------------+-------------------------------------------------------------------+

@@ -4,7 +4,7 @@
 # single image. After completion, runs the source-finder on the
 # mosaicked image.
 #
-# @copyright (c) 2016 CSIRO
+# @copyright (c) 2017 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -38,37 +38,39 @@ if [ "$DO_CONTCUBE_IMAGING" != "true" ]; then
     DO_IT=false
 fi
 
-if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
-    BEAM=all
-    for POLN in $POL_LIST; do
-        pol=`echo $POLN | tr '[:upper:]' '[:lower:]'`
-        for imageCode in ${mosaicImageList}; do
-            setImageProperties contcube
-            if [ -e ${OUTPUT}/${imageName} ]; then
-                if [ $DO_IT == true ]; then
-                    echo "Image ${imageName} exists, so not running continuum cube mosaicking"
+for imageCode in ${mosaicImageList}; do
+
+    if [ "${DO_IT}" == "true" ] && [ "${CLOBBER}" != "true" ]; then
+        BEAM=all
+        for POLN in $POL_LIST; do
+            pol=$(echo "$POLN" | tr '[:upper:]' '[:lower:]')
+            for subband in ${SUBBAND_WRITER_LIST_CONTCUBE}; do
+                setImageProperties contcube
+                if [ -e "${OUTPUT}/${imageName}" ]; then
+                    if [ "${DO_IT}" == "true" ]; then
+                        echo "Image ${imageName} exists, so not running ${imageCode} continuum cube mosaicking"
+                    fi
+                    DO_IT=false
                 fi
-                DO_IT=false
-            fi
+            done
         done
-    done
-fi
+    fi
 
-if [ "${DO_IT}" == "true" ]; then
+    if [ "${DO_IT}" == "true" ]; then
 
-    if [ ${IMAGE_AT_BEAM_CENTRES} == true ] && [ "$DIRECTION_SCI" == "" ]; then
-        reference="# No reference image or offsets, as we take the image centres"
-    else
-        reference="# Reference image for offsets
+        if [ "${IMAGE_AT_BEAM_CENTRES}" == "true" ] && [ "$DIRECTION_SCI" == "" ]; then
+            reference="# No reference image or offsets, as we take the image centres"
+        else
+            reference="# Reference image for offsets
 linmos.feeds.centreref  = 0
 linmos.feeds.spacing    = ${LINMOS_BEAM_SPACING}
 # Beam offsets
 ${LINMOS_BEAM_OFFSETS}"
-    fi
+        fi
 
 
-    setJob linmosContCube linmosCC
-    cat > $sbatchfile <<EOFOUTER
+        setJob "linmosContCube${code}" "linmosCC${code}"
+        cat > "$sbatchfile" <<EOFOUTER
 #!/bin/bash -l
 #SBATCH --partition=${QUEUE}
 #SBATCH --clusters=${CLUSTER}
@@ -90,42 +92,56 @@ cd $OUTPUT
 
 # Make a copy of this sbatch file for posterity
 sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
-cp $sbatchfile \`echo $sbatchfile | sed -e \$sedstr\`
+thisfile=$sbatchfile
+cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
+DO_ALT_IMAGER_CONTCUBE="${DO_ALT_IMAGER_CONTCUBE}"
+ALT_IMAGER_SINGLE_FILE_CONTCUBE="${ALT_IMAGER_SINGLE_FILE_CONTCUBE}"
 IMAGE_BASE_CONTCUBE=${IMAGE_BASE_CONTCUBE}
 FIELD=${FIELD}
 POL_LIST="${POL_LIST}"
+BEAMS_TO_USE="${BEAMS_TO_USE}"
+imageCode=${imageCode}
+IMAGETYPE_CONTCUBE="${IMAGETYPE_CONTCUBE}"
 
 for POLN in \$POL_LIST; do
 
-    pol=\`echo \$POLN | tr '[:upper:]' '[:lower:]'\`
+    pol=\$(echo "\$POLN" | tr '[:upper:]' '[:lower:]')
 
-    for imageCode in ${mosaicImageList}; do
+    for subband in ${SUBBAND_WRITER_LIST_CONTCUBE}; do
     
         beamList=""
-        for BEAM in ${BEAMS_TO_USE}; do
+        for BEAM in \${BEAMS_TO_USE}; do
             setImageProperties contcube
-            if [ -e \${imageName} ]; then
+            im="\${imageName}"
+            if [ -e "\${im}" ]; then
                 if [ "\${beamList}" == "" ]; then
-                    beamList="\${imageName}"
+                    beamList="\${im%%.fits}"
                 else
-                    beamList="\${beamList},\${imageName}"
+                    beamList="\${beamList},\${im%%.fits}"
                 fi
             fi
         done
     
-        jobCode=${jobname}_\${imageCode}
+        jobCode=${jobname}_\${imageCode}\${subband}
     
         if [ "\${beamList}" != "" ]; then
             BEAM=all
             setImageProperties contcube
+            if [ "\${imageCode}" != "restored" ]; then
+                weightsImage="\${weightsImage%%.fits}.\${imageCode}"
+                if [ "\${IMAGETYPE_CONTCUBE}" == "fits" ]; then
+                    weightsImage="\${weightsImage}.fits"
+                fi
+            fi
             echo "Mosaicking \${beamList} to form \${imageName}"
             parset=${parsets}/science_\${jobCode}_\${pol}_${FIELDBEAM}_\${SLURM_JOB_ID}.in
             log=${logs}/science_\${jobCode}_\${pol}_${FIELDBEAM}_\${SLURM_JOB_ID}.log
-            cat > \${parset} << EOFINNER
+            cat > "\${parset}" << EOFINNER
 linmos.names            = [\${beamList}]
-linmos.outname          = \$imageName
-linmos.outweight        = \$weightsImage
+linmos.imagetype        = \${IMAGETYPE_CONTCUBE}
+linmos.outname          = \${imageName%%.fits}
+linmos.outweight        = \${weightsImage%%.fits}
 linmos.weighttype       = FromPrimaryBeamModel
 linmos.weightstate      = Inherent
 ${reference}
@@ -135,12 +151,12 @@ EOFINNER
 
             NCORES=${NUM_CPUS_CONTCUBE_LINMOS}
             NPPN=${CPUS_PER_CORE_CONTCUBE_IMAGING}
-            aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c \$parset > \$log
+            aprun -n \${NCORES} -N \${NPPN} $linmosMPI -c "\$parset" > "\$log"
             err=\$?
-            for im in \`echo \${beamList} | sed -e 's/,/ /g'\`; do
-                rejuvenate \${im}
+            for im in \$(echo "\${beamList}" | sed -e 's/,/ /g'); do
+                rejuvenate "\${im}"
             done
-            extractStats \${log} \${NCORES} \${SLURM_JOB_ID} \${err} \${jobCode} "txt,csv"
+            extractStats "\${log}" \${NCORES} "\${SLURM_JOB_ID}" \${err} \${jobCode} "txt,csv"
             if [ \$err != 0 ]; then
                 exit \$err
             fi
@@ -151,15 +167,19 @@ EOFINNER
 done
 EOFOUTER
 
-    if [ $SUBMIT_JOBS == true ]; then
-        DEP_CONTCUBE=`echo $DEP_CONTCUBE | sed -e 's/afterok/afterany/g'`
-	ID_LINMOS_CONTCUBE=`sbatch $DEP_CONTCUBE $sbatchfile | awk '{print $4}'`
-	recordJob ${ID_LINMOS_CONTCUBE} "Make a mosaic continuum cube of the science observation, field $FIELD, with flags \"${DEP_CONTCUBE}\""
-        FULL_LINMOS_CONTCUBE_DEP=`addDep "${FULL_LINMOS_CONTCUBE_DEP}" "${ID_LINMOS_CONTCUBE}"`
-    else
-	echo "Would make a mosaic image of the science observation, field $FIELD with slurm file $sbatchfile"
+        if [ "${SUBMIT_JOBS}" == "true" ]; then
+            DEP_CONTCUBE=$(echo "$DEP_CONTCUBE" | sed -e 's/afterok/afterany/g')
+	    ID_LINMOS_CONTCUBE=$(sbatch ${DEP_CONTCUBE} "$sbatchfile" | awk '{print $4}')
+            if [ "${imageCode}" == "restored" ]; then
+                ID_LINMOS_CONTCUBE_RESTORED=${ID_LINMOS_CONTCUBE}
+            fi
+	    recordJob "${ID_LINMOS_CONTCUBE}" "Make a mosaic ${imageCode} continuum cube of the science observation, field $FIELD, with flags \"${DEP_CONTCUBE}\""
+            FULL_LINMOS_CONTCUBE_DEP=$(addDep "${FULL_LINMOS_CONTCUBE_DEP}" "${ID_LINMOS_CONTCUBE}")
+        else
+	    echo "Would make a mosaic ${imageCode} continuum cube of the science observation, field $FIELD, with slurm file $sbatchfile"
+        fi
+
+
     fi
-
-    echo " "
-
-fi
+done
+echo " "

@@ -6,8 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 from numpy import *
 import os
-import pyfits
-import pywcs
+from astropy.io import fits
 from askap.analysis.evaluation.readData import *
 from askap.analysis.evaluation.distributionPlotsNew import *
 from askap.analysis.evaluation.distributionPlots import *
@@ -42,7 +41,8 @@ if __name__ == '__main__':
         exit(0)
     sourceCatType = inputPars.get_value('sourceCatalogueType','Selavy')
     sourceCat = readCat(sourceCatFile,sourceCatType)
-    
+    sourceFluxScale = inputPars.get_value('sourceFluxScale',1.0)
+  
     refCatFile = inputPars.get_value('refCatalogue','')
     if(refCatFile == ''):
         logging.error('Eval.refCatalogue not provided. Doing no evaluation.')
@@ -52,6 +52,7 @@ if __name__ == '__main__':
         exit(0)
     refCatType = inputPars.get_value('refCatalogueType','Selavy')
     refCat = readCat(refCatFile,refCatType)
+    refFluxScale = inputPars.get_value('refFluxScale',1.0)
 
     matchfile = inputPars.get_value('matchfile','matches.txt')
     if(not os.access(matchfile,os.F_OK)):
@@ -79,13 +80,15 @@ if __name__ == '__main__':
     imageName=inputPars.get_value('image','image.i.clean.taylor.0.restored.fits')
     haveBeam = os.path.exists(imageName)
     if haveBeam:
-        image = pyfits.open(imageName)
+        image = fits.open(imageName)
         imhead = image[0].header
         bmaj = imhead.get('bmaj')*3600.
         bmin = imhead.get('bmin')*3600.
         bpa  = imhead.get('bpa')
     else:
         print "Image file %s does not exist. Not showing beam size."%imageName
+
+    outputType = inputPars.get_value('outputType','png')
 
     # Tool used to determine whether a given missed reference source should be included
     selector = sourceSelector(inputPars)
@@ -104,10 +107,12 @@ if __name__ == '__main__':
     dra=[]
     ddec=[]
     for m in matchlist:
-        refFlux.append(m.ref.flux())
+        rflux=m.ref.flux()*refFluxScale
+        sflux=m.src.flux()*sourceFluxScale
+        refFlux.append(rflux)
         refMaj.append(m.ref.maj)
-        fluxratio.append(m.src.flux()/m.ref.flux())
-        fluxdiff.append(m.src.flux()-m.ref.flux())
+        fluxratio.append(sflux/rflux)
+        fluxdiff.append(sflux-rflux)
         majratio.append(m.src.maj/m.ref.maj)
         srcAxialRatio.append(m.src.min/m.src.maj)
         refAxialRatio.append(m.ref.min/m.ref.maj)
@@ -186,7 +191,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('Source flux / Reference flux')
             plt.title(sourceCatFile)
-            plt.savefig('fluxRatio.png')
+            plt.savefig('fluxRatio.%s'%outputType)
 
 		############################
 		# Flux difference vs reference flux
@@ -200,7 +205,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('Source flux - Reference flux')
             plt.title(sourceCatFile)
-            plt.savefig('fluxDiff.png')
+            plt.savefig('fluxDiff.%s'%outputType)
             
 		############################
 		# Relative Flux difference vs reference flux
@@ -214,7 +219,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('(Source flux - Reference flux)/Reference flux')
             plt.title(sourceCatFile)
-            plt.savefig('fluxDiffRelative.png')
+            plt.savefig('fluxDiffRelative.%s'%outputType)
             
 	    ############################
 	    # Major axis ratio vs flux plot
@@ -236,7 +241,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('Source Major Axis / Reference Major Axis')
             plt.title(sourceCatFile)
-            plt.savefig('majorAxisRatio_flux.png')
+            plt.savefig('majorAxisRatio_flux.%s'%outputType)
 	
 	    
 	    ############################
@@ -262,7 +267,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference major axis')
             plt.ylabel('Source Major Axis / Reference Major Axis')
             plt.title(sourceCatFile)
-            plt.savefig('majorAxisRatio_majorAxis.png')
+            plt.savefig('majorAxisRatio_majorAxis.%s'%outputType)
 	
 	    
 	    ############################
@@ -283,7 +288,7 @@ if __name__ == '__main__':
             plt.xlabel('Source flux / Reference flux')
             plt.ylabel('Source Major Axis / Reference Major Axis')
             plt.title(sourceCatFile)
-            plt.savefig('majorAxisRatio_fluxRatio.png')
+            plt.savefig('majorAxisRatio_fluxRatio.%s'%outputType)
 	
 	    
 	    ############################
@@ -297,7 +302,7 @@ if __name__ == '__main__':
             plt.ylabel('Source flux - Reference flux')
             plt.xlabel('Reference Major Axis')
             plt.title(sourceCatFile)
-            plt.savefig('majorAxis_fluxdiff.png')
+            plt.savefig('majorAxis_fluxdiff.%s'%outputType)
 	
 	    ############################
 	    # Major axis ratio vs flux diff plot        
@@ -309,7 +314,7 @@ if __name__ == '__main__':
             plt.xlabel('Source flux - Reference flux')
             plt.ylabel('Source Major Axis / Reference Major Axis')
             plt.title(sourceCatFile)
-            plt.savefig('majorAxisRatio_fluxdiff.png')
+            plt.savefig('majorAxisRatio_fluxdiff.%s'%outputType)
 	
  	    ############################
 	    # Positional Offset vs flux diff plot        
@@ -320,7 +325,7 @@ if __name__ == '__main__':
             plt.ylabel('Source flux - Reference flux')
             plt.xlabel('Positional offset [arcsec]')
             plt.title(sourceCatFile)
-            plt.savefig('posoffset_fluxdiff.png')
+            plt.savefig('posoffset_fluxdiff.%s'%outputType)
 	
 	    
  	    ############################
@@ -332,7 +337,7 @@ if __name__ == '__main__':
             plt.ylabel('Source flux / Reference flux')
             plt.xlabel('Positional offset [arcsec]')
             plt.title(sourceCatFile)
-            plt.savefig('posoffset_fluxratio.png')
+            plt.savefig('posoffset_fluxratio.%s'%outputType)
 	
 	    
 	    ############################
@@ -348,7 +353,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('Source Axial Ratio / Reference Axial Ratio')
             plt.title(sourceCatFile)
-            plt.savefig('axialRatioChange_flux.png')
+            plt.savefig('axialRatioChange_flux.%s'%outputType)
 	
 	    ############################
 	    # Axial ratio change, vs major axis
@@ -363,7 +368,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference major axis')
             plt.ylabel('Source Axial Ratio / Reference Axial Ratio')
             plt.title(sourceCatFile)
-            plt.savefig('axialRatioChange_majoraxis.png')
+            plt.savefig('axialRatioChange_majoraxis.%s'%outputType)
 	
 	    
 	    ############################
@@ -385,7 +390,7 @@ if __name__ == '__main__':
             plt.xlabel('Reference flux')
             plt.ylabel('Source Position Angle - Reference Position Angle [deg]')
             plt.title(sourceCatFile)
-            plt.savefig('posangDiff_flux.png')
+            plt.savefig('posangDiff_flux.%s'%outputType)
 	
 	    ############################
 	    # Position angle change, vs major axis
@@ -404,7 +409,7 @@ if __name__ == '__main__':
             plt.xlabel('Major Axis')
             plt.ylabel('Source Position Angle - Reference Position Angle [deg]')
             plt.title(sourceCatFile)
-            plt.savefig('posangDiff_majorAxis.png')
+            plt.savefig('posangDiff_majorAxis.%s'%outputType)
 	
 	    ############################
 	    # Positional offsets
@@ -428,7 +433,7 @@ if __name__ == '__main__':
             plt.xlabel('(Source RA - Reference RA) * cos(ref.Dec) [arcsec]')
             plt.ylabel('Source Dec - Reference Dec [arcsec]')
             plt.title(sourceCatFile)
-            plt.savefig('posOffsets.png')
+            plt.savefig('posOffsets.%s'%outputType)
 	
 	    
         ##################################
@@ -436,52 +441,59 @@ if __name__ == '__main__':
 
         f=[]
         for m in matchlist:
-            f.append(m.ref.flux())
-            f.append(m.src.flux())
+            f.append(m.ref.flux()*refFluxScale)
+            f.append(m.src.flux()*sourceFluxScale)
         for s in srcmisslist:
-            f.append(s.flux())
+            f.append(s.flux()*sourceFluxScale)
         for r in refmisslist:
             if selector.isGood(r):
-                f.append(r.flux())
+                f.append(r.flux()*refFluxScale)
                 
         f=np.array(f,dtype=float)
         minFlux=floor(log10(f.min())*2.)/2.
         maxFlux=ceil(log10(f.max())*2.)/2.
-	    
-        numMatchBinnedByFlux = np.zeros((maxFlux-minFlux)*10)
-        numMissSrcBinnedByFlux = np.zeros((maxFlux-minFlux)*10)
-        numMissRefBinnedByFlux = np.zeros((maxFlux-minFlux)*10)
+
+        numMatchBinnedByFlux = np.zeros(int((maxFlux-minFlux)*10))
+        numMissSrcBinnedByFlux = np.zeros(int((maxFlux-minFlux)*10))
+        numMissRefBinnedByFlux = np.zeros(int((maxFlux-minFlux)*10))
 	    
         for m in matchlist:
-            binNumber = int((log10(m.src.flux())-minFlux)*10)
+            binNumber = int((log10(m.src.flux()*sourceFluxScale)-minFlux)*10)
             numMatchBinnedByFlux[binNumber] += 1
 	
         for s in srcmisslist:
-            binNumber = int((log10(s.flux())-minFlux)*10)
+            binNumber = int((log10(s.flux()*sourceFluxScale)-minFlux)*10)
             numMissSrcBinnedByFlux[binNumber] += 1
 	
         for r in refmisslist:
             if selector.isGood(r):
-                binNumber = int((log10(r.flux())-minFlux)*10)
+                binNumber = int((log10(r.flux()*refFluxScale)-minFlux)*10)
                 numMissRefBinnedByFlux[binNumber] += 1
 	
         numSrcBinnedByFlux = numMatchBinnedByFlux + numMissSrcBinnedByFlux
         numRefBinnedByFlux = numMatchBinnedByFlux + numMissRefBinnedByFlux
-	
+
+        # Have the additional +3 here to match the extension down below (clist)
         fluxBin=10**(minFlux-0.1+arange((maxFlux-minFlux)*10+3)/10.)
+        fluxBinPlot=10**(minFlux-0.1+arange((maxFlux-minFlux)*10)/10.)
 	    
         completenessBinnedByFlux=np.zeros(numMatchBinnedByFlux.shape)
         completenessBinnedByFlux[numRefBinnedByFlux>0] = numMatchBinnedByFlux[numRefBinnedByFlux>0] / numRefBinnedByFlux[numRefBinnedByFlux>0]
         completenessBinnedByFlux[numRefBinnedByFlux==0] = -1
+
+        reliabilityBinnedByFlux = np.zeros(numMatchBinnedByFlux.shape)
+        reliabilityBinnedByFlux[numSrcBinnedByFlux>0] = numMatchBinnedByFlux[numSrcBinnedByFlux>0] / numSrcBinnedByFlux[numSrcBinnedByFlux>0]
+        reliabilityBinnedByFlux[numSrcBinnedByFlux==0] = -1
+
+        completenessReliability = np.zeros(numMatchBinnedByFlux.shape)
+        completenessReliability[(numSrcBinnedByFlux>0)&(numRefBinnedByFlux>0)] = completenessBinnedByFlux[(numSrcBinnedByFlux>0)&(numRefBinnedByFlux>0)] * reliabilityBinnedByFlux[(numSrcBinnedByFlux>0)&(numRefBinnedByFlux>0)]
+
         clist=[0]
         clist.extend(completenessBinnedByFlux)
         clist.append(completenessBinnedByFlux[-1])
         clist.append(0.)
         completenessBinnedByFlux=np.array(clist)
 	    
-        reliabilityBinnedByFlux = np.zeros(numMatchBinnedByFlux.shape)
-        reliabilityBinnedByFlux[numSrcBinnedByFlux>0] = numMatchBinnedByFlux[numSrcBinnedByFlux>0] / numSrcBinnedByFlux[numSrcBinnedByFlux>0]
-        reliabilityBinnedByFlux[numSrcBinnedByFlux==0] = -1
         rlist=[0]
         rlist.extend(reliabilityBinnedByFlux)
         rlist.append(reliabilityBinnedByFlux[-1])
@@ -511,7 +523,7 @@ if __name__ == '__main__':
         plt.ylabel('Completeness')
         if not doSinglePlot:
             plt.title(sourceCatFile)
-            plt.savefig('completeness.png')
+            plt.savefig('completeness.%s'%outputType)
 	
         if doSinglePlot:
             plt.subplot(3,4,10)
@@ -529,7 +541,7 @@ if __name__ == '__main__':
         plt.ylabel('Reliability')
         if not doSinglePlot:
             plt.title(sourceCatFile)
-            plt.savefig('reliability.png')
+            plt.savefig('reliability.%s'%outputType)
 	
         if doSinglePlot:
             plt.subplot(3,4,8)
@@ -546,23 +558,36 @@ if __name__ == '__main__':
         plt.ylabel('Completeness')
         if not doSinglePlot:
             plt.title(sourceCatFile)
-            plt.savefig('completeness_reliability.png')
+            plt.savefig('completeness_reliability.%s'%outputType)
+
+        if not doSinglePlot:
+            plt.cla()
+            print "Completeness x Reliability"
+#            plt.semilogx()
+#            plt.step(fluxBinPlot,completenessReliability,where='post')
+            plt.plot(fluxBinPlot,completenessReliability)
+            plt.ylim(-0.05,1.05)
+#            plt.xlim(10**(minFlux-0.2),10**(maxFlux+0.2))
+            plt.xlabel('Flux')
+            plt.ylabel('Completeness x Reliability')
+            plt.title(sourceCatFile)
+            plt.savefig('completeness_x_reliability.%s'%outputType)
 
 	    #############################
 	
         f=[]
         a=[]
         for m in matchlist:
-            f.append(m.ref.flux())
-            f.append(m.src.flux())
+            f.append(m.ref.flux()*refFluxScale)
+            f.append(m.src.flux()*sourceFluxScale)
             a.append(m.src.maj)
             a.append(m.ref.maj)
         for s in srcmisslist:
-            f.append(s.flux())
+            f.append(s.flux()*sourceFluxScale)
             a.append(s.maj)
         for r in refmisslist:
             if selector.isGood(r):
-                f.append(r.flux())
+                f.append(r.flux()*refFluxScale)
                 a.append(r.maj)
 
         f=np.array(f,dtype=float)
@@ -572,22 +597,22 @@ if __name__ == '__main__':
         amin=floor(a.min()/5.)*5
         amax=ceil(a.max()/5.)*5
 	
-        nmatch2d=np.zeros(((amax-amin)/5.,(maxFlux-minFlux)*10.))
-        nmissSrc2d=np.zeros(((amax-amin)/5.,(maxFlux-minFlux)*10.))
-        nmissRef2d=np.zeros(((amax-amin)/5.,(maxFlux-minFlux)*10.))
+        nmatch2d=np.zeros((int((amax-amin)/5),int((maxFlux-minFlux)*10)))
+        nmissSrc2d=np.zeros((int((amax-amin)/5),int((maxFlux-minFlux)*10)))
+        nmissRef2d=np.zeros((int((amax-amin)/5),int((maxFlux-minFlux)*10)))
 	
         for m in matchlist:
             abin=int((m.ref.maj-amin)/5.)
-            fbin=int((log10(m.src.flux())-minFlux)*10)
+            fbin=int((log10(m.src.flux()*sourceFluxScale)-minFlux)*10)
             nmatch2d[abin][fbin] += 1
         for s in srcmisslist:
             abin=int((s.maj-amin)/5.)
-            fbin=int((log10(s.flux())-minFlux)*10)
+            fbin=int((log10(s.flux()*sourceFluxScale)-minFlux)*10)
             nmissSrc2d[abin][fbin] += 1
         for r in refmisslist:
             if selector.isGood(r):
                 abin=int((r.maj-amin)/5.)
-                fbin=int((log10(r.flux())-minFlux)*10)
+                fbin=int((log10(r.flux()*refFluxScale)-minFlux)*10)
                 nmissRef2d[abin][fbin] += 1
 	    
         nSrc2d = nmatch2d + nmissSrc2d
@@ -617,7 +642,7 @@ if __name__ == '__main__':
             plt.title('Completeness',fontsize='small')
         else:
             plt.title(sourceCatFile)
-            plt.savefig('completeness_by_flux_majoraxis.png')
+            plt.savefig('completeness_by_flux_majoraxis.%s'%outputType)
             
         if doSinglePlot:
             plt.subplot(3,4,12)
@@ -636,11 +661,11 @@ if __name__ == '__main__':
             plt.title('Reliability',fontsize='small')
         else:
             plt.title(sourceCatFile)
-            plt.savefig('reliability_by_flux_majoraxis.png')
+            plt.savefig('reliability_by_flux_majoraxis.%s'%outputType)
 	    
 	    #############################
         if doSinglePlot:
             plt.suptitle(sourceCatFile,y=0.95)
-            plt.savefig('finderEval.png')
+            plt.savefig('finderEval.%s'%outputType)
     
     plt.close()
