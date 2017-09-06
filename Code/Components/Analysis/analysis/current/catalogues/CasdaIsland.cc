@@ -70,6 +70,12 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     itsPA(obj.getPositionAngle()),
     itsFluxInt(obj.getIntegFlux()),
     itsFluxPeak(obj.getPeakFlux()),
+    itsMeanBackground(0.),
+    itsMaxResidual(0.),
+    itsMinResidual(0.),
+    itsMeanResidual(0.),
+    itsRMSResidual(0.),
+    itsStddevResidual(0.),
     itsXmin(obj.getXmin()),
     itsXmax(obj.getXmax()),
     itsYmin(obj.getYmin()),
@@ -107,6 +113,10 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     // Re-calculate WCS parameters
     obj.calcWCSparams(newHead_freq);
     itsFreq = obj.getVel() * freqScale;
+
+    /// @todo
+    // Average value for the background
+    // Residual pixel statistics
 
 }
 
@@ -165,6 +175,18 @@ void CasdaIsland::printTableEntry(std::ostream &stream,
         column.printEntry(stream, itsFluxInt);
     } else if (type == "FPEAK") {
         column.printEntry(stream, itsFluxPeak);
+    } else if (type == "BACKGND") {
+        column.printEntry(stream, itsMeanBackground);
+    } else if (type == "MAXRESID") {
+        column.printEntry(stream, itsMaxResidual);
+    } else if (type == "MINRESID") {
+        column.printEntry(stream, itsMinResidual);
+    } else if (type == "MEANRESID") {
+        column.printEntry(stream, itsMeanResidual);
+    } else if (type == "RMSRESID") {
+        column.printEntry(stream, itsRMSResidual);
+    } else if (type == "STDDEVRESID") {
+        column.printEntry(stream, itsStddevResidual);
     } else if (type == "XMIN") {
         column.printEntry(stream, itsXmin);
     } else if (type == "XMAX") {
@@ -206,7 +228,7 @@ void CasdaIsland::printTableEntry(std::ostream &stream,
 
 void CasdaIsland::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
 {
-    bool checkPrec=false;
+    bool checkPrec = false;
     std::string type = column.type();
     if (type == "ID") {
         column.check(itsIslandID, checkTitle);
@@ -234,6 +256,18 @@ void CasdaIsland::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
         column.check(itsFluxInt, checkTitle, checkPrec);
     } else if (type == "FPEAK") {
         column.check(itsFluxPeak, checkTitle, checkPrec);
+    } else if (type == "BACKGND") {
+        column.check(itsMeanBackground, checkTitle, checkPrec);
+    } else if (type == "MAXRESID") {
+        column.check(itsMaxResidual, checkTitle, checkPrec);
+    } else if (type == "MINRESID") {
+        column.check(itsMinResidual, checkTitle, checkPrec);
+    } else if (type == "MEANRESID") {
+        column.check(itsMeanResidual, checkTitle, checkPrec);
+    } else if (type == "RMSRESID") {
+        column.check(itsRMSResidual, checkTitle, checkPrec);
+    } else if (type == "STDDEVRESID") {
+        column.check(itsStddevResidual, checkTitle, checkPrec);
     } else if (type == "XMIN") {
         column.check(itsXmin, checkTitle);
     } else if (type == "XMAX") {
@@ -300,6 +334,12 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaIsland& src)
     d = src.itsPA; blob << d;
     d = src.itsFluxInt; blob << d;
     d = src.itsFluxPeak; blob << d;
+    d = src.itsMeanBackground; blob << d;
+    d = src.itsMaxResidual; blob << d;
+    d = src.itsMinResidual; blob << d;
+    d = src.itsMeanResidual; blob << d;
+    d = src.itsRMSResidual; blob << d;
+    d = src.itsStddevResidual; blob << d;
     i = src.itsXmin; blob << i;
     i = src.itsXmax; blob << i;
     i = src.itsYmin; blob << i;
@@ -340,6 +380,12 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaIsland& src)
     blob >> d; src.itsPA = d;
     blob >> d; src.itsFluxInt = d;
     blob >> d; src.itsFluxPeak = d;
+    blob >> d; src.itsMeanBackground = d;
+    blob >> d; src.itsMaxResidual = d;
+    blob >> d; src.itsMinResidual = d;
+    blob >> d; src.itsMeanResidual = d;
+    blob >> d; src.itsRMSResidual = d;
+    blob >> d; src.itsStddevResidual = d;
     blob >> i; src.itsXmin = i;
     blob >> i; src.itsXmax = i;
     blob >> i; src.itsYmin = i;

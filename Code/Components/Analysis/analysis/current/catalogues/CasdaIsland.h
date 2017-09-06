@@ -93,11 +93,11 @@ class CasdaIsland : public CatalogueEntry {
         /// the COLNAME key. If a key is given that was not expected,
         /// an Askap Error is thrown. The column must be non-const as
         /// it could change.
-    void checkCol(duchamp::Catalogues::Column &column, bool checkTitle);
+        void checkCol(duchamp::Catalogues::Column &column, bool checkTitle);
 
         /// Perform the column check for all columns in the
-        /// specification. 
-    void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle);
+        /// specification.
+        void checkSpec(duchamp::Catalogues::CatalogueSpecification &spec, bool checkTitle);
 
         /// @brief Functions allowing CasdaIsland objects to be passed
         /// over LOFAR Blobs
@@ -151,6 +151,18 @@ class CasdaIsland : public CatalogueEntry {
         double itsFluxInt;
         /// The flux of the brightest pixel in the island
         double itsFluxPeak;
+        /// The mean value of the background level across the island
+        double itsMeanBackground;
+        /// The maximum residual after subtraction of fitted Gaussian(s)
+        double itsMaxResidual;
+        /// The minimum residual after subtraction of fitted Gaussian(s)
+        double itsMinResidual;
+        /// The average residual after subtraction of fitted Gaussian(s)
+        double itsMeanResidual;
+        /// The RMS residual after subtraction of fitted Gaussian(s)
+        double itsRMSResidual;
+        /// The standard deviation in the residuals after subtraction of fitted Gaussian(s)
+        double itsStddevResidual;
         /// The minimum x pixel value for the island
         int itsXmin;
         /// The maximum x pixel value for the island
