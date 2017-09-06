@@ -30,6 +30,7 @@
 #define ASKAP_ANALYSIS_CASDA_ISLAND_H_
 
 #include <catalogues/CatalogueEntry.h>
+#include <catalogues/Casda.h>
 #include <sourcefitting/RadioSource.h>
 #include <Common/ParameterSet.h>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
@@ -148,11 +149,13 @@ class CasdaIsland : public CatalogueEntry {
         /// The position angle of the island's major axis
         double itsPA;
         /// The integrated flux of the pixels in the island.
-        double itsFluxInt;
+        casda::ValueError itsFluxInt;
         /// The flux of the brightest pixel in the island
         double itsFluxPeak;
         /// The mean value of the background level across the island
         double itsMeanBackground;
+        /// The average noise level in the background across the island
+        double itsBackgroundNoise;
         /// The maximum residual after subtraction of fitted Gaussian(s)
         double itsMaxResidual;
         /// The minimum residual after subtraction of fitted Gaussian(s)
@@ -173,6 +176,10 @@ class CasdaIsland : public CatalogueEntry {
         int itsYmax;
         /// The number of pixels in the island
         unsigned int itsNumPix;
+        /// The solid angle subtended by the island (area on the sky, [arcmin^2])
+        double itsSolidAngle;
+        /// The area of the beam on the sky, using the Full-Width-Half-Maximum ellipse
+        double itsBeamArea;
         /// The average x-value of all pixels in the island
         double itsXaverage;
         /// The average y-value of all pixels in the island

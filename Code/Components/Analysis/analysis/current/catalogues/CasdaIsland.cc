@@ -68,9 +68,9 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     itsMaj(obj.getMajorAxis()),
     itsMin(obj.getMinorAxis()),
     itsPA(obj.getPositionAngle()),
-    itsFluxInt(obj.getIntegFlux()),
     itsFluxPeak(obj.getPeakFlux()),
     itsMeanBackground(0.),
+    itsBackgroundNoise(0.),
     itsMaxResidual(0.),
     itsMinResidual(0.),
     itsMeanResidual(0.),
@@ -81,6 +81,8 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     itsYmin(obj.getYmin()),
     itsYmax(obj.getYmax()),
     itsNumPix(obj.getSpatialSize()),
+    itsSolidAngle(0.),
+    itsBeamArea(0.),
     itsXaverage(obj.getXaverage()),
     itsYaverage(obj.getYaverage()),
     itsXcentroid(obj.getXCentroid()),
@@ -107,16 +109,20 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     double peakFluxscale = getPeakFluxConversionScale(newHead_freq, casda::fluxUnit);
     itsFluxPeak *= peakFluxscale;
 
+    itsFluxInt.value() = obj.getIntegFlux();
+    itsFluxInt.error() = obj.getIntegFluxError();  // this won't work as we don't know the stats
     double intFluxscale = getIntFluxConversionScale(newHead_freq, casda::intFluxUnitContinuum);
-    itsFluxInt *= intFluxscale;
+    itsFluxInt.value() *= intFluxscale;
 
     // Re-calculate WCS parameters
     obj.calcWCSparams(newHead_freq);
     itsFreq = obj.getVel() * freqScale;
 
     /// @todo
-    // Average value for the background
+    // Average values for the background level & noise
     // Residual pixel statistics
+    // Convert npix to solid angle
+    // Get beam size in solid angle
 
 }
 
@@ -172,11 +178,15 @@ void CasdaIsland::printTableEntry(std::ostream &stream,
     } else if (type == "PA") {
         column.printEntry(stream, itsPA);
     } else if (type == "FINT") {
-        column.printEntry(stream, itsFluxInt);
+        column.printEntry(stream, itsFluxInt.value());
+    } else if (type == "FINTERR") {
+        column.printEntry(stream, itsFluxInt.error());
     } else if (type == "FPEAK") {
         column.printEntry(stream, itsFluxPeak);
     } else if (type == "BACKGND") {
         column.printEntry(stream, itsMeanBackground);
+    } else if (type == "NOISE") {
+        column.printEntry(stream, itsBackgroundNoise);
     } else if (type == "MAXRESID") {
         column.printEntry(stream, itsMaxResidual);
     } else if (type == "MINRESID") {
@@ -197,6 +207,10 @@ void CasdaIsland::printTableEntry(std::ostream &stream,
         column.printEntry(stream, itsYmax);
     } else if (type == "NPIX") {
         column.printEntry(stream, itsNumPix);
+    } else if (type == "SOLIDANGLE") {
+        column.printEntry(stream, itsSolidAngle);
+    } else if (type == "BEAMAREA") {
+        column.printEntry(stream, itsBeamArea);
     } else if (type == "XAV") {
         column.printEntry(stream, itsXaverage);
     } else if (type == "YAV") {
@@ -253,11 +267,15 @@ void CasdaIsland::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
     } else if (type == "PA") {
         column.check(itsPA, checkTitle, checkPrec);
     } else if (type == "FINT") {
-        column.check(itsFluxInt, checkTitle, checkPrec);
+        column.check(itsFluxInt.value(), checkTitle, checkPrec);
+    } else if (type == "FINTERR") {
+        column.check(itsFluxInt.error(), checkTitle, checkPrec);
     } else if (type == "FPEAK") {
         column.check(itsFluxPeak, checkTitle, checkPrec);
     } else if (type == "BACKGND") {
         column.check(itsMeanBackground, checkTitle, checkPrec);
+    } else if (type == "NOISE") {
+        column.check(itsBackgroundNoise, checkTitle, checkPrec);
     } else if (type == "MAXRESID") {
         column.check(itsMaxResidual, checkTitle, checkPrec);
     } else if (type == "MINRESID") {
@@ -278,6 +296,10 @@ void CasdaIsland::checkCol(duchamp::Catalogues::Column &column, bool checkTitle)
         column.check(itsYmax, checkTitle);
     } else if (type == "NPIX") {
         column.check(itsNumPix, checkTitle);
+    } else if (type == "SOLIDANGLE") {
+        column.check(itsSolidAngle, checkTitle, checkPrec);
+    } else if (type == "BEAMAREA") {
+        column.check(itsBeamArea, checkTitle, checkPrec);
     } else if (type == "XAV") {
         column.check(itsXaverage, checkTitle, checkPrec);
     } else if (type == "YAV") {
@@ -318,6 +340,7 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaIsland& src)
 {
     std::string s;
     double d;
+    casda::ValueError v;
     unsigned int u;
     int i;
 
@@ -332,9 +355,10 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaIsland& src)
     d = src.itsMaj; blob << d;
     d = src.itsMin; blob << d;
     d = src.itsPA; blob << d;
-    d = src.itsFluxInt; blob << d;
+    v = src.itsFluxInt; blob << v;
     d = src.itsFluxPeak; blob << d;
     d = src.itsMeanBackground; blob << d;
+    d = src.itsBackgroundNoise; blob << d;
     d = src.itsMaxResidual; blob << d;
     d = src.itsMinResidual; blob << d;
     d = src.itsMeanResidual; blob << d;
@@ -345,6 +369,8 @@ LOFAR::BlobOStream& operator<<(LOFAR::BlobOStream& blob, CasdaIsland& src)
     i = src.itsYmin; blob << i;
     i = src.itsYmax; blob << i;
     u = src.itsNumPix; blob << u;
+    d = src.itsSolidAngle; blob << d;
+    d = src.itsBeamArea; blob << d;
     d = src.itsXaverage; blob << d;
     d = src.itsYaverage; blob << d;
     d = src.itsXcentroid; blob << d;
@@ -364,6 +390,7 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaIsland& src)
 {
     std::string s;
     double d;
+    casda::ValueError v;
     unsigned int u;
     int i;
 
@@ -378,9 +405,10 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaIsland& src)
     blob >> d; src.itsMaj = d;
     blob >> d; src.itsMin = d;
     blob >> d; src.itsPA = d;
-    blob >> d; src.itsFluxInt = d;
+    blob >> v; src.itsFluxInt = v;
     blob >> d; src.itsFluxPeak = d;
     blob >> d; src.itsMeanBackground = d;
+    blob >> d; src.itsBackgroundNoise = d;
     blob >> d; src.itsMaxResidual = d;
     blob >> d; src.itsMinResidual = d;
     blob >> d; src.itsMeanResidual = d;
@@ -391,6 +419,8 @@ LOFAR::BlobIStream& operator>>(LOFAR::BlobIStream& blob, CasdaIsland& src)
     blob >> i; src.itsYmin = i;
     blob >> i; src.itsYmax = i;
     blob >> u; src.itsNumPix = u;
+    blob >> d; src.itsSolidAngle = d;
+    blob >> d; src.itsBeamArea = d;
     blob >> d; src.itsXaverage = d;
     blob >> d; src.itsYaverage = d;
     blob >> d; src.itsXcentroid = d;
