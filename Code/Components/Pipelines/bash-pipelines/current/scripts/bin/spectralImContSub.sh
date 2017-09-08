@@ -58,6 +58,18 @@ for subband in ${SUBBAND_WRITER_LIST}; do
     
     if [ "${DO_IT}" == "true" ]; then
 
+        # Make a working directory - the casapy & ipython log files
+        # will go in here. This will prevent conflicts between jobs
+        # that start at the same time
+        workingDirectory="imcontsub-working-beam${BEAM}"
+        if [ ${NUM_SPECTRAL_CUBES} -gt 1 ]; then
+            workingDirectory="${workingDirectory}.${subband}"
+        fi
+
+        # Set the $imageName for the restored cube, as we will use this in the slurm job
+        imageCode=restored
+        setImageProperties spectral
+
         setJob "spectral_imcontsub${subband}" "imcontsub${subband}"
         cat > "$sbatchfile" <<EOF
 #!/bin/bash -l
@@ -84,17 +96,8 @@ sedstr="s/sbatch/\${SLURM_JOB_ID}\.sbatch/g"
 thisfile=$sbatchfile
 cp \$thisfile "\$(echo \$thisfile | sed -e "\$sedstr")"
 
-IMAGE_BASE_SPECTRAL=${IMAGE_BASE_SPECTRAL}
-TILE=${TILE}
-FIELD=${FIELD}
 BEAM=${BEAM}
-pol=${pol}
-DO_ALT_IMAGER_SPECTRAL="${DO_ALT_IMAGER_SPECTRAL}"
-NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES}
-IMAGETYPE_SPECTRAL=${IMAGETYPE_SPECTRAL}
-subband="${subband}"
-imageCode=restored
-setImageProperties spectral
+imageName=${imageName}
 
 if [ ! -e "\${imageName}" ]; then
 
@@ -105,7 +108,7 @@ else
 
     # Make a working directory - the casapy & ipython log files will go in here.
     # This will prevent conflicts
-    workdir=imcontsub-working-beam\${BEAM}
+    workdir=${workingDirectory}
     mkdir -p \$workdir
     cd \$workdir
 

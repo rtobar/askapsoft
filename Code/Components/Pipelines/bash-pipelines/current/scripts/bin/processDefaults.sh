@@ -207,6 +207,7 @@ module load askappipeline/${askappipelineVersion}"
             fi
             unloadModule ${module}
         }
+        acesModuleCommand="module load ${module}"
 
         # in case $ACES is already defined, we capture it here before overwriting it
         ACES_ORIGINAL=${ACES}
@@ -227,6 +228,7 @@ module load askappipeline/${askappipelineVersion}"
         {
             unloadModule aces
         }
+        acesModuleCommand="module load aces"
     fi
     
     #############################
@@ -534,7 +536,7 @@ EOF
     if [ "${DO_SCIENCE_FIELD}" == "true" ]; then
 
         if [ "${NSUB_CUBES}" != "" ]; then
-            echo "WARNING - the parameter NSUB_CUBES is deprectated. Using NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_CUBES} instead."
+            echo "WARNING - the parameter NSUB_CUBES is deprecated. Using NUM_SPECTRAL_WRITERS=${NUM_SPECTRAL_WRITERS} instead."
         fi
 
         ####################
@@ -679,6 +681,14 @@ EOF
             NUM_CPUS_CONTCUBE_LINMOS=$NUM_CPUS_CONTCUBE_SCI
         fi
 
+        # Deprecation warning for the specification of
+        # NUM_SPECTRAL_CUBES_CONTCUBE - this is now NUM_SPECTRAL_WRITERS_CONTCUBE
+        if [ "${NUM_SPECTRAL_CUBES_CONTCUBE}" != "" ]; then
+            echo "WARNING - the parameter NUM_SPECTRAL_CUBES_CONTCUBE is deprecated - please use NUM_SPECTRAL_WRITERS_CONTCUBE instead."
+            echo "        - Setting NUM_SPECTRAL_WRITERS_CONTCUBE=${NUM_SPECTRAL_CUBES_CONTCUBE}"
+            NUM_SPECTRAL_WRITERS_CONTCUBE=${NUM_SPECTRAL_CUBES_CONTCUBE}
+        fi
+
         # Define the list of writer ranks used in the askap_imager
         # spectral-line output
         # Only define if we are using the askap_imager and not writing
@@ -687,6 +697,7 @@ EOF
         # will not be referenced in that case).
         if [ "${DO_ALT_IMAGER_CONTCUBE}" == "true" ] && [ "${ALT_IMAGER_SINGLE_FILE_CONTCUBE}" != "true" ]; then
             nworkers=$nchanContSci
+            NUM_SPECTRAL_CUBES_CONTCUBE=${NUM_SPECTRAL_WRITERS_CONTCUBE}
             writerIncrement=$(echo "$nworkers" "${NUM_SPECTRAL_CUBES_CONTCUBE}" | awk '{print $1/$2}')
             SUBBAND_WRITER_LIST_CONTCUBE=$(seq 1 "$writerIncrement" "$nworkers")
             unset nworkers
@@ -758,11 +769,20 @@ EOF
             CPUS_PER_CORE_SPEC_IMAGING=${NUM_CPUS_SPECIMG_SCI}
         fi
 
+
+        # Deprecation warning for the specification of
+        # NUM_SPECTRAL_CUBES - this is now NUM_SPECTRAL_WRITERS
+        if [ "${NUM_SPECTRAL_CUBES}" != "" ]; then
+            echo "WARNING - the parameter NUM_SPECTRAL_CUBES is deprecated - please use NUM_SPECTRAL_WRITERS instead."
+            echo "        - Setting NUM_SPECTRAL_WRITERS=${NUM_SPECTRAL_CUBES}"
+            NUM_SPECTRAL_WRITERS=${NUM_SPECTRAL_CUBES}
+        fi
+
         # Reduce the number of writers to no more than the number of
         # workers
-        if [ "${NUM_SPECTRAL_CUBES}" -ge "${NUM_CPUS_SPECIMG_SCI}" ]; then
-            NUM_SPECTRAL_CUBES=$(echo ${NUM_CPUS_SPECIMG_SCI} | awk '{print $1-1}')
-            echo "WARNING - Reducing NUM_SPECTRAL_CUBES to ${NUM_SPECTRAL_CUBES} to match number of spectral workers"
+        if [ "${NUM_SPECTRAL_WRITERS}" -ge "${NUM_CPUS_SPECIMG_SCI}" ]; then
+            NUM_SPECTRAL_WRITERS=$(echo ${NUM_CPUS_SPECIMG_SCI} | awk '{print $1-1}')
+            echo "WARNING - Reducing NUM_SPECTRAL_WRITERS to ${NUM_SPECTRAL_WRITERS} to match number of spectral workers"
         fi
 
         # Method used for continuum subtraction
@@ -789,6 +809,7 @@ EOF
         # so that the loop over subbands is only done once ($subband
         # will not be referenced in that case).
         if [ "${DO_ALT_IMAGER_SPECTRAL}" == "true" ] && [ "${ALT_IMAGER_SINGLE_FILE}" != "true" ]; then
+            NUM_SPECTRAL_CUBES=${NUM_SPECTRAL_WRITERS}
             nworkers=$(echo "${NUM_CHAN_SCIENCE_SL}" "${NCHAN_PER_CORE_SL}" | awk '{print int($1/$2)}')
             writerIncrement=$(echo "$nworkers" "${NUM_SPECTRAL_CUBES}" | awk '{print int($1/$2)}')
             SUBBAND_WRITER_LIST=$(seq 1 "$writerIncrement" "$nworkers")

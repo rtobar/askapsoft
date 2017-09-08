@@ -33,6 +33,8 @@
 #include <sstream>
 #include <fstream>
 #include <mpi.h>
+#include <pthread.h>
+#include <string.h> // for memcpy
 
 // ASKAPsoft includes
 #include "CommandLineParser.h"
@@ -41,8 +43,25 @@
 
 #define BLOCKSIZE 4*1024*1024
 
+#define TIME_FUNC(func,tag) { \
+    { \
+        casa::Timer work; \
+        work.mark(); \
+        func; \
+        std::cout << tag << ":" << work.real() << std::endl; \
+    } \
+}
 // Using
 using LOFAR::ParameterSet;
+
+
+/* the mutex lock */
+
+pthread_mutex_t full_lock;
+pthread_mutex_t swap_lock;
+
+pthread_cond_t buffer_full;
+pthread_cond_t buffer_swapped;
 
 static ParameterSet getParameterSet(int argc, char *argv[])
 {
@@ -64,12 +83,24 @@ static ParameterSet getParameterSet(int argc, char *argv[])
 }
 void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
 
+
     casa::Timer work;
+
+
     int rtn=0;
-    work.mark();
+
+
+    TIME_FUNC(pthread_mutex_lock(&swap_lock),"Write:acquire_swaplock");
+    std::cout << "Write: released the swap lock and waiting for signal" << std::endl;
+    // wait and release lock
+    TIME_FUNC(pthread_cond_wait(&buffer_swapped,&swap_lock),"Write:wait");
+
+    std::cout << "Write: acquired the swap lock" << std::endl;
+
     size_t towrite=buffsize;
     size_t write_block=BLOCKSIZE;
     char * buffptr= (char *) buffer;
+    work.mark();
     while (towrite>0) {
 
         if (towrite < write_block)
@@ -90,9 +121,9 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
             towrite = 0;
         }
     }
-
+    TIME_FUNC(pthread_mutex_unlock(&swap_lock),"Write:released swap lock");
     *workTime = work.real();
-
+    std::cout << "Write:Actual write:" << *workTime << std::endl;
 
 
 }
@@ -100,11 +131,48 @@ void doWorkWorker(void *buffer) {
 
 }
 
+typedef struct {
+    char *in;
+    char *out;
+    size_t nelements;
+} thread_args ;
 
+/* this function is run by the second thread */
+void *thread_x(void *arg)
+{
+
+    thread_args *x_ptr = (thread_args *) arg;
+    while (1) {
+        // wait for a full buffer
+        TIME_FUNC(pthread_mutex_lock (&full_lock),"Worker:acquire full_lock");
+        std::cout << "Worker: releasing full_lock and waiting" << std::endl;
+        TIME_FUNC(pthread_cond_wait(&buffer_full,&full_lock),"Worker:wait-time:");
+        std::cout << "Worker: acquired full_lock" << std::endl;
+        // release wait and release lock
+        // do something
+        TIME_FUNC(memcpy(x_ptr->out, x_ptr->in,x_ptr->nelements*sizeof(float)),"Worker:memcpy");
+
+        TIME_FUNC(pthread_mutex_unlock (&full_lock),"Worker:released full_lock");
+        TIME_FUNC(pthread_mutex_lock (&swap_lock),"Worker:acquired swap_lock");
+        TIME_FUNC(pthread_cond_signal(&buffer_swapped),"Worker:signalling swap");
+        TIME_FUNC(pthread_mutex_unlock (&swap_lock),"Worker: released swap_lock");
+
+    }
+}
+void transpose(float *in, float *out) {
+
+}
 int main(int argc, char *argv[])
 {
     // MPI init
+    int provided;
+    // This is correct initializer
+    // MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
+    //
+    // This is not correct
+    //
     MPI_Init(&argc, &argv);
+    //
     int rank,wsize;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -119,8 +187,18 @@ int main(int argc, char *argv[])
     // create the output file
     FILE *fptr=NULL;
 
+    // initialise the mutex lock
+    pthread_mutex_init(&full_lock, NULL);
+    pthread_cond_init (&buffer_full, NULL);
+    pthread_mutex_init(&swap_lock, NULL);
+    pthread_cond_init (&buffer_swapped, NULL);
+    // thread attributes
+    pthread_t x_thread;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-
+    thread_args work_dat;
 
     int intTime = subset.getInt32("integrationTime",5);
     int integrations = subset.getInt32("nIntegrations",1);
@@ -147,6 +225,12 @@ int main(int argc, char *argv[])
 
     float *sBuf = (float *) malloc(sendBufferSize);
     float *rBuf = (float *) malloc(recvBufferSize);
+    float *oBuf = (float *) malloc(recvBufferSize);
+
+    work_dat.in = (char *) rBuf;
+    work_dat.out = (char *) oBuf;
+    work_dat.nelements = wsize*nElements;
+
 
     int *displs = (int *)malloc(wsize*sizeof(int));
     int *rcounts = (int *)malloc(wsize*sizeof(int));
@@ -168,13 +252,25 @@ int main(int argc, char *argv[])
         if (maxfilesizeMB !=0) {
             std::cout << "Integrations per file " << intPerFile << std::endl;
         }
+        // Spawn a thread
+
+
+        std::cout << "Spawning a thread" << std::endl;
+
+        if (pthread_create(&x_thread, &attr, thread_x, &work_dat)) {
+
+            fprintf(stderr, "Error creating thread\n");
+            return 1;
+
+        }
+
     }
 
     for (int i = 0; i < integrations; ++i) {
 
         if (i==0 || i%intPerFile == 0) {
             if (fptr != NULL) {
-                fclose(fptr);
+                TIME_FUNC(fclose(fptr),"Write:closing file");
             }
             std::ostringstream oss;
             oss << filename << "_" << i << ".dat";
@@ -185,6 +281,11 @@ int main(int argc, char *argv[])
         }
         timer.mark();
         doWorkWorker(sBuf);
+
+        if (rank == 0) {
+            TIME_FUNC(pthread_mutex_lock(&full_lock),"Write: acquired full_lock");
+            std::cout << "Starting the Gathering" << std::endl;
+        }
         MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -195,22 +296,25 @@ int main(int argc, char *argv[])
             if (perf < 1) {
                 std::cout << "WARNING ";
             }
-            std::cout << "Received integration " << i <<
+            std::cout << "MPI Gather for integration " << i <<
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
-            std::cout << "Doing some work" << std::endl;
+
+
+            TIME_FUNC(pthread_cond_signal(&buffer_full),"Write: signalling buffer full");
+            TIME_FUNC(pthread_mutex_unlock(&full_lock),"Write: released full_lock");
+
             float workTime;
-            doWorkRoot(rBuf,recvBufferSize,&workTime,fptr);
-            std::cout << "Wrote integration " << i <<  " in "
-            << workTime << " seconds" << std::endl;
-            float combinedTime = workTime + realtime;
-            if (combinedTime < intTime) {
-                useconds_t timetosleep = (useconds_t) 1000.0*(intTime-combinedTime);
-                usleep(timetosleep);
-            }
-            else {
-                std::cout << "WARNING combined time greater than integration time" << std::endl;
-            }
+
+
+            // aquire lock
+            //first get the lock so things stay sync'd
+
+            TIME_FUNC(doWorkRoot(rBuf,recvBufferSize,&workTime,fptr),"Write: Total time:");
+
+
+
+            // release lock
         }
     }
 
@@ -225,11 +329,22 @@ int main(int argc, char *argv[])
     if (fptr != NULL) {
         fclose(fptr);
     }
+
+
+    pthread_attr_destroy(&attr);
+    // pthread_kill(x_thread,SIGKILL);
+    // pthread_join(x_thread, NULL);
+    pthread_mutex_destroy(&full_lock);
+    pthread_mutex_destroy(&swap_lock);
+    pthread_cond_destroy(&buffer_full);
+    pthread_cond_destroy(&buffer_swapped);
+
     free(sBuf);
     free(rBuf);
+    free(oBuf);
     free(displs);
     free(rcounts);
     MPI_Finalize();
 
-    return 0;
+    // pthread_exit(NULL);
 }
