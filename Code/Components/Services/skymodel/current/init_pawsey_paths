@@ -1,12 +1,2 @@
-#!/usr/bin/env bash
-# Galaxy 
-if [[ $PAWSEY_OS = cle* ]]; then
-    export LD_PRELOAD=$LD_PRELOAD:/pawsey/cle52up04/apps/gcc/4.9.0/python/2.7.10/lib/libpython2.7.so.1.0
-    export LD_PRELOAD=$LD_PRELOAD:/opt/gcc/4.9.0/snos/lib64/libstdc++.so.6
-fi
-
-# Ingest
-if [[ $PAWSEY_OS = SLES* ]]; then
-    export LD_PRELOAD=$LD_PRELOAD:/pawsey/sles11sp4/apps/gcc/4.3.4/python/2.7.10/lib/libpython2.7.so.1.0
-    export LD_PRELOAD=$LD_PRELOAD:/opt/gcc/4.3.4/snos/lib64/libstdc++.so.6
-fi
+LD_PRELOAD=$LD_PRELOAD:/pawsey/sles11sp4/apps/gcc/4.3.4/python/2.7.10/lib/libpython2.7.so.1.0
+export LD_PRELOAD=$LD_PRELOAD:/opt/gcc/4.3.4/snos/lib64/libstdc++.so.6
