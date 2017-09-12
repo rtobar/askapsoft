@@ -106,6 +106,12 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     casa::Unit freqUnits(casda::freqUnit);
     double freqScale = casa::Quantity(1., wcsFreqUnits).getValue(freqUnits);
 
+    double pixelSize = obj.header().getAvPixScale();
+    std::string pixelUnits(obj.header().WCS().cunit[0]);
+    pixelUnits += "2";
+    casa::Unit solidAngleUnits(casda::solidangleUnit);
+    double pixelToSolidAngle = casa::Quantity(pixelSize*pixelSize, pixelUnits).getValue(solidAngleUnits);
+    
     double peakFluxscale = getPeakFluxConversionScale(newHead_freq, casda::fluxUnit);
     itsFluxPeak *= peakFluxscale;
 
@@ -121,8 +127,11 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     /// @todo
     // Average values for the background level & noise
     // Residual pixel statistics
+
     // Convert npix to solid angle
+    itsSolidAngle = itsNumPix * pixelToSolidAngle;
     // Get beam size in solid angle
+    itsBeamArea = obj.header().beam().area() * pixelToSolidAngle;
 
 }
 

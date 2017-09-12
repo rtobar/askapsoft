@@ -78,6 +78,9 @@ const std::string faradayDepthUnit = "rad/m2";
 /// Units for angle (such as polarisation position angle)
 const std::string angleUnit = "deg";
 
+/// Units for solid angle (size of detections on the sky)
+const std::string solidangleUnit = "arcmin2";
+
 /// Precision for reporting fluxes
 const int precFlux = 3;
 /// Precision for reporting frequency in continuum catalogues
@@ -108,6 +111,8 @@ const int precAngle = 3;
 const int precPfrac = 2;
 /// Precision for polarisation statistics
 const int precStats = 2;
+/// Precision for solid angle measurements
+const int precSolidangle = 2;
 
 class ValueError
 {

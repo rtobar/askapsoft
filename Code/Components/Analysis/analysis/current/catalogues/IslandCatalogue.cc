@@ -165,9 +165,9 @@ void IslandCatalogue::defineSpec()
                       "pos.cartesian.y;stat.max", "int", "col_y_max", "");
     itsSpec.addColumn("NPIX", "n_pix", "", 9, 0,
                       "phys.angArea;instr.pixel;meta.number", "int", "col_n_pix", "");
-    itsSpec.addColumn("SOLIDANGLE", "solid_angle", "arcmin2", 9, 0,
+    itsSpec.addColumn("SOLIDANGLE", "solid_angle", "[" + casda::solidangleUnit + "]", 9, casda::precSolidangle,
                       "phys.angArea", "int", "col_solid_angle", "");
-    itsSpec.addColumn("BEAMAREA", "beam_area", "arcmin2", 9, 0,
+    itsSpec.addColumn("BEAMAREA", "beam_area", "[" + casda::solidangleUnit + "]", 9, casda::precSolidangle,
                       "phys.angArea;instr.beam", "int", "col_beam_area", "");
     itsSpec.addColumn("XAV", "x_ave", "", casda::precPix + 2, casda::precPix,
                       "pos.cartesian.x;stat.mean", "float", "col_x_ave", "");
