@@ -130,23 +130,33 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
                               + beamScaling * ((itsMaj.error() * itsMaj.error()) / (itsMaj.value() * itsMaj.value()) +
                                       (itsMaj.error() * itsMaj.error()) / (itsMaj.value() * itsMaj.value())));
 
-    std::vector<Double> deconv = analysisutilities::deconvolveGaussian(gauss,
+    // std::vector<Double> deconv = analysisutilities::deconvolveGaussian(gauss,
+    //                              newHead_freq.getBeam());
+    std::vector<Double> deconv = analysisutilities::deconvolveGaussian(gauss, errors,
                                  newHead_freq.getBeam());
     itsMaj_deconv.value() = deconv[0] * pixscale;
     itsMin_deconv.value() = deconv[1] * pixscale;
     itsPA_deconv.value() = deconv[2] * 180. / M_PI;
+    itsMaj_deconv.error() = deconv[3] * pixscale;
+    itsMin_deconv.error() = deconv[4] * pixscale;
+    itsPA_deconv.error() = deconv[5] * 180. / M_PI;
+    /// @todo - errors for deconv parameters
 
     itsChisq = results.chisq();
     itsRMSfit = results.RMS() * peakFluxscale;
 
     itsAlpha.value() = obj.alphaValues(fitType)[fitNumber];
     itsBeta.value() = obj.betaValues(fitType)[fitNumber];
+    /// @todo - errors for alpha/beta
 
     itsRMSimage = obj.noiseLevel() * peakFluxscale;
 
     itsFlagGuess = results.fitIsGuess() ? 1 : 0;
     itsFlagSiblings = obj.numFits(fitType) > 1 ? 1 : 0;
 
+    /// @todo - fix this to respond to how alpha/beta came about. Only
+    /// one way to calculate them at the moment.
+    itsFlagSpectralIndexOrigin = 1;
 
     // These are the additional parameters not used in the CASDA
     // component catalogue v1.7:
