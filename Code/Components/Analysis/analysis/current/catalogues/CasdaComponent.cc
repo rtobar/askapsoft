@@ -130,8 +130,6 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
                               + beamScaling * ((itsMaj.error() * itsMaj.error()) / (itsMaj.value() * itsMaj.value()) +
                                       (itsMaj.error() * itsMaj.error()) / (itsMaj.value() * itsMaj.value())));
 
-    // std::vector<Double> deconv = analysisutilities::deconvolveGaussian(gauss,
-    //                              newHead_freq.getBeam());
     std::vector<Double> deconv = analysisutilities::deconvolveGaussian(gauss, errors,
                                  newHead_freq.getBeam());
     itsMaj_deconv.value() = deconv[0] * pixscale;
@@ -140,14 +138,14 @@ CasdaComponent::CasdaComponent(sourcefitting::RadioSource &obj,
     itsMaj_deconv.error() = deconv[3] * pixscale;
     itsMin_deconv.error() = deconv[4] * pixscale;
     itsPA_deconv.error() = deconv[5] * 180. / M_PI;
-    /// @todo - errors for deconv parameters
 
     itsChisq = results.chisq();
     itsRMSfit = results.RMS() * peakFluxscale;
 
     itsAlpha.value() = obj.alphaValues(fitType)[fitNumber];
     itsBeta.value() = obj.betaValues(fitType)[fitNumber];
-    /// @todo - errors for alpha/beta
+    itsAlpha.error() = obj.alphaErrors(fitType)[fitNumber];
+    itsBeta.error() = obj.betaErrors(fitType)[fitNumber];
 
     itsRMSimage = obj.noiseLevel() * peakFluxscale;
 
