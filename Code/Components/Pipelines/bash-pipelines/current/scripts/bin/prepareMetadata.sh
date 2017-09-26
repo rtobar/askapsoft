@@ -37,7 +37,7 @@
 if [ "${DO_1934_CAL}" == "true" ]; then
     # This is set to true if the SB MS is absent
     MS_CAL_MISSING=false
-    if [ "${SB_1934}" != "" ]; then
+    if [ "${SB_1934}" != "" ] && [ "${DIR_SB}" != "" ]; then
         sb1934dir="$DIR_SB/$SB_1934"
         msnames=$(find "$sb1934dir" -maxdepth 1 -type d -name "*.ms")
         numMS=$(find "$sb1934dir" -maxdepth 1 -type d -name "*.ms" | wc -l)
@@ -77,7 +77,7 @@ fi
 if [ "${DO_SCIENCE_FIELD}" == "true" ]; then
     # This is set to true if the SB MS is absent
     MS_SCIENCE_MISSING=false
-    if [ "${SB_SCIENCE}" != "" ]; then
+    if [ "${SB_SCIENCE}" != "" ] && [ "${DIR_SB}" != "" ]; then
         sbScienceDir=$DIR_SB/$SB_SCIENCE
         msnames=$(find "$sbScienceDir" -maxdepth 1 -type d -name "*.ms")
         numMS=$(find "$sbScienceDir" -maxdepth 1 -type d -name "*.ms" | wc -l)
@@ -319,7 +319,15 @@ EOF
 
     FIELDLISTFILE=${metadata}/fieldlist-${msname}.txt
     if [ ! -e "$FIELDLISTFILE" ]; then
-        grep -A"${NUM_FIELDS}" RA "${MS_METADATA}" | tail -n "${NUM_FIELDS}" | cut -f 4- >> "$FIELDLISTFILE"
+        # This works on the assumption we have something like this in
+        # the mslist output:
+# 2017-09-12 01:31:12	INFO		Fields: 2
+# 2017-09-12 01:31:12	INFO	+	  ID   Code Name                RA               Decl           Epoch        nRows
+# 2017-09-12 01:31:12	INFO	+	  0         DRAGN_T0-0A         17:05:10.000000 -24.40.00.00000 J2000      1934712
+# 2017-09-12 01:31:12	INFO	+	  1         DRAGN_T0-0B         17:06:07.763000 -25.15.52.00000 J2000      1929096
+        # We look for the "Fields: n" line, get the next n+1 lines,
+        # and only keep the last n, which should be all the fields
+        grep -A$(echo $NUM_FIELDS | awk '{print $1+1}') "Fields: ${NUM_FIELDS}" "${MS_METADATA}" | tail -n ${NUM_FIELDS} | cut -f 4- >> "$FIELDLISTFILE"
     fi
 
     FIELD_LIST=""
@@ -360,12 +368,17 @@ EOF
 
         # Run schedblock to get parset & variables
         sbinfo="${metadata}/schedblock-info-${SB_SCIENCE}.txt"
-        if [ -e "${sbinfo}" ] && [ "$(wc -l "$sbinfo" | awk '{print $1}')" -gt 1 ]; then
-            echo "Reusing schedblock info file $sbinfo for SBID ${SB_SCIENCE}"
-        else
-            if [ -e "${sbinfo}" ]; then
+        getSchedblock=true
+        if [ -e "${sbinfo}" ]; then
+            if [ "$(grep -c "${METADATA_IS_GOOD}" "${sbinfo}")" -gt 0 ]; then
+                # SB info file exists and is complete. Don't need to regenerate.
+                getSchedblock=false
+                echo "Reusing schedblock info file $sbinfo for SBID ${SB_SCIENCE}"
+            else
                 rm -f "$sbinfo"
             fi
+        fi
+        if [ "${getSchedblock}" == "true" ]; then
             echo "Using $sbinfo as location for SB metadata"
             loadModule askapcli
             schedblock info -v -p "${SB_SCIENCE}" > "$sbinfo"
@@ -377,6 +390,9 @@ EOF
                 echo "Exiting pipeline."
                 exit $err
             fi
+            cat >> $sbinfo <<EOF
+${METADATA_IS_GOOD} ${NOW}
+EOF
         fi
         awkstr="\$1==${SB_SCIENCE}"
         PROJECT_ID=$(awk "$awkstr" "${sbinfo}" | awk '{split($0,a,FS); print a[NF];}')
@@ -426,12 +442,17 @@ EOF
 
             # Run schedblock to get parset & variables
             sbinfoCal="${metadata}/schedblock-info-${SB_1934}.txt"
-            if [ -e "${sbinfoCal}" ] && [ "$(wc -l "$sbinfoCal" | awk '{print $1}')" -gt 1 ]; then
-                echo "Reusing schedblock info file $sbinfoCal for SBID ${SB_1934}"
-            else
-                if [ -e "${sbinfoCal}" ]; then
+            getSchedblock=true
+            if [ -e "${sbinfoCal}" ]; then
+                if [ "$(grep -c "${METADATA_IS_GOOD}" "${sbinfoCal}")" -gt 0 ]; then
+                    # SB info file exists and is complete. Don't need to regenerate.
+                    getSchedblock=false
+                    echo "Reusing schedblock info file $sbinfoCal for SBID ${SB_1934}"
+                else
                     rm -f "$sbinfoCal"
                 fi
+            fi
+            if [ "${getSchedblock}" == "true" ]; then
                 echo "Using $sbinfoCal as location for bandpass SB metadata"
                 loadModule askapcli
                 schedblock info -v -p ${SB_1934} > $sbinfoCal
@@ -443,6 +464,9 @@ EOF
                     echo "Exiting pipeline."
                     exit $err
                 fi
+                cat >> ${sbinfoCal} <<EOF
+${METADATA_IS_GOOD} ${NOW}
+EOF
             fi
 
             SB_STATE_INITIAL_CAL=$(awk "$awkstr" "${sbinfoCal}" | awk '{split($0,a,FS); print a[NF-3];}')

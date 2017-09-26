@@ -37,6 +37,17 @@
 #include "publisher/InputMessage.h"
 #include "publisher/SpdOutputMessage.h"
 
+#include "publisher/VisMessageBuilder.h"
+#include "publisher/ZmqPublisher.h"
+#include "publisher/ZmqVisControlPort.h"
+
+// to be moved to base
+#include "publisher/CircularBuffer.h"
+
+#include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
+
 namespace askap {
 namespace cp {
 namespace vispublisher {
@@ -44,15 +55,46 @@ namespace vispublisher {
 /// @brief Implementation of the VisPublisher application.
 class PublisherApp : public askap::Application {
     public:
+        /// constructor
+        PublisherApp();
+
+        /// destructor
+        ~PublisherApp();
+ 
         /// Run the application
         virtual int run(int argc, char* argv[]);
 
     private:
+        /// actual loop of the program receiving and publishing messages
+        void receiveAndPublishLoop(boost::asio::ip::tcp::socket &socket);
 
         /// Build an Spd message for a givn beam and polarisation
         static SpdOutputMessage buildSpdOutputMessage(const InputMessage& in,
                                                       uint32_t beam,
                                                       uint32_t pol);
+
+        /// @brief parallel thread entry point 
+        /// @details This is the code of the parallel thread
+        /// @param[in] stream unique stream number (e.g. for logging and storing data to avoid synchronisation)
+        void parallelThread(int stream);
+
+        /// shared pointer to zmq publisher for vis messages
+        boost::shared_ptr<ZmqPublisher> itsVisMsgPublisher;
+
+        /// shared pointer to zmq publisher for spd messages
+        boost::shared_ptr<ZmqPublisher> itsSpdMsgPublisher;
+
+        /// shared pointer to zmq publisher for control port
+        boost::shared_ptr<ZmqVisControlPort> itsVisCtrlPort;
+
+        /// thread group to manage connections from ingest
+        mutable boost::thread_group itsThreadGroup;
+
+        /// stop flag
+        mutable bool itsStopRequested;
+        
+        // circular buffer handling jobs for individual threads
+        ingest::CircularBuffer<boost::asio::ip::tcp::socket> itsBuffer;
 };
 
 }

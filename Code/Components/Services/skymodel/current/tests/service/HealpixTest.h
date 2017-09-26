@@ -73,7 +73,7 @@ class HealpixTest : public CppUnit::TestFixture {
                 Coordinate(71.8, -63.1),
                 1.0/60.0,
                 8);
-            CPPUNIT_ASSERT_EQUAL(size_t(4), actual->size());
+            CPPUNIT_ASSERT_EQUAL(size_t(4), (size_t) actual->size());
             CPPUNIT_ASSERT_EQUAL(33942670l, (*actual)[0]);
             CPPUNIT_ASSERT_EQUAL(33942671l, (*actual)[1]);
             CPPUNIT_ASSERT_EQUAL(33942692l, (*actual)[2]);

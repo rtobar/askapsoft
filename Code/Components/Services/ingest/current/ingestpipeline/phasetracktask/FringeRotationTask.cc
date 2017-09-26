@@ -161,7 +161,7 @@ void FringeRotationTask::initialise(bool hasData)
 void FringeRotationTask::process(askap::cp::common::VisChunk::ShPtr& chunk)
 {
     if (itsToBeInitialised) {
-        initialise(chunk);
+        initialise(static_cast<bool>(chunk));
         if (!chunk) {
              return;
         }

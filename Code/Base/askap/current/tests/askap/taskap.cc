@@ -35,7 +35,7 @@
 #include <IndexConverterTest.h>
 
 
-const double askap::AskapUtilTest::dblTolerance;
+BOOST_CONSTEXPR_OR_CONST double askap::AskapUtilTest::dblTolerance;
 
 int main(int argc, char *argv[])
 {
