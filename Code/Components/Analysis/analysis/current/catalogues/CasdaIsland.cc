@@ -37,6 +37,7 @@
 #include <sourcefitting/RadioSource.h>
 #include <outputs/AskapVOTableCatalogueWriter.h>
 #include <duchampinterface/DuchampInterface.h>
+#include <extraction/IslandData.h>
 
 #include <Common/ParameterSet.h>
 #include <duchamp/Outputs/CatalogueSpecification.hh>
@@ -56,7 +57,8 @@ CasdaIsland::CasdaIsland():
 }
 
 CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
-                         const LOFAR::ParameterSet &parset):
+                         const LOFAR::ParameterSet &parset,
+                         const std::string fitType):
     CatalogueEntry(parset),
     itsName(obj.getName()),
     itsNumComponents(obj.numFits(casda::componentFitType)),
@@ -108,8 +110,8 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     std::string pixelUnits(obj.header().WCS().cunit[0]);
     pixelUnits += "2";
     casa::Unit solidAngleUnits(casda::solidangleUnit);
-    double pixelToSolidAngle = casa::Quantity(pixelSize*pixelSize, pixelUnits).getValue(solidAngleUnits);
-    
+    double pixelToSolidAngle = casa::Quantity(pixelSize * pixelSize, pixelUnits).getValue(solidAngleUnits);
+
     double peakFluxscale = getPeakFluxConversionScale(newHead_freq, casda::fluxUnit);
     itsFluxPeak *= peakFluxscale;
 
@@ -124,14 +126,24 @@ CasdaIsland::CasdaIsland(sourcefitting::RadioSource &obj,
     double shapeScale = casa::Quantity(1., headerShapeUnits).getValue(shapeUnits);
     itsMaj = obj.getMajorAxis() * shapeScale;
     itsMin = obj.getMinorAxis() * shapeScale;
-    
+
     // Re-calculate WCS parameters
     obj.calcWCSparams(newHead_freq);
     itsFreq = obj.getVel() * freqScale;
 
-    /// @todo
     // Average values for the background level & noise
     // Residual pixel statistics
+    IslandData islanddata(parset, fitType);
+    islanddata.setSource(&obj);
+    islanddata.findVoxelStats();
+
+    itsMeanBackground = islanddata.background() * peakFluxscale;
+    itsBackgroundNoise = islanddata.noise() * peakFluxscale;
+    itsMaxResidual = islanddata.residualMax() * peakFluxscale;
+    itsMinResidual = islanddata.residualMin() * peakFluxscale;
+    itsMeanResidual = islanddata.residualMean() * peakFluxscale;
+    itsStddevResidual = islanddata.residualStddev() * peakFluxscale;
+    itsRMSResidual = islanddata.residualRMS() * peakFluxscale;
 
     // Convert npix to solid angle
     itsSolidAngle = itsNumPix * pixelToSolidAngle;

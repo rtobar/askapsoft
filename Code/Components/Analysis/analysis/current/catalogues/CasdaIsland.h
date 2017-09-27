@@ -56,9 +56,12 @@ class CasdaIsland : public CatalogueEntry {
         /// otherwise it is essentially the information contained in
         /// the duchamp::Detection object. The parset is passed to the
         /// base CatalogueEntry object, and used to get the scheduling
-        /// block ID and image name, for constructing the islandID.
+        /// block ID and image name, for constructing the
+        /// islandID. The fitType is used when calculating the
+        /// statistics of the fit residuals.
         CasdaIsland(sourcefitting::RadioSource &obj,
-                    const LOFAR::ParameterSet &parset);
+                    const LOFAR::ParameterSet &parset,
+                    const std::string fitType = casda::componentFitType);
 
         /// Default destructor
         virtual ~CasdaIsland() {};
