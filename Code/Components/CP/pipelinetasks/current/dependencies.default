@@ -6,7 +6,7 @@ askap=Code/Base/askap/current
 logfilters=Code/Base/logfilters/current
 accessors=Code/Base/accessors/current
 components=Code/Base/components/current
-casa_components=3rdParty/casa-components/casa-components-1.6.0
+casa_components=3rdParty/casa-components/casa-rest-1.4.2
 
 # DC: note that cpdataservices is an old data services prototype. It doesn't actually
 # do anything. The Component accessor class uses methods on the old Ice interface which

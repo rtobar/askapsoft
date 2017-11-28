@@ -9,5 +9,5 @@ cpcommon=Code/Components/Services/common/current
 icewrapper=Code/Components/Services/icewrapper/current
 cppiceinterfaces=Code/Interfaces/cpp/current
 cpdataservices-client=Code/Components/Services/cpdataservices/client-cpp/current
-casa_components=3rdParty/casa-components/casa-components-1.6.0
+casa_components=3rdParty/casa-components/casa-rest-1.4.2
 logappenders=Code/Base/logappenders/current
