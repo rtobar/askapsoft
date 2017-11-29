@@ -1,0 +1,8 @@
+# This file lists the external dependencies
+# use pkgname=askapsoft_relative_path
+boost=3rdParty/boost/boost-1.56.0
+blas=3rdParty/blas/blas-1.0
+cfitsio=3rdParty/cfitsio/cfitsio-3.35
+lapack=3rdParty/lapack/lapack-3.4.0
+wcslib=3rdParty/wcslib/wcslib-5.17
+casacore=3rdParty/casacore/casacore-2.4.0
