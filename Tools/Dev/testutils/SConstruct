@@ -4,6 +4,7 @@
 # @author Tony Maher <Tony.Maher@csiro.au>
 #
 import os
+from askapenv import env
 
 askap_root = os.environ['ASKAP_ROOT']
 incdir = '%s/include' % askap_root
@@ -15,7 +16,6 @@ libdir = '%s/lib' % askap_root
 #
 #env = Environment(ENV = {'PATH' : os.environ['PATH']})
 #env = Environment(ENV = {'LD_LIBRARY_PATH' : os.environ['LD_LIBRARY_PATH']})
-env = Environment()
 env.AppendUnique(CPPPATH=["%s/include" % askap_root])
 
 testutils = env.Library('testutils', ['AskapTestRunner.cc'])
